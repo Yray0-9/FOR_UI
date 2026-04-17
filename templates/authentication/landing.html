@@ -1,0 +1,332 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}SafeBooks - Find Any Client. Record Any Transaction. In Seconds.{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<section id="hero" class="position-relative overflow-hidden" style="background: linear-gradient(to bottom, #EFF6FF, #FFFFFF); padding-top: 8rem; padding-bottom: 6rem;">
+    <!-- Subtle Background Element -->
+    <div class="position-absolute rounded-circle" style="width: 600px; height: 600px; background: rgba(16, 185, 129, 0.05); top: -200px; right: -100px; z-index: 0; filter: blur(80px);"></div>
+
+    <div class="container position-relative z-1">
+        <div class="row align-items-center">
+            <!-- Left Column Content -->
+            <div class="col-lg-6 mb-5 mb-lg-0 reveal-up">
+                <div class="d-inline-flex align-items-center px-4 py-2 mb-4 rounded-pill border fw-bold bg-white text-uppercase" style="color: var(--primary-navy); border-color: var(--border-light); font-size: 0.75rem; letter-spacing: 1px;">
+                    <span class="me-2 d-inline-block rounded-circle" style="width: 8px; height: 8px; background-color: var(--accent-emerald); box-shadow: 0 0 10px var(--accent-emerald);"></span> Built for Panabo City Bookkeepers
+                </div>
+                
+                <h1 class="display-4 fw-bold mb-4" style="color: var(--primary-navy); line-height: 1.2;">
+                    Find Any Client. Record Data. In Seconds.
+                </h1>
+                
+                <p class="lead mb-5" style="color: var(--text-gray); font-size: 1.15rem;">
+                    SafeBooks ends the chaos of physical client folders. Switch to a lightning-fast, organized, and remarkably secure digital platform built for busy tax filing days.
+                </p>
+                
+                <div class="d-flex flex-column flex-sm-row gap-3 mb-5">
+                    <a href="{% url 'login' %}" class="btn rounded-pill shadow-sm px-5 py-3 fw-bold hover-glow" style="background-color: var(--accent-emerald); color: #FFFFFF !important; transition: all 0.3s ease;">
+                        Get Started Free
+                    </a>
+                    <a href="#how-it-works" class="btn bg-white border rounded-pill px-5 py-3 fw-bold hover-lift" style="color: var(--primary-navy); border-color: var(--border-light); transition: all 0.3s ease;">
+                        See How It Works <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+                </div>
+                
+                <!-- Trust indicators -->
+                <div class="d-flex flex-wrap gap-4">
+                    <div class="d-flex align-items-center" style="color: var(--text-dark); font-weight: 500; font-size: 0.95rem; opacity: 0.9;">
+                        <i class="bi bi-search me-2 fs-5" style="color: var(--accent-emerald);"></i> Instant Search
+                    </div>
+                    <div class="d-flex align-items-center" style="color: var(--text-dark); font-weight: 500; font-size: 0.95rem; opacity: 0.9;">
+                        <i class="bi bi-journal-check me-2 fs-5" style="color: var(--accent-emerald);"></i> Visual Reports
+                    </div>
+                    <div class="d-flex align-items-center" style="color: var(--text-dark); font-weight: 500; font-size: 0.95rem; opacity: 0.9;">
+                        <i class="bi bi-shield-check me-2 fs-5" style="color: var(--accent-emerald);"></i> Bank-Grade Security
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column Dashboard Preview -->
+            <div class="col-lg-6 reveal-up" style="transition-delay: 0.2s;">
+                <div class="bg-white rounded-4 border overflow-hidden hero-dashboard-card animate-float" style="border-color: var(--border-light); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);">
+                    <!-- Fake Window Header -->
+                    <div class="px-4 py-3 d-flex align-items-center" style="background-color: var(--primary-navy);">
+                        <div class="fw-bold text-white d-flex align-items-center">
+                            <i class="bi bi-shield-check me-2" style="color: var(--accent-emerald);"></i> SafeBooks Portal
+                        </div>
+                        <div class="ms-auto d-flex gap-2">
+                            <div class="rounded-circle" style="width: 12px; height: 12px; background-color: #EF4444;"></div>
+                            <div class="rounded-circle" style="width: 12px; height: 12px; background-color: #F59E0B;"></div>
+                            <div class="rounded-circle" style="width: 12px; height: 12px; background-color: #10B981;"></div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white" style="background-color: var(--background);">
+                        <!-- Skeleton Stats -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <div class="p-3 rounded-3" style="background-color: var(--background); border: 1px solid var(--border-light);">
+                                    <div style="color: var(--text-gray); font-size: 0.85rem; font-weight: 600;">Active Clients</div>
+                                    <div class="fs-3 fw-bold" style="color: var(--primary-navy);">142</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 rounded-3" style="background-color: var(--background); border: 1px solid var(--border-light);">
+                                    <div style="color: var(--text-gray); font-size: 0.85rem; font-weight: 600;">Compliance Score</div>
+                                    <div class="fs-3 fw-bold" style="color: var(--accent-emerald);">98%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Client Risk Display -->
+                        <div class="bg-white rounded-3 p-3" style="border: 1px solid var(--border-light);">
+                            <h6 class="fw-bold mb-3" style="color: var(--primary-navy);">Portfolio Risk Scanner</h6>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark);">Low Risk (Compliant)</span>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--accent-emerald);">85%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar rounded-pill progress-bar-striped progress-bar-animated" style="width: 85%; background-color: var(--accent-emerald);"></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark);">Medium Risk (Upcoming)</span>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-gray);">10%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar rounded-pill bg-warning" style="width: 10%;"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark);">High Risk (Attention Needed)</span>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-gray);">5%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar rounded-pill bg-danger" style="width: 5%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Core Problem Section -->
+<section style="background-color: var(--white); padding: 6rem 0;">
+    <div class="container text-center">
+        <div class="small fw-bold mb-2 text-uppercase reveal-up" style="color: var(--accent-emerald); letter-spacing: 1px;">THE PROBLEM WE SOLVE</div>
+        <h2 class="fw-bold mb-4 reveal-up" style="color: var(--primary-navy);">Managing Clients Manually Is Slowing You Down</h2>
+        <p class="mb-5 mx-auto reveal-up" style="max-width: 650px; color: var(--text-gray); font-size: 1.1rem;">
+            Filing days are chaotic when you rely on physical folders and disjointed notes. The old way of bookkeeping limits how many clients you can help.
+        </p>
+        
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4 reveal-up" style="transition-delay: 0.1s;">
+                <div class="p-5 rounded-4 h-100 shadow-sm border border-light hover-lift d-flex flex-column align-items-center" style="background-color: #FEF2F2;">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 70px; height: 70px; background-color: rgba(220, 38, 38, 0.1);">
+                        <i class="bi bi-folder-x text-danger fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3" style="color: var(--primary-navy);">Searching Through Folders</h5>
+                    <p style="color: var(--text-gray); font-size: 0.95rem; line-height: 1.6;">Wasting precious hours navigating physical cabinets just to find a simple past tax return or record.</p>
+                </div>
+            </div>
+            <div class="col-md-4 reveal-up" style="transition-delay: 0.2s;">
+                <div class="p-5 rounded-4 h-100 shadow-sm border border-light hover-lift d-flex flex-column align-items-center" style="background-color: #FEF2F2;">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 70px; height: 70px; background-color: rgba(220, 38, 38, 0.1);">
+                        <i class="bi bi-graph-down text-danger fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3" style="color: var(--primary-navy);">Blind to Client Risk</h5>
+                    <p style="color: var(--text-gray); font-size: 0.95rem; line-height: 1.6;">Missing pending obligations and risking penalties because there is no automated system to track due dates.</p>
+                </div>
+            </div>
+            <div class="col-md-4 reveal-up" style="transition-delay: 0.3s;">
+                <div class="p-5 rounded-4 h-100 shadow-sm border border-light hover-lift d-flex flex-column align-items-center" style="background-color: #FEF2F2;">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 70px; height: 70px; background-color: rgba(220, 38, 38, 0.1);">
+                        <i class="bi bi-shield-slash text-danger fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3" style="color: var(--primary-navy);">Exposed Financial Data</h5>
+                    <p style="color: var(--text-gray); font-size: 0.95rem; line-height: 1.6;">Leaving sensitive financial information at the mercy of physical damage, water, loss, or prying eyes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Digital Reliability Section -->
+<section style="background-color: var(--highlight-blue); padding: 5rem 0;">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 order-2 order-lg-1 reveal-up">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="bg-white p-4 rounded-4 hover-lift shadow-sm border border-light">
+                            <div class="p-2 d-inline-block rounded-3 mb-3" style="background-color: rgba(15, 23, 42, 0.05);">
+                                <i class="bi bi-folder-check fs-3" style="color: var(--primary-navy);"></i>
+                            </div>
+                            <h6 class="fw-bold" style="color: var(--primary-navy);">Digital Organization</h6>
+                            <p class="small mb-0" style="color: var(--text-gray);">No more physical cabinets. Keep all client TINs and histories neatly sorted online.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="bg-white p-4 rounded-4 hover-lift shadow-sm border border-light" style="transform: translateY(20px);">
+                            <div class="p-2 d-inline-block rounded-3 mb-3" style="background-color: rgba(15, 23, 42, 0.05);">
+                                <i class="bi bi-cloud-check fs-3" style="color: var(--primary-navy);"></i>
+                            </div>
+                            <h6 class="fw-bold" style="color: var(--primary-navy);">Cloud Access</h6>
+                            <p class="small mb-0" style="color: var(--text-gray);">Work from anywhere. Your client data stays synced and accessible whenever you need it.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="bg-white p-4 rounded-4 hover-lift shadow-sm border border-light">
+                            <div class="p-2 d-inline-block rounded-3 mb-3" style="background-color: rgba(15, 23, 42, 0.05);">
+                                <i class="bi bi-person-lock fs-3" style="color: var(--primary-navy);"></i>
+                            </div>
+                            <h6 class="fw-bold" style="color: var(--primary-navy);">Secure Accounts</h6>
+                            <p class="small mb-0" style="color: var(--text-gray);">Private authenticated logins ensure only you can manage your specific client portfolio.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="bg-white p-4 rounded-4 hover-lift shadow-sm border border-light" style="transform: translateY(20px);">
+                            <div class="p-2 d-inline-block rounded-3 mb-3" style="background-color: rgba(15, 23, 42, 0.05);">
+                                <i class="bi bi-file-earmark-check fs-3" style="color: var(--primary-navy);"></i>
+                            </div>
+                            <h6 class="fw-bold" style="color: var(--primary-navy);">Filing Readiness</h6>
+                            <p class="small mb-0" style="color: var(--text-gray);">Easily trace past compliance records for seamless reporting and tracking.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 order-1 order-lg-2 reveal-up">
+                <div class="small fw-bold mb-2 text-uppercase" style="color: var(--accent-emerald); letter-spacing: 1px;">PEACE OF MIND</div>
+                <h2 class="fw-bold mb-4" style="color: var(--primary-navy);">Your Clients Trust You. Keep Their Records Organized.</h2>
+                <p class="lead mb-4" style="color: var(--text-gray);">
+                    We built SafeBooks acknowledging the daily stress of manual bookkeeping. Transition to a system specifically designed to keep your tax records unified, structured, and easy to find.
+                </p>
+                <div class="d-flex align-items-center p-3 rounded-3 bg-white shadow-sm border border-light">
+                    <i class="bi bi-shield-check fs-2 me-3" style="color: var(--accent-emerald);"></i>
+                    <div>
+                        <div class="fw-bold" style="color: var(--primary-navy);">Reliable Tracking</div>
+                        <div class="small" style="color: var(--text-gray);">A modernized approach for dedicated freelance bookkeepers.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" style="background-color: var(--background); padding: 6rem 0;">
+    <div class="container text-center">
+        <div class="small fw-bold mb-2 text-uppercase reveal-up" style="color: var(--accent-emerald); letter-spacing: 1px;">SIMPLE WORKFLOW</div>
+        <h2 class="fw-bold mb-5 reveal-up" style="color: var(--primary-navy);">A Workflow Designed for Tax Season</h2>
+        
+        <div class="row position-relative text-center g-4 mt-2">
+            <!-- Connecting line -->
+            <div class="step-connector d-none d-md-block" style="position: absolute; top: 35px; left: 15%; right: 15%; height: 2px; border-top: 2px dashed var(--border-light); z-index: 0;"></div>
+        
+            <div class="col-md-4 position-relative z-1 reveal-up" style="transition-delay: 0.1s;">
+                <div class="step-number mx-auto mb-4 hover-lift d-flex align-items-center justify-content-center fw-bold fs-3" style="width: 70px; height: 70px; background-color: var(--primary-navy); color: #FFFFFF !important; border-radius: 50%; border: 6px solid var(--background); box-shadow: 0 10px 15px rgba(0,0,0,0.1);">1</div>
+                <h5 class="fw-bold" style="color: var(--primary-navy);">Add Client Profile</h5>
+                <p style="color: var(--text-gray); font-size: 0.95rem;" class="px-3">Input basic business details and TIN to register clients securely into your central portal.</p>
+            </div>
+            <div class="col-md-4 position-relative z-1 reveal-up" style="transition-delay: 0.2s;">
+                <div class="step-number mx-auto mb-4 hover-lift d-flex align-items-center justify-content-center fw-bold fs-3" style="width: 70px; height: 70px; background-color: var(--primary-navy); color: #FFFFFF !important; border-radius: 50%; border: 6px solid var(--background); box-shadow: 0 10px 15px rgba(0,0,0,0.1);">2</div>
+                <h5 class="fw-bold" style="color: var(--primary-navy);">Log Monthly Data</h5>
+                <p style="color: var(--text-gray); font-size: 0.95rem;" class="px-3">Attach financial transactions and flag filing compliance digitally as soon as you process them.</p>
+            </div>
+            <div class="col-md-4 position-relative z-1 reveal-up" style="transition-delay: 0.3s;">
+                <div class="step-number mx-auto mb-4 hover-lift d-flex align-items-center justify-content-center fw-bold fs-3" style="width: 70px; height: 70px; background-color: var(--accent-emerald); color: #FFFFFF !important; border-radius: 50%; border: 6px solid var(--background); box-shadow: 0 10px 15px rgba(16, 185, 129, 0.3);">3</div>
+                <h5 class="fw-bold" style="color: var(--primary-navy);">Instantly View Risk Analytics</h5>
+                <p style="color: var(--text-gray); font-size: 0.95rem;" class="px-3">Watch SafeBooks compile your data into clear visualizations, automatically detecting critical risks.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" style="background-color: var(--white); padding: 6rem 0;">
+    <div class="container text-center">
+        <div class="small fw-bold mb-2 text-uppercase reveal-up" style="color: var(--accent-emerald); letter-spacing: 1px;">PLATFORM CAPABILITIES</div>
+        <h2 class="fw-bold mb-5 reveal-up" style="color: var(--primary-navy);">Everything Included</h2>
+        
+        <div class="row g-4 text-start">
+            <div class="col-md-6 reveal-up" style="transition-delay: 0.1s;">
+                <div class="bg-white p-4 rounded-4 shadow-sm border h-100 hover-lift" style="border-left: 4px solid var(--accent-emerald) !important; border-color: var(--border-light); cursor: default;">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="p-2 rounded" style="background-color: rgba(16, 185, 129, 0.1);">
+                            <i class="bi bi-search fs-4" style="color: var(--accent-emerald);"></i>
+                        </div>
+                        <h5 class="fw-bold ms-3 mb-0" style="color: var(--primary-navy);">Instant Search by TIN</h5>
+                    </div>
+                    <p class="mb-0" style="color: var(--text-gray);">Filter through your entire client database using Tax Identification Numbers. Never lose track of a client file again.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 reveal-up" style="transition-delay: 0.2s;">
+                <div class="bg-white p-4 rounded-4 shadow-sm border h-100 hover-lift" style="border-left: 4px solid var(--accent-emerald) !important; border-color: var(--border-light); cursor: default;">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="p-2 rounded" style="background-color: rgba(16, 185, 129, 0.1);">
+                            <i class="bi bi-journal-text fs-4" style="color: var(--accent-emerald);"></i>
+                        </div>
+                        <h5 class="fw-bold ms-3 mb-0" style="color: var(--primary-navy);">Monthly Records Archiving</h5>
+                    </div>
+                    <p class="mb-0" style="color: var(--text-gray);">Digitize ongoing transactions. Maintain organized histories of past filings to protect clients against audits.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 reveal-up" style="transition-delay: 0.3s;">
+                <div class="bg-white p-4 rounded-4 shadow-sm border h-100 hover-lift" style="border-left: 4px solid var(--accent-emerald) !important; border-color: var(--border-light); cursor: default;">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="p-2 rounded" style="background-color: rgba(16, 185, 129, 0.1);">
+                            <i class="bi bi-bar-chart-line fs-4" style="color: var(--accent-emerald);"></i>
+                        </div>
+                        <h5 class="fw-bold ms-3 mb-0" style="color: var(--primary-navy);">Financial Analytics Engine</h5>
+                    </div>
+                    <p class="mb-0" style="color: var(--text-gray);">Ditch complex spreadsheets. View clean charts summarizing compliance rates and tax progress for your entire portfolio.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 reveal-up" style="transition-delay: 0.4s;">
+                <div class="bg-white p-4 rounded-4 shadow-sm border h-100 hover-lift" style="border-left: 4px solid var(--accent-emerald) !important; border-color: var(--border-light); cursor: default;">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="p-2 rounded" style="background-color: rgba(16, 185, 129, 0.1);">
+                            <i class="bi bi-shield-exclamation fs-4" style="color: var(--accent-emerald);"></i>
+                        </div>
+                        <h5 class="fw-bold ms-3 mb-0" style="color: var(--primary-navy);">Automated Risk Classification</h5>
+                    </div>
+                    <p class="mb-0" style="color: var(--text-gray);">Stop guessing who needs attention. The system automatically tags clients that require immediate action to prevent penalties.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section style="background-color: var(--primary-navy); padding: 6rem 0;" class="text-center position-relative overflow-hidden">
+    <!-- Background Patterns -->
+    <div class="position-absolute rounded-circle" style="width: 300px; height: 300px; background: rgba(16, 185, 129, 0.1); top: -100px; left: -100px; filter: blur(40px);"></div>
+    <div class="position-absolute rounded-circle" style="width: 300px; height: 300px; background: rgba(239, 246, 255, 0.05); bottom: -100px; right: -100px; filter: blur(40px);"></div>
+
+    <div class="container position-relative z-1 reveal-up">
+        <h2 class="fw-bold mb-4" style="color: var(--white);">Stop Wrestling with Papers.</h2>
+        <p class="mb-5 mx-auto" style="max-width: 600px; color: rgba(255,255,255,0.8); font-size: 1.15rem;">
+            Streamline your bookkeeping, gain critical insights, and protect your clients' data today. SafeBooks takes less than 3 minutes to set up.
+        </p>
+        <a href="{% url 'login' %}" class="btn rounded-pill px-5 py-3 fs-5 fw-bold text-white shadow hover-glow d-inline-flex align-items-center" style="background-color: var(--accent-emerald);">
+            Create Your Account <i class="bi bi-rocket-takeoff ms-3"></i>
+        </a>
+    </div>
+</section>
+
+{% endblock %}
