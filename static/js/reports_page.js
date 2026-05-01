@@ -1,0 +1,1768 @@
+(function () {
+    const config = window.SafeBooksReportsConfig || {};
+    const urls = config.urls || {};
+    const shared = window.SafeBooksShared || null;
+
+    const REPORT_TYPE_META = {
+        financial_summary: {
+            label: "Financial Summary Report",
+            hint: "Sales, expenses, taxes, and monthly trend overview for the selected scope.",
+            icon: "bi-cash-stack",
+        },
+        compliance_snapshot: {
+            label: "Compliance Status Snapshot",
+            hint: "Compliance distribution and client filing posture for the selected scope.",
+            icon: "bi-patch-check",
+        },
+        client_risk_overview: {
+            label: "Client Risk Overview",
+            hint: "Risk-level distribution and compliance risk visibility for the selected scope.",
+            icon: "bi-shield-exclamation",
+        },
+    };
+
+    const COMPLIANCE_LABELS = {
+        filed: "Filed",
+        pending: "Pending",
+        late: "Late",
+    };
+
+    const RISK_LABELS = {
+        low: "Low",
+        medium: "Medium",
+        high: "High",
+    };
+
+    const AUTH_USER_KEY = String(config.authUserKey || "safebooks.authUser");
+    const LOGIN_WELCOME_KEY = String(config.loginWelcomeKey || "safebooks.loginWelcome");
+    const SIDEBAR_STATE_KEY = String(config.sidebarStateKey || "safebooks.sidebarCollapsed");
+    const DESKTOP_QUERY = String(config.desktopQuery || "(min-width: 992px)");
+    const HISTORY_STORAGE_KEY = "safebooks.reportsHistory";
+    const MAX_HISTORY_ITEMS = 8;
+
+    const body = document.body;
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
+    const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
+    const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+
+    const dashboardUserAvatar = document.getElementById("dashboardUserAvatar");
+    const dashboardUserName = document.getElementById("dashboardUserName");
+    const dashboardProfileAction = document.getElementById("dashboardProfileAction");
+    const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
+    const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
+
+    const reportsFilterForm = document.getElementById("reportsFilterForm");
+    const reportsTypeSelect = document.getElementById("reportsTypeSelect");
+    const reportsClientSelect = document.getElementById("reportsClientSelect");
+    const reportsDateFrom = document.getElementById("reportsDateFrom");
+    const reportsDateTo = document.getElementById("reportsDateTo");
+
+    const reportsGenerateButton = document.getElementById("reportsGenerateButton");
+    const reportsPreviewButton = document.getElementById("reportsPreviewButton");
+    const reportsDownloadButton = document.getElementById("reportsDownloadButton");
+    const reportsPrintButton = document.getElementById("reportsPrintButton");
+    const reportsResetButton = document.getElementById("reportsResetButton");
+    const reportsRetryButton = document.getElementById("reportsRetryButton");
+    const reportsEmptyAdjustButton = document.getElementById("reportsEmptyAdjustButton");
+
+    const reportsFilterStatus = document.getElementById("reportsFilterStatus");
+    const reportsGenerationTag = document.getElementById("reportsGenerationTag");
+
+    const reportsFeedbackCard = document.getElementById("reportsFeedbackCard");
+    const reportsLoadingState = document.getElementById("reportsLoadingState");
+    const reportsErrorState = document.getElementById("reportsErrorState");
+    const reportsErrorText = document.getElementById("reportsErrorText");
+    const reportsEmptyState = document.getElementById("reportsEmptyState");
+
+    const reportsPreviewArea = document.getElementById("reportsPreviewArea");
+    const reportsSummaryCards = document.getElementById("reportsSummaryCards");
+    const reportsPreviewTitle = document.getElementById("reportsPreviewTitle");
+    const reportsPreviewHint = document.getElementById("reportsPreviewHint");
+    const reportsPreviewMetaTag = document.getElementById("reportsPreviewMetaTag");
+    const reportsPreviewMeta = document.getElementById("reportsPreviewMeta");
+    const reportsPreviewHead = document.getElementById("reportsPreviewHead");
+    const reportsPreviewBody = document.getElementById("reportsPreviewBody");
+    const reportsPreviewTable = document.getElementById("reportsPreviewTable");
+    const reportsPreviewTableWrap = document.getElementById("reportsPreviewTableWrap");
+    const reportsPreviewTableEmpty = document.getElementById("reportsPreviewTableEmpty");
+
+    const reportsLedgerCard = document.getElementById("reportsLedgerCard");
+    const reportsLedgerHint = document.getElementById("reportsLedgerHint");
+    const reportsLedgerMetaTag = document.getElementById("reportsLedgerMetaTag");
+    const reportsLedgerWrapper = document.getElementById("reportsLedgerWrapper");
+    const reportsLedgerSheet = document.getElementById("reportsLedgerSheet");
+    const reportsLedgerEmpty = document.getElementById("reportsLedgerEmpty");
+
+    const reportsHistoryList = document.getElementById("reportsHistoryList");
+    const reportsHistoryCountTag = document.getElementById("reportsHistoryCountTag");
+    const reportsHistoryEmpty = document.getElementById("reportsHistoryEmpty");
+
+    const uiToastContainer = document.getElementById("uiToastContainer");
+
+    if (
+        !body
+        || !reportsFilterForm
+        || !reportsTypeSelect
+        || !reportsClientSelect
+        || !reportsDateFrom
+        || !reportsDateTo
+        || !reportsGenerateButton
+        || !reportsPreviewButton
+        || !reportsDownloadButton
+        || !reportsPrintButton
+        || !reportsResetButton
+        || !reportsFeedbackCard
+        || !reportsLoadingState
+        || !reportsErrorState
+        || !reportsEmptyState
+        || !reportsPreviewArea
+        || !reportsSummaryCards
+        || !reportsPreviewTitle
+        || !reportsPreviewHint
+        || !reportsPreviewMetaTag
+        || !reportsPreviewMeta
+        || !reportsPreviewHead
+        || !reportsPreviewBody
+        || !reportsPreviewTable
+        || !reportsPreviewTableWrap
+        || !reportsPreviewTableEmpty
+        || !reportsLedgerCard
+        || !reportsLedgerHint
+        || !reportsLedgerMetaTag
+        || !reportsLedgerWrapper
+        || !reportsLedgerSheet
+        || !reportsLedgerEmpty
+        || !reportsHistoryList
+        || !reportsHistoryCountTag
+        || !reportsHistoryEmpty
+        || !reportsGenerationTag
+    ) {
+        return;
+    }
+
+    window.setTimeout(() => {
+        if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
+            body.classList.remove("skeleton-active");
+            body.classList.add("skeleton-loaded");
+        }
+    }, 1800);
+
+    const currencyFormatter = new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+
+    const numberFormatter = new Intl.NumberFormat("en-PH", {
+        maximumFractionDigits: 0,
+    });
+
+    const displayDateFormatter = new Intl.DateTimeFormat("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+
+    const displayDateTimeFormatter = new Intl.DateTimeFormat("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+    const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
+        ? shared.initializeSidebarBehavior({
+            bodyElement: body,
+            sidebarToggle,
+            sidebarCollapseToggle,
+            sidebarCollapseIcon,
+            sidebarBackdrop,
+            storageKey: SIDEBAR_STATE_KEY,
+            desktopQuery: DESKTOP_QUERY,
+        })
+        : {
+            closeMobileSidebar: () => {},
+            restoreDesktopState: () => {},
+        };
+
+    const parseJsonSafe = (response) => {
+        if (shared && typeof shared.parseJsonSafe === "function") {
+            return shared.parseJsonSafe(response);
+        }
+
+        return response
+            .json()
+            .catch(() => null);
+    };
+
+    const showToast = (message, variantClass = "") => {
+        if (!shared || typeof shared.showToast !== "function") {
+            return;
+        }
+
+        shared.showToast(uiToastContainer, message, variantClass, {
+            delay: 2800,
+        });
+    };
+
+    const hydrateHeaderUser = () => {
+        if (!shared || typeof shared.hydrateHeaderUser !== "function") {
+            return;
+        }
+
+        shared.hydrateHeaderUser({
+            avatarElement: dashboardUserAvatar,
+            nameElement: dashboardUserName,
+            authUserKey: AUTH_USER_KEY,
+            defaultName: String(config.defaultName || "Bookkeeper User"),
+            defaultInitials: String(config.defaultInitials || "SB"),
+        });
+    };
+
+    const logoutCurrentUser = async () => {
+        if (!shared || typeof shared.logoutCurrentUser !== "function") {
+            return String(urls.loginPage || "/login/");
+        }
+
+        return shared.logoutCurrentUser({
+            logoutUrl: String(urls.logoutApi || ""),
+            loginUrl: String(urls.loginPage || "/login/"),
+            authUserKey: AUTH_USER_KEY,
+            loginWelcomeKey: LOGIN_WELCOME_KEY,
+        });
+    };
+
+    const escapeHtml = (value) => {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    };
+
+    const safeNumber = (value) => {
+        const parsed = Number(value || 0);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const toDateInputValue = (value) => {
+        if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+            return "";
+        }
+
+        const year = value.getFullYear();
+        const month = String(value.getMonth() + 1).padStart(2, "0");
+        const day = String(value.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    const parseDateInput = (value) => {
+        const cleaned = String(value || "").trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+            return null;
+        }
+
+        const parsed = new Date(`${cleaned}T00:00:00`);
+        if (Number.isNaN(parsed.getTime())) {
+            return null;
+        }
+
+        return parsed;
+    };
+
+    const formatCurrency = (value) => currencyFormatter.format(safeNumber(value));
+
+    const formatCount = (value) => numberFormatter.format(safeNumber(value));
+
+    const formatIsoDateForDisplay = (isoDate) => {
+        const parsed = parseDateInput(isoDate);
+        if (!parsed) {
+            return "-";
+        }
+        return displayDateFormatter.format(parsed);
+    };
+
+    const formatGeneratedDateTime = (isoValue) => {
+        const parsed = new Date(String(isoValue || ""));
+        if (Number.isNaN(parsed.getTime())) {
+            return "-";
+        }
+        return displayDateTimeFormatter.format(parsed);
+    };
+
+    const getDefaultDateRange = () => {
+        const today = new Date();
+        const rangeStart = new Date(today.getFullYear(), 0, 1);
+        return {
+            dateFrom: toDateInputValue(rangeStart),
+            dateTo: toDateInputValue(today),
+        };
+    };
+
+    const applyDefaultDateRange = () => {
+        const defaults = getDefaultDateRange();
+        if (!String(reportsDateFrom.value || "").trim()) {
+            reportsDateFrom.value = defaults.dateFrom;
+        }
+        if (!String(reportsDateTo.value || "").trim()) {
+            reportsDateTo.value = defaults.dateTo;
+        }
+    };
+
+    const toReportTypeLabel = (reportType) => {
+        const normalized = String(reportType || "").trim();
+        return REPORT_TYPE_META[normalized] ? REPORT_TYPE_META[normalized].label : "Report";
+    };
+
+    const toReportTypeHint = (reportType) => {
+        const normalized = String(reportType || "").trim();
+        return REPORT_TYPE_META[normalized] ? REPORT_TYPE_META[normalized].hint : "Generated report preview.";
+    };
+
+    const toRiskLabel = (riskValue) => {
+        const key = String(riskValue || "").toLowerCase();
+        return RISK_LABELS[key] || "Medium";
+    };
+
+    const toComplianceLabel = (complianceValue) => {
+        const key = String(complianceValue || "").toLowerCase();
+        return COMPLIANCE_LABELS[key] || "Pending";
+    };
+
+    const buildScopeLabel = (selectedClientId, fallbackLabel = "All clients") => {
+        if (!Number.isFinite(selectedClientId) || selectedClientId <= 0) {
+            return fallbackLabel;
+        }
+
+        const matchedClient = availableClients.find((client) => {
+            return safeNumber(client.id) === selectedClientId;
+        });
+
+        if (!matchedClient) {
+            return fallbackLabel;
+        }
+
+        const clientName = String(matchedClient.client_name || "Client");
+        const clientTin = String(matchedClient.tin_number || "").trim();
+        if (!clientTin) {
+            return clientName;
+        }
+        return `${clientName} (TIN: ${clientTin})`;
+    };
+
+    const toDisplayText = (value, fallback = "-") => {
+        const cleaned = String(value == null ? "" : value).trim();
+        return cleaned || fallback;
+    };
+
+    const toLedgerHeaderLabel = (labelValue) => {
+        const cleanedLabel = String(labelValue || "")
+            .replace(/_/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        return cleanedLabel ? cleanedLabel.toUpperCase() : "VALUE";
+    };
+
+    const formatClientBirthday = (isoDateValue) => {
+        const parsedFromInput = parseDateInput(isoDateValue);
+        if (parsedFromInput) {
+            return displayDateFormatter.format(parsedFromInput);
+        }
+
+        const parsedDate = new Date(String(isoDateValue || ""));
+        if (Number.isNaN(parsedDate.getTime())) {
+            return "-";
+        }
+
+        return displayDateFormatter.format(parsedDate);
+    };
+
+    const isClientScopedReport = (report) => {
+        const clientId = safeNumber(report && report.clientId);
+        return Number.isFinite(clientId) && clientId > 0;
+    };
+
+    const getClientForReport = (report) => {
+        if (!isClientScopedReport(report)) {
+            return null;
+        }
+
+        const clientId = safeNumber(report.clientId);
+        return availableClients.find((client) => safeNumber(client.id) === clientId) || null;
+    };
+
+    const buildLedgerColumnSchema = (report) => {
+        const reportColumns = Array.isArray(report && report.columns) ? report.columns : [];
+
+        const periodColumn = reportColumns.find((column) => {
+            const key = String(column && column.key || "").toLowerCase();
+            const label = String(column && column.label || "").toLowerCase();
+
+            return key.includes("period")
+                || key.includes("date")
+                || key.includes("month")
+                || label.includes("period")
+                || label.includes("date")
+                || label.includes("month");
+        }) || null;
+
+        const ignoredColumnKeys = new Set([
+            "client_name",
+            "tin_number",
+            "trade_name",
+            "location",
+            "permit_number",
+            "birthday",
+            "email",
+        ]);
+
+        let dataColumns = reportColumns
+            .filter((column) => {
+                const columnKey = String(column && column.key || "").toLowerCase();
+                if (periodColumn && columnKey === String(periodColumn.key || "").toLowerCase()) {
+                    return false;
+                }
+                return !ignoredColumnKeys.has(columnKey);
+            })
+            .slice(0, 8);
+
+        if (!dataColumns.length) {
+            dataColumns = reportColumns
+                .filter((column) => {
+                    if (!periodColumn) {
+                        return true;
+                    }
+
+                    return String(column && column.key || "").toLowerCase() !== String(periodColumn.key || "").toLowerCase();
+                })
+                .slice(0, 8);
+        }
+
+        if (!dataColumns.length) {
+            dataColumns = [{ key: "__detail__", label: "Details", synthetic: true }];
+        }
+
+        return {
+            periodColumn,
+            dataColumns,
+        };
+    };
+
+    const buildLedgerRowCells = (report, periodColumn, dataColumns) => {
+        const rows = Array.isArray(report && report.rows) ? report.rows : [];
+        const periodKey = periodColumn ? String(periodColumn.key || "") : "";
+
+        return rows.map((row, rowIndex) => {
+            const safeRow = row && typeof row === "object" ? row : {};
+
+            let periodValue = periodKey ? safeRow[periodKey] : "";
+            if (!String(periodValue || "").trim()) {
+                periodValue = safeRow.current_period || safeRow.last_entry_date || `Line ${rowIndex + 1}`;
+            }
+
+            const cells = dataColumns.map((column) => {
+                if (column && column.synthetic) {
+                    const syntheticValue = Object.keys(safeRow)
+                        .filter((key) => key !== periodKey)
+                        .map((key) => toDisplayText(safeRow[key], ""))
+                        .find((value) => Boolean(value));
+
+                    return toDisplayText(syntheticValue);
+                }
+
+                return toDisplayText(safeRow[column.key]);
+            });
+
+            return {
+                period: toDisplayText(periodValue, `Line ${rowIndex + 1}`),
+                cells,
+            };
+        });
+    };
+
+    const setFilterStatus = (message) => {
+        reportsFilterStatus.textContent = String(message || "");
+    };
+
+    const setGenerationTag = (message) => {
+        reportsGenerationTag.textContent = String(message || "");
+    };
+
+    const setFeedbackState = (state, errorMessage = "") => {
+        const normalized = String(state || "empty").toLowerCase();
+
+        if (normalized === "ready") {
+            reportsFeedbackCard.hidden = true;
+            return;
+        }
+
+        reportsFeedbackCard.hidden = false;
+        reportsLoadingState.hidden = normalized !== "loading";
+        reportsErrorState.hidden = normalized !== "error";
+        reportsEmptyState.hidden = normalized !== "empty";
+
+        if (normalized === "error" && reportsErrorText) {
+            reportsErrorText.textContent = errorMessage || "Unable to generate report with the current filters.";
+        }
+    };
+
+    const setActionLoadingState = (isLoading) => {
+        const loading = Boolean(isLoading);
+        reportsGenerateButton.disabled = loading;
+        reportsPreviewButton.disabled = loading;
+        reportsResetButton.disabled = loading;
+
+        if (!latestGeneratedReport) {
+            reportsDownloadButton.disabled = true;
+            reportsPrintButton.disabled = true;
+        } else {
+            reportsDownloadButton.disabled = loading || !latestGeneratedReport.rows.length;
+            reportsPrintButton.disabled = loading || !isClientScopedReport(latestGeneratedReport);
+        }
+    };
+
+    const togglePreviewTableEmptyState = (hasRows) => {
+        const shouldShowRows = Boolean(hasRows);
+        reportsPreviewTableWrap.hidden = !shouldShowRows;
+        reportsPreviewTableEmpty.hidden = shouldShowRows;
+    };
+
+    const toCsvCell = (value) => {
+        const raw = String(value == null ? "" : value);
+        if (!/[\",\r\n]/.test(raw)) {
+            return raw;
+        }
+        return `"${raw.replace(/"/g, '""')}"`;
+    };
+
+    const downloadCsv = (report) => {
+        if (!report || !Array.isArray(report.columns) || !Array.isArray(report.rows) || !report.columns.length) {
+            showToast("Generate a report first before downloading.", "warning");
+            return;
+        }
+
+        const header = report.columns.map((column) => toCsvCell(column.label)).join(",");
+        const bodyRows = report.rows.map((row) => {
+            return report.columns
+                .map((column) => toCsvCell(row[column.key]))
+                .join(",");
+        });
+
+        const csvContent = [header, ...bodyRows].join("\r\n");
+        const csvBlob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const objectUrl = window.URL.createObjectURL(csvBlob);
+
+        const stamp = toDateInputValue(new Date()).replace(/-/g, "");
+        const reportTypeToken = String(report.reportType || "report").replace(/[^a-z0-9_]+/gi, "_").toLowerCase();
+        const fileName = `${reportTypeToken}_${report.dateFrom || "from"}_${report.dateTo || "to"}_${stamp}.csv`;
+
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = fileName;
+        anchor.rel = "noopener";
+
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+
+        window.setTimeout(() => {
+            window.URL.revokeObjectURL(objectUrl);
+        }, 200);
+    };
+
+    const readHistoryItems = () => {
+        try {
+            const rawValue = window.sessionStorage.getItem(HISTORY_STORAGE_KEY) || "";
+            if (!rawValue) {
+                return [];
+            }
+
+            const parsedValue = JSON.parse(rawValue);
+            if (!Array.isArray(parsedValue)) {
+                return [];
+            }
+
+            return parsedValue.filter((item) => item && typeof item === "object");
+        } catch (error) {
+            return [];
+        }
+    };
+
+    const writeHistoryItems = (historyItems) => {
+        try {
+            window.sessionStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(historyItems));
+        } catch (error) {
+            // Ignore storage failures to keep report generation usable.
+        }
+    };
+
+    const renderHistoryItems = (historyItems) => {
+        const items = Array.isArray(historyItems) ? historyItems : [];
+        reportsHistoryCountTag.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
+
+        if (!items.length) {
+            reportsHistoryList.innerHTML = "";
+            reportsHistoryEmpty.hidden = false;
+            return;
+        }
+
+        reportsHistoryEmpty.hidden = true;
+        reportsHistoryList.innerHTML = items
+            .map((item) => {
+                const generatedLabel = formatGeneratedDateTime(item.generatedAt);
+                const rowCountLabel = `${formatCount(item.rowCount)} row${safeNumber(item.rowCount) === 1 ? "" : "s"}`;
+                return `
+                    <li class="reports-history-item">
+                        <div class="reports-history-meta">
+                            <strong>${escapeHtml(item.reportLabel || "Report")}</strong>
+                            <p>${escapeHtml(item.scopeLabel || "All clients")} | ${escapeHtml(item.dateFrom || "-")} to ${escapeHtml(item.dateTo || "-")} | ${escapeHtml(rowCountLabel)} | ${escapeHtml(generatedLabel)}</p>
+                        </div>
+                        <div class="reports-history-actions">
+                            <button type="button" class="btn dashboard-action-btn outline reports-history-apply-btn" data-history-id="${escapeHtml(item.id || "")}">
+                                Apply & Regenerate
+                            </button>
+                        </div>
+                    </li>
+                `;
+            })
+            .join("");
+    };
+
+    const appendHistoryItem = (report) => {
+        if (!report) {
+            return;
+        }
+
+        const historyItems = readHistoryItems();
+        const nextItem = {
+            id: `${Date.now()}_${Math.round(Math.random() * 100000)}`,
+            reportType: report.reportType,
+            reportLabel: report.reportLabel,
+            clientId: report.clientId,
+            scopeLabel: report.scopeLabel,
+            dateFrom: report.dateFrom,
+            dateTo: report.dateTo,
+            generatedAt: report.generatedAt,
+            rowCount: report.rows.length,
+        };
+
+        const updatedItems = [nextItem, ...historyItems].slice(0, MAX_HISTORY_ITEMS);
+        writeHistoryItems(updatedItems);
+        renderHistoryItems(updatedItems);
+    };
+
+    const applyHistoryFilterItem = (historyItem) => {
+        if (!historyItem || typeof historyItem !== "object") {
+            return;
+        }
+
+        const reportType = String(historyItem.reportType || "");
+        if (REPORT_TYPE_META[reportType]) {
+            reportsTypeSelect.value = reportType;
+        }
+
+        if (String(historyItem.clientId || "all") === "all" || !Number.isFinite(safeNumber(historyItem.clientId))) {
+            reportsClientSelect.value = "all";
+        } else {
+            const targetValue = String(historyItem.clientId);
+            const optionExists = Array.from(reportsClientSelect.options).some((optionItem) => optionItem.value === targetValue);
+            reportsClientSelect.value = optionExists ? targetValue : "all";
+        }
+
+        const dateFromValue = String(historyItem.dateFrom || "").trim();
+        const dateToValue = String(historyItem.dateTo || "").trim();
+
+        if (parseDateInput(dateFromValue)) {
+            reportsDateFrom.value = dateFromValue;
+        }
+        if (parseDateInput(dateToValue)) {
+            reportsDateTo.value = dateToValue;
+        }
+    };
+
+    const collectFilters = () => {
+        const reportType = String(reportsTypeSelect.value || "").trim();
+        const selectedClientValue = String(reportsClientSelect.value || "all").trim();
+        const clientId = selectedClientValue === "all"
+            ? null
+            : safeNumber(selectedClientValue);
+
+        return {
+            reportType,
+            clientId: Number.isFinite(clientId) && clientId > 0 ? clientId : null,
+            dateFrom: String(reportsDateFrom.value || "").trim(),
+            dateTo: String(reportsDateTo.value || "").trim(),
+        };
+    };
+
+    const validateFilters = (filters) => {
+        if (!filters || !REPORT_TYPE_META[filters.reportType]) {
+            return "Please select a valid report type.";
+        }
+
+        const parsedFrom = parseDateInput(filters.dateFrom);
+        const parsedTo = parseDateInput(filters.dateTo);
+
+        if (!parsedFrom || !parsedTo) {
+            return "Please provide a valid date range.";
+        }
+
+        if (parsedFrom.getTime() > parsedTo.getTime()) {
+            return "Date From cannot be later than Date To.";
+        }
+
+        return "";
+    };
+
+    const isIsoDateWithinRange = (isoDate, filters) => {
+        if (!isoDate) {
+            return true;
+        }
+
+        const rowDate = parseDateInput(isoDate);
+        const rangeFrom = parseDateInput(filters.dateFrom);
+        const rangeTo = parseDateInput(filters.dateTo);
+
+        if (!rowDate || !rangeFrom || !rangeTo) {
+            return true;
+        }
+
+        const rowTime = rowDate.getTime();
+        return rowTime >= rangeFrom.getTime() && rowTime <= rangeTo.getTime();
+    };
+
+    const isTrendMonthWithinRange = (yearValue, monthValue, filters) => {
+        const year = safeNumber(yearValue);
+        const month = safeNumber(monthValue);
+        const rangeFrom = parseDateInput(filters.dateFrom);
+        const rangeTo = parseDateInput(filters.dateTo);
+
+        if (!year || !month || !rangeFrom || !rangeTo) {
+            return true;
+        }
+
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+        return monthEnd.getTime() >= rangeFrom.getTime() && monthStart.getTime() <= rangeTo.getTime();
+    };
+
+    const filterActivityRows = (rows, filters) => {
+        const sourceRows = Array.isArray(rows) ? rows : [];
+        return sourceRows.filter((row) => {
+            const rowClientId = safeNumber(row.client_id);
+            if (Number.isFinite(filters.clientId) && filters.clientId > 0 && rowClientId !== filters.clientId) {
+                return false;
+            }
+
+            return isIsoDateWithinRange(row.last_entry_date, filters);
+        });
+    };
+
+    const renderSummaryCards = (cards) => {
+        const safeCards = Array.isArray(cards) ? cards : [];
+        reportsSummaryCards.innerHTML = safeCards
+            .map((card, index) => {
+                const delayValue = (0.16 + (index * 0.03)).toFixed(2);
+                const iconClass = String(card.icon || "bi-file-earmark-bar-graph");
+                return `
+                    <div class="col-sm-6 col-xl-3">
+                        <article class="dashboard-stat-card dashboard-fade-up reports-stat-card" style="--delay: ${delayValue}s;">
+                            <div class="stat-icon"><i class="bi ${escapeHtml(iconClass)}"></i></div>
+                            <div>
+                                <p class="stat-label">${escapeHtml(card.label || "Metric")}</p>
+                                <h3>${escapeHtml(card.value || "0")}</h3>
+                                <p class="stat-note">${escapeHtml(card.note || "")}</p>
+                            </div>
+                        </article>
+                    </div>
+                `;
+            })
+            .join("");
+    };
+
+    const renderPreviewRows = (columns, rows) => {
+        const safeColumns = Array.isArray(columns) ? columns : [];
+        const safeRows = Array.isArray(rows) ? rows : [];
+
+        reportsPreviewHead.innerHTML = `
+            <tr>
+                ${safeColumns.map((column) => `<th>${escapeHtml(column.label || "")}</th>`).join("")}
+            </tr>
+        `;
+
+        reportsPreviewBody.innerHTML = safeRows
+            .map((row) => {
+                return `
+                    <tr>
+                        ${safeColumns.map((column) => `<td>${escapeHtml(row[column.key])}</td>`).join("")}
+                    </tr>
+                `;
+            })
+            .join("");
+
+        togglePreviewTableEmptyState(safeRows.length > 0);
+    };
+
+    const renderPreviewMeta = (report) => {
+        reportsPreviewMeta.innerHTML = `
+            <span class="reports-preview-chip"><i class="bi bi-file-earmark-text"></i>${escapeHtml(report.reportLabel)}</span>
+            <span class="reports-preview-chip"><i class="bi bi-people"></i>${escapeHtml(report.scopeLabel)}</span>
+            <span class="reports-preview-chip"><i class="bi bi-calendar-range"></i>${escapeHtml(report.dateFrom)} to ${escapeHtml(report.dateTo)}</span>
+            <span class="reports-preview-chip"><i class="bi bi-clock"></i>${escapeHtml(formatGeneratedDateTime(report.generatedAt))}</span>
+        `;
+    };
+
+    const buildLedgerSheetHtml = (report) => {
+        const client = getClientForReport(report);
+        const clientName = toDisplayText(client && client.client_name ? client.client_name : report.scopeLabel, "Selected client");
+        const clientTin = toDisplayText(client && client.tin_number);
+        const tradeName = toDisplayText(client && client.trade_name);
+        const location = toDisplayText(client && client.location);
+        const permitNumber = toDisplayText(client && client.permit_number);
+        const birthday = client && client.birthday ? formatClientBirthday(client.birthday) : "-";
+        const email = toDisplayText(client && client.email);
+
+        const reportTypeLabel = toDisplayText(report.reportLabel, "Client Report");
+        const generatedLabel = formatGeneratedDateTime(report.generatedAt);
+        const dateRangeLabel = `${toDisplayText(report.dateFrom)} to ${toDisplayText(report.dateTo)}`;
+
+        const schema = buildLedgerColumnSchema(report);
+        const periodLabel = toLedgerHeaderLabel(
+            schema.periodColumn
+                ? schema.periodColumn.label || schema.periodColumn.key
+                : "Period"
+        );
+
+        const ledgerRows = buildLedgerRowCells(report, schema.periodColumn, schema.dataColumns);
+        const visibleRows = Math.max(14, ledgerRows.length);
+
+        const headerMarkup = schema.dataColumns
+            .map((column) => `<th>${escapeHtml(toLedgerHeaderLabel(column.label || column.key))}</th>`)
+            .join("");
+
+        const rowsMarkup = Array.from({ length: visibleRows }, (_, rowIndex) => {
+            const sourceRow = ledgerRows[rowIndex];
+            if (!sourceRow) {
+                return `
+                    <tr>
+                        <td>&nbsp;</td>
+                        ${schema.dataColumns.map(() => "<td>&nbsp;</td>").join("")}
+                    </tr>
+                `;
+            }
+
+            return `
+                <tr>
+                    <td>${escapeHtml(toDisplayText(sourceRow.period))}</td>
+                    ${sourceRow.cells.map((cell) => `<td>${escapeHtml(toDisplayText(cell))}</td>`).join("")}
+                </tr>
+            `;
+        }).join("");
+
+        const rowHint = ledgerRows.length
+            ? "Prepared from generated report values."
+            : "No rows matched the selected date range. Blank lines are available for manual notes.";
+
+        return `
+            <h3 class="reports-ledger-title">SafeBooks Client Report Sheet</h3>
+            <p class="reports-ledger-subtitle">Client-facing format for quick review and print handover</p>
+
+            <div class="reports-ledger-meta-row">
+                <span class="reports-ledger-meta-pill">Type: ${escapeHtml(reportTypeLabel)}</span>
+                <span class="reports-ledger-meta-pill">Range: ${escapeHtml(dateRangeLabel)}</span>
+                <span class="reports-ledger-meta-pill">Generated: ${escapeHtml(generatedLabel)}</span>
+            </div>
+
+            <table class="reports-ledger-client-table" aria-label="Client details">
+                <tbody>
+                    <tr>
+                        <th>TIN</th>
+                        <td>${escapeHtml(clientTin)}</td>
+                        <th>Trade Name</th>
+                        <td>${escapeHtml(tradeName)}</td>
+                    </tr>
+                    <tr>
+                        <th>Taxpayer</th>
+                        <td>${escapeHtml(clientName)}</td>
+                        <th>Location</th>
+                        <td>${escapeHtml(location)}</td>
+                    </tr>
+                    <tr>
+                        <th>Permit No.</th>
+                        <td>${escapeHtml(permitNumber)}</td>
+                        <th>Birthday</th>
+                        <td>${escapeHtml(birthday)}</td>
+                    </tr>
+                    <tr>
+                        <th>Email</th>
+                        <td colspan="3">${escapeHtml(email)}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="reports-ledger-grid-wrap">
+                <table class="reports-ledger-grid-table" aria-label="Ledger entries">
+                    <thead>
+                        <tr>
+                            <th>${escapeHtml(periodLabel)}</th>
+                            ${headerMarkup}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsMarkup}
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="reports-ledger-note">${escapeHtml(rowHint)}</p>
+        `;
+    };
+
+    const renderLedgerPreview = (report) => {
+        if (!report) {
+            return;
+        }
+
+        reportsLedgerCard.hidden = false;
+
+        if (!isClientScopedReport(report)) {
+            reportsLedgerWrapper.hidden = true;
+            reportsLedgerEmpty.hidden = false;
+            reportsLedgerSheet.innerHTML = "";
+            reportsLedgerHint.textContent = "This familiar format appears when one client is selected.";
+            reportsLedgerMetaTag.textContent = "Client scope required";
+            reportsPrintButton.disabled = true;
+            return;
+        }
+
+        reportsLedgerWrapper.hidden = false;
+        reportsLedgerEmpty.hidden = true;
+        reportsLedgerHint.textContent = "Paper-style sheet preview for client review and printing.";
+        reportsLedgerMetaTag.textContent = toDisplayText(report.scopeLabel, "Selected client");
+        reportsLedgerSheet.innerHTML = buildLedgerSheetHtml(report);
+        reportsPrintButton.disabled = false;
+    };
+
+    const clearLedgerPreview = () => {
+        reportsLedgerCard.hidden = true;
+        reportsLedgerWrapper.hidden = false;
+        reportsLedgerEmpty.hidden = true;
+        reportsLedgerSheet.innerHTML = "";
+        reportsLedgerHint.textContent = "Familiar paper-style format for review and future printing.";
+        reportsLedgerMetaTag.textContent = "Print-ready";
+        reportsPrintButton.disabled = true;
+    };
+
+    const buildLedgerPrintDocumentHtml = (report, sheetMarkup) => {
+        const reportLabel = toDisplayText(report && report.reportLabel, "Client Report");
+
+        return `
+            <!doctype html>
+            <html lang="en">
+                <head>
+                    <meta charset="utf-8">
+                    <title>${escapeHtml(reportLabel)} - Print</title>
+                    <style>
+                        @page {
+                            size: A4 portrait;
+                            margin: 10mm;
+                        }
+
+                        * {
+                            box-sizing: border-box;
+                        }
+
+                        html,
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background: #ffffff;
+                            color: #1f3f74;
+                            font-family: Arial, "Helvetica Neue", sans-serif;
+                        }
+
+                        .reports-print-root {
+                            width: 100%;
+                        }
+
+                        .reports-ledger-sheet {
+                            border: 1px solid #c7d8f6;
+                            padding: 8px;
+                            width: 100%;
+                        }
+
+                        .reports-ledger-title {
+                            margin: 0;
+                            color: #183365;
+                            font-size: 13px;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.04em;
+                        }
+
+                        .reports-ledger-subtitle {
+                            margin: 2px 0 0;
+                            color: #607ca9;
+                            font-size: 10px;
+                            font-weight: 700;
+                        }
+
+                        .reports-ledger-meta-row {
+                            margin: 6px 0;
+                        }
+
+                        .reports-ledger-meta-pill {
+                            display: inline-block;
+                            border: 1px solid #d8e4f8;
+                            border-radius: 999px;
+                            padding: 2px 8px;
+                            margin-right: 4px;
+                            margin-bottom: 4px;
+                            background: #f8fbff;
+                            color: #3f5e92;
+                            font-size: 10px;
+                            font-weight: 700;
+                        }
+
+                        .reports-ledger-client-table,
+                        .reports-ledger-grid-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            table-layout: fixed;
+                        }
+
+                        .reports-ledger-client-table th,
+                        .reports-ledger-client-table td,
+                        .reports-ledger-grid-table th,
+                        .reports-ledger-grid-table td {
+                            border: 1px solid #ccd9f0;
+                            padding: 4px 6px;
+                            color: #1f3f74;
+                            font-size: 10px;
+                        }
+
+                        .reports-ledger-client-table th,
+                        .reports-ledger-grid-table th {
+                            background: #f7fafe;
+                            color: #4d6896;
+                            text-transform: uppercase;
+                            letter-spacing: 0.04em;
+                            font-weight: 700;
+                        }
+
+                        .reports-ledger-grid-wrap {
+                            margin-top: 8px;
+                        }
+
+                        .reports-ledger-grid-table td {
+                            height: 24px;
+                            font-weight: 700;
+                        }
+
+                        .reports-ledger-note {
+                            margin-top: 6px;
+                            color: #607ca9;
+                            font-size: 10px;
+                            font-weight: 700;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <main class="reports-print-root">${sheetMarkup}</main>
+                </body>
+            </html>
+        `;
+    };
+
+    const printLedgerLayout = () => {
+        if (!latestGeneratedReport) {
+            showToast("Generate a report before printing.", "warning");
+            return;
+        }
+
+        if (!isClientScopedReport(latestGeneratedReport)) {
+            showToast("Select one client to use this print-friendly format.", "warning");
+            return;
+        }
+
+        const sheetMarkup = String(reportsLedgerSheet.innerHTML || "").trim();
+        if (!sheetMarkup) {
+            showToast("Print layout is not ready yet. Generate the report again.", "warning");
+            return;
+        }
+
+        const printWindow = window.open("", "_blank", "noopener,noreferrer,width=1024,height=860");
+        if (!printWindow) {
+            showToast("Allow pop-ups to print the report layout.", "warning");
+            return;
+        }
+
+        const documentMarkup = buildLedgerPrintDocumentHtml(latestGeneratedReport, sheetMarkup);
+        printWindow.document.open();
+        printWindow.document.write(documentMarkup);
+        printWindow.document.close();
+
+        window.setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+        }, 120);
+    };
+
+    const renderGeneratedReport = (report) => {
+        latestGeneratedReport = report;
+        reportsPreviewArea.hidden = false;
+        renderSummaryCards(report.summaryCards);
+        renderPreviewRows(report.columns, report.rows);
+        renderPreviewMeta(report);
+        renderLedgerPreview(report);
+
+        reportsPreviewTitle.textContent = report.reportLabel;
+        reportsPreviewHint.textContent = report.hint;
+        reportsPreviewMetaTag.textContent = `${formatCount(report.rows.length)} row${report.rows.length === 1 ? "" : "s"}`;
+
+        setGenerationTag(`Generated ${formatGeneratedDateTime(report.generatedAt)}`);
+        setFilterStatus(`${report.reportLabel} generated successfully.`);
+        reportsDownloadButton.disabled = report.rows.length === 0;
+        reportsPrintButton.disabled = !isClientScopedReport(report);
+
+        setFeedbackState("ready");
+    };
+
+    const clearGeneratedPreview = () => {
+        latestGeneratedReport = null;
+        reportsPreviewArea.hidden = true;
+        reportsSummaryCards.innerHTML = "";
+        reportsPreviewHead.innerHTML = "";
+        reportsPreviewBody.innerHTML = "";
+        reportsPreviewMeta.innerHTML = "";
+        clearLedgerPreview();
+        setGenerationTag("Not generated");
+        reportsDownloadButton.disabled = true;
+    };
+
+    const syncUrlFromFilters = (filters) => {
+        if (!window.history || typeof window.history.replaceState !== "function") {
+            return;
+        }
+
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set("report_type", filters.reportType);
+        nextUrl.searchParams.set("date_from", filters.dateFrom);
+        nextUrl.searchParams.set("date_to", filters.dateTo);
+
+        if (Number.isFinite(filters.clientId) && filters.clientId > 0) {
+            nextUrl.searchParams.set("client_id", String(filters.clientId));
+        } else {
+            nextUrl.searchParams.delete("client_id");
+        }
+
+        window.history.replaceState({}, "", `${nextUrl.pathname}${nextUrl.search}`);
+    };
+
+    const buildAnalyticsSummaryUrl = (clientId) => {
+        const baseUrl = String(urls.analyticsSummaryApi || "");
+        if (!baseUrl) {
+            return "";
+        }
+
+        if (!Number.isFinite(clientId) || clientId <= 0) {
+            return baseUrl;
+        }
+
+        const query = new URLSearchParams();
+        query.set("client_id", String(clientId));
+        return `${baseUrl}?${query.toString()}`;
+    };
+
+    const redirectToLogin = () => {
+        const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+        const loginUrl = String(urls.loginPage || "/login/");
+        window.location.assign(`${loginUrl}?next=${nextPath}`);
+    };
+
+    const fetchJsonOrThrow = async (url, signal, fallbackErrorMessage) => {
+        if (!url) {
+            throw new Error(fallbackErrorMessage || "Required API URL is missing.");
+        }
+
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                Accept: "application/json",
+            },
+            credentials: "same-origin",
+            signal,
+        });
+
+        if (response.status === 401) {
+            redirectToLogin();
+            throw new Error("Authentication required.");
+        }
+
+        const payload = await parseJsonSafe(response);
+        if (!response.ok || !payload || !payload.ok) {
+            const message = payload && payload.message
+                ? String(payload.message)
+                : String(fallbackErrorMessage || "Request failed.");
+            throw new Error(message);
+        }
+
+        return payload;
+    };
+
+    const buildFinancialSummaryReport = (payload, filters) => {
+        const summary = payload && payload.summary ? payload.summary : {};
+        const trendRows = Array.isArray(payload && payload.monthly_trend)
+            ? payload.monthly_trend.filter((row) => isTrendMonthWithinRange(row.year, row.month, filters))
+            : [];
+
+        const scope = payload && payload.scope ? payload.scope : {};
+        const scopeLabel = Number.isFinite(filters.clientId) && filters.clientId > 0
+            ? buildScopeLabel(filters.clientId, String(scope.client_name || "Selected client"))
+            : "All clients";
+
+        const rows = trendRows.map((row) => {
+            return {
+                period: `${row.month_label || row.month || "-"} ${row.year || ""}`.trim(),
+                sales: formatCurrency(row.sales),
+                expenses: formatCurrency(row.expenses),
+                tax: formatCurrency(row.tax),
+                net_value: formatCurrency(row.net_value),
+            };
+        });
+
+        return {
+            reportType: filters.reportType,
+            reportLabel: toReportTypeLabel(filters.reportType),
+            hint: toReportTypeHint(filters.reportType),
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+            generatedAt: new Date().toISOString(),
+            clientId: Number.isFinite(filters.clientId) && filters.clientId > 0 ? filters.clientId : "all",
+            scopeLabel,
+            summaryCards: [
+                {
+                    label: "Total Sales",
+                    value: formatCurrency(summary.total_sales),
+                    note: "For selected scope",
+                    icon: "bi-cash-stack",
+                },
+                {
+                    label: "Total Expenses",
+                    value: formatCurrency(summary.total_expenses),
+                    note: "For selected scope",
+                    icon: "bi-wallet2",
+                },
+                {
+                    label: "Total Tax",
+                    value: formatCurrency(summary.total_tax),
+                    note: "For selected scope",
+                    icon: "bi-receipt",
+                },
+                {
+                    label: "Net Value",
+                    value: formatCurrency(summary.net_value),
+                    note: "Sales minus expenses and tax",
+                    icon: "bi-graph-up-arrow",
+                },
+            ],
+            columns: [
+                { key: "period", label: "Period" },
+                { key: "sales", label: "Sales" },
+                { key: "expenses", label: "Expenses" },
+                { key: "tax", label: "Tax" },
+                { key: "net_value", label: "Net Value" },
+            ],
+            rows,
+        };
+    };
+
+    const buildComplianceSnapshotReport = (payload, filters) => {
+        const activityRows = filterActivityRows(payload && payload.recent_client_activity, filters);
+
+        const filedCount = activityRows.filter((row) => String(row.compliance || "").toLowerCase() === "filed").length;
+        const pendingCount = activityRows.filter((row) => String(row.compliance || "").toLowerCase() === "pending").length;
+        const lateCount = activityRows.filter((row) => String(row.compliance || "").toLowerCase() === "late").length;
+
+        const scopeLabel = Number.isFinite(filters.clientId) && filters.clientId > 0
+            ? buildScopeLabel(filters.clientId, "Selected client")
+            : "All clients";
+
+        const rows = activityRows.map((row) => {
+            return {
+                client_name: String(row.client_name || "Client"),
+                tin_number: String(row.tin_number || "-"),
+                compliance: toComplianceLabel(row.compliance),
+                last_entry_date: formatIsoDateForDisplay(row.last_entry_date),
+                current_period: String(row.current_period || "-"),
+                risk_level: toRiskLabel(row.risk),
+            };
+        });
+
+        return {
+            reportType: filters.reportType,
+            reportLabel: toReportTypeLabel(filters.reportType),
+            hint: toReportTypeHint(filters.reportType),
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+            generatedAt: new Date().toISOString(),
+            clientId: Number.isFinite(filters.clientId) && filters.clientId > 0 ? filters.clientId : "all",
+            scopeLabel,
+            summaryCards: [
+                {
+                    label: "Filed",
+                    value: formatCount(filedCount),
+                    note: "Clients marked filed",
+                    icon: "bi-patch-check",
+                },
+                {
+                    label: "Pending",
+                    value: formatCount(pendingCount),
+                    note: "Requires follow-up",
+                    icon: "bi-hourglass-split",
+                },
+                {
+                    label: "Late",
+                    value: formatCount(lateCount),
+                    note: "No recent submission",
+                    icon: "bi-clock-history",
+                },
+                {
+                    label: "Needs Attention",
+                    value: formatCount(pendingCount + lateCount),
+                    note: "Pending and late combined",
+                    icon: "bi-exclamation-triangle",
+                },
+            ],
+            columns: [
+                { key: "client_name", label: "Client Name" },
+                { key: "tin_number", label: "TIN" },
+                { key: "compliance", label: "Compliance" },
+                { key: "last_entry_date", label: "Last Entry Date" },
+                { key: "current_period", label: "Current Period" },
+                { key: "risk_level", label: "Risk Level" },
+            ],
+            rows,
+        };
+    };
+
+    const buildClientRiskOverviewReport = (payload, filters) => {
+        const activityRows = filterActivityRows(payload && payload.recent_client_activity, filters);
+
+        const lowCount = activityRows.filter((row) => String(row.risk || "").toLowerCase() === "low").length;
+        const mediumCount = activityRows.filter((row) => String(row.risk || "").toLowerCase() === "medium").length;
+        const highCount = activityRows.filter((row) => String(row.risk || "").toLowerCase() === "high").length;
+
+        const totalRows = activityRows.length;
+        const highRiskRatio = totalRows > 0 ? Math.round((highCount / totalRows) * 100) : 0;
+
+        const scopeLabel = Number.isFinite(filters.clientId) && filters.clientId > 0
+            ? buildScopeLabel(filters.clientId, "Selected client")
+            : "All clients";
+
+        const rows = activityRows
+            .slice()
+            .sort((a, b) => {
+                const riskOrder = {
+                    high: 0,
+                    medium: 1,
+                    low: 2,
+                };
+                const aRisk = String(a.risk || "medium").toLowerCase();
+                const bRisk = String(b.risk || "medium").toLowerCase();
+                const aOrder = Object.prototype.hasOwnProperty.call(riskOrder, aRisk) ? riskOrder[aRisk] : 1;
+                const bOrder = Object.prototype.hasOwnProperty.call(riskOrder, bRisk) ? riskOrder[bRisk] : 1;
+                if (aOrder !== bOrder) {
+                    return aOrder - bOrder;
+                }
+
+                const aName = String(a.client_name || "").toLowerCase();
+                const bName = String(b.client_name || "").toLowerCase();
+                return aName.localeCompare(bName);
+            })
+            .map((row) => {
+                return {
+                    client_name: String(row.client_name || "Client"),
+                    tin_number: String(row.tin_number || "-"),
+                    risk_level: toRiskLabel(row.risk),
+                    compliance: toComplianceLabel(row.compliance),
+                    last_entry_date: formatIsoDateForDisplay(row.last_entry_date),
+                    current_period: String(row.current_period || "-"),
+                };
+            });
+
+        return {
+            reportType: filters.reportType,
+            reportLabel: toReportTypeLabel(filters.reportType),
+            hint: toReportTypeHint(filters.reportType),
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+            generatedAt: new Date().toISOString(),
+            clientId: Number.isFinite(filters.clientId) && filters.clientId > 0 ? filters.clientId : "all",
+            scopeLabel,
+            summaryCards: [
+                {
+                    label: "Low Risk",
+                    value: formatCount(lowCount),
+                    note: "Consistent entry activity",
+                    icon: "bi-shield-check",
+                },
+                {
+                    label: "Medium Risk",
+                    value: formatCount(mediumCount),
+                    note: "Needs regular follow-up",
+                    icon: "bi-shield",
+                },
+                {
+                    label: "High Risk",
+                    value: formatCount(highCount),
+                    note: "Requires immediate review",
+                    icon: "bi-shield-exclamation",
+                },
+                {
+                    label: "High Risk Ratio",
+                    value: `${highRiskRatio}%`,
+                    note: "High-risk share in scope",
+                    icon: "bi-graph-up",
+                },
+            ],
+            columns: [
+                { key: "client_name", label: "Client Name" },
+                { key: "tin_number", label: "TIN" },
+                { key: "risk_level", label: "Risk Level" },
+                { key: "compliance", label: "Compliance" },
+                { key: "last_entry_date", label: "Last Entry Date" },
+                { key: "current_period", label: "Current Period" },
+            ],
+            rows,
+        };
+    };
+
+    const loadOptionsAndClients = async () => {
+        reportsClientSelect.disabled = true;
+
+        try {
+            const result = await fetchJsonOrThrow(
+                String(urls.clientsApi || ""),
+                undefined,
+                "Unable to load clients list."
+            );
+
+            availableClients = Array.isArray(result.clients)
+                ? result.clients.map((client) => ({
+                    id: safeNumber(client.id),
+                    client_name: String(client.client_name || "Client"),
+                    tin_number: String(client.tin_number || ""),
+                }))
+                : [];
+        } catch (error) {
+            availableClients = [];
+            showToast("Clients list could not be loaded. All-clients scope is still available.", "warning");
+        }
+
+        reportsClientSelect.innerHTML = "";
+
+        const allOption = document.createElement("option");
+        allOption.value = "all";
+        allOption.textContent = "All clients";
+        reportsClientSelect.appendChild(allOption);
+
+        availableClients.forEach((client) => {
+            const optionElement = document.createElement("option");
+            optionElement.value = String(client.id);
+            const tin = String(client.tin_number || "").trim();
+            optionElement.textContent = tin
+                ? `${client.client_name} (TIN: ${tin})`
+                : client.client_name;
+            reportsClientSelect.appendChild(optionElement);
+        });
+
+        reportsClientSelect.disabled = false;
+    };
+
+    const applyInitialFilterValues = () => {
+        applyDefaultDateRange();
+
+        const queryParams = new URLSearchParams(window.location.search);
+        const initialReportType = String(queryParams.get("report_type") || "").trim();
+        const initialClientId = String(queryParams.get("client_id") || "").trim();
+        const initialDateFrom = String(queryParams.get("date_from") || "").trim();
+        const initialDateTo = String(queryParams.get("date_to") || "").trim();
+
+        if (REPORT_TYPE_META[initialReportType]) {
+            reportsTypeSelect.value = initialReportType;
+        }
+
+        if (parseDateInput(initialDateFrom)) {
+            reportsDateFrom.value = initialDateFrom;
+        }
+
+        if (parseDateInput(initialDateTo)) {
+            reportsDateTo.value = initialDateTo;
+        }
+
+        if (initialClientId) {
+            const optionExists = Array.from(reportsClientSelect.options).some((optionItem) => optionItem.value === initialClientId);
+            if (optionExists) {
+                reportsClientSelect.value = initialClientId;
+            }
+        }
+    };
+
+    const runReportGeneration = async (options = {}) => {
+        const focusAfterGenerate = Boolean(options.focusAfterGenerate);
+        const filters = collectFilters();
+        const validationMessage = validateFilters(filters);
+
+        if (validationMessage) {
+            setFeedbackState("error", validationMessage);
+            setFilterStatus(validationMessage);
+            showToast(validationMessage, "warning");
+            return;
+        }
+
+        const requestToken = ++generationRequestToken;
+        if (generationAbortController) {
+            generationAbortController.abort();
+        }
+        generationAbortController = new AbortController();
+
+        setActionLoadingState(true);
+        setFeedbackState("loading");
+        setFilterStatus("Generating report...");
+
+        try {
+            let generatedReport = null;
+
+            if (filters.reportType === "financial_summary") {
+                const analyticsPayload = await fetchJsonOrThrow(
+                    buildAnalyticsSummaryUrl(filters.clientId),
+                    generationAbortController.signal,
+                    "Unable to load analytics data for financial summary."
+                );
+                if (requestToken !== generationRequestToken) {
+                    return;
+                }
+                generatedReport = buildFinancialSummaryReport(analyticsPayload, filters);
+            } else if (filters.reportType === "compliance_snapshot") {
+                const dashboardPayload = await fetchJsonOrThrow(
+                    String(urls.dashboardSummaryApi || ""),
+                    generationAbortController.signal,
+                    "Unable to load compliance snapshot data."
+                );
+                if (requestToken !== generationRequestToken) {
+                    return;
+                }
+                generatedReport = buildComplianceSnapshotReport(dashboardPayload, filters);
+            } else if (filters.reportType === "client_risk_overview") {
+                const dashboardPayload = await fetchJsonOrThrow(
+                    String(urls.dashboardSummaryApi || ""),
+                    generationAbortController.signal,
+                    "Unable to load risk overview data."
+                );
+                if (requestToken !== generationRequestToken) {
+                    return;
+                }
+                generatedReport = buildClientRiskOverviewReport(dashboardPayload, filters);
+            } else {
+                throw new Error("Unsupported report type selected.");
+            }
+
+            if (!generatedReport) {
+                throw new Error("Report generation returned no payload.");
+            }
+
+            renderGeneratedReport(generatedReport);
+            appendHistoryItem(generatedReport);
+            syncUrlFromFilters(filters);
+
+            if (generatedReport.rows.length === 0) {
+                setFilterStatus("Report generated, but no rows matched this date range.");
+                showToast("Report generated with no matching rows. Try widening the date range.", "info");
+            } else {
+                showToast(`${generatedReport.reportLabel} generated successfully.`, "success");
+            }
+
+            if (focusAfterGenerate) {
+                reportsPreviewArea.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        } catch (error) {
+            if (error && error.name === "AbortError") {
+                return;
+            }
+
+            if (requestToken !== generationRequestToken) {
+                return;
+            }
+
+            const fallbackMessage = "Unable to generate report right now. Please try again.";
+            const errorMessage = error && error.message ? String(error.message) : fallbackMessage;
+
+            setFeedbackState("error", errorMessage);
+            setFilterStatus(errorMessage);
+            showToast(errorMessage, "danger");
+        } finally {
+            if (requestToken === generationRequestToken) {
+                setActionLoadingState(false);
+            }
+        }
+    };
+
+    const previewLatestReport = () => {
+        if (!latestGeneratedReport) {
+            runReportGeneration({ focusAfterGenerate: true });
+            return;
+        }
+
+        reportsPreviewArea.hidden = false;
+        reportsPreviewArea.scrollIntoView({ behavior: "smooth", block: "start" });
+        reportsPreviewTable.focus({ preventScroll: true });
+    };
+
+    const resetReportFiltersAndState = () => {
+        reportsTypeSelect.value = "financial_summary";
+        reportsClientSelect.value = "all";
+
+        const defaults = getDefaultDateRange();
+        reportsDateFrom.value = defaults.dateFrom;
+        reportsDateTo.value = defaults.dateTo;
+
+        clearGeneratedPreview();
+        setFeedbackState("empty");
+        setFilterStatus("Filters reset. Select Generate to build a new report.");
+
+        const filters = collectFilters();
+        syncUrlFromFilters(filters);
+    };
+
+    const bindCoreEvents = () => {
+        reportsFilterForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            runReportGeneration({ focusAfterGenerate: false });
+        });
+
+        reportsPreviewButton.addEventListener("click", () => {
+            previewLatestReport();
+        });
+
+        reportsDownloadButton.addEventListener("click", () => {
+            if (!latestGeneratedReport) {
+                showToast("Generate a report before downloading.", "warning");
+                return;
+            }
+            downloadCsv(latestGeneratedReport);
+            showToast("CSV download started.", "success");
+        });
+
+        reportsPrintButton.addEventListener("click", () => {
+            printLedgerLayout();
+        });
+
+        reportsResetButton.addEventListener("click", () => {
+            resetReportFiltersAndState();
+        });
+
+        if (reportsRetryButton) {
+            reportsRetryButton.addEventListener("click", () => {
+                runReportGeneration({ focusAfterGenerate: false });
+            });
+        }
+
+        if (reportsEmptyAdjustButton) {
+            reportsEmptyAdjustButton.addEventListener("click", () => {
+                reportsTypeSelect.focus();
+                reportsFilterForm.scrollIntoView({ behavior: "smooth", block: "center" });
+            });
+        }
+
+        if (reportsTypeSelect) {
+            reportsTypeSelect.addEventListener("change", () => {
+                const selectedType = String(reportsTypeSelect.value || "").trim();
+                setFilterStatus(`${toReportTypeLabel(selectedType)} selected. Ready to generate.`);
+            });
+        }
+
+        reportsHistoryList.addEventListener("click", (event) => {
+            const trigger = event.target.closest("button[data-history-id]");
+            if (!trigger) {
+                return;
+            }
+
+            const targetId = String(trigger.dataset.historyId || "").trim();
+            if (!targetId) {
+                return;
+            }
+
+            const matchedItem = readHistoryItems().find((item) => String(item.id || "") === targetId);
+            if (!matchedItem) {
+                return;
+            }
+
+            applyHistoryFilterItem(matchedItem);
+            runReportGeneration({ focusAfterGenerate: true });
+        });
+
+        if (dashboardProfileAction) {
+            dashboardProfileAction.addEventListener("click", () => {
+                window.location.assign(String(urls.profilePage || "/profile/"));
+            });
+        }
+
+        if (dashboardLogoutAction) {
+            dashboardLogoutAction.addEventListener("click", async () => {
+                dashboardLogoutAction.disabled = true;
+
+                try {
+                    const redirectUrl = await logoutCurrentUser();
+                    showToast("Logging out...", "success");
+                    window.location.assign(redirectUrl);
+                } finally {
+                    dashboardLogoutAction.disabled = false;
+                }
+            });
+        }
+
+        plannedFeatureButtons.forEach((buttonElement) => {
+            buttonElement.addEventListener("click", (event) => {
+                event.preventDefault();
+                const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
+                showToast(`${featureLabel} is planned and will be available soon.`);
+            });
+        });
+
+        window.addEventListener("resize", () => {
+            sidebarState.closeMobileSidebar();
+            sidebarState.restoreDesktopState();
+        });
+    };
+
+    let availableClients = [];
+    let latestGeneratedReport = null;
+    let generationRequestToken = 0;
+    let generationAbortController = null;
+
+    const initializeReportsPage = async () => {
+        sidebarState.restoreDesktopState();
+        hydrateHeaderUser();
+
+        clearGeneratedPreview();
+        setFeedbackState("empty");
+        setFilterStatus("Set filters then select Generate to prepare your report.");
+        setActionLoadingState(false);
+
+        renderHistoryItems(readHistoryItems());
+        applyDefaultDateRange();
+
+        await loadOptionsAndClients();
+        applyInitialFilterValues();
+
+        bindCoreEvents();
+    };
+
+    initializeReportsPage();
+})();

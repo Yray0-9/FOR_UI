@@ -1,0 +1,443 @@
+.profile-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.profile-main {
+    display: grid;
+    gap: 1rem;
+}
+
+.profile-side {
+    display: grid;
+    gap: 1rem;
+}
+
+.profile-hero-card {
+    padding: 1.6rem;
+    display: grid;
+    gap: 1.4rem;
+}
+
+.profile-hero-top {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+}
+
+.profile-hero-identity {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.profile-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 24px;
+    background: #e4eeff;
+    color: #1f5ed9;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+}
+
+.profile-hero-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: #6a82ae;
+}
+
+.profile-hero-name {
+    font-size: 1.6rem;
+    margin-bottom: 0.35rem;
+}
+
+.profile-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    color: #556b97;
+    font-weight: 600;
+}
+
+.profile-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.profile-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: #ecf6ff;
+    color: #1f5ed9;
+    font-weight: 700;
+    font-size: 0.78rem;
+    border: 1px solid #d3e4ff;
+}
+
+.profile-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.profile-hero-progress {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.profile-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    color: #486192;
+}
+
+.profile-progress-bar {
+    background: #e8f0ff;
+    border-radius: 999px;
+    height: 10px;
+}
+
+.profile-progress-bar .progress-bar {
+    background: linear-gradient(120deg, #1f5ed9, #4f97ff);
+    border-radius: 999px;
+}
+
+.profile-card {
+    display: grid;
+    gap: 1rem;
+}
+
+.profile-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.8rem;
+}
+
+.profile-field-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #415b8f;
+    margin-bottom: 0.35rem;
+}
+
+.profile-field-hint {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #6f86b0;
+    margin: 0;
+}
+
+.profile-input,
+.profile-select {
+    border-radius: 12px;
+    border-color: #d7e4fb;
+    background: #f9fbff;
+    font-weight: 600;
+    color: #2f4f83;
+}
+
+.profile-input:focus,
+.profile-select:focus {
+    border-color: #aac2ee;
+    box-shadow: 0 0 0 0.2rem rgba(39, 103, 225, 0.12);
+}
+
+.profile-readonly-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+    background: #edf3ff;
+    color: #2d5ec5;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border: 1px solid #d6e3fb;
+    min-height: 42px;
+}
+
+.profile-planned-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.65rem 0.7rem;
+    border-radius: 12px;
+    border: 1px dashed #d7e4fb;
+    background: #f8fbff;
+}
+
+.profile-planned-btn {
+    width: auto;
+}
+
+.profile-section-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.profile-save-btn {
+    min-width: 160px;
+}
+
+.profile-save-status {
+    color: #7a91b8;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.profile-security-list,
+.profile-device-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.profile-security-row,
+.profile-device-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.65rem 0.1rem;
+    border-bottom: 1px dashed #e1e9fb;
+}
+
+.profile-security-row .profile-field-label {
+    margin-bottom: 0;
+}
+
+.profile-security-row:last-child,
+.profile-device-row:last-child {
+    border-bottom: none;
+}
+
+.profile-device-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-weight: 700;
+    color: #35507f;
+}
+
+.profile-device-meta small {
+    font-weight: 600;
+    color: #6f86b0;
+}
+
+.profile-chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    background: #edf3ff;
+    color: #2d5ec5;
+    font-weight: 700;
+    font-size: 0.78rem;
+    border: 1px solid #d6e3fb;
+}
+
+.profile-link-btn {
+    width: 100%;
+}
+
+.profile-activity-card .profile-section-footer {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.profile-activity-list {
+    display: grid;
+    gap: 0.9rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.profile-activity-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.profile-activity-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    margin-top: 0.35rem;
+    background: #1f5ed9;
+    box-shadow: 0 0 0 4px #e6efff;
+}
+
+.profile-activity-title {
+    font-weight: 700;
+    color: #263c66;
+    margin-bottom: 0.2rem;
+}
+
+.profile-danger-card {
+    border-color: rgba(234, 161, 161, 0.5);
+}
+
+.profile-danger-card .dashboard-tag {
+    background: #ffecec;
+    color: #b54848;
+}
+
+.profile-scroll-target {
+    scroll-margin-top: 6rem;
+}
+
+@media (min-width: 992px) {
+    .profile-hero-top {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .profile-hero-actions {
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 1199.98px) {
+    .profile-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .profile-section-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-save-btn {
+        width: 100%;
+    }
+
+    .profile-security-row,
+    .profile-device-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .profile-hero-identity {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-hero-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+body.theme-dark .profile-avatar {
+    background: #1a2c4f;
+    color: #aecdff;
+}
+
+body.theme-dark .profile-hero-eyebrow {
+    color: #9ab4df;
+}
+
+body.theme-dark .profile-hero-meta {
+    color: #a8bedf;
+}
+
+body.theme-dark .profile-status-pill {
+    background: #1a2c4f;
+    border-color: #2a3c5a;
+    color: #aecdff;
+}
+
+body.theme-dark .profile-progress-bar {
+    background: #1a2c4f;
+}
+
+body.theme-dark .profile-field-label {
+    color: #9ab4df;
+}
+
+body.theme-dark .profile-field-hint,
+body.theme-dark .profile-save-status,
+body.theme-dark .profile-device-meta small {
+    color: #7f99c1;
+}
+
+body.theme-dark .profile-input,
+body.theme-dark .profile-select {
+    background: #0f1c33;
+    border-color: #25344f;
+    color: #e6edf7;
+}
+
+body.theme-dark .profile-readonly-pill,
+body.theme-dark .profile-chip {
+    background: #1a2c4f;
+    border-color: #2a3c5a;
+    color: #aecdff;
+}
+
+body.theme-dark .profile-planned-row {
+    background: #0f1c33;
+    border-color: #2a3c5a;
+}
+
+body.theme-dark .profile-security-row,
+body.theme-dark .profile-device-row {
+    border-bottom-color: #2a3c5a;
+}
+
+body.theme-dark .profile-device-meta {
+    color: #c8d6ef;
+}
+
+body.theme-dark .profile-activity-dot {
+    background: #6ea1ff;
+    box-shadow: 0 0 0 4px rgba(110, 161, 255, 0.18);
+}
+
+body.theme-dark .profile-activity-title {
+    color: #d7e3f7;
+}
+
+body.theme-dark .profile-danger-card {
+    border-color: rgba(180, 95, 95, 0.55);
+}
+
+body.theme-dark .profile-danger-card .dashboard-tag {
+    background: #351c24;
+    color: #f0a4a4;
+}

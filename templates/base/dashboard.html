@@ -1,0 +1,1108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeBooks | Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
+</head>
+<body class="dashboard-page skeleton-active">
+    <div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+        <div class="skeleton-shell">
+            <div class="dash-sk-layout">
+                <aside class="dash-sk-sidebar">
+                    <div class="skeleton-shimmer dash-sk-logo"></div>
+                    <div class="dash-sk-nav">
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    </div>
+                </aside>
+                <section class="dash-sk-main">
+                    <div class="dash-sk-topbar">
+                        <div class="skeleton-shimmer dash-sk-title"></div>
+                        <div class="skeleton-shimmer dash-sk-search"></div>
+                        <div class="skeleton-shimmer dash-sk-profile"></div>
+                    </div>
+                    <div class="dash-sk-metrics">
+                        <div class="skeleton-shimmer dash-sk-metric"></div>
+                        <div class="skeleton-shimmer dash-sk-metric"></div>
+                        <div class="skeleton-shimmer dash-sk-metric"></div>
+                        <div class="skeleton-shimmer dash-sk-metric"></div>
+                    </div>
+                    <div class="dash-sk-content">
+                        <div class="dash-sk-left">
+                            <div class="dash-sk-card">
+                                <div class="skeleton-shimmer dash-sk-card-head"></div>
+                                <div class="dash-sk-table-row">
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                </div>
+                                <div class="dash-sk-table-row">
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                </div>
+                                <div class="dash-sk-table-row">
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                </div>
+                            </div>
+                            <div class="dash-sk-card dash-sk-chart-card">
+                                <div class="skeleton-shimmer dash-sk-card-head"></div>
+                                <div class="dash-sk-bars">
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dash-sk-right">
+                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
+                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
+                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
+                        </div>
+                    </div>
+                    <div class="dash-sk-card dash-sk-recent">
+                        <div class="skeleton-shimmer dash-sk-card-head"></div>
+                        <div class="skeleton-shimmer dash-sk-line"></div>
+                        <div class="skeleton-shimmer dash-sk-line"></div>
+                        <div class="skeleton-shimmer dash-sk-line"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="dashboard-sidebar" id="dashboardSidebar">
+            <div class="dashboard-sidebar-top">
+                <a href="{% url 'dashboard' %}" class="dashboard-logo" aria-label="SafeBooks">
+                    <span class="dashboard-logo-glyph">
+                        <img src="{% static 'images/Logo_safebooks.png' %}" alt="" class="dashboard-logo-image" aria-hidden="true">
+                    </span>
+                    <span class="dashboard-logo-text">SafeBooks</span>
+                </a>
+                <button class="btn dashboard-menu-toggle dashboard-collapse-btn d-none d-lg-inline-flex" type="button" id="sidebarCollapseToggle" aria-label="Collapse sidebar" aria-expanded="true">
+                    <i class="bi bi-layout-sidebar-inset" id="sidebarCollapseIcon"></i>
+                </button>
+            </div>
+            <p class="dashboard-sidebar-label">Main Navigation</p>
+
+            <nav class="dashboard-nav" aria-label="Sidebar navigation">
+                <button type="button" class="dashboard-nav-item active" aria-current="page"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></button>
+                <a href="{% url 'clients' %}" class="dashboard-nav-item"><i class="bi bi-people"></i><span>Clients</span></a>
+                <a href="{% url 'financial_records' %}" class="dashboard-nav-item"><i class="bi bi-journal-text"></i><span>Financial Records</span></a>
+                <a href="{% url 'analytics' %}" class="dashboard-nav-item"><i class="bi bi-bar-chart-line"></i><span>Analytics</span></a>
+                <a href="{% url 'reports' %}" class="dashboard-nav-item"><i class="bi bi-file-earmark-text"></i><span>Reports</span></a>
+                <a href="{% url 'settings' %}" class="dashboard-nav-item"><i class="bi bi-gear"></i><span>Settings</span></a>
+            </nav>
+
+            <a href="{% url 'home' %}" class="dashboard-landing-link">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Back to Landing</span>
+            </a>
+        </aside>
+
+        <main class="dashboard-main">
+            <header class="dashboard-topbar animate-fade-in">
+                <div class="dashboard-topbar-left">
+                    <button class="btn dashboard-menu-toggle d-lg-none" type="button" id="sidebarToggle" aria-label="Toggle sidebar menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div>
+                        <h1 class="dashboard-page-title">Dashboard</h1>
+                        <p class="dashboard-page-subtitle">Overview of your clients and recent financial activity</p>
+                        <div class="dashboard-utility-strip" aria-label="Dashboard context">
+                            <span class="dashboard-utility-item"><i class="bi bi-calendar3"></i> Current period: <strong>April 2026</strong></span>
+                            <span class="dashboard-utility-item"><i class="bi bi-clock"></i> Last updated: <strong>Just now</strong></span>
+                            <a href="{% url 'reports' %}" class="dashboard-utility-link" aria-label="Open Reports page">Open Reports</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-topbar-right">
+                    <div class="dropdown dashboard-user-dropdown">
+                        <button type="button" class="btn dashboard-profile-btn" id="dashboardProfileMenuButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open user menu">
+                            <span class="dashboard-avatar" id="dashboardUserAvatar">SB</span>
+                            <span class="dashboard-user-meta">
+                                <strong id="dashboardUserName">Bookkeeper User</strong>
+                                <small>Profile</small>
+                            </span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="dashboardProfileMenuButton">
+                            <li>
+                                <button type="button" class="dropdown-item" id="dashboardProfileAction">
+                                    <i class="bi bi-person"></i>
+                                    <span>Profile</span>
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button type="button" class="dropdown-item text-danger" id="dashboardLogoutAction">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    <span>Log out</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <section class="dashboard-content">
+                <div class="row g-3 dashboard-stats-row">
+                    <div class="col-sm-6 col-xl-3">
+                        <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.05s;" data-nav-target="{% url 'clients' %}" tabindex="0" role="button" aria-label="Open Clients page">
+                            <div class="stat-icon"><i class="bi bi-people"></i></div>
+                            <div>
+                                <p class="stat-label">Total Clients</p>
+                                <h3 id="totalClientsValue">0</h3>
+                                <p class="stat-note">Clients currently managed</p>
+                                <span class="stat-trend-chip">vs last month</span>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.1s;" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page">
+                            <div class="stat-icon"><i class="bi bi-journal-check"></i></div>
+                            <div>
+                                <p class="stat-label">Total Entries This Month</p>
+                                <h3 id="totalEntriesMonthValue">0</h3>
+                                <p class="stat-note">Entries recorded this month</p>
+                                <span class="stat-trend-chip">vs last month</span>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.15s;" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page for compliance follow-up">
+                            <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                            <div>
+                                <p class="stat-label">Pending Compliance</p>
+                                <h3 id="pendingComplianceValue">0</h3>
+                                <p class="stat-note">Requires attention</p>
+                                <span class="stat-trend-chip">vs last month</span>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.2s;" data-nav-target="{% url 'clients' %}?risk=high" tabindex="0" role="button" aria-label="Open Clients page with high-risk filter preview">
+                            <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                            <div>
+                                <p class="stat-label">High Risk Clients</p>
+                                <h3 id="highRiskClientsValue">0</h3>
+                                <p class="stat-note">Needs review</p>
+                                <span class="stat-trend-chip">vs last month</span>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                <!-- <p class="dashboard-overview-note">Overview of your clients and recent financial activity</p> -->
+
+                <div class="row g-3 mt-1 align-items-start">
+                    <div class="col-12 col-xl-8 d-grid gap-3">
+                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.25s;">
+                            <div class="dashboard-card-head">
+                                <h2>Recent Client Activity</h2>
+                                <button type="button" class="btn dashboard-link-muted" id="clientFiltersReset">View All</button>
+                            </div>
+                            <p class="dashboard-section-hint">Latest updates from your clients.</p>
+                            <div class="dashboard-table-toolbar" aria-label="Recent client activity controls">
+                                <label class="dashboard-table-search" aria-label="Search clients by name or TIN">
+                                    <i class="bi bi-search"></i>
+                                    <input type="search" id="clientTableSearch" placeholder="Search by client name or TIN" autocomplete="off">
+                                </label>
+                                <div class="dashboard-table-filters">
+                                    <div class="dashboard-filter-chips" role="group" aria-label="Filter recent client activity">
+                                        <button type="button" class="dashboard-filter-chip is-active" data-filter="all" aria-pressed="true">All</button>
+                                        <button type="button" class="dashboard-filter-chip" data-filter="updated" aria-pressed="false">Updated</button>
+                                        <button type="button" class="dashboard-filter-chip" data-filter="no-entries" aria-pressed="false">No Entries</button>
+                                        <button type="button" class="dashboard-filter-chip" data-filter="needs-attention" aria-pressed="false">Needs Attention</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="dashboard-filter-summary" id="clientFilterSummary">Active filter: All (0 results)</p>
+                            <div class="table-responsive" id="clientTableWrap">
+                                <table class="table table-hover align-middle dashboard-table mb-0" id="clientTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Client Name</th>
+                                            <th>TIN</th>
+                                            <th>Last Entry Date</th>
+                                            <th>Current Period</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="clientTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="dashboard-data-empty" id="clientActivityEmpty" hidden>
+                                <p>No data available yet</p>
+                                <div class="dashboard-empty-actions">
+                                    <a href="{% url 'clients' %}" class="btn dashboard-action-btn outline">Add Client</a>
+                                    <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn primary">Add Financial Entry</a>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.3s;">
+                            <div class="dashboard-card-head">
+                                <h2>Recent Entries</h2>
+                                <span class="dashboard-tag" id="recentEntriesCountTag">0 Entries</span>
+                            </div>
+                            <p class="dashboard-section-hint">Latest updates from your clients.</p>
+                            <p class="dashboard-table-label">Last 5 entries</p>
+                            <div class="table-responsive" id="recentEntriesWrap">
+                                <table class="table table-hover align-middle dashboard-table mb-0" id="recentEntriesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Client Name</th>
+                                            <th>Entry Date</th>
+                                            <th>Total Amount</th>
+                                        </tr>
+                                        <tr class="dashboard-table-summary">
+                                            <th colspan="3">Total amount: --</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentEntriesBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="dashboard-data-empty" id="recentEntriesEmpty" hidden>
+                                <p>No data available yet</p>
+                                <div class="dashboard-empty-actions">
+                                    <a href="{% url 'clients' %}" class="btn dashboard-action-btn outline">Add Client</a>
+                                    <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn primary">Add Financial Entry</a>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="col-12 col-xl-4 d-grid gap-3">
+                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.35s;">
+                            <div class="dashboard-card-head">
+                                <h2>Risk Classification Summary</h2>
+                            </div>
+                            <p class="dashboard-panel-hint">Based on completeness of financial records.</p>
+                            <ul class="insight-list">
+                                <li class="insight-item risk-low-item">
+                                    <span class="insight-dot"></span>
+                                    <div>
+                                        <strong>Low Risk</strong>
+                                        <small>Has consistent entries</small>
+                                    </div>
+                                    <span class="insight-value" id="riskLowCount">0</span>
+                                </li>
+                                <li class="insight-item risk-medium-item">
+                                    <span class="insight-dot"></span>
+                                    <div>
+                                        <strong>Medium Risk</strong>
+                                        <small>Missing some entries</small>
+                                    </div>
+                                    <span class="insight-value" id="riskMediumCount">0</span>
+                                </li>
+                                <li class="insight-item risk-high-item">
+                                    <span class="insight-dot"></span>
+                                    <div>
+                                        <strong>High Risk</strong>
+                                        <small>No entries or incomplete</small>
+                                    </div>
+                                    <span class="insight-value" id="riskHighCount">0</span>
+                                </li>
+                            </ul>
+                            <div class="dashboard-card-footer">
+                                <a href="{% url 'reports' %}" class="dashboard-card-link">View Details</a>
+                            </div>
+                        </article>
+
+                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.4s;">
+                            <div class="dashboard-card-head">
+                                <h2>Compliance Status Overview</h2>
+                            </div>
+                            <p class="dashboard-panel-hint">Status based on record completeness and recent entry activity.</p>
+                            <div class="compliance-meters">
+                                <div class="compliance-row">
+                                    <div class="compliance-meta">
+                                        <div>
+                                            <span>Filed</span>
+                                            <small>Complete records</small>
+                                        </div>
+                                        <strong id="complianceFiledPct">0%</strong>
+                                    </div>
+                                    <div class="progress"><div class="progress-bar filed" id="complianceFiledBar" style="width: 0%;"></div></div>
+                                </div>
+                                <div class="compliance-row">
+                                    <div class="compliance-meta">
+                                        <div>
+                                            <span>Pending</span>
+                                            <small>Missing entries</small>
+                                        </div>
+                                        <strong id="compliancePendingPct">0%</strong>
+                                    </div>
+                                    <div class="progress"><div class="progress-bar pending" id="compliancePendingBar" style="width: 0%;"></div></div>
+                                </div>
+                                <div class="compliance-row">
+                                    <div class="compliance-meta">
+                                        <div>
+                                            <span>Late</span>
+                                            <small>No recent activity</small>
+                                        </div>
+                                        <strong id="complianceLatePct">0%</strong>
+                                    </div>
+                                    <div class="progress"><div class="progress-bar late" id="complianceLateBar" style="width: 0%;"></div></div>
+                                </div>
+                            </div>
+                            <div class="dashboard-card-footer">
+                                <a href="{% url 'reports' %}" class="dashboard-card-link">View Details</a>
+                            </div>
+                        </article>
+
+                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.45s;">
+                            <div class="dashboard-card-head">
+                                <h2>Quick Actions</h2>
+                            </div>
+                            <div class="dashboard-actions">
+                                <a href="{% url 'clients' %}" class="btn dashboard-action-btn primary">Add Client</a>
+                                <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline">Add Financial Entry</a>
+                                <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline">View Financial Records</a>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <button type="button" class="dashboard-backdrop" id="sidebarBackdrop" aria-label="Close sidebar"></button>
+    </div>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3 safebooks-toast-container" id="uiToastContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="{% static 'js/skeleton.js' %}"></script>
+    <script src="{% static 'js/app_shared.js' %}"></script>
+    <script>
+        (() => {
+            const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
+            const DESKTOP_QUERY = "(min-width: 992px)";
+            const LOGIN_WELCOME_KEY = "safebooks.loginWelcome";
+            const AUTH_USER_KEY = "safebooks.authUser";
+
+            const body = document.body;
+            const sidebarToggle = document.getElementById("sidebarToggle");
+            const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
+            const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
+            const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+            const uiToastContainer = document.getElementById("uiToastContainer");
+            const dashboardUserAvatar = document.getElementById("dashboardUserAvatar");
+            const dashboardUserName = document.getElementById("dashboardUserName");
+            const dashboardProfileAction = document.getElementById("dashboardProfileAction");
+            const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
+            const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
+            const shared = window.SafeBooksShared || null;
+
+            if (!body) {
+                return;
+            }
+
+            // Failsafe so UI controls remain usable even if a transition state gets stuck.
+            window.setTimeout(() => {
+                if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
+                    body.classList.remove("skeleton-active");
+                    body.classList.add("skeleton-loaded");
+                }
+            }, 1800);
+
+            const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
+                ? shared.initializeSidebarBehavior({
+                    bodyElement: body,
+                    sidebarToggle,
+                    sidebarCollapseToggle,
+                    sidebarCollapseIcon,
+                    sidebarBackdrop,
+                    storageKey: SIDEBAR_STATE_KEY,
+                    desktopQuery: DESKTOP_QUERY,
+                })
+                : {
+                    closeMobileSidebar: () => {},
+                    restoreDesktopState: () => {},
+                };
+
+            const clientTableBody = document.getElementById("clientTableBody");
+            const clientTableWrap = document.getElementById("clientTableWrap");
+            const clientTableSearch = document.getElementById("clientTableSearch");
+            const clientFilterChips = Array.from(document.querySelectorAll(".dashboard-filter-chip"));
+            const clientFilterSummary = document.getElementById("clientFilterSummary");
+            const clientFiltersReset = document.getElementById("clientFiltersReset");
+            const clientActivityEmpty = document.getElementById("clientActivityEmpty");
+
+            const recentEntriesWrap = document.getElementById("recentEntriesWrap");
+            const recentEntriesBody = document.getElementById("recentEntriesBody");
+            const recentEntriesEmpty = document.getElementById("recentEntriesEmpty");
+            const recentEntriesCountTag = document.getElementById("recentEntriesCountTag");
+
+            const totalClientsValue = document.getElementById("totalClientsValue");
+            const totalEntriesMonthValue = document.getElementById("totalEntriesMonthValue");
+            const pendingComplianceValue = document.getElementById("pendingComplianceValue");
+            const highRiskClientsValue = document.getElementById("highRiskClientsValue");
+
+            const riskLowCount = document.getElementById("riskLowCount");
+            const riskMediumCount = document.getElementById("riskMediumCount");
+            const riskHighCount = document.getElementById("riskHighCount");
+
+            const complianceFiledPct = document.getElementById("complianceFiledPct");
+            const compliancePendingPct = document.getElementById("compliancePendingPct");
+            const complianceLatePct = document.getElementById("complianceLatePct");
+            const complianceFiledBar = document.getElementById("complianceFiledBar");
+            const compliancePendingBar = document.getElementById("compliancePendingBar");
+            const complianceLateBar = document.getElementById("complianceLateBar");
+
+            const FINANCIAL_RECORDS_BASE_URL = "{% url 'financial_records_client' %}";
+            const DASHBOARD_SUMMARY_API_URL = "{% url 'api_dashboard_summary' %}";
+
+            let CURRENT_PERIOD_LABEL = "";
+            let CLIENT_ACTIVITY_DATA = [];
+            let RECENT_ENTRIES_DATA = [];
+            let DASHBOARD_METRICS = {
+                totalClients: 0,
+                totalEntriesThisMonth: 0,
+                pendingCompliance: 0,
+                highRiskClients: 0,
+                risk: {
+                    low: 0,
+                    medium: 0,
+                    high: 0,
+                },
+                compliancePct: {
+                    filed: 0,
+                    pending: 0,
+                    late: 0,
+                },
+            };
+
+            const STATUS_META = {
+                updated: {
+                    label: "Updated",
+                    badgeClass: "status-updated"
+                },
+                "no-entries": {
+                    label: "No Entries",
+                    badgeClass: "status-no-entries"
+                },
+                "needs-attention": {
+                    label: "Needs Attention",
+                    badgeClass: "status-needs-attention"
+                }
+            };
+
+            const CLIENT_FILTER_LABELS = {
+                all: "All",
+                updated: "Updated",
+                "no-entries": "No Entries",
+                "needs-attention": "Needs Attention"
+            };
+
+            const normalize = (value) => String(value || "").trim().toLowerCase();
+
+            const getActiveClientFilter = () => {
+                const activeChip = clientFilterChips.find((chip) => chip.classList.contains("is-active"));
+                return activeChip ? String(activeChip.dataset.filter || "all") : "all";
+            };
+
+            const setActiveClientFilter = (value) => {
+                const normalizedValue = normalize(value) || "all";
+                clientFilterChips.forEach((chip) => {
+                    const chipValue = normalize(chip.dataset.filter || "all");
+                    const isActive = chipValue === normalizedValue;
+                    chip.classList.toggle("is-active", isActive);
+                    chip.setAttribute("aria-pressed", String(isActive));
+                });
+            };
+
+            const updateClientFilterSummary = (statusFilter, resultCount) => {
+                if (!clientFilterSummary) {
+                    return;
+                }
+
+                const label = CLIENT_FILTER_LABELS[statusFilter] || CLIENT_FILTER_LABELS.all;
+                const countLabel = resultCount === 1 ? "result" : "results";
+                clientFilterSummary.textContent = `Active filter: ${label} (${resultCount} ${countLabel})`;
+            };
+
+            const currencyFormatter = new Intl.NumberFormat("en-PH", {
+                style: "currency",
+                currency: "PHP",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            let filterTransitionTimer = null;
+
+            const escapeHtml = (value) => {
+                return String(value || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            };
+
+            const formatCurrency = (value) => currencyFormatter.format(value || 0);
+
+            const formatEntryDate = (value) => {
+                if (!value) {
+                    return "No entries";
+                }
+
+                const parsedDate = new Date(`${value}T00:00:00`);
+                if (Number.isNaN(parsedDate.getTime())) {
+                    return value;
+                }
+
+                return parsedDate.toLocaleDateString("en-PH", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric"
+                });
+            };
+
+            const buildFinancialRecordsUrl = (clientData) => {
+                const params = new URLSearchParams();
+                params.set("client_id", String(clientData.clientId || ""));
+                params.set("client", clientData.clientName || "");
+                params.set("tin", clientData.tin || "");
+                params.set("trade", clientData.tradeName || "");
+                return `${FINANCIAL_RECORDS_BASE_URL}?${params.toString()}`;
+            };
+
+            const openClientFinancialRecords = (clientData) => {
+                if (!clientData) {
+                    window.location.assign(FINANCIAL_RECORDS_BASE_URL);
+                    return;
+                }
+
+                window.location.assign(buildFinancialRecordsUrl(clientData));
+            };
+
+            const renderClientTableRows = (rows) => {
+                if (!clientTableBody) {
+                    return;
+                }
+
+                clientTableBody.innerHTML = rows
+                    .map((row) => {
+                        const statusMeta = STATUS_META[row.status] || STATUS_META["needs-attention"];
+                        const rowClientId = Number.isFinite(row.clientId) ? row.clientId : "";
+
+                        return `
+                            <tr class="dashboard-client-row" data-client-id="${escapeHtml(String(rowClientId))}" data-client-name="${escapeHtml(row.clientName)}" data-tin="${escapeHtml(row.tin)}" data-trade="${escapeHtml(row.tradeName)}" tabindex="0" role="button" aria-label="Open financial records for ${escapeHtml(row.clientName)}">
+                                <td>${escapeHtml(row.clientName)}</td>
+                                <td>${escapeHtml(row.tin)}</td>
+                                <td>${escapeHtml(formatEntryDate(row.lastEntryDate))}</td>
+                                <td>${escapeHtml(row.currentPeriod)}</td>
+                                <td><span class="status-badge ${statusMeta.badgeClass}">${statusMeta.label}</span></td>
+                            </tr>
+                        `;
+                    })
+                    .join("");
+
+                if (clientTableBody) {
+                    clientTableBody.classList.add("is-filtering");
+                    window.clearTimeout(filterTransitionTimer);
+                    filterTransitionTimer = window.setTimeout(() => {
+                        clientTableBody.classList.remove("is-filtering");
+                    }, 170);
+                }
+
+                const hasRows = rows.length > 0;
+                if (clientTableWrap) {
+                    clientTableWrap.hidden = !hasRows;
+                }
+                if (clientActivityEmpty) {
+                    clientActivityEmpty.hidden = hasRows;
+                }
+            };
+
+            const applyClientFilters = () => {
+                const query = normalize(clientTableSearch ? clientTableSearch.value : "");
+                const statusFilter = normalize(getActiveClientFilter());
+
+                const filteredRows = CLIENT_ACTIVITY_DATA.filter((row) => {
+                    const matchesQuery = !query || normalize(row.clientName).includes(query) || normalize(row.tin).includes(query);
+                    const matchesStatus = statusFilter === "all" || normalize(row.status) === statusFilter;
+                    return matchesQuery && matchesStatus;
+                });
+
+                renderClientTableRows(filteredRows);
+                updateClientFilterSummary(statusFilter, filteredRows.length);
+            };
+
+            const renderRecentEntries = () => {
+                if (!recentEntriesBody) {
+                    return;
+                }
+
+                const entriesToShow = [...RECENT_ENTRIES_DATA]
+                    .sort((a, b) => normalize(b.entryDate).localeCompare(normalize(a.entryDate)))
+                    .slice(0, 5);
+
+                recentEntriesBody.innerHTML = entriesToShow
+                    .map((entry) => {
+                        return `
+                            <tr>
+                                <td>${escapeHtml(entry.clientName)}</td>
+                                <td>${escapeHtml(formatEntryDate(entry.entryDate))}</td>
+                                <td>${escapeHtml(formatCurrency(entry.totalAmount))}</td>
+                            </tr>
+                        `;
+                    })
+                    .join("");
+
+                if (recentEntriesCountTag) {
+                    recentEntriesCountTag.textContent = `${entriesToShow.length} ${entriesToShow.length === 1 ? "Entry" : "Entries"}`;
+                }
+
+                const hasEntries = entriesToShow.length > 0;
+                if (recentEntriesWrap) {
+                    recentEntriesWrap.hidden = !hasEntries;
+                }
+                if (recentEntriesEmpty) {
+                    recentEntriesEmpty.hidden = hasEntries;
+                }
+            };
+
+            const updateSummaryCards = () => {
+                const totalClients = DASHBOARD_METRICS.totalClients || 0;
+                const totalEntriesThisMonth = DASHBOARD_METRICS.totalEntriesThisMonth || 0;
+                const pendingCompliance = DASHBOARD_METRICS.pendingCompliance || 0;
+                const highRiskClients = DASHBOARD_METRICS.highRiskClients || 0;
+
+                if (totalClientsValue) {
+                    totalClientsValue.textContent = String(totalClients);
+                }
+                if (totalEntriesMonthValue) {
+                    totalEntriesMonthValue.textContent = String(totalEntriesThisMonth);
+                }
+                if (pendingComplianceValue) {
+                    pendingComplianceValue.textContent = String(pendingCompliance);
+                }
+                if (highRiskClientsValue) {
+                    highRiskClientsValue.textContent = String(highRiskClients);
+                }
+            };
+
+            const updateRiskSummary = () => {
+                const lowRisk = DASHBOARD_METRICS.risk.low || 0;
+                const mediumRisk = DASHBOARD_METRICS.risk.medium || 0;
+                const highRisk = DASHBOARD_METRICS.risk.high || 0;
+
+                if (riskLowCount) {
+                    riskLowCount.textContent = String(lowRisk);
+                }
+                if (riskMediumCount) {
+                    riskMediumCount.textContent = String(mediumRisk);
+                }
+                if (riskHighCount) {
+                    riskHighCount.textContent = String(highRisk);
+                }
+            };
+
+            const updateComplianceSummary = () => {
+                const filedPct = DASHBOARD_METRICS.compliancePct.filed || 0;
+                const pendingPct = DASHBOARD_METRICS.compliancePct.pending || 0;
+                const latePct = DASHBOARD_METRICS.compliancePct.late || 0;
+
+                if (complianceFiledPct) {
+                    complianceFiledPct.textContent = `${filedPct}%`;
+                }
+                if (compliancePendingPct) {
+                    compliancePendingPct.textContent = `${pendingPct}%`;
+                }
+                if (complianceLatePct) {
+                    complianceLatePct.textContent = `${latePct}%`;
+                }
+
+                if (complianceFiledBar) {
+                    complianceFiledBar.style.width = `${filedPct}%`;
+                }
+                if (compliancePendingBar) {
+                    compliancePendingBar.style.width = `${pendingPct}%`;
+                }
+                if (complianceLateBar) {
+                    complianceLateBar.style.width = `${latePct}%`;
+                }
+            };
+
+            const navigateFromCard = (cardElement) => {
+                if (!cardElement) {
+                    return;
+                }
+
+                const targetUrl = cardElement.getAttribute("data-nav-target");
+                if (!targetUrl) {
+                    return;
+                }
+
+                window.location.assign(targetUrl);
+            };
+
+            const showToast = (message, variantClass = "") => {
+                if (!shared || typeof shared.showToast !== "function") {
+                    return;
+                }
+
+                shared.showToast(uiToastContainer, message, variantClass, {
+                    delay: 2800,
+                });
+            };
+
+            const parseJsonSafe = (response) => {
+                if (!shared || typeof shared.parseJsonSafe !== "function") {
+                    return Promise.resolve(null);
+                }
+
+                return shared.parseJsonSafe(response);
+            };
+
+            const mapActivityRowFromApi = (row) => {
+                return {
+                    clientId: Number.parseInt(row.client_id || "", 10) || null,
+                    clientName: row.client_name || "",
+                    tin: row.tin_number || "",
+                    tradeName: row.trade_name || "",
+                    lastEntryDate: row.last_entry_date || "",
+                    currentPeriod: row.current_period || CURRENT_PERIOD_LABEL || "",
+                    status: row.status || "needs-attention",
+                    risk: row.risk || "medium",
+                    compliance: row.compliance || "pending",
+                };
+            };
+
+            const mapRecentEntryFromApi = (entry) => {
+                const parsedAmount = Number.parseFloat(entry.total_amount || "0");
+
+                return {
+                    clientId: Number.parseInt(entry.client_id || "", 10) || null,
+                    clientName: entry.client_name || "",
+                    tin: entry.tin_number || "",
+                    tradeName: entry.trade_name || "",
+                    entryDate: entry.entry_date || "",
+                    period: entry.period || CURRENT_PERIOD_LABEL || "",
+                    totalAmount: Number.isFinite(parsedAmount) ? parsedAmount : 0,
+                };
+            };
+
+            const setDashboardFallbackState = () => {
+                CURRENT_PERIOD_LABEL = "";
+                CLIENT_ACTIVITY_DATA = [];
+                RECENT_ENTRIES_DATA = [];
+                DASHBOARD_METRICS = {
+                    totalClients: 0,
+                    totalEntriesThisMonth: 0,
+                    pendingCompliance: 0,
+                    highRiskClients: 0,
+                    risk: {
+                        low: 0,
+                        medium: 0,
+                        high: 0,
+                    },
+                    compliancePct: {
+                        filed: 0,
+                        pending: 0,
+                        late: 0,
+                    },
+                };
+            };
+
+            const loadDashboardSummaryFromApi = async () => {
+                try {
+                    const response = await fetch(DASHBOARD_SUMMARY_API_URL, {
+                        method: "GET",
+                        headers: {
+                            "Accept": "application/json"
+                        },
+                        credentials: "same-origin"
+                    });
+
+                    if (response.status === 401) {
+                        const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                        window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                        return;
+                    }
+
+                    const result = await parseJsonSafe(response);
+                    if (!response.ok || !result || !result.ok) {
+                        const message = result && result.message ? result.message : "Unable to load dashboard data.";
+                        setDashboardFallbackState();
+                        updateSummaryCards();
+                        updateRiskSummary();
+                        updateComplianceSummary();
+                        renderRecentEntries();
+                        applyClientFilters();
+                        showToast(message);
+                        return;
+                    }
+
+                    CURRENT_PERIOD_LABEL = result.current_period_label || "";
+
+                    const metrics = result.metrics || {};
+                    const riskSummary = result.risk_summary || {};
+                    const complianceSummary = result.compliance_summary || {};
+
+                    DASHBOARD_METRICS = {
+                        totalClients: Number.parseInt(metrics.total_clients || 0, 10) || 0,
+                        totalEntriesThisMonth: Number.parseInt(metrics.total_entries_this_month || 0, 10) || 0,
+                        pendingCompliance: Number.parseInt(metrics.pending_compliance || 0, 10) || 0,
+                        highRiskClients: Number.parseInt(metrics.high_risk_clients || 0, 10) || 0,
+                        risk: {
+                            low: Number.parseInt(riskSummary.low || 0, 10) || 0,
+                            medium: Number.parseInt(riskSummary.medium || 0, 10) || 0,
+                            high: Number.parseInt(riskSummary.high || 0, 10) || 0,
+                        },
+                        compliancePct: {
+                            filed: Number.parseInt((complianceSummary.filed || {}).percentage || 0, 10) || 0,
+                            pending: Number.parseInt((complianceSummary.pending || {}).percentage || 0, 10) || 0,
+                            late: Number.parseInt((complianceSummary.late || {}).percentage || 0, 10) || 0,
+                        },
+                    };
+
+                    CLIENT_ACTIVITY_DATA = Array.isArray(result.recent_client_activity)
+                        ? result.recent_client_activity.map(mapActivityRowFromApi)
+                        : [];
+
+                    RECENT_ENTRIES_DATA = Array.isArray(result.recent_entries)
+                        ? result.recent_entries.map(mapRecentEntryFromApi)
+                        : [];
+
+                    updateSummaryCards();
+                    updateRiskSummary();
+                    updateComplianceSummary();
+                    renderRecentEntries();
+                    applyClientFilters();
+                } catch (requestError) {
+                    setDashboardFallbackState();
+                    updateSummaryCards();
+                    updateRiskSummary();
+                    updateComplianceSummary();
+                    renderRecentEntries();
+                    applyClientFilters();
+                    showToast("Unable to load dashboard data.");
+                }
+            };
+
+            const showLoginWelcomeIfPresent = () => {
+                let welcomeRaw = "";
+                try {
+                    welcomeRaw = window.sessionStorage.getItem(LOGIN_WELCOME_KEY) || "";
+                    window.sessionStorage.removeItem(LOGIN_WELCOME_KEY);
+                } catch (storageError) {
+                    return;
+                }
+
+                if (!welcomeRaw) {
+                    return;
+                }
+
+                let payload = null;
+                try {
+                    payload = JSON.parse(welcomeRaw);
+                } catch (parseError) {
+                    payload = null;
+                }
+
+                const message = payload && typeof payload.message === "string"
+                    ? payload.message.trim()
+                    : "";
+
+                if (!message) {
+                    return;
+                }
+
+                showToast(message, "safebooks-toast-welcome");
+            };
+
+            const getCookieValue = (cookieName) => {
+                if (!shared || typeof shared.getCookieValue !== "function") {
+                    return "";
+                }
+
+                return shared.getCookieValue(cookieName);
+            };
+
+            const logoutCurrentUser = async () => {
+                if (!shared || typeof shared.logoutCurrentUser !== "function") {
+                    return "{% url 'login' %}";
+                }
+
+                return shared.logoutCurrentUser({
+                    logoutUrl: "{% url 'api_logout' %}",
+                    loginUrl: "{% url 'login' %}",
+                    authUserKey: AUTH_USER_KEY,
+                    loginWelcomeKey: LOGIN_WELCOME_KEY,
+                });
+            };
+
+            const hydrateHeaderUser = () => {
+                if (!shared || typeof shared.hydrateHeaderUser !== "function") {
+                    return;
+                }
+
+                shared.hydrateHeaderUser({
+                    avatarElement: dashboardUserAvatar,
+                    nameElement: dashboardUserName,
+                    authUserKey: AUTH_USER_KEY,
+                    defaultName: "Bookkeeper User",
+                    defaultInitials: "SB",
+                });
+            };
+
+            if (window.bootstrap) {
+                document.querySelectorAll("[data-bs-toggle='tooltip']").forEach((element) => {
+                    new window.bootstrap.Tooltip(element);
+                });
+            }
+
+            const dashboardStatCards = Array.from(document.querySelectorAll(".dashboard-stat-card[data-nav-target]"));
+            dashboardStatCards.forEach((cardElement) => {
+                cardElement.addEventListener("click", () => {
+                    navigateFromCard(cardElement);
+                });
+
+                cardElement.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigateFromCard(cardElement);
+                    }
+                });
+            });
+
+            if (clientTableBody) {
+                clientTableBody.addEventListener("click", (event) => {
+                    const row = event.target.closest(".dashboard-client-row");
+                    if (!row) {
+                        return;
+                    }
+
+                    const parsedClientId = Number.parseInt(row.dataset.clientId || "", 10);
+
+                    openClientFinancialRecords({
+                        clientId: Number.isFinite(parsedClientId) ? parsedClientId : null,
+                        clientName: row.dataset.clientName || "",
+                        tin: row.dataset.tin || "",
+                        tradeName: row.dataset.trade || ""
+                    });
+                });
+
+                clientTableBody.addEventListener("keydown", (event) => {
+                    const row = event.target.closest(".dashboard-client-row");
+                    if (!row) {
+                        return;
+                    }
+
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        const parsedClientId = Number.parseInt(row.dataset.clientId || "", 10);
+                        openClientFinancialRecords({
+                            clientId: Number.isFinite(parsedClientId) ? parsedClientId : null,
+                            clientName: row.dataset.clientName || "",
+                            tin: row.dataset.tin || "",
+                            tradeName: row.dataset.trade || ""
+                        });
+                    }
+                });
+            }
+
+            if (clientTableSearch) {
+                clientTableSearch.addEventListener("input", applyClientFilters);
+            }
+
+            clientFilterChips.forEach((chip) => {
+                chip.addEventListener("click", () => {
+                    setActiveClientFilter(chip.dataset.filter || "all");
+                    applyClientFilters();
+                });
+            });
+
+            if (clientFiltersReset) {
+                clientFiltersReset.addEventListener("click", () => {
+                    if (clientTableSearch) {
+                        clientTableSearch.value = "";
+                    }
+                    setActiveClientFilter("all");
+                    applyClientFilters();
+                });
+            }
+
+            if (dashboardProfileAction) {
+                dashboardProfileAction.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    window.location.assign("{% url 'profile' %}");
+                });
+            }
+
+            if (dashboardLogoutAction) {
+                dashboardLogoutAction.addEventListener("click", async (event) => {
+                    event.preventDefault();
+
+                    const redirectUrl = await logoutCurrentUser();
+
+                    showToast("You have been logged out.");
+
+                    window.setTimeout(() => {
+                        document.body.classList.remove("skeleton-loaded");
+                        document.body.classList.add("skeleton-active");
+                        window.location.assign(redirectUrl);
+                    }, 300);
+                });
+            }
+
+            plannedFeatureButtons.forEach((buttonElement) => {
+                buttonElement.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
+                    showToast(`${featureLabel} is planned and will be available soon.`);
+                });
+            });
+
+            hydrateHeaderUser();
+            setDashboardFallbackState();
+            updateSummaryCards();
+            updateRiskSummary();
+            updateComplianceSummary();
+            renderRecentEntries();
+            applyClientFilters();
+            showLoginWelcomeIfPresent();
+            loadDashboardSummaryFromApi();
+
+            window.addEventListener("resize", () => {
+                sidebarState.closeMobileSidebar();
+                sidebarState.restoreDesktopState();
+            });
+        })();
+    </script>
+</body>
+</html>

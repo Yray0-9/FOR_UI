@@ -1,0 +1,1148 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeBooks | Clients</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
+</head>
+<body class="dashboard-page clients-page skeleton-active">
+    <div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+        <div class="skeleton-shell">
+            <div class="dash-sk-layout">
+                <aside class="dash-sk-sidebar">
+                    <div class="skeleton-shimmer dash-sk-logo"></div>
+                    <div class="dash-sk-nav">
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    </div>
+                </aside>
+                <section class="dash-sk-main">
+                    <div class="dash-sk-topbar">
+                        <div class="skeleton-shimmer dash-sk-title"></div>
+                        <div class="skeleton-shimmer dash-sk-search"></div>
+                        <div class="skeleton-shimmer dash-sk-profile"></div>
+                    </div>
+                    <div class="dash-sk-content">
+                        <div class="dash-sk-left">
+                            <div class="dash-sk-card">
+                                <div class="skeleton-shimmer dash-sk-card-head"></div>
+                                <div class="dash-sk-table-row">
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                </div>
+                                <div class="dash-sk-table-row">
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                </div>
+                                <div class="dash-sk-table-row">
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                    <span class="skeleton-shimmer"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="dashboard-sidebar" id="dashboardSidebar">
+            <div class="dashboard-sidebar-top">
+                <a href="{% url 'dashboard' %}" class="dashboard-logo" aria-label="SafeBooks">
+                    <span class="dashboard-logo-glyph">
+                        <img src="{% static 'images/Logo_safebooks.png' %}" alt="" class="dashboard-logo-image" aria-hidden="true">
+                    </span>
+                    <span class="dashboard-logo-text">SafeBooks</span>
+                </a>
+                <button class="btn dashboard-menu-toggle dashboard-collapse-btn d-none d-lg-inline-flex" type="button" id="sidebarCollapseToggle" aria-label="Collapse sidebar" aria-expanded="true">
+                    <i class="bi bi-layout-sidebar-inset" id="sidebarCollapseIcon"></i>
+                </button>
+            </div>
+            <p class="dashboard-sidebar-label">Main Navigation</p>
+
+            <nav class="dashboard-nav" aria-label="Sidebar navigation">
+                <a href="{% url 'dashboard' %}" class="dashboard-nav-item"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+                <a href="{% url 'clients' %}" class="dashboard-nav-item active" aria-current="page"><i class="bi bi-people"></i><span>Clients</span></a>
+                <a href="{% url 'financial_records' %}" class="dashboard-nav-item"><i class="bi bi-journal-text"></i><span>Financial Records</span></a>
+                <a href="{% url 'analytics' %}" class="dashboard-nav-item"><i class="bi bi-bar-chart-line"></i><span>Analytics</span></a>
+                <a href="{% url 'reports' %}" class="dashboard-nav-item"><i class="bi bi-file-earmark-text"></i><span>Reports</span></a>
+                <a href="{% url 'settings' %}" class="dashboard-nav-item"><i class="bi bi-gear"></i><span>Settings</span></a>
+            </nav>
+
+            <a href="{% url 'home' %}" class="dashboard-landing-link">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Back to Landing</span>
+            </a>
+        </aside>
+
+        <main class="dashboard-main">
+            <header class="dashboard-topbar animate-fade-in">
+                <div class="dashboard-topbar-left">
+                    <button class="btn dashboard-menu-toggle d-lg-none" type="button" id="sidebarToggle" aria-label="Toggle sidebar menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div>
+                        <h1 class="dashboard-page-title">Clients</h1>
+                        <p class="dashboard-page-subtitle">Manage your clients and access their financial records</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-topbar-right">
+                    <div class="dropdown dashboard-user-dropdown">
+                        <button type="button" class="btn dashboard-profile-btn" id="dashboardProfileMenuButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open user menu">
+                            <span class="dashboard-avatar" id="dashboardUserAvatar">{{ current_user_initials|default:"SB" }}</span>
+                            <span class="dashboard-user-meta">
+                                <strong id="dashboardUserName">{{ current_user_name|default:"Bookkeeper User" }}</strong>
+                                <small>Profile</small>
+                            </span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="dashboardProfileMenuButton">
+                            <li>
+                                <button type="button" class="dropdown-item" id="dashboardProfileAction">
+                                    <i class="bi bi-person"></i>
+                                    <span>Profile</span>
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button type="button" class="dropdown-item text-danger" id="dashboardLogoutAction">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    <span>Log out</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <section class="dashboard-content">
+                <article class="dashboard-card dashboard-fade-up clients-action-card" style="--delay: 0.05s;">
+                    <div class="clients-action-bar">
+                        <label class="dashboard-table-search clients-page-search" aria-label="Search clients by name or TIN">
+                            <i class="bi bi-search"></i>
+                            <input type="search" id="clientsSearchInput" placeholder="Search by client name or TIN" autocomplete="off">
+                        </label>
+                        <button type="button" class="btn dashboard-action-btn primary clients-add-btn" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Add Client</span>
+                        </button>
+                    </div>
+                    <p class="dashboard-guidance-text clients-risk-preview-note" id="clientsRiskPreviewNote" hidden>High-risk client filter is active.</p>
+                </article>
+
+                <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.12s;">
+                    <div class="dashboard-card-head">
+                        <h2>Registered Clients</h2>
+                        <span class="dashboard-tag" id="clientsCountTag">5 Clients</span>
+                    </div>
+                    <p class="dashboard-section-hint">Click a client to view details or manage records</p>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle dashboard-table clients-table mb-0" id="clientsTable">
+                            <thead>
+                                <tr>
+                                    <th>Client Name</th>
+                                    <th>TIN</th>
+                                    <th>Trade Name</th>
+                                    <th>Location</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="clients-empty-state" id="clientsEmptyState" hidden>
+                        <p>No clients added yet</p>
+                        <button type="button" class="btn dashboard-action-btn primary" id="openAddClientFromEmpty" data-bs-toggle="modal" data-bs-target="#addClientModal">Add Your First Client</button>
+                    </div>
+                </article>
+            </section>
+        </main>
+
+        <button type="button" class="dashboard-backdrop" id="sidebarBackdrop" aria-label="Close sidebar"></button>
+    </div>
+
+    <div class="modal fade client-manage-modal" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <form class="modal-content" id="addClientForm" novalidate>
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="addClientModalTitle">Add Client</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientName">Client Name</label>
+                            <input class="form-control client-form-input" id="addClientName" name="client_name" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientTin">TIN</label>
+                            <input class="form-control client-form-input" id="addClientTin" name="tin" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientTradeName">Trade Name</label>
+                            <input class="form-control client-form-input" id="addClientTradeName" name="trade_name" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientLocation">Location</label>
+                            <input class="form-control client-form-input" id="addClientLocation" name="location" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientPermitNumber">Permit Number</label>
+                            <input class="form-control client-form-input" id="addClientPermitNumber" name="permit_number" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientBirthday">Birthday (optional)</label>
+                            <input class="form-control client-form-input" id="addClientBirthday" name="birthday" type="date">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label client-form-label" for="addClientEmail">Email Address (optional)</label>
+                            <input class="form-control client-form-input" id="addClientEmail" name="email" type="email" placeholder="example@company.com">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn dashboard-action-btn primary">Save Client Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade client-manage-modal" id="viewClientModal" tabindex="-1" aria-labelledby="viewClientModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="viewClientModalTitle">Client Details</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="client-details-grid">
+                        <div class="client-details-row"><span class="client-details-key">Client Name</span><strong id="viewClientName">-</strong></div>
+                        <div class="client-details-row"><span class="client-details-key">TIN</span><strong id="viewClientTin">-</strong></div>
+                        <div class="client-details-row"><span class="client-details-key">Trade Name</span><strong id="viewClientTradeName">-</strong></div>
+                        <div class="client-details-row"><span class="client-details-key">Location</span><strong id="viewClientLocation">-</strong></div>
+                        <div class="client-details-row"><span class="client-details-key">Permit Number</span><strong id="viewClientPermitNumber">-</strong></div>
+                        <div class="client-details-row"><span class="client-details-key">Birthday</span><strong id="viewClientBirthday">-</strong></div>
+                        <div class="client-details-row"><span class="client-details-key">Email</span><strong id="viewClientEmail">-</strong></div>
+                    </div>
+                    <p class="client-details-note">Manage this client's financial transactions.</p>
+                </div>
+                <div class="modal-footer client-details-actions">
+                    <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn dashboard-action-btn outline" id="viewClientAnalyticsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Analytics for this client">View Analytics</button>
+                    <button type="button" class="btn dashboard-action-btn outline" id="viewFinancialRecordsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">View Financial Records</button>
+                    <button type="button" class="btn dashboard-action-btn primary" id="viewAddFinancialRecordBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">Add Financial Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade client-manage-modal" id="editClientModal" tabindex="-1" aria-labelledby="editClientModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <form class="modal-content" id="editClientForm" novalidate>
+                <input type="hidden" id="editClientRowId" name="row_id">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="editClientModalTitle">Edit Client</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientName">Client Name</label>
+                            <input class="form-control client-form-input" id="editClientName" name="client_name" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientTin">TIN</label>
+                            <input class="form-control client-form-input" id="editClientTin" name="tin" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientTradeName">Trade Name</label>
+                            <input class="form-control client-form-input" id="editClientTradeName" name="trade_name" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientLocation">Location</label>
+                            <input class="form-control client-form-input" id="editClientLocation" name="location" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientPermitNumber">Permit Number</label>
+                            <input class="form-control client-form-input" id="editClientPermitNumber" name="permit_number" type="text" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientBirthday">Birthday (optional)</label>
+                            <input class="form-control client-form-input" id="editClientBirthday" name="birthday" type="date">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label client-form-label" for="editClientEmail">Email Address (optional)</label>
+                            <input class="form-control client-form-input" id="editClientEmail" name="email" type="email" placeholder="example@company.com">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn dashboard-action-btn primary">Update Client Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content client-delete-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="deleteClientModalTitle">Delete Client</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="clients-delete-text">Are you sure you want to delete this client?</p>
+                    <p class="clients-delete-name" id="deleteClientName">-</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn dashboard-action-btn primary" id="confirmDeleteClientBtn">Delete Client</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3 safebooks-toast-container" id="uiToastContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="{% static 'js/skeleton.js' %}"></script>
+    <script src="{% static 'js/app_shared.js' %}"></script>
+    <script>
+        (() => {
+            const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
+            const DESKTOP_QUERY = "(min-width: 992px)";
+            const AUTH_USER_KEY = "safebooks.authUser";
+            const LOGIN_WELCOME_KEY = "safebooks.loginWelcome";
+
+            const body = document.body;
+            const sidebarToggle = document.getElementById("sidebarToggle");
+            const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
+            const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
+            const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+            const dashboardUserAvatar = document.getElementById("dashboardUserAvatar");
+            const dashboardUserName = document.getElementById("dashboardUserName");
+            const dashboardProfileAction = document.getElementById("dashboardProfileAction");
+            const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
+            const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
+            const shared = window.SafeBooksShared || null;
+
+            if (!body) {
+                return;
+            }
+
+            window.setTimeout(() => {
+                if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
+                    body.classList.remove("skeleton-active");
+                    body.classList.add("skeleton-loaded");
+                }
+            }, 1800);
+
+            const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
+                ? shared.initializeSidebarBehavior({
+                    bodyElement: body,
+                    sidebarToggle,
+                    sidebarCollapseToggle,
+                    sidebarCollapseIcon,
+                    sidebarBackdrop,
+                    storageKey: SIDEBAR_STATE_KEY,
+                    desktopQuery: DESKTOP_QUERY,
+                })
+                : {
+                    closeMobileSidebar: () => {},
+                    restoreDesktopState: () => {},
+                };
+
+            const clientsTableBody = document.getElementById("clientsTableBody");
+            const clientsSearchInput = document.getElementById("clientsSearchInput");
+            const clientsCountTag = document.getElementById("clientsCountTag");
+            const clientsEmptyState = document.getElementById("clientsEmptyState");
+            const clientsRiskPreviewNote = document.getElementById("clientsRiskPreviewNote");
+            const uiToastContainer = document.getElementById("uiToastContainer");
+
+            const addClientForm = document.getElementById("addClientForm");
+            const editClientForm = document.getElementById("editClientForm");
+            const deleteClientName = document.getElementById("deleteClientName");
+            const confirmDeleteClientBtn = document.getElementById("confirmDeleteClientBtn");
+
+            const viewClientName = document.getElementById("viewClientName");
+            const viewClientTin = document.getElementById("viewClientTin");
+            const viewClientTradeName = document.getElementById("viewClientTradeName");
+            const viewClientLocation = document.getElementById("viewClientLocation");
+            const viewClientPermitNumber = document.getElementById("viewClientPermitNumber");
+            const viewClientBirthday = document.getElementById("viewClientBirthday");
+            const viewClientEmail = document.getElementById("viewClientEmail");
+
+            const addClientModalElement = document.getElementById("addClientModal");
+            const viewClientModalElement = document.getElementById("viewClientModal");
+            const editClientModalElement = document.getElementById("editClientModal");
+            const deleteClientModalElement = document.getElementById("deleteClientModal");
+
+            const addClientModal = addClientModalElement && window.bootstrap ? new window.bootstrap.Modal(addClientModalElement) : null;
+            const viewClientModal = viewClientModalElement && window.bootstrap ? new window.bootstrap.Modal(viewClientModalElement) : null;
+            const editClientModal = editClientModalElement && window.bootstrap ? new window.bootstrap.Modal(editClientModalElement) : null;
+            const deleteClientModal = deleteClientModalElement && window.bootstrap ? new window.bootstrap.Modal(deleteClientModalElement) : null;
+
+            const CLIENTS_API_URL = "{% url 'api_clients' %}";
+            const FINANCIAL_RECORDS_BASE_URL = "{% url 'financial_records_client' %}";
+            const ANALYTICS_PAGE_URL = "{% url 'analytics' %}";
+
+            let editingRow = null;
+            let pendingDeleteRow = null;
+            let activeViewedClient = null;
+            let filterTransitionTimer = null;
+            let activeRiskFilter = "all";
+            let clientsSearchDebounceTimer = null;
+            let clientsListRequestToken = 0;
+            let clientsListAbortController = null;
+            let isClientsLoading = false;
+
+            const normalize = (value) => String(value || "").trim().toLowerCase();
+
+            const debounce = (callback, waitMs = 180) => {
+                return (...args) => {
+                    window.clearTimeout(clientsSearchDebounceTimer);
+                    clientsSearchDebounceTimer = window.setTimeout(() => {
+                        callback(...args);
+                    }, waitMs);
+                };
+            };
+
+            const escapeHtml = (value) => {
+                return String(value || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            };
+
+            const showToast = (message) => {
+                if (!shared || typeof shared.showToast !== "function") {
+                    return;
+                }
+
+                shared.showToast(uiToastContainer, message, "", {
+                    delay: 2400,
+                });
+            };
+
+            const getCookieValue = (cookieName) => {
+                if (!shared || typeof shared.getCookieValue !== "function") {
+                    return "";
+                }
+
+                return shared.getCookieValue(cookieName);
+            };
+
+            const buildClientDetailApiUrl = (clientId) => {
+                return `${CLIENTS_API_URL}${clientId}/`;
+            };
+
+            const parseJsonSafe = (response) => {
+                if (!shared || typeof shared.parseJsonSafe !== "function") {
+                    return Promise.resolve(null);
+                }
+
+                return shared.parseJsonSafe(response);
+            };
+
+            const logoutCurrentUser = async () => {
+                if (!shared || typeof shared.logoutCurrentUser !== "function") {
+                    return "{% url 'login' %}";
+                }
+
+                return shared.logoutCurrentUser({
+                    logoutUrl: "{% url 'api_logout' %}",
+                    loginUrl: "{% url 'login' %}",
+                    authUserKey: AUTH_USER_KEY,
+                    loginWelcomeKey: LOGIN_WELCOME_KEY,
+                });
+            };
+
+            const hydrateHeaderUser = () => {
+                if (!shared || typeof shared.hydrateHeaderUser !== "function") {
+                    return;
+                }
+
+                shared.hydrateHeaderUser({
+                    avatarElement: dashboardUserAvatar,
+                    nameElement: dashboardUserName,
+                    authUserKey: AUTH_USER_KEY,
+                    defaultName: "Bookkeeper User",
+                    defaultInitials: "SB",
+                });
+            };
+
+            const mapClientFromApi = (client) => {
+                return {
+                    clientId: client.id,
+                    clientName: client.client_name || "",
+                    tin: client.tin_number || "",
+                    tradeName: client.trade_name || "",
+                    location: client.location || "",
+                    permitNumber: client.permit_number || "",
+                    birthday: client.birthday || "",
+                    email: client.email || "",
+                    risk: client.risk_level || "medium"
+                };
+            };
+
+            const getClientRows = () => {
+                if (!clientsTableBody) {
+                    return [];
+                }
+                return Array.from(clientsTableBody.querySelectorAll(".clients-row"));
+            };
+
+            const updateClientsCount = (count) => {
+                if (!clientsCountTag) {
+                    return;
+                }
+                clientsCountTag.textContent = `${count} ${count === 1 ? "Client" : "Clients"}`;
+            };
+
+            const setClientsLoadingState = (isLoading, message = "Loading clients...") => {
+                isClientsLoading = Boolean(isLoading);
+
+                if (clientsTableBody) {
+                    clientsTableBody.setAttribute("aria-busy", String(isClientsLoading));
+                    if (isClientsLoading) {
+                        clientsTableBody.innerHTML = `<tr class="clients-loading-row"><td colspan="5" class="text-center py-4">${escapeHtml(message)}</td></tr>`;
+                    }
+                }
+
+                if (clientsEmptyState && isClientsLoading) {
+                    clientsEmptyState.hidden = true;
+                }
+            };
+
+            const getClientDataFromRow = (row) => {
+                return {
+                    clientId: Number.parseInt(row.dataset.clientId || "", 10) || null,
+                    clientName: row.dataset.clientName || "",
+                    tin: row.dataset.tin || "",
+                    tradeName: row.dataset.tradeName || "",
+                    location: row.dataset.location || "",
+                    permitNumber: row.dataset.permitNumber || "",
+                    birthday: row.dataset.birthday || "",
+                    email: row.dataset.email || "",
+                    risk: row.dataset.risk || "medium"
+                };
+            };
+
+            const setClientRowData = (row, data) => {
+                row.dataset.clientId = String(data.clientId || "");
+                row.dataset.rowId = String(data.clientId || "");
+                row.dataset.clientName = data.clientName;
+                row.dataset.tin = data.tin;
+                row.dataset.tradeName = data.tradeName;
+                row.dataset.location = data.location;
+                row.dataset.permitNumber = data.permitNumber;
+                row.dataset.birthday = data.birthday;
+                row.dataset.email = data.email;
+                row.dataset.risk = data.risk || "medium";
+                row.setAttribute("aria-label", `View details for ${data.clientName}`);
+
+                const cells = row.querySelectorAll("td");
+                if (cells[0]) {
+                    cells[0].textContent = data.clientName;
+                }
+                if (cells[1]) {
+                    cells[1].textContent = data.tin;
+                }
+                if (cells[2]) {
+                    cells[2].textContent = data.tradeName;
+                }
+                if (cells[3]) {
+                    cells[3].textContent = data.location;
+                }
+            };
+
+            const renderClientRowHtml = (data) => {
+                return `
+                    <td>${escapeHtml(data.clientName)}</td>
+                    <td>${escapeHtml(data.tin)}</td>
+                    <td>${escapeHtml(data.tradeName)}</td>
+                    <td>${escapeHtml(data.location)}</td>
+                    <td class="clients-actions-cell">
+                        <div class="clients-actions">
+                            <button type="button" class="btn client-action-btn view" data-client-action="view"><i class="bi bi-eye"></i><span>View</span></button>
+                            <button type="button" class="btn client-action-btn analytics" data-client-action="analytics" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Analytics for this client"><i class="bi bi-bar-chart-line"></i><span>Analytics</span></button>
+                            <button type="button" class="btn client-action-btn edit" data-client-action="edit"><i class="bi bi-pencil-square"></i><span>Edit Client</span></button>
+                            <button type="button" class="btn client-action-btn delete" data-client-action="delete"><i class="bi bi-trash3"></i><span>Delete Client</span></button>
+                            <button type="button" class="btn client-action-btn add-record" data-client-action="add-record" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client"><i class="bi bi-journal-plus"></i><span>View Financial Records</span></button>
+                        </div>
+                    </td>
+                `;
+            };
+
+            const createClientRowElement = (data) => {
+                const row = document.createElement("tr");
+                row.className = "clients-row";
+                row.setAttribute("tabindex", "0");
+                row.setAttribute("role", "button");
+                setClientRowData(row, data);
+                row.innerHTML = renderClientRowHtml(data);
+                return row;
+            };
+
+            const syncClientRowsFromApi = (clients) => {
+                if (!clientsTableBody) {
+                    return;
+                }
+
+                clientsTableBody.innerHTML = "";
+                clients.forEach((client) => {
+                    const row = createClientRowElement(mapClientFromApi(client));
+                    clientsTableBody.appendChild(row);
+                    initializeTooltips(row);
+                });
+
+                applyClientsSearch();
+            };
+
+            const toDisplayValue = (value) => {
+                const trimmedValue = String(value || "").trim();
+                return trimmedValue ? trimmedValue : "Not provided";
+            };
+
+            const buildFinancialRecordsUrl = (clientData) => {
+                const params = new URLSearchParams();
+                params.set("client_id", String(clientData.clientId || ""));
+                params.set("client", clientData.clientName || "");
+                params.set("tin", clientData.tin || "");
+                params.set("trade", clientData.tradeName || "");
+                return `${FINANCIAL_RECORDS_BASE_URL}?${params.toString()}`;
+            };
+
+            const buildClientAnalyticsUrl = (clientData) => {
+                const params = new URLSearchParams();
+                params.set("client_id", String(clientData.clientId || ""));
+                params.set("client", clientData.clientName || "");
+                params.set("tin", clientData.tin || "");
+                params.set("trade", clientData.tradeName || "");
+                return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
+            };
+
+            const goToFinancialRecords = (clientData) => {
+                if (!clientData) {
+                    window.location.assign(FINANCIAL_RECORDS_BASE_URL);
+                    return;
+                }
+                window.location.assign(buildFinancialRecordsUrl(clientData));
+            };
+
+            const goToClientAnalytics = (clientData) => {
+                if (!clientData || !Number.isFinite(clientData.clientId) || clientData.clientId <= 0) {
+                    showToast("Select a valid client first.");
+                    return;
+                }
+
+                window.location.assign(buildClientAnalyticsUrl(clientData));
+            };
+
+            const setViewModalData = (data) => {
+                if (viewClientName) {
+                    viewClientName.textContent = toDisplayValue(data.clientName);
+                }
+                if (viewClientTin) {
+                    viewClientTin.textContent = toDisplayValue(data.tin);
+                }
+                if (viewClientTradeName) {
+                    viewClientTradeName.textContent = toDisplayValue(data.tradeName);
+                }
+                if (viewClientLocation) {
+                    viewClientLocation.textContent = toDisplayValue(data.location);
+                }
+                if (viewClientPermitNumber) {
+                    viewClientPermitNumber.textContent = toDisplayValue(data.permitNumber);
+                }
+                if (viewClientBirthday) {
+                    viewClientBirthday.textContent = toDisplayValue(data.birthday);
+                }
+                if (viewClientEmail) {
+                    viewClientEmail.textContent = toDisplayValue(data.email);
+                }
+            };
+
+            const setEditFormData = (row, data) => {
+                const editRowId = document.getElementById("editClientRowId");
+                const editClientName = document.getElementById("editClientName");
+                const editClientTin = document.getElementById("editClientTin");
+                const editClientTradeName = document.getElementById("editClientTradeName");
+                const editClientLocation = document.getElementById("editClientLocation");
+                const editClientPermitNumber = document.getElementById("editClientPermitNumber");
+                const editClientBirthday = document.getElementById("editClientBirthday");
+                const editClientEmail = document.getElementById("editClientEmail");
+
+                if (editRowId) {
+                    editRowId.value = row.dataset.clientId || "";
+                }
+                if (editClientName) {
+                    editClientName.value = data.clientName;
+                }
+                if (editClientTin) {
+                    editClientTin.value = data.tin;
+                }
+                if (editClientTradeName) {
+                    editClientTradeName.value = data.tradeName;
+                }
+                if (editClientLocation) {
+                    editClientLocation.value = data.location;
+                }
+                if (editClientPermitNumber) {
+                    editClientPermitNumber.value = data.permitNumber;
+                }
+                if (editClientBirthday) {
+                    editClientBirthday.value = data.birthday;
+                }
+                if (editClientEmail) {
+                    editClientEmail.value = data.email;
+                }
+            };
+
+            const openViewModal = (row) => {
+                if (!row || !viewClientModal) {
+                    return;
+                }
+                const clientData = getClientDataFromRow(row);
+                activeViewedClient = clientData;
+                setViewModalData(clientData);
+                viewClientModal.show();
+            };
+
+            const openEditModal = (row) => {
+                if (!row || !editClientModal) {
+                    return;
+                }
+                editingRow = row;
+                setEditFormData(row, getClientDataFromRow(row));
+                editClientModal.show();
+            };
+
+            const openDeleteModal = (row) => {
+                if (!row || !deleteClientModal) {
+                    return;
+                }
+                pendingDeleteRow = row;
+                if (deleteClientName) {
+                    deleteClientName.textContent = row.dataset.clientName || "Selected client";
+                }
+                deleteClientModal.show();
+            };
+
+            const initializeTooltips = (scope = document) => {
+                if (!window.bootstrap) {
+                    return;
+                }
+                scope.querySelectorAll("[data-bs-toggle='tooltip']").forEach((element) => {
+                    if (!window.bootstrap.Tooltip.getInstance(element)) {
+                        new window.bootstrap.Tooltip(element);
+                    }
+                });
+            };
+
+            const applyClientsSearch = () => {
+                if (isClientsLoading) {
+                    if (clientsEmptyState) {
+                        clientsEmptyState.hidden = true;
+                    }
+                    return;
+                }
+
+                const rows = getClientRows();
+                const query = normalize(clientsSearchInput ? clientsSearchInput.value : "");
+                let visibleCount = 0;
+
+                rows.forEach((row) => {
+                    const matchesQuery = !query || normalize(row.dataset.clientName).includes(query) || normalize(row.dataset.tin).includes(query);
+                    const matchesRisk = activeRiskFilter === "all" || normalize(row.dataset.risk || "") === activeRiskFilter;
+                    const isVisible = matchesQuery && matchesRisk;
+                    row.hidden = !isVisible;
+                    row.setAttribute("aria-hidden", String(!isVisible));
+                    if (isVisible) {
+                        visibleCount += 1;
+                    }
+                });
+
+                if (clientsTableBody) {
+                    clientsTableBody.classList.add("is-filtering");
+                    window.clearTimeout(filterTransitionTimer);
+                    filterTransitionTimer = window.setTimeout(() => {
+                        clientsTableBody.classList.remove("is-filtering");
+                    }, 170);
+                }
+
+                if (clientsEmptyState) {
+                    clientsEmptyState.hidden = visibleCount !== 0;
+                }
+
+                updateClientsCount(visibleCount);
+            };
+
+            const loadClientsFromApi = async () => {
+                const requestToken = ++clientsListRequestToken;
+                if (clientsListAbortController) {
+                    clientsListAbortController.abort();
+                }
+                clientsListAbortController = new AbortController();
+                setClientsLoadingState(true);
+
+                try {
+                    const response = await fetch(CLIENTS_API_URL, {
+                        method: "GET",
+                        headers: {
+                            "Accept": "application/json"
+                        },
+                        credentials: "same-origin",
+                        signal: clientsListAbortController.signal,
+                    });
+
+                    if (requestToken !== clientsListRequestToken) {
+                        return;
+                    }
+
+                    if (response.status === 401) {
+                        setClientsLoadingState(false);
+                        const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                        window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                        return;
+                    }
+
+                    const result = await parseJsonSafe(response);
+                    if (!response.ok || !result || !result.ok) {
+                        setClientsLoadingState(false);
+                        syncClientRowsFromApi([]);
+                        const message = result && result.message
+                            ? result.message
+                            : "Unable to load clients. Please try again.";
+                        showToast(message);
+                        return;
+                    }
+
+                    setClientsLoadingState(false);
+                    const clients = Array.isArray(result.clients) ? result.clients : [];
+                    syncClientRowsFromApi(clients);
+                } catch (error) {
+                    if (error && error.name === "AbortError") {
+                        return;
+                    }
+
+                    if (requestToken !== clientsListRequestToken) {
+                        return;
+                    }
+
+                    setClientsLoadingState(false);
+                    syncClientRowsFromApi([]);
+                    showToast("Unable to load clients. Please check your connection and try again.");
+                }
+            };
+
+            if (clientsTableBody) {
+                clientsTableBody.addEventListener("click", (event) => {
+                    const row = event.target.closest(".clients-row");
+                    if (!row) {
+                        return;
+                    }
+
+                    const actionButton = event.target.closest("[data-client-action]");
+                    if (actionButton) {
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        const action = actionButton.getAttribute("data-client-action");
+                        if (action === "view") {
+                            openViewModal(row);
+                        } else if (action === "analytics") {
+                            goToClientAnalytics(getClientDataFromRow(row));
+                        } else if (action === "edit") {
+                            openEditModal(row);
+                        } else if (action === "delete") {
+                            openDeleteModal(row);
+                        } else if (action === "add-record") {
+                            goToFinancialRecords(getClientDataFromRow(row));
+                        }
+                        return;
+                    }
+
+                    openViewModal(row);
+                });
+
+                clientsTableBody.addEventListener("keydown", (event) => {
+                    const row = event.target.closest(".clients-row");
+                    if (!row) {
+                        return;
+                    }
+
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openViewModal(row);
+                    }
+                });
+            }
+
+            if (clientsSearchInput) {
+                clientsSearchInput.addEventListener("input", debounce(applyClientsSearch));
+            }
+
+            if (addClientForm) {
+                addClientForm.addEventListener("submit", async (event) => {
+                    event.preventDefault();
+
+                    if (!addClientForm.checkValidity()) {
+                        addClientForm.reportValidity();
+                        return;
+                    }
+
+                    const payload = {
+                        client_name: document.getElementById("addClientName") ? document.getElementById("addClientName").value.trim() : "",
+                        tin_number: document.getElementById("addClientTin") ? document.getElementById("addClientTin").value.trim() : "",
+                        trade_name: document.getElementById("addClientTradeName") ? document.getElementById("addClientTradeName").value.trim() : "",
+                        location: document.getElementById("addClientLocation") ? document.getElementById("addClientLocation").value.trim() : "",
+                        permit_number: document.getElementById("addClientPermitNumber") ? document.getElementById("addClientPermitNumber").value.trim() : "",
+                        birthday: document.getElementById("addClientBirthday") ? document.getElementById("addClientBirthday").value.trim() : "",
+                        email: document.getElementById("addClientEmail") ? document.getElementById("addClientEmail").value.trim() : "",
+                        risk_level: "medium"
+                    };
+
+                    const csrfToken = getCookieValue("csrftoken");
+                    const response = await fetch(CLIENTS_API_URL, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": csrfToken
+                        },
+                        credentials: "same-origin",
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await parseJsonSafe(response);
+                    if (!response.ok || !result || !result.ok) {
+                        const message = result && result.message ? result.message : "Unable to add client.";
+                        showToast(message);
+                        return;
+                    }
+
+                    addClientForm.reset();
+                    if (addClientModal) {
+                        addClientModal.hide();
+                    }
+
+                    await loadClientsFromApi();
+                    showToast(result.message || "Client added successfully.");
+                });
+            }
+
+            if (editClientForm) {
+                editClientForm.addEventListener("submit", async (event) => {
+                    event.preventDefault();
+
+                    if (!editingRow) {
+                        return;
+                    }
+
+                    if (!editClientForm.checkValidity()) {
+                        editClientForm.reportValidity();
+                        return;
+                    }
+
+                    const clientId = Number.parseInt(editingRow.dataset.clientId || "", 10);
+                    if (!Number.isFinite(clientId)) {
+                        showToast("Client record is invalid.");
+                        return;
+                    }
+
+                    const payload = {
+                        client_name: document.getElementById("editClientName") ? document.getElementById("editClientName").value.trim() : "",
+                        tin_number: document.getElementById("editClientTin") ? document.getElementById("editClientTin").value.trim() : "",
+                        trade_name: document.getElementById("editClientTradeName") ? document.getElementById("editClientTradeName").value.trim() : "",
+                        location: document.getElementById("editClientLocation") ? document.getElementById("editClientLocation").value.trim() : "",
+                        permit_number: document.getElementById("editClientPermitNumber") ? document.getElementById("editClientPermitNumber").value.trim() : "",
+                        birthday: document.getElementById("editClientBirthday") ? document.getElementById("editClientBirthday").value.trim() : "",
+                        email: document.getElementById("editClientEmail") ? document.getElementById("editClientEmail").value.trim() : "",
+                        risk_level: editingRow.dataset.risk || "medium"
+                    };
+
+                    const csrfToken = getCookieValue("csrftoken");
+                    const response = await fetch(buildClientDetailApiUrl(clientId), {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": csrfToken
+                        },
+                        credentials: "same-origin",
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await parseJsonSafe(response);
+                    if (!response.ok || !result || !result.ok) {
+                        const message = result && result.message ? result.message : "Unable to update client.";
+                        showToast(message);
+                        return;
+                    }
+
+                    if (editClientModal) {
+                        editClientModal.hide();
+                    }
+                    editingRow = null;
+
+                    await loadClientsFromApi();
+                    showToast(result.message || "Client updated successfully.");
+                });
+            }
+
+            if (confirmDeleteClientBtn) {
+                confirmDeleteClientBtn.addEventListener("click", async () => {
+                    if (!pendingDeleteRow) {
+                        return;
+                    }
+
+                    const clientId = Number.parseInt(pendingDeleteRow.dataset.clientId || "", 10);
+                    if (!Number.isFinite(clientId)) {
+                        showToast("Client record is invalid.");
+                        return;
+                    }
+
+                    const csrfToken = getCookieValue("csrftoken");
+                    const response = await fetch(buildClientDetailApiUrl(clientId), {
+                        method: "DELETE",
+                        headers: {
+                            "X-CSRFToken": csrfToken
+                        },
+                        credentials: "same-origin"
+                    });
+
+                    const result = await parseJsonSafe(response);
+                    if (!response.ok || !result || !result.ok) {
+                        const message = result && result.message ? result.message : "Unable to delete client.";
+                        showToast(message);
+                        return;
+                    }
+
+                    if (deleteClientModal) {
+                        deleteClientModal.hide();
+                    }
+                    pendingDeleteRow = null;
+
+                    await loadClientsFromApi();
+                    showToast(result.message || "Client deleted successfully.");
+                });
+            }
+
+            if (editClientModalElement) {
+                editClientModalElement.addEventListener("hidden.bs.modal", () => {
+                    editingRow = null;
+                });
+            }
+
+            if (deleteClientModalElement) {
+                deleteClientModalElement.addEventListener("hidden.bs.modal", () => {
+                    pendingDeleteRow = null;
+                });
+            }
+
+            const viewFinancialRecordsBtn = document.getElementById("viewFinancialRecordsBtn");
+            const viewAddFinancialRecordBtn = document.getElementById("viewAddFinancialRecordBtn");
+            const viewClientAnalyticsBtn = document.getElementById("viewClientAnalyticsBtn");
+            if (viewClientAnalyticsBtn) {
+                viewClientAnalyticsBtn.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    goToClientAnalytics(activeViewedClient);
+                });
+            }
+            if (viewFinancialRecordsBtn) {
+                viewFinancialRecordsBtn.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    goToFinancialRecords(activeViewedClient);
+                });
+            }
+            if (viewAddFinancialRecordBtn) {
+                viewAddFinancialRecordBtn.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    goToFinancialRecords(activeViewedClient);
+                });
+            }
+
+            if (dashboardProfileAction) {
+                dashboardProfileAction.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    window.location.assign("{% url 'profile' %}");
+                });
+            }
+
+            if (dashboardLogoutAction) {
+                dashboardLogoutAction.addEventListener("click", async () => {
+                    dashboardLogoutAction.disabled = true;
+
+                    try {
+                        const redirectUrl = await logoutCurrentUser();
+                        showToast("Logging out...");
+                        window.location.assign(redirectUrl);
+                    } finally {
+                        dashboardLogoutAction.disabled = false;
+                    }
+                });
+            }
+
+            plannedFeatureButtons.forEach((buttonElement) => {
+                buttonElement.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
+                    showToast(`${featureLabel} is planned and will be available soon.`);
+                });
+            });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const requestedRiskFilter = normalize(urlParams.get("risk") || "all");
+            if (requestedRiskFilter === "high" || requestedRiskFilter === "medium" || requestedRiskFilter === "low") {
+                activeRiskFilter = requestedRiskFilter;
+                if (clientsRiskPreviewNote) {
+                    const displayValue = requestedRiskFilter.charAt(0).toUpperCase() + requestedRiskFilter.slice(1);
+                    clientsRiskPreviewNote.textContent = `${displayValue}-risk client filter is active.`;
+                    clientsRiskPreviewNote.hidden = false;
+                }
+            }
+
+            hydrateHeaderUser();
+            initializeTooltips();
+            loadClientsFromApi();
+
+            window.addEventListener("resize", () => {
+                sidebarState.closeMobileSidebar();
+                sidebarState.restoreDesktopState();
+            });
+        })();
+    </script>
+</body>
+</html>

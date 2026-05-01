@@ -1,76 +1,307 @@
-/* 
-   SafeBooks UI Animations 
-   Includes scroll reveals, hover lifts, pulse glows, and floating elements.
-*/
-
-/* 1. Meaningful Hover Interactions */
-.hover-lift {
-    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.35s ease !important;
+@keyframes fadeInSoft {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.hover-lift:hover {
-    transform: translateY(-8px) scale(1.01) !important;
-    box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.12), 0 10px 20px -10px rgba(15, 23, 42, 0.08) !important;
-    z-index: 10;
+@keyframes floatCard {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
-.hover-glow {
-    transition: box-shadow 0.3s ease, transform 0.3s ease !important;
+@keyframes slideInAuthCard {
+    from {
+        opacity: 0;
+        transform: translateX(26px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
-.hover-glow:hover {
-    box-shadow: 0 0 25px rgba(16, 185, 129, 0.5) !important;
-    transform: translateY(-2px) !important;
+@keyframes dashboardFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* 2. Scroll Reveal Animations (Triggered by IntersectionObserver) */
-.reveal-up {
+.animate-fade-in {
+    opacity: 1;
+    animation: fadeInSoft 0.85s ease both;
+}
+
+.delay-1 {
+    animation-delay: 0.12s;
+}
+
+.delay-2 {
+    animation-delay: 0.24s;
+}
+
+.delay-3 {
+    animation-delay: 0.36s;
+}
+
+.scroll-reveal {
     opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-    will-change: opacity, transform;
+    transform: translateY(24px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
 }
 
-.reveal-up.active {
+.scroll-reveal.in-view {
     opacity: 1;
     transform: translateY(0);
 }
 
-.reveal-fade {
+.floating-element {
+    animation: floatCard 5.8s ease-in-out infinite;
+}
+
+.slide-in-card {
     opacity: 0;
-    transition: opacity 1s ease-in-out;
+    animation: slideInAuthCard 0.72s cubic-bezier(0.19, 1, 0.22, 1) 0.1s forwards;
 }
 
-.reveal-fade.active {
-    opacity: 1;
+.auth-page .auth-submit-btn {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
-/* 3. Infinite Keyframe Animations */
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-15px); }
-    100% { transform: translateY(0px); }
-}
-
-.animate-float {
-    animation: float 6s ease-in-out infinite;
-    will-change: transform;
-}
-
-@keyframes pulse-soft {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.8; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-.animate-pulse {
-    animation: pulse-soft 3s infinite;
-}
-
-/* Button specific transitions */
-.btn {
-    transition: all 0.3s ease;
-}
-.btn:hover {
+.auth-page .auth-submit-btn:hover,
+.auth-page .auth-submit-btn:focus-visible {
     transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(24, 77, 185, 0.28);
+}
+
+.auth-page .auth-google-btn {
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.auth-page .auth-google-btn:hover,
+.auth-page .auth-google-btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 11px 20px rgba(16, 42, 100, 0.13);
+}
+
+.auth-page .auth-google-btn:active {
+    transform: translateY(0) scale(0.995);
+    box-shadow: 0 6px 12px rgba(16, 42, 100, 0.12);
+}
+
+.auth-page .auth-input {
+    transition: border-color 0.24s ease, box-shadow 0.24s ease, transform 0.24s ease;
+}
+
+.auth-page .auth-input:focus {
+    transform: translateY(-1px);
+}
+
+.auth-page .auth-inline-link,
+.auth-page .auth-switch-text a,
+.auth-page .auth-back-link {
+    transition: color 0.2s ease;
+}
+
+.dashboard-page .dashboard-fade-up {
+    opacity: 0;
+    animation: dashboardFadeUp 0.62s ease forwards;
+    animation-delay: var(--delay, 0s);
+}
+
+.dashboard-page .dashboard-card,
+.dashboard-page .dashboard-stat-card,
+.dashboard-page .dashboard-nav-item,
+.dashboard-page .insight-item,
+.dashboard-page .recent-activity-list li {
+    transition: transform 0.26s ease, box-shadow 0.26s ease, background-color 0.26s ease, border-color 0.26s ease;
+}
+
+.dashboard-page .dashboard-card:hover,
+.dashboard-page .dashboard-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px rgba(17, 52, 123, 0.14);
+}
+
+.dashboard-page .dashboard-nav-item:hover,
+.dashboard-page .dashboard-nav-item:focus-visible {
+    transform: translateX(1px);
+}
+
+.dashboard-page .dashboard-table tbody tr {
+    transition: background-color 0.22s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-page .dashboard-table tbody.is-filtering tr {
+    transform: translateY(1px);
+}
+
+.dashboard-page .clients-table tbody tr {
+    transition: background-color 0.22s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-page .clients-table tbody.is-filtering tr {
+    transform: translateY(1px);
+}
+
+.dashboard-page .financial-table tbody tr {
+    transition: background-color 0.22s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-page .financial-table tbody.is-filtering tr {
+    transform: translateY(1px);
+}
+
+.dashboard-page .financial-entry-row {
+    transition: background-color 0.22s ease;
+}
+
+.dashboard-page .financial-entry-details-shell {
+    transition: max-height 0.28s ease, opacity 0.24s ease, padding 0.24s ease;
+}
+
+.dashboard-page .financial-line-item-row {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-page .client-preview-modal .modal-content {
+    animation: fadeInSoft 0.24s ease both;
+}
+
+.dashboard-page .client-manage-modal .modal-content {
+    animation: fadeInSoft 0.24s ease both;
+}
+
+.dashboard-page .financial-manage-modal .modal-content {
+    animation: fadeInSoft 0.24s ease both;
+}
+
+.dashboard-page .dashboard-action-btn,
+.dashboard-page .dashboard-profile-btn,
+.dashboard-page .dashboard-menu-toggle,
+.dashboard-page .dashboard-landing-link,
+.dashboard-page .clients-add-btn,
+.dashboard-page .client-action-btn,
+.dashboard-page .financial-add-entry-btn,
+.dashboard-page .financial-entry-btn,
+.dashboard-page .financial-add-line-item-btn,
+.dashboard-page .financial-line-remove-btn {
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease;
+}
+
+.dashboard-page .dashboard-action-btn:hover,
+.dashboard-page .dashboard-action-btn:focus-visible,
+.dashboard-page .dashboard-profile-btn:hover,
+.dashboard-page .dashboard-profile-btn:focus-visible,
+.dashboard-page .dashboard-menu-toggle:hover,
+.dashboard-page .dashboard-menu-toggle:focus-visible,
+.dashboard-page .dashboard-landing-link:hover,
+.dashboard-page .dashboard-landing-link:focus-visible,
+.dashboard-page .clients-add-btn:hover,
+.dashboard-page .clients-add-btn:focus-visible,
+.dashboard-page .client-action-btn:hover,
+.dashboard-page .client-action-btn:focus-visible,
+.dashboard-page .financial-add-entry-btn:hover,
+.dashboard-page .financial-add-entry-btn:focus-visible,
+.dashboard-page .financial-entry-btn:hover,
+.dashboard-page .financial-entry-btn:focus-visible,
+.dashboard-page .financial-add-line-item-btn:hover,
+.dashboard-page .financial-add-line-item-btn:focus-visible,
+.dashboard-page .financial-line-remove-btn:hover,
+.dashboard-page .financial-line-remove-btn:focus-visible {
+    transform: translateY(-1px);
+}
+
+.btn-safe-nav,
+.btn-safe-primary,
+.btn-safe-outline,
+.btn-cta {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.btn-safe-nav:hover,
+.btn-safe-nav:focus-visible,
+.btn-safe-primary:hover,
+.btn-safe-primary:focus-visible,
+.btn-safe-outline:hover,
+.btn-safe-outline:focus-visible,
+.btn-cta:hover,
+.btn-cta:focus-visible {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 12px 22px rgba(22, 65, 150, 0.18);
+}
+
+.feature-card,
+.step-card,
+.preview-board,
+.dashboard-mockup {
+    transition: transform 0.34s ease, box-shadow 0.34s ease;
+}
+
+.feature-card:hover,
+.feature-card:focus-within,
+.step-card:hover,
+.step-card:focus-within,
+.preview-board:hover,
+.dashboard-mockup:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 34px rgba(17, 52, 123, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .scroll-reveal,
+    .floating-element,
+    .btn-safe-nav,
+    .btn-safe-primary,
+    .btn-safe-outline,
+    .btn-cta,
+    .feature-card,
+    .step-card,
+    .preview-board,
+    .dashboard-mockup,
+    .slide-in-card,
+    .auth-page .auth-submit-btn,
+    .auth-page .auth-input,
+    .auth-page .auth-google-btn,
+    .dashboard-page .dashboard-fade-up,
+    .dashboard-page .dashboard-card,
+    .dashboard-page .dashboard-stat-card,
+    .dashboard-page .dashboard-nav-item,
+    .dashboard-page .dashboard-action-btn,
+    .dashboard-page .dashboard-profile-btn,
+    .dashboard-page .dashboard-menu-toggle,
+    .dashboard-page .dashboard-landing-link,
+    .dashboard-page .clients-add-btn,
+    .dashboard-page .client-action-btn,
+    .dashboard-page .financial-add-entry-btn,
+    .dashboard-page .financial-entry-btn,
+    .dashboard-page .financial-add-line-item-btn,
+    .dashboard-page .financial-line-remove-btn,
+    .dashboard-page .financial-line-item-row,
+    .dashboard-page .financial-entry-details-shell,
+    .dashboard-page .insight-item,
+    .dashboard-page .recent-activity-list li,
+    .dashboard-page .client-preview-modal .modal-content,
+    .dashboard-page .client-manage-modal .modal-content,
+    .dashboard-page .financial-manage-modal .modal-content {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+    }
 }

@@ -11,11 +11,13 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'safebooks.apps.SafebooksConfig',
 ]
 
 MIDDLEWARE = [
@@ -74,12 +77,42 @@ WSGI_APPLICATION = 'safebooks.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+def _env_bool(name: str, default: str = "0") -> bool:
+    return str(os.getenv(name, default)).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _first_env(*keys: str, default: str = "") -> str:
+    for key in keys:
+        value = os.getenv(key)
+        if value is not None and str(value).strip() != "":
+            return str(value).strip()
+    return default
+
+
+USE_POSTGRESQL = _env_bool("SAFEBOOKS_USE_POSTGRESQL", "0")
+
+if USE_POSTGRESQL:
+    postgres_db_config = {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": _first_env("SAFEBOOKS_DB_NAME", "POSTGRES_DB", default="safebooks_db"),
+        "USER": _first_env("SAFEBOOKS_DB_USER", "POSTGRES_USER", default=""),
+        "PASSWORD": _first_env("SAFEBOOKS_DB_PASSWORD", "POSTGRES_PASSWORD", default=""),
+        "HOST": _first_env("SAFEBOOKS_DB_HOST", "POSTGRES_HOST", default="localhost"),
+        "PORT": _first_env("SAFEBOOKS_DB_PORT", "POSTGRES_PORT", default="5432"),
     }
-}
+
+    sslmode = _first_env("SAFEBOOKS_DB_SSLMODE", "POSTGRES_SSLMODE", default="")
+    if sslmode:
+        postgres_db_config["OPTIONS"] = {"sslmode": sslmode}
+
+    DATABASES = {"default": postgres_db_config}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation

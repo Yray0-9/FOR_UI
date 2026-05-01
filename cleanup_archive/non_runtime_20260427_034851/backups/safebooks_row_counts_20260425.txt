@@ -1,0 +1,5 @@
+bookkeeper_accounts:3
+clients:6
+periods:5
+financial_records:9
+financial_record_lines:25
