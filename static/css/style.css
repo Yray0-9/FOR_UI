@@ -2392,6 +2392,26 @@ body.dashboard-page .modal {
     font-weight: 600;
 }
 
+.client-details-custom {
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #dbe6fb;
+}
+
+.client-details-custom-title {
+    color: #6d83ab;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.client-details-custom-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
 .client-details-actions {
     gap: 0.42rem;
 }

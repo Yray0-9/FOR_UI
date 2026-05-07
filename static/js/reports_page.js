@@ -874,6 +874,7 @@
         const permitNumber = toDisplayText(client && client.permit_number);
         const birthday = client && client.birthday ? formatClientBirthday(client.birthday) : "-";
         const email = toDisplayText(client && client.email);
+        const customFields = client && Array.isArray(client.custom_fields) ? client.custom_fields : [];
 
         const reportTypeLabel = toDisplayText(report.reportLabel, "Client Report");
         const generatedLabel = formatGeneratedDateTime(report.generatedAt);
@@ -931,6 +932,7 @@
                 permitNumber,
                 birthday,
                 email,
+                customFields,
             },
             table: {
                 columns,
@@ -1570,6 +1572,7 @@
                     permit_number: String(client.permit_number || ""),
                     birthday: String(client.birthday || ""),
                     email: String(client.email || ""),
+                    custom_fields: Array.isArray(client.custom_fields) ? client.custom_fields : [],
                 }))
                 : [];
         } catch (error) {

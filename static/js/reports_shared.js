@@ -46,6 +46,21 @@
         const birthday = toDisplayText(client.birthday);
         const email = toDisplayText(client.email);
 
+        const rawCustomFields = Array.isArray(client.custom_fields)
+            ? client.custom_fields
+            : Array.isArray(client.customFields)
+                ? client.customFields
+                : [];
+        const customFields = rawCustomFields
+            .filter((field) => field && typeof field === "object")
+            .map((field) => {
+                return {
+                    label: toDisplayText(field.label, ""),
+                    value: toDisplayText(field.value, "-"),
+                };
+            })
+            .filter((field) => field.label || field.value);
+
         const rawColumns = Array.isArray(table.columns) ? table.columns : [];
         const columns = rawColumns
             .map((column) => toColumnLabel(column))
@@ -86,6 +101,31 @@
 
         const rowHint = toDisplayText(settings.rowHint, "Prepared from generated report values.");
 
+        const customRowsMarkup = customFields
+            .map((field, index) => {
+                if (index % 2 !== 0) {
+                    return "";
+                }
+
+                const leftField = field;
+                const rightField = customFields[index + 1];
+
+                const leftLabel = escapeHtml(toDisplayText(leftField.label, ""));
+                const leftValue = escapeHtml(toDisplayText(leftField.value, "-"));
+                const rightLabel = rightField ? escapeHtml(toDisplayText(rightField.label, "")) : "&nbsp;";
+                const rightValue = rightField ? escapeHtml(toDisplayText(rightField.value, "-")) : "&nbsp;";
+
+                return `
+                    <tr>
+                        <th>${leftLabel}</th>
+                        <td>${leftValue}</td>
+                        <th>${rightLabel}</th>
+                        <td>${rightValue}</td>
+                    </tr>
+                `;
+            })
+            .join("");
+
         return `
             <h3 class="reports-ledger-title">${escapeHtml(reportTitle)}</h3>
             <p class="reports-ledger-subtitle">${escapeHtml(reportSubtitle)}</p>
@@ -120,6 +160,7 @@
                         <th>Email</th>
                         <td colspan="3">${escapeHtml(email)}</td>
                     </tr>
+                    ${customRowsMarkup}
                 </tbody>
             </table>
 

@@ -189,6 +189,10 @@
                     <div class="client-details-row"><span class="client-details-key">Birthday</span><strong id="viewClientBirthday">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">Email</span><strong id="viewClientEmail">-</strong></div>
                 </div>
+                <div class="client-details-custom" id="viewClientCustomFields" hidden>
+                    <p class="client-details-custom-title">Custom Fields</p>
+                    <div class="client-details-custom-list" id="viewClientCustomFieldsList"></div>
+                </div>
                 <p class="client-details-note">Manage this client's financial transactions.</p>
             </div>
             <div class="modal-footer client-details-actions">
@@ -380,6 +384,8 @@
         const viewClientPermitNumber = document.getElementById("viewClientPermitNumber");
         const viewClientBirthday = document.getElementById("viewClientBirthday");
         const viewClientEmail = document.getElementById("viewClientEmail");
+        const viewClientCustomFields = document.getElementById("viewClientCustomFields");
+        const viewClientCustomFieldsList = document.getElementById("viewClientCustomFieldsList");
 
         const addClientModalElement = document.getElementById("addClientModal");
         const viewClientModalElement = document.getElementById("viewClientModal");
@@ -750,6 +756,36 @@
             return trimmedValue ? trimmedValue : "Not provided";
         };
 
+        const renderClientCustomFields = (fields) => {
+            if (!viewClientCustomFields || !viewClientCustomFieldsList) {
+                return;
+            }
+
+            const safeFields = Array.isArray(fields) ? fields : [];
+            if (!safeFields.length) {
+                viewClientCustomFields.hidden = true;
+                viewClientCustomFieldsList.innerHTML = "";
+                return;
+            }
+
+            viewClientCustomFields.hidden = false;
+            viewClientCustomFieldsList.innerHTML = safeFields
+                .map((field) => {
+                    const label = field && typeof field.label === "string" ? field.label.trim() : "";
+                    const value = field && typeof field.value === "string" ? field.value.trim() : "";
+                    const safeLabel = label || "Custom Field";
+                    const safeValue = value || "Not provided";
+
+                    return `
+                        <div class="client-details-row">
+                            <span class="client-details-key">${escapeHtml(safeLabel)}</span>
+                            <strong>${escapeHtml(safeValue)}</strong>
+                        </div>
+                    `;
+                })
+                .join("");
+        };
+
         const toReportValue = (value, fallback = "-") => {
             const trimmedValue = String(value || "").trim();
             return trimmedValue ? trimmedValue : fallback;
@@ -885,6 +921,7 @@
             const permitNumber = toReportValue(clientData.permitNumber);
             const birthday = toReportValue(clientData.birthday);
             const email = toReportValue(clientData.email);
+            const customFields = Array.isArray(clientData.customFields) ? clientData.customFields : [];
 
             const reportTypeLabel = "Financial Summary Report";
             const dateRangeLabel = `${toReportValue(filters.dateFrom)} to ${toReportValue(filters.dateTo)}`;
@@ -917,6 +954,7 @@
                     permitNumber,
                     birthday,
                     email,
+                    customFields,
                 },
                 table: {
                     columns,
@@ -1061,6 +1099,7 @@
             if (viewClientEmail) {
                 viewClientEmail.textContent = toDisplayValue(data.email);
             }
+            renderClientCustomFields(data.customFields);
         };
 
         const setEditFormData = (row, data) => {

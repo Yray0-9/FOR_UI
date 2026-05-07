@@ -342,6 +342,10 @@
                     <div class="client-details-row"><span class="client-details-key">Birthday</span><strong id="viewClientBirthday">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">Email</span><strong id="viewClientEmail">-</strong></div>
                 </div>
+                <div class="client-details-custom" id="viewClientCustomFields" hidden>
+                    <p class="client-details-custom-title">Custom Fields</p>
+                    <div class="client-details-custom-list" id="viewClientCustomFieldsList"></div>
+                </div>
                 <p class="client-details-note">Manage this client's financial transactions.</p>
             </div>
             <div class="modal-footer client-details-actions">
@@ -444,6 +448,8 @@
         const viewClientPermitNumber = document.getElementById("viewClientPermitNumber");
         const viewClientBirthday = document.getElementById("viewClientBirthday");
         const viewClientEmail = document.getElementById("viewClientEmail");
+        const viewClientCustomFields = document.getElementById("viewClientCustomFields");
+        const viewClientCustomFieldsList = document.getElementById("viewClientCustomFieldsList");
 
         const viewClientModalElement = document.getElementById("viewClientModal");
         const viewClientModal = viewClientModalElement && window.bootstrap ? new window.bootstrap.Modal(viewClientModalElement) : null;
@@ -539,6 +545,36 @@
         const toDisplayValue = (value) => {
             const trimmedValue = String(value || "").trim();
             return trimmedValue ? trimmedValue : "Not provided";
+        };
+
+        const renderClientCustomFields = (fields) => {
+            if (!viewClientCustomFields || !viewClientCustomFieldsList) {
+                return;
+            }
+
+            const safeFields = Array.isArray(fields) ? fields : [];
+            if (!safeFields.length) {
+                viewClientCustomFields.hidden = true;
+                viewClientCustomFieldsList.innerHTML = "";
+                return;
+            }
+
+            viewClientCustomFields.hidden = false;
+            viewClientCustomFieldsList.innerHTML = safeFields
+                .map((field) => {
+                    const label = field && typeof field.label === "string" ? field.label.trim() : "";
+                    const value = field && typeof field.value === "string" ? field.value.trim() : "";
+                    const safeLabel = label || "Custom Field";
+                    const safeValue = value || "Not provided";
+
+                    return `
+                        <div class="client-details-row">
+                            <span class="client-details-key">${escapeHtml(safeLabel)}</span>
+                            <strong>${escapeHtml(safeValue)}</strong>
+                        </div>
+                    `;
+                })
+                .join("");
         };
 
         const toReportValue = (value, fallback = "-") => {
@@ -759,6 +795,7 @@
             const permitNumber = toReportValue(clientData.permitNumber);
             const birthday = toReportValue(clientData.birthday);
             const email = toReportValue(clientData.email);
+            const customFields = Array.isArray(clientData.customFields) ? clientData.customFields : [];
 
             const reportTypeLabel = "Financial Summary Report";
             const dateRangeLabel = `${toReportValue(filters.dateFrom)} to ${toReportValue(filters.dateTo)}`;
@@ -791,6 +828,7 @@
                     permitNumber,
                     birthday,
                     email,
+                    customFields,
                 },
                 table: {
                     columns,
@@ -930,6 +968,7 @@
                 permitNumber: row.dataset.permitNumber || "",
                 birthday: row.dataset.birthday || "",
                 email: row.dataset.email || "",
+                customFields: [],
             };
         };
 
@@ -943,6 +982,7 @@
                 permitNumber: client.permit_number || "",
                 birthday: client.birthday || "",
                 email: client.email || "",
+                customFields: Array.isArray(client.custom_fields) ? client.custom_fields : [],
             };
         };
 
@@ -1004,6 +1044,9 @@
                 permitNumber: detailData.permitNumber || baseData.permitNumber,
                 birthday: detailData.birthday || baseData.birthday,
                 email: detailData.email || baseData.email,
+                customFields: detailData.customFields && detailData.customFields.length
+                    ? detailData.customFields
+                    : baseData.customFields,
             };
         };
 
@@ -1029,6 +1072,7 @@
             if (viewClientEmail) {
                 viewClientEmail.textContent = toDisplayValue(clientData.email);
             }
+            renderClientCustomFields(clientData.customFields);
         };
 
         const openClientDetailsModal = async (clientData) => {
