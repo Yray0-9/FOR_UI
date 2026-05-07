@@ -58,9 +58,30 @@ def _normalize_entry_date(value):
         return None, "Entry date is required."
 
     try:
-        return date.fromisoformat(cleaned_value), None
+        entry_date = date.fromisoformat(cleaned_value)
     except ValueError:
         return None, "Entry date must use YYYY-MM-DD format."
+
+    if entry_date.year < 2000 or entry_date.year > 2100:
+        return None, "Entry date year must be between 2000 and 2100."
+
+    return entry_date, None
+
+
+def _normalize_required_date(value, label: str):
+    cleaned_value = _normalize_text(value)
+    if not cleaned_value:
+        return None, f"{label} is required."
+
+    try:
+        parsed_date = date.fromisoformat(cleaned_value)
+    except ValueError:
+        return None, f"{label} must use YYYY-MM-DD format."
+
+    if parsed_date.year < 2000 or parsed_date.year > 2100:
+        return None, f"{label} year must be between 2000 and 2100."
+
+    return parsed_date, None
 
 
 def _normalize_amount(value):
@@ -122,10 +143,8 @@ def _sum_line_item_amounts(line_items):
     return total_amount.quantize(Decimal("0.01"))
 
 
-def _validate_entry_date_in_period(entry_date, month, year):
-    if entry_date.month != month or entry_date.year != year:
-        return "Entry date must be within the selected period month and year."
-    return None
+def _resolve_period_from_entry_date(entry_date):
+    return entry_date.month, entry_date.year
 
 
 def _serialize_client(client: Client) -> dict:
@@ -279,26 +298,87 @@ def list_records_for_client_period(bookkeeper, client_id: int, month_value=None,
     }
 
 
-def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> dict:
+def list_transactions_for_client_range(bookkeeper, client_id: int, date_from_value, date_to_value) -> dict:
     client, error_response = _resolve_client_for_bookkeeper(bookkeeper, client_id)
     if error_response:
         return error_response
 
-    month, month_error = _normalize_month(data.get("month"))
-    if month_error:
+    date_from, date_from_error = _normalize_required_date(date_from_value, "Date From")
+    if date_from_error:
         return {
             "ok": False,
-            "message": month_error,
-            "errors": [month_error],
+            "message": date_from_error,
+            "errors": [date_from_error],
         }
 
-    year, year_error = _normalize_year(data.get("year"))
-    if year_error:
+    date_to, date_to_error = _normalize_required_date(date_to_value, "Date To")
+    if date_to_error:
         return {
             "ok": False,
-            "message": year_error,
-            "errors": [year_error],
+            "message": date_to_error,
+            "errors": [date_to_error],
         }
+
+    if date_from > date_to:
+        message = "Date From cannot be later than Date To."
+        return {
+            "ok": False,
+            "message": message,
+            "errors": [message],
+        }
+
+    records = list(
+        FinancialRecord.objects.filter(
+            bookkeeper=bookkeeper,
+            client=client,
+            entry_date__gte=date_from,
+            entry_date__lte=date_to,
+        )
+        .prefetch_related("line_items")
+        .order_by("entry_date", "id")
+    )
+
+    rows = []
+    total_amount = Decimal("0.00")
+    line_item_count = 0
+
+    for record in records:
+        record_notes = record.notes or ""
+        record_date = record.entry_date.isoformat() if record.entry_date else ""
+        line_items = record.line_items.all().order_by("sort_order", "id")
+        for line_item in line_items:
+            amount_value = line_item.amount or Decimal("0.00")
+            total_amount += amount_value
+            line_item_count += 1
+
+            rows.append(
+                {
+                    "entry_date": record_date,
+                    "type_code": line_item.type_code,
+                    "description": line_item.description,
+                    "amount": str(amount_value.quantize(Decimal("0.01"))),
+                    "notes": record_notes,
+                }
+            )
+
+    return {
+        "ok": True,
+        "client": _serialize_client(client),
+        "date_from": date_from.isoformat(),
+        "date_to": date_to.isoformat(),
+        "summary": {
+            "entry_count": len(records),
+            "line_item_count": line_item_count,
+            "total_amount": str(total_amount.quantize(Decimal("0.01"))),
+        },
+        "rows": rows,
+    }
+
+
+def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> dict:
+    client, error_response = _resolve_client_for_bookkeeper(bookkeeper, client_id)
+    if error_response:
+        return error_response
 
     entry_date, entry_date_error = _normalize_entry_date(data.get("date"))
     if entry_date_error:
@@ -308,13 +388,7 @@ def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> d
             "errors": [entry_date_error],
         }
 
-    period_date_error = _validate_entry_date_in_period(entry_date, month, year)
-    if period_date_error:
-        return {
-            "ok": False,
-            "message": period_date_error,
-            "errors": [period_date_error],
-        }
+    month, year = _resolve_period_from_entry_date(entry_date)
 
     notes = _normalize_text(data.get("notes"))
     line_items, line_item_errors = _normalize_line_items(data.get("line_items"))
@@ -377,22 +451,6 @@ def update_record_for_client_period(bookkeeper, client_id: int, record_id: int, 
             "errors": ["Financial record not found."],
         }
 
-    month, month_error = _normalize_month(data.get("month", record.period.month))
-    if month_error:
-        return {
-            "ok": False,
-            "message": month_error,
-            "errors": [month_error],
-        }
-
-    year, year_error = _normalize_year(data.get("year", record.period.year))
-    if year_error:
-        return {
-            "ok": False,
-            "message": year_error,
-            "errors": [year_error],
-        }
-
     entry_date_value = data.get("date", record.entry_date.isoformat())
     entry_date, entry_date_error = _normalize_entry_date(entry_date_value)
     if entry_date_error:
@@ -402,13 +460,7 @@ def update_record_for_client_period(bookkeeper, client_id: int, record_id: int, 
             "errors": [entry_date_error],
         }
 
-    period_date_error = _validate_entry_date_in_period(entry_date, month, year)
-    if period_date_error:
-        return {
-            "ok": False,
-            "message": period_date_error,
-            "errors": [period_date_error],
-        }
+    month, year = _resolve_period_from_entry_date(entry_date)
 
     notes = _normalize_text(data.get("notes", record.notes))
 

@@ -1,0 +1,25 @@
+<div class="dropdown dashboard-user-dropdown">
+    <button type="button" class="btn dashboard-profile-btn" id="dashboardProfileMenuButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open user menu">
+        <span class="dashboard-avatar" id="dashboardUserAvatar">{{ current_user_initials|default:"SB" }}</span>
+        <span class="dashboard-user-meta">
+            <strong id="dashboardUserName">{{ current_user_name|default:"Bookkeeper User" }}</strong>
+            <small>Profile</small>
+        </span>
+        <i class="bi bi-chevron-down"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="dashboardProfileMenuButton">
+        <li>
+            <button type="button" class="dropdown-item" id="dashboardProfileAction">
+                <i class="bi bi-person"></i>
+                <span>Profile</span>
+            </button>
+        </li>
+        <li><hr class="dropdown-divider" /></li>
+        <li>
+            <button type="button" class="dropdown-item text-danger" id="dashboardLogoutAction">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Log out</span>
+            </button>
+        </li>
+    </ul>
+</div>

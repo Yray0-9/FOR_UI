@@ -1,0 +1,117 @@
+{% extends 'admin_panel/admin_base.html' %}
+
+{% block page_title %}Approvals{% endblock %}
+{% block page_heading %}Approvals{% endblock %}
+{% block page_subtitle %}
+<!-- <p class="dashboard-page-subtitle">Review bookkeeper access requests and track approval outcomes.</p> -->
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-content admin-dashboard">
+    <div class="row g-3 mt-1">
+        <div class="col-lg-8">
+            <article class="dashboard-card admin-card h-100">
+                <div class="dashboard-card-head">
+                    <h2>Approval queue</h2>
+                </div>
+            <!--    <p class="dashboard-section-hint">Review incoming bookkeeper access requests before approval.</p> -->
+                <div class="dashboard-table-toolbar" aria-label="Approval queue controls">
+                    <div class="admin-approvals-toolbar-row d-flex align-items-center gap-2 w-100">
+                        <label class="dashboard-table-search admin-approvals-search" aria-label="Search approvals by name or email">
+                            <i class="bi bi-search"></i>
+                            <input type="search" placeholder="Search by name or email" autocomplete="off">
+                        </label>
+                        <select class="form-select dashboard-filter-select admin-approvals-sort" aria-label="Sort approvals" disabled>
+                            <option>Sort: Newest</option>
+                            <option>Sort: Oldest</option>
+                            <option>Sort: Status</option>
+                        </select>
+                    </div>
+                    <div class="dashboard-filter-chips" role="group" aria-label="Filter approvals by status">
+                        <button type="button" class="dashboard-filter-chip is-active" aria-pressed="true" data-planned-feature>All</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Pending</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Approved</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Rejected</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Bookkeeper</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Request date</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="admin-table-empty">
+                                <td>No approval requests yet.</td>
+                                <td>--</td>
+                                <td>--</td>
+                                <td><span class="admin-status-chip inactive">N/A</span></td>
+                                <td>
+                                    <div class="admin-table-actions">
+                                        <button type="button" class="admin-action-btn approve" disabled>Approve</button>
+                                        <button type="button" class="admin-action-btn reject" disabled>Reject</button>
+                                        <button type="button" class="admin-action-btn detail" disabled>View details</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </div>
+        <div class="col-lg-4 d-grid gap-3">
+            <article class="dashboard-card admin-card">
+                <div class="dashboard-card-head">
+                    <h2>Approval details</h2>
+                </div>
+             <!--   <p class="dashboard-panel-hint">Select a request to see reviewer details.</p> -->
+                <div class="admin-empty-state">No approval selected yet.</div>
+                <ul class="admin-status-list mt-3">
+                    <li class="admin-status-item"><span>Bookkeeper</span><span>--</span></li>
+                    <li class="admin-status-item"><span>Email</span><span>--</span></li>
+                    <li class="admin-status-item"><span>Request date</span><span>--</span></li>
+                    <li class="admin-status-item"><span>Status</span><span class="admin-status-chip inactive">N/A</span></li>
+                </ul>
+            </article>
+            <article class="dashboard-card admin-card">
+                <div class="dashboard-card-head">
+                    <h2>Notification preview</h2>
+                </div>
+               <!-- <p class="dashboard-panel-hint">Approvals and rejections notify bookkeepers.</p> -->
+                <div class="admin-empty-state">No notification activity yet.</div>
+            </article>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-lg-7">
+            <article class="dashboard-card admin-card h-100">
+                <div class="dashboard-card-head">
+                    <h2>Review notes</h2>
+                    <button type="button" class="dashboard-link-muted" data-planned-feature>Save note</button>
+                </div>
+                <p class="dashboard-panel-hint">Internal notes for approval decisions.</p>
+                <div class="admin-empty-state">No notes yet. Add a reminder for upcoming reviews.</div>
+            </article>
+        </div>
+        <div class="col-lg-5">
+            <article class="dashboard-card admin-card h-100">
+                <div class="dashboard-card-head">
+                    <h2>Quick actions</h2>
+                </div>
+               <!-- <p class="dashboard-panel-hint">Admin-only actions. Exports remain disabled until data is wired.</p> -->
+                <div class="dashboard-actions admin-actions">
+                    <button type="button" class="dashboard-action-btn primary" data-planned-feature>Refresh queue</button>
+                    <button type="button" class="dashboard-action-btn outline" data-planned-feature>View audit log</button>
+                    <button type="button" class="dashboard-action-btn outline" disabled>Export approvals (disabled)</button>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+{% endblock %}

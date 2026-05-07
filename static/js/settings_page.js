@@ -21,10 +21,6 @@
 
     const uiToastContainer = document.getElementById("uiToastContainer");
 
-    const settingsFullNameInput = document.getElementById("settingsFullName");
-    const settingsUsernameInput = document.getElementById("settingsUsername");
-    const settingsInitialsPreview = document.getElementById("settingsInitialsPreview");
-
     const themeButtons = Array.from(document.querySelectorAll("[data-theme-value]"));
     const followSystemToggle = document.getElementById("settingsFollowSystemToggle");
     const themeStatus = document.getElementById("settingsThemeStatus");
@@ -96,28 +92,6 @@
             authUserKey: AUTH_USER_KEY,
             loginWelcomeKey: LOGIN_WELCOME_KEY,
         });
-    };
-
-    const resolveInitials = (name, fallbackInitials = "SB") => {
-        const nameParts = String(name || "").trim().split(/\s+/).filter(Boolean);
-        if (!nameParts.length) {
-            return fallbackInitials;
-        }
-        if (nameParts.length === 1) {
-            return nameParts[0].slice(0, 2).toUpperCase();
-        }
-        return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
-    };
-
-    const updateInitialsPreview = () => {
-        if (!settingsInitialsPreview) {
-            return;
-        }
-
-        const fullName = settingsFullNameInput ? settingsFullNameInput.value.trim() : "";
-        const username = settingsUsernameInput ? settingsUsernameInput.value.trim() : "";
-        const nextValue = resolveInitials(fullName || username, String(config.defaultInitials || "SB"));
-        settingsInitialsPreview.textContent = nextValue;
     };
 
     const markSectionDirty = (section) => {
@@ -378,14 +352,6 @@
 
         if (shared && typeof shared.applyStoredTheme === "function") {
             shared.applyStoredTheme();
-        }
-
-        updateInitialsPreview();
-        if (settingsFullNameInput) {
-            settingsFullNameInput.addEventListener("input", updateInitialsPreview);
-        }
-        if (settingsUsernameInput) {
-            settingsUsernameInput.addEventListener("input", updateInitialsPreview);
         }
 
         bindSectionInputs();

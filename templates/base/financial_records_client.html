@@ -1,1209 +1,1585 @@
+{% extends 'base/bookkeeper_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeBooks | Client Financial Records</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% block page_title %}Client Financial Records{% endblock %}
+{% block body_class %}financial-records-page{% endblock %}
+{% block page_heading %}Financial Records{% endblock %}
+{% block page_subtitle %}
+<p class="dashboard-page-subtitle">Add and manage financial entries for this client by period</p>
+{% endblock %}
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
-    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
-</head>
-<body class="dashboard-page financial-records-page skeleton-active">
-    <div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
-        <div class="skeleton-shell">
-            <div class="dash-sk-layout">
-                <aside class="dash-sk-sidebar">
-                    <div class="skeleton-shimmer dash-sk-logo"></div>
-                    <div class="dash-sk-nav">
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                    </div>
-                </aside>
-                <section class="dash-sk-main">
-                    <div class="dash-sk-topbar">
-                        <div class="skeleton-shimmer dash-sk-title"></div>
-                        <div class="skeleton-shimmer dash-sk-search"></div>
-                        <div class="skeleton-shimmer dash-sk-profile"></div>
-                    </div>
-                    <div class="dash-sk-content">
-                        <div class="dash-sk-left">
-                            <div class="dash-sk-card">
-                                <div class="skeleton-shimmer dash-sk-card-head"></div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
+{% block skeleton %}
+<div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+        <div class="dash-sk-layout">
+            <aside class="dash-sk-sidebar">
+                <div class="skeleton-shimmer dash-sk-logo"></div>
+                <div class="dash-sk-nav">
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                </div>
+            </aside>
+            <section class="dash-sk-main">
+                <div class="dash-sk-topbar">
+                    <div class="skeleton-shimmer dash-sk-title"></div>
+                    <div class="skeleton-shimmer dash-sk-search"></div>
+                    <div class="skeleton-shimmer dash-sk-profile"></div>
+                </div>
+                <div class="dash-sk-content">
+                    <div class="dash-sk-left">
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
                             </div>
                         </div>
                     </div>
-                </section>
-            </div>
-        </div>
-    </div>
-
-    <div class="dashboard-layout">
-        <aside class="dashboard-sidebar" id="dashboardSidebar">
-            <div class="dashboard-sidebar-top">
-                <a href="{% url 'dashboard' %}" class="dashboard-logo" aria-label="SafeBooks">
-                    <span class="dashboard-logo-glyph">
-                        <img src="{% static 'images/Logo_safebooks.png' %}" alt="" class="dashboard-logo-image" aria-hidden="true">
-                    </span>
-                    <span class="dashboard-logo-text">SafeBooks</span>
-                </a>
-                <button class="btn dashboard-menu-toggle dashboard-collapse-btn d-none d-lg-inline-flex" type="button" id="sidebarCollapseToggle" aria-label="Collapse sidebar" aria-expanded="true">
-                    <i class="bi bi-layout-sidebar-inset" id="sidebarCollapseIcon"></i>
-                </button>
-            </div>
-            <p class="dashboard-sidebar-label">Main Navigation</p>
-
-            <nav class="dashboard-nav" aria-label="Sidebar navigation">
-                <a href="{% url 'dashboard' %}" class="dashboard-nav-item"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
-                <a href="{% url 'clients' %}" class="dashboard-nav-item"><i class="bi bi-people"></i><span>Clients</span></a>
-                <a href="{% url 'financial_records' %}" class="dashboard-nav-item active" aria-current="page"><i class="bi bi-journal-text"></i><span>Financial Records</span></a>
-                <a href="{% url 'analytics' %}" class="dashboard-nav-item" id="financialAnalyticsNavLink"><i class="bi bi-bar-chart-line"></i><span>Analytics</span></a>
-                <a href="{% url 'reports' %}" class="dashboard-nav-item"><i class="bi bi-file-earmark-text"></i><span>Reports</span></a>
-                <a href="{% url 'settings' %}" class="dashboard-nav-item"><i class="bi bi-gear"></i><span>Settings</span></a>
-            </nav>
-
-            <a href="{% url 'home' %}" class="dashboard-landing-link">
-                <i class="bi bi-box-arrow-left"></i>
-                <span>Back to Landing</span>
-            </a>
-        </aside>
-
-        <main class="dashboard-main">
-            <header class="dashboard-topbar animate-fade-in">
-                <div class="dashboard-topbar-left">
-                    <button class="btn dashboard-menu-toggle d-lg-none" type="button" id="sidebarToggle" aria-label="Toggle sidebar menu">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <div>
-                        <h1 class="dashboard-page-title">Financial Records</h1>
-                        <p class="dashboard-page-subtitle">Add and manage financial entries for this client by period</p>
-                    </div>
                 </div>
-
-                <div class="dashboard-topbar-right">
-                    <div class="dropdown dashboard-user-dropdown">
-                        <button type="button" class="btn dashboard-profile-btn" id="dashboardProfileMenuButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open user menu">
-                            <span class="dashboard-avatar" id="dashboardUserAvatar">{{ current_user_initials|default:"SB" }}</span>
-                            <span class="dashboard-user-meta">
-                                <strong id="dashboardUserName">{{ current_user_name|default:"Bookkeeper User" }}</strong>
-                                <small>Profile</small>
-                            </span>
-                            <i class="bi bi-chevron-down"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="dashboardProfileMenuButton">
-                            <li>
-                                <button type="button" class="dropdown-item" id="dashboardProfileAction">
-                                    <i class="bi bi-person"></i>
-                                    <span>Profile</span>
-                                </button>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <button type="button" class="dropdown-item text-danger" id="dashboardLogoutAction">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                    <span>Log out</span>
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </header>
-
-            <section class="dashboard-content">
-                <article class="dashboard-card dashboard-fade-up financial-context-card" style="--delay: 0.05s;">
-                    <div class="financial-context-head">
-                        <div>
-                            <nav class="financial-breadcrumb" aria-label="Financial records breadcrumb">
-                                <a href="{% url 'financial_records' %}">Financial Records</a>
-                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                                <span id="financialBreadcrumbClient">Selected Client</span>
-                            </nav>
-                            <h2 class="financial-context-title">Client Financial Records</h2>
-                            <p class="financial-context-subtitle">Add and manage financial entries for this client by period</p>
-                        </div>
-                        <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline financial-back-btn">
-                            <i class="bi bi-arrow-left"></i>
-                            <span>Back to Financial Records</span>
-                        </a>
-                    </div>
-                    <div class="financial-context-grid">
-                        <div class="financial-context-item">
-                            <span class="financial-context-label">Client Name</span>
-                            <strong id="financialClientName">-</strong>
-                        </div>
-                        <div class="financial-context-item">
-                            <span class="financial-context-label">TIN</span>
-                            <strong id="financialClientTin">-</strong>
-                        </div>
-                        <div class="financial-context-item">
-                            <span class="financial-context-label">Trade Name</span>
-                            <strong id="financialClientTradeName">-</strong>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.1s;">
-                    <div class="financial-action-bar">
-                        <label class="financial-period-select-wrap" for="periodSelector">
-                            <span class="financial-period-label">Period</span>
-                            <select class="form-select financial-period-select" id="periodSelector" aria-label="Select period month">
-                                <option value="1">January</option>
-                                <option value="2">February</option>
-                                <option value="3">March</option>
-                                <option value="4">April</option>
-                                <option value="5">May</option>
-                                <option value="6">June</option>
-                                <option value="7">July</option>
-                                <option value="8">August</option>
-                                <option value="9">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
-                            </select>
-                        </label>
-                        <button type="button" class="btn dashboard-action-btn outline" id="openClientAnalyticsButton" title="Open Analytics for this client">
-                            <i class="bi bi-bar-chart-line"></i>
-                            <span>View Client Analytics</span>
-                        </button>
-                        <button type="button" class="btn dashboard-action-btn primary financial-add-entry-btn" data-bs-toggle="modal" data-bs-target="#addEntryModal">
-                            <i class="bi bi-plus-lg"></i>
-                            <span>Add Financial Entry</span>
-                        </button>
-                    </div>
-                </article>
-
-                <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.16s;">
-                    <div class="dashboard-card-head">
-                        <h2 id="periodHeading">January Records</h2>
-                        <span class="dashboard-tag" id="periodEntriesTag">0 Entries</span>
-                    </div>
-
-                    <p class="financial-records-hint">Entries are grouped by period. Add new entries as needed</p>
-
-                    <div class="table-responsive" id="financialTableWrap">
-                        <table class="table table-hover align-middle dashboard-table financial-table mb-0" id="financialTable">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Total Amount</th>
-                                    <th>Line Items</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="financialTableBody"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="financial-empty-state" id="financialEmptyState" hidden>
-                        <p>No entries for this period</p>
-                        <button type="button" class="btn dashboard-action-btn primary" data-bs-toggle="modal" data-bs-target="#addEntryModal">Add First Entry</button>
-                    </div>
-                </article>
-
-                <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.22s;">
-                    <div class="dashboard-card-head">
-                        <h2>Period Summary</h2>
-                    </div>
-                    <div class="financial-summary-grid">
-                        <div class="financial-summary-item financial-summary-item-total">
-                            <p>Total Amount</p>
-                            <h3 id="summaryTotalAmount">&#8369;0.00</h3>
-                            <small id="summaryEntriesHint">0 entries in this period</small>
-                        </div>
-                        <div class="financial-summary-item financial-summary-item-breakdown">
-                            <p>Breakdown by Type / Code</p>
-                            <ul class="financial-breakdown-list" id="summaryTypeBreakdown"></ul>
-                            <p class="financial-breakdown-empty" id="summaryBreakdownEmpty">No type breakdown available for this period.</p>
-                        </div>
-                    </div>
-                </article>
             </section>
-        </main>
-
-        <button type="button" class="dashboard-backdrop" id="sidebarBackdrop" aria-label="Close sidebar"></button>
-    </div>
-
-    <div class="modal fade financial-manage-modal" id="addEntryModal" tabindex="-1" aria-labelledby="addEntryModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <form class="modal-content" id="addEntryForm" novalidate>
-                <div class="modal-header">
-                    <h2 class="modal-title h5" id="addEntryModalTitle">Add Financial Entry</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="dashboard-section-hint mb-3">Enter details for each transaction or tax type</p>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label financial-form-label" for="addEntryDate">Date</label>
-                            <input class="form-control financial-form-input" id="addEntryDate" name="date" type="date" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label financial-form-label" for="addEntryNotes">Notes (optional)</label>
-                            <input class="form-control financial-form-input" id="addEntryNotes" name="notes" type="text" placeholder="Enter brief note">
-                        </div>
-                    </div>
-
-                    <section class="financial-line-items-section" aria-label="Dynamic line items">
-                        <div class="financial-line-items-head">
-                            <div>
-                                <h3 class="financial-line-items-title">Line Items</h3>
-                                <p class="financial-line-items-help">Add multiple transaction types or tax codes for this entry</p>
-                            </div>
-                        </div>
-                        <div class="table-responsive financial-line-items-table-wrap">
-                            <table class="table align-middle financial-line-items-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Type / Code</th>
-                                        <th>Description</th>
-                                        <th>Amount</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="addLineItemsBody"></tbody>
-                            </table>
-                        </div>
-                        <button type="button" class="btn dashboard-action-btn outline financial-add-line-item-btn" id="addLineItemBtn">
-                            <i class="bi bi-plus-lg"></i>
-                            <span>Add Line Item</span>
-                        </button>
-                    </section>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn dashboard-action-btn primary">Save Financial Entry</button>
-                </div>
-            </form>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <div class="modal fade financial-manage-modal" id="editEntryModal" tabindex="-1" aria-labelledby="editEntryModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <form class="modal-content" id="editEntryForm" novalidate>
-                <input type="hidden" id="editEntryId" name="entry_id">
-                <div class="modal-header">
-                    <h2 class="modal-title h5" id="editEntryModalTitle">Edit Financial Entry</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="dashboard-section-hint mb-3">Enter details for each transaction or tax type</p>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label financial-form-label" for="editEntryDate">Date</label>
-                            <input class="form-control financial-form-input" id="editEntryDate" name="date" type="date" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label financial-form-label" for="editEntryNotes">Notes (optional)</label>
-                            <input class="form-control financial-form-input" id="editEntryNotes" name="notes" type="text" placeholder="Enter brief note">
-                        </div>
-                    </div>
-
-                    <section class="financial-line-items-section" aria-label="Edit line items">
-                        <div class="financial-line-items-head">
-                            <div>
-                                <h3 class="financial-line-items-title">Line Items</h3>
-                                <p class="financial-line-items-help">Add multiple transaction types or tax codes for this entry</p>
-                            </div>
-                        </div>
-                        <div class="table-responsive financial-line-items-table-wrap">
-                            <table class="table align-middle financial-line-items-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Type / Code</th>
-                                        <th>Description</th>
-                                        <th>Amount</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="editLineItemsBody"></tbody>
-                            </table>
-                        </div>
-                        <button type="button" class="btn dashboard-action-btn outline financial-add-line-item-btn" id="editAddLineItemBtn">
-                            <i class="bi bi-plus-lg"></i>
-                            <span>Add Line Item</span>
-                        </button>
-                    </section>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn dashboard-action-btn primary">Update Financial Entry</button>
-                </div>
-            </form>
+{% block content %}
+<section class="dashboard-content">
+    <article class="dashboard-card dashboard-fade-up financial-context-card" style="--delay: 0.05s;">
+        <div class="financial-context-head">
+            <div>
+                <nav class="financial-breadcrumb" aria-label="Financial records breadcrumb">
+                    <a href="{% url 'financial_records' %}">Financial Records</a>
+                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    <span id="financialBreadcrumbClient">Selected Client</span>
+                </nav>
+                <h2 class="financial-context-title">Client Financial Records</h2>
+                <p class="financial-context-subtitle">Add and manage financial entries for this client by period</p>
+            </div>
+            <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline financial-back-btn">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Financial Records</span>
+            </a>
         </div>
-    </div>
-
-    <div class="modal fade" id="deleteEntryModal" tabindex="-1" aria-labelledby="deleteEntryModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content financial-delete-modal">
-                <div class="modal-header">
-                    <h2 class="modal-title h5" id="deleteEntryModalTitle">Delete Entry</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="financial-delete-text">Are you sure you want to delete this entry?</p>
-                    <p class="financial-delete-period" id="deleteEntryPeriodLabel">-</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn dashboard-action-btn primary" id="confirmDeleteEntryBtn">Delete Entry</button>
-                </div>
+        <div class="financial-context-grid">
+            <div class="financial-context-item">
+                <span class="financial-context-label">Client Name</span>
+                <strong id="financialClientName">-</strong>
+            </div>
+            <div class="financial-context-item">
+                <span class="financial-context-label">TIN</span>
+                <strong id="financialClientTin">-</strong>
+            </div>
+            <div class="financial-context-item">
+                <span class="financial-context-label">Trade Name</span>
+                <strong id="financialClientTradeName">-</strong>
             </div>
         </div>
-    </div>
-
-    <datalist id="financialTypeCodeOptions">
-        <option value="1701"></option>
-        <option value="2550M"></option>
-        <option value="Sales"></option>
-        <option value="Expenses"></option>
-        <option value="Withholding Tax"></option>
-        <option value="Professional Fee"></option>
-        <option value="Input VAT"></option>
-        <option value="Output VAT"></option>
-    </datalist>
-
-    <div class="toast-container position-fixed bottom-0 end-0 p-3 safebooks-toast-container" id="uiToastContainer" aria-live="polite" aria-atomic="true"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="{% static 'js/skeleton.js' %}"></script>
-    <script src="{% static 'js/app_shared.js' %}"></script>
-    <script>
-        (() => {
-            const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
-            const DESKTOP_QUERY = "(min-width: 992px)";
-            const AUTH_USER_KEY = "safebooks.authUser";
-            const LOGIN_WELCOME_KEY = "safebooks.loginWelcome";
-            const MONTH_NAMES = {
-                1: "January",
-                2: "February",
-                3: "March",
-                4: "April",
-                5: "May",
-                6: "June",
-                7: "July",
-                8: "August",
-                9: "September",
-                10: "October",
-                11: "November",
-                12: "December",
-            };
-
-            const body = document.body;
-            const sidebarToggle = document.getElementById("sidebarToggle");
-            const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
-            const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
-            const sidebarBackdrop = document.getElementById("sidebarBackdrop");
-            const dashboardUserAvatar = document.getElementById("dashboardUserAvatar");
-            const dashboardUserName = document.getElementById("dashboardUserName");
-            const dashboardProfileAction = document.getElementById("dashboardProfileAction");
-            const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
-            const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
-            const shared = window.SafeBooksShared || null;
-
-            if (!body) {
-                return;
-            }
-
-            window.setTimeout(() => {
-                if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
-                    body.classList.remove("skeleton-active");
-                    body.classList.add("skeleton-loaded");
-                }
-            }, 1800);
-
-            const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
-                ? shared.initializeSidebarBehavior({
-                    bodyElement: body,
-                    sidebarToggle,
-                    sidebarCollapseToggle,
-                    sidebarCollapseIcon,
-                    sidebarBackdrop,
-                    storageKey: SIDEBAR_STATE_KEY,
-                    desktopQuery: DESKTOP_QUERY,
-                })
-                : {
-                    closeMobileSidebar: () => {},
-                    restoreDesktopState: () => {},
-                };
-
-            const periodSelector = document.getElementById("periodSelector");
-            const periodHeading = document.getElementById("periodHeading");
-            const periodEntriesTag = document.getElementById("periodEntriesTag");
-            const financialTableBody = document.getElementById("financialTableBody");
-            const financialTableWrap = document.getElementById("financialTableWrap");
-            const financialEmptyState = document.getElementById("financialEmptyState");
-
-            const summaryTotalAmount = document.getElementById("summaryTotalAmount");
-            const summaryEntriesHint = document.getElementById("summaryEntriesHint");
-            const summaryTypeBreakdown = document.getElementById("summaryTypeBreakdown");
-            const summaryBreakdownEmpty = document.getElementById("summaryBreakdownEmpty");
-
-            const financialClientName = document.getElementById("financialClientName");
-            const financialClientTin = document.getElementById("financialClientTin");
-            const financialClientTradeName = document.getElementById("financialClientTradeName");
-            const financialBreadcrumbClient = document.getElementById("financialBreadcrumbClient");
-            const openClientAnalyticsButton = document.getElementById("openClientAnalyticsButton");
-            const financialAnalyticsNavLink = document.getElementById("financialAnalyticsNavLink");
-            const financialAddEntryButton = document.querySelector(".financial-add-entry-btn");
-            const uiToastContainer = document.getElementById("uiToastContainer");
-
-            const addEntryForm = document.getElementById("addEntryForm");
-            const editEntryForm = document.getElementById("editEntryForm");
-            const addLineItemsBody = document.getElementById("addLineItemsBody");
-            const editLineItemsBody = document.getElementById("editLineItemsBody");
-            const addLineItemBtn = document.getElementById("addLineItemBtn");
-            const editAddLineItemBtn = document.getElementById("editAddLineItemBtn");
-            const confirmDeleteEntryBtn = document.getElementById("confirmDeleteEntryBtn");
-            const deleteEntryPeriodLabel = document.getElementById("deleteEntryPeriodLabel");
-
-            const addEntryModalElement = document.getElementById("addEntryModal");
-            const editEntryModalElement = document.getElementById("editEntryModal");
-            const deleteEntryModalElement = document.getElementById("deleteEntryModal");
-
-            const addEntryModal = addEntryModalElement && window.bootstrap ? new window.bootstrap.Modal(addEntryModalElement) : null;
-            const editEntryModal = editEntryModalElement && window.bootstrap ? new window.bootstrap.Modal(editEntryModalElement) : null;
-            const deleteEntryModal = deleteEntryModalElement && window.bootstrap ? new window.bootstrap.Modal(deleteEntryModalElement) : null;
-
-            const CLIENTS_API_URL = "{% url 'api_clients' %}";
-            const FINANCIAL_RECORDS_CLIENT_TEMPLATE_URL = "{% url 'api_financial_records' client_id=999999 %}";
-            const FINANCIAL_RECORDS_DETAIL_TEMPLATE_URL = "{% url 'api_financial_record_detail' client_id=999999 record_id=888888 %}";
-            const ANALYTICS_PAGE_URL = "{% url 'analytics' %}";
-
-            const currencyFormatter = new Intl.NumberFormat("en-PH", {
-                style: "currency",
-                currency: "PHP",
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-
-            const urlParams = new URLSearchParams(window.location.search);
-            let activeClientId = Number.parseInt(urlParams.get("client_id") || "", 10);
-            if (!Number.isFinite(activeClientId) || activeClientId <= 0) {
-                activeClientId = null;
-            }
-
-            const clientContext = {
-                name: urlParams.get("client") || "",
-                tin: urlParams.get("tin") || "",
-                tradeName: urlParams.get("trade") || "",
-            };
-
-            let activeMonth = Number.parseInt(urlParams.get("month") || "", 10);
-            if (!Number.isFinite(activeMonth) || activeMonth < 1 || activeMonth > 12) {
-                activeMonth = new Date().getMonth() + 1;
-            }
-
-            let activeYear = Number.parseInt(urlParams.get("year") || "", 10);
-            if (!Number.isFinite(activeYear) || activeYear < 2000 || activeYear > 2100) {
-                activeYear = new Date().getFullYear();
-            }
-
-            let activeRecords = [];
-            let activeSummary = null;
-            let filterTransitionTimer = null;
-            let pendingDeleteEntryId = null;
-            let lineItemCounter = 20;
-            let isAddSubmitting = false;
-            let isEditSubmitting = false;
-            let recordsLoadRequestToken = 0;
-            let recordsLoadAbortController = null;
-            let isRecordsLoading = false;
-            const expandedEntryIds = new Set();
-            const lineItemAnimationMs = 180;
-
-            const parseAmount = (value) => {
-                const parsedValue = Number.parseFloat(value || "0");
-                return Number.isFinite(parsedValue) ? parsedValue : 0;
-            };
-
-            const formatCurrency = (value) => currencyFormatter.format(value || 0);
-
-            const hasValidClientId = () => Number.isFinite(activeClientId) && activeClientId > 0;
-
-            const buildRecordsApiUrl = (clientId) => {
-                return FINANCIAL_RECORDS_CLIENT_TEMPLATE_URL.replace("999999", String(clientId));
-            };
-
-            const buildRecordDetailApiUrl = (clientId, recordId) => {
-                return FINANCIAL_RECORDS_DETAIL_TEMPLATE_URL
-                    .replace("999999", String(clientId))
-                    .replace("888888", String(recordId));
-            };
-
-            const buildClientAnalyticsUrl = () => {
-                if (!hasValidClientId()) {
-                    return ANALYTICS_PAGE_URL;
-                }
-
-                const params = new URLSearchParams();
-                params.set("client_id", String(activeClientId));
-                params.set("client", clientContext.name || "");
-                params.set("tin", clientContext.tin || "");
-                params.set("trade", clientContext.tradeName || "");
-                return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
-            };
-
-            const syncAnalyticsLinks = () => {
-                const targetUrl = buildClientAnalyticsUrl();
-                if (financialAnalyticsNavLink) {
-                    financialAnalyticsNavLink.href = targetUrl;
-                }
-                if (openClientAnalyticsButton) {
-                    openClientAnalyticsButton.disabled = isRecordsLoading || !hasValidClientId();
-                }
-                if (financialAddEntryButton) {
-                    financialAddEntryButton.disabled = isRecordsLoading || !hasValidClientId();
-                }
-            };
-
-            const goToClientAnalytics = () => {
-                if (isRecordsLoading) {
-                    showToast("Please wait for records to finish loading.");
-                    return;
-                }
-
-                if (!hasValidClientId()) {
-                    showToast("Select a valid client first.");
-                    return;
-                }
-
-                window.location.assign(buildClientAnalyticsUrl());
-            };
-
-            const getCookieValue = (cookieName) => {
-                if (!shared || typeof shared.getCookieValue !== "function") {
-                    return "";
-                }
-
-                return shared.getCookieValue(cookieName);
-            };
-
-            const parseJsonSafe = (response) => {
-                if (!shared || typeof shared.parseJsonSafe !== "function") {
-                    return Promise.resolve(null);
-                }
-
-                return shared.parseJsonSafe(response);
-            };
-
-            const redirectToLogin = () => {
-                const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
-                window.location.assign(`{% url 'login' %}?next=${nextPath}`);
-            };
-
-            const escapeHtml = (value) => {
-                return String(value || "")
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/\"/g, "&quot;")
-                    .replace(/'/g, "&#39;");
-            };
-
-            const showToast = (message) => {
-                if (!shared || typeof shared.showToast !== "function") {
-                    return;
-                }
-
-                shared.showToast(uiToastContainer, message, "", {
-                    delay: 2400,
-                });
-            };
-
-            const logoutCurrentUser = async () => {
-                if (!shared || typeof shared.logoutCurrentUser !== "function") {
-                    return "{% url 'login' %}";
-                }
-
-                return shared.logoutCurrentUser({
-                    logoutUrl: "{% url 'api_logout' %}",
-                    loginUrl: "{% url 'login' %}",
-                    authUserKey: AUTH_USER_KEY,
-                    loginWelcomeKey: LOGIN_WELCOME_KEY,
-                });
-            };
-
-            const hydrateHeaderUser = () => {
-                if (!shared || typeof shared.hydrateHeaderUser !== "function") {
-                    return;
-                }
-
-                shared.hydrateHeaderUser({
-                    avatarElement: dashboardUserAvatar,
-                    nameElement: dashboardUserName,
-                    authUserKey: AUTH_USER_KEY,
-                    defaultName: "Bookkeeper User",
-                    defaultInitials: "SB",
-                });
-            };
-
-            const toDisplayText = (value) => {
-                const normalized = String(value || "").trim();
-                return normalized || "-";
-            };
-
-            const getActiveMonthLabel = () => MONTH_NAMES[activeMonth] || "Selected Period";
-
-            const getEntryLineItems = (entry) => {
-                if (!entry || !Array.isArray(entry.line_items)) {
-                    return [];
-                }
-                return entry.line_items;
-            };
-
-            const getEntryTotal = (entry) => {
-                return getEntryLineItems(entry).reduce((total, lineItem) => total + parseAmount(lineItem.amount), 0);
-            };
-
-            const getEntryById = (entryId) => {
-                return activeRecords.find((entry) => entry.id === entryId) || null;
-            };
-
-            const updateLineItemRemoveButtons = (tbodyElement) => {
-                if (!tbodyElement) {
-                    return;
-                }
-                const rows = Array.from(tbodyElement.querySelectorAll("tr"));
-                rows.forEach((row) => {
-                    const removeButton = row.querySelector("[data-line-action='remove']");
-                    if (removeButton) {
-                        removeButton.disabled = rows.length <= 1;
-                    }
-                });
-            };
-
-            const createLineItemRow = (lineItem = {}) => {
-                const row = document.createElement("tr");
-                row.className = "financial-line-item-row is-entering";
-                row.dataset.lineItemId = String(lineItem.id || ++lineItemCounter);
-
-                const safeTypeCode = escapeHtml(lineItem.type_code || lineItem.typeCode || "");
-                const safeDescription = escapeHtml(lineItem.description || "");
-                const safeAmount = Number.isFinite(Number.parseFloat(lineItem.amount)) ? escapeHtml(String(lineItem.amount)) : "";
-
-                row.innerHTML = `
-                    <td>
-                        <input type="text" class="form-control financial-form-input financial-line-code-input" list="financialTypeCodeOptions" placeholder="Enter or select tax code (e.g., 1701, 2550M)" value="${safeTypeCode}" required>
-                    </td>
-                    <td>
-                        <input type="text" class="form-control financial-form-input financial-line-description-input" placeholder="Describe this line item" value="${safeDescription}" required>
-                    </td>
-                    <td>
-                        <input type="number" class="form-control financial-form-input financial-line-amount-input" min="0" step="0.01" placeholder="Enter amount here" value="${safeAmount}" required>
-                    </td>
-                    <td>
-                        <button type="button" class="btn financial-line-remove-btn" data-line-action="remove" aria-label="Remove line item">
-                            <i class="bi bi-trash3"></i>
-                        </button>
-                    </td>
-                `;
-
-                window.requestAnimationFrame(() => {
-                    row.classList.remove("is-entering");
-                });
-
-                return row;
-            };
-
-            const addLineItemRow = (tbodyElement, lineItem = {}) => {
-                if (!tbodyElement) {
-                    return;
-                }
-                tbodyElement.appendChild(createLineItemRow(lineItem));
-                updateLineItemRemoveButtons(tbodyElement);
-            };
-
-            const resetLineItemsBody = (tbodyElement, lineItems = []) => {
-                if (!tbodyElement) {
-                    return;
-                }
-
-                tbodyElement.innerHTML = "";
-                const itemsToRender = Array.isArray(lineItems) && lineItems.length ? lineItems : [{}];
-                itemsToRender.forEach((lineItem) => addLineItemRow(tbodyElement, lineItem));
-            };
-
-            const removeLineItemRow = (tbodyElement, rowElement) => {
-                if (!tbodyElement || !rowElement) {
-                    return;
-                }
-
-                const rows = Array.from(tbodyElement.querySelectorAll("tr"));
-                if (rows.length <= 1) {
-                    return;
-                }
-
-                rowElement.classList.add("is-removing");
-                window.setTimeout(() => {
-                    rowElement.remove();
-                    updateLineItemRemoveButtons(tbodyElement);
-                }, lineItemAnimationMs);
-            };
-
-            const collectLineItems = (tbodyElement) => {
-                if (!tbodyElement) {
-                    return [];
-                }
-
-                return Array.from(tbodyElement.querySelectorAll("tr")).map((row) => {
-                    const typeCodeInput = row.querySelector(".financial-line-code-input");
-                    const descriptionInput = row.querySelector(".financial-line-description-input");
-                    const amountInput = row.querySelector(".financial-line-amount-input");
-
-                    return {
-                        type_code: typeCodeInput ? typeCodeInput.value.trim() : "",
-                        description: descriptionInput ? descriptionInput.value.trim() : "",
-                        amount: amountInput ? amountInput.value.trim() : ""
-                    };
-                });
-            };
-
-            const buildBreakdownByType = (entries) => {
-                const totalsByType = new Map();
-
-                entries.forEach((entry) => {
-                    getEntryLineItems(entry).forEach((lineItem) => {
-                        const key = toDisplayText(lineItem.type_code || "Uncategorized");
-                        const currentTotal = totalsByType.get(key) || 0;
-                        totalsByType.set(key, currentTotal + parseAmount(lineItem.amount));
-                    });
-                });
-
-                return Array.from(totalsByType.entries())
-                    .map(([typeCode, totalAmount]) => ({ typeCode, totalAmount }))
-                    .sort((a, b) => b.totalAmount - a.totalAmount);
-            };
-
-            const renderSummary = () => {
-                const fallbackTotalAmount = activeRecords.reduce((grandTotal, entry) => grandTotal + getEntryTotal(entry), 0);
-                const fallbackLineItemsCount = activeRecords.reduce((count, entry) => count + getEntryLineItems(entry).length, 0);
-                const fallbackBreakdown = buildBreakdownByType(activeRecords);
-
-                const totalAmount = activeSummary ? parseAmount(activeSummary.total_amount) : fallbackTotalAmount;
-                const totalLineItems = activeSummary ? Number.parseInt(activeSummary.line_item_count || 0, 10) : fallbackLineItemsCount;
-                const breakdownByType = activeSummary && Array.isArray(activeSummary.breakdown)
-                    ? activeSummary.breakdown.map((item) => ({
-                        typeCode: item.type_code || "Uncategorized",
-                        totalAmount: parseAmount(item.total_amount),
-                    }))
-                    : fallbackBreakdown;
-
-                if (summaryTotalAmount) {
-                    summaryTotalAmount.textContent = formatCurrency(totalAmount);
-                }
-
-                if (summaryEntriesHint) {
-                    const entryCountLabel = `${activeRecords.length} ${activeRecords.length === 1 ? "entry" : "entries"}`;
-                    const itemCountLabel = `${totalLineItems} ${totalLineItems === 1 ? "line item" : "line items"}`;
-                    summaryEntriesHint.textContent = `${entryCountLabel} • ${itemCountLabel}`;
-                }
-
-                if (summaryTypeBreakdown) {
-                    summaryTypeBreakdown.innerHTML = "";
-                    breakdownByType.forEach((item) => {
-                        const listItem = document.createElement("li");
-                        listItem.className = "financial-breakdown-item";
-                        listItem.innerHTML = `<span>${escapeHtml(item.typeCode)}</span><strong>${formatCurrency(parseAmount(item.totalAmount))}</strong>`;
-                        summaryTypeBreakdown.appendChild(listItem);
-                    });
-                }
-
-                if (summaryBreakdownEmpty) {
-                    summaryBreakdownEmpty.hidden = breakdownByType.length !== 0;
-                }
-            };
-
-            const renderEntryDetailsTable = (entry) => {
-                const lineItems = getEntryLineItems(entry);
-                if (!lineItems.length) {
-                    return '<p class="financial-entry-no-items">No line items available for this entry.</p>';
-                }
-
-                const rowsMarkup = lineItems
-                    .map((lineItem) => {
-                        const safeTypeCode = escapeHtml(toDisplayText(lineItem.type_code));
-                        const safeDescription = escapeHtml(toDisplayText(lineItem.description));
-                        return `
-                            <tr>
-                                <td>${safeTypeCode}</td>
-                                <td>${safeDescription}</td>
-                                <td>${formatCurrency(parseAmount(lineItem.amount))}</td>
-                            </tr>
-                        `;
-                    })
-                    .join("");
-
-                return `
-                    <div class="table-responsive">
-                        <table class="table align-middle financial-line-items-preview-table mb-0">
+    </article>
+
+    <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.1s;">
+        <div class="financial-action-bar">
+            <label class="financial-period-select-wrap" for="periodSelector">
+                <span class="financial-period-label">Period</span>
+                <select class="form-select financial-period-select" id="periodSelector" aria-label="Select period month">
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </label>
+            <button type="button" class="btn dashboard-action-btn outline" id="openClientAnalyticsButton" title="Open Analytics for this client">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>View Client Analytics</span>
+            </button>
+            <button type="button" class="btn dashboard-action-btn primary financial-add-entry-btn" data-bs-toggle="modal" data-bs-target="#addEntryModal">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Financial Entry</span>
+            </button>
+        </div>
+    </article>
+
+    <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.16s;">
+        <div class="dashboard-card-head">
+            <h2 id="periodHeading">January Records</h2>
+            <span class="dashboard-tag" id="periodEntriesTag">0 Entries</span>
+        </div>
+
+        <p class="financial-records-hint">Entries are grouped by period. Add new entries as needed</p>
+
+        <div class="table-responsive" id="financialTableWrap">
+            <table class="table table-hover align-middle dashboard-table financial-table mb-0" id="financialTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Total Amount</th>
+                        <th>Line Items</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="financialTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="financial-empty-state" id="financialEmptyState" hidden>
+            <p>No entries for this period</p>
+            <button type="button" class="btn dashboard-action-btn primary" data-bs-toggle="modal" data-bs-target="#addEntryModal">Add First Entry</button>
+        </div>
+    </article>
+
+    <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.22s;">
+        <div class="dashboard-card-head">
+            <h2>Period Summary</h2>
+        </div>
+        <div class="financial-summary-grid">
+            <div class="financial-summary-item financial-summary-item-total">
+                <p>Total Amount</p>
+                <h3 id="summaryTotalAmount">&#8369;0.00</h3>
+                <small id="summaryEntriesHint">0 entries in this period</small>
+            </div>
+            <div class="financial-summary-item financial-summary-item-breakdown">
+                <p>Breakdown by Type / Code</p>
+                <ul class="financial-breakdown-list" id="summaryTypeBreakdown"></ul>
+                <p class="financial-breakdown-empty" id="summaryBreakdownEmpty">No type breakdown available for this period.</p>
+            </div>
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block after_layout %}
+<div class="modal fade financial-manage-modal" id="addEntryModal" tabindex="-1" aria-labelledby="addEntryModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form class="modal-content" id="addEntryForm" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="addEntryModalTitle">Add Financial Entry</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="dashboard-section-hint mb-3">Enter details for each transaction or tax type</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label financial-form-label" for="addEntryDate">Date</label>
+                        <input class="form-control financial-form-input" id="addEntryDate" name="date" type="date" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label financial-form-label" for="addEntryNotes">Notes (optional)</label>
+                        <input class="form-control financial-form-input" id="addEntryNotes" name="notes" type="text" placeholder="Enter brief note">
+                    </div>
+                </div>
+
+                <section class="financial-line-items-section" aria-label="Dynamic line items">
+                    <div class="financial-line-items-head">
+                        <div>
+                            <h3 class="financial-line-items-title">Line Items</h3>
+                            <p class="financial-line-items-help">Add multiple transaction types or tax codes for this entry</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive financial-line-items-table-wrap">
+                        <table class="table align-middle financial-line-items-table mb-0">
                             <thead>
                                 <tr>
                                     <th>Type / Code</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                ${rowsMarkup}
-                            </tbody>
+                            <tbody id="addLineItemsBody"></tbody>
                         </table>
                     </div>
-                `;
+                    <button type="button" class="btn dashboard-action-btn outline financial-add-line-item-btn" id="addLineItemBtn">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Add Line Item</span>
+                    </button>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn dashboard-action-btn primary">Save Financial Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade financial-manage-modal" id="editEntryModal" tabindex="-1" aria-labelledby="editEntryModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form class="modal-content" id="editEntryForm" novalidate>
+            <input type="hidden" id="editEntryId" name="entry_id">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="editEntryModalTitle">Edit Financial Entry</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="dashboard-section-hint mb-3">Enter details for each transaction or tax type</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label financial-form-label" for="editEntryDate">Date</label>
+                        <input class="form-control financial-form-input" id="editEntryDate" name="date" type="date" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label financial-form-label" for="editEntryNotes">Notes (optional)</label>
+                        <input class="form-control financial-form-input" id="editEntryNotes" name="notes" type="text" placeholder="Enter brief note">
+                    </div>
+                </div>
+
+                <section class="financial-line-items-section" aria-label="Edit line items">
+                    <div class="financial-line-items-head">
+                        <div>
+                            <h3 class="financial-line-items-title">Line Items</h3>
+                            <p class="financial-line-items-help">Add multiple transaction types or tax codes for this entry</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive financial-line-items-table-wrap">
+                        <table class="table align-middle financial-line-items-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Type / Code</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="editLineItemsBody"></tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn dashboard-action-btn outline financial-add-line-item-btn" id="editAddLineItemBtn">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Add Line Item</span>
+                    </button>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn dashboard-action-btn primary">Update Financial Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteEntryModal" tabindex="-1" aria-labelledby="deleteEntryModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content financial-delete-modal">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="deleteEntryModalTitle">Delete Entry</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="financial-delete-text">Are you sure you want to delete this entry?</p>
+                <p class="financial-delete-period" id="deleteEntryPeriodLabel">-</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn dashboard-action-btn primary" id="confirmDeleteEntryBtn">Delete Entry</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<datalist id="financialTypeCodeOptions">
+    <option value="1701"></option>
+    <option value="2550M"></option>
+    <option value="Sales"></option>
+    <option value="Expenses"></option>
+    <option value="Withholding Tax"></option>
+    <option value="Professional Fee"></option>
+    <option value="Input VAT"></option>
+    <option value="Output VAT"></option>
+</datalist>
+{% endblock %}
+
+{% block toast_container %}
+<div class="toast-container position-fixed bottom-0 end-0 p-3 safebooks-toast-container" id="uiToastContainer" aria-live="polite" aria-atomic="true"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (() => {
+        const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
+        const DESKTOP_QUERY = "(min-width: 992px)";
+        const AUTH_USER_KEY = "safebooks.authUser";
+        const LOGIN_WELCOME_KEY = "safebooks.loginWelcome";
+        const MONTH_NAMES = {
+            1: "January",
+            2: "February",
+            3: "March",
+            4: "April",
+            5: "May",
+            6: "June",
+            7: "July",
+            8: "August",
+            9: "September",
+            10: "October",
+            11: "November",
+            12: "December",
+        };
+
+        const body = document.body;
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
+        const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
+        const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+        const dashboardUserAvatar = document.getElementById("dashboardUserAvatar");
+        const dashboardUserName = document.getElementById("dashboardUserName");
+        const dashboardProfileAction = document.getElementById("dashboardProfileAction");
+        const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
+        const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
+        const shared = window.SafeBooksShared || null;
+
+        if (!body) {
+            return;
+        }
+
+        window.setTimeout(() => {
+            if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
+                body.classList.remove("skeleton-active");
+                body.classList.add("skeleton-loaded");
+            }
+        }, 1800);
+
+        const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
+            ? shared.initializeSidebarBehavior({
+                bodyElement: body,
+                sidebarToggle,
+                sidebarCollapseToggle,
+                sidebarCollapseIcon,
+                sidebarBackdrop,
+                storageKey: SIDEBAR_STATE_KEY,
+                desktopQuery: DESKTOP_QUERY,
+            })
+            : {
+                closeMobileSidebar: () => {},
+                restoreDesktopState: () => {},
             };
 
-            const toggleEntryExpansion = (entryId) => {
-                if (expandedEntryIds.has(entryId)) {
-                    expandedEntryIds.delete(entryId);
-                } else {
-                    expandedEntryIds.add(entryId);
+        const periodSelector = document.getElementById("periodSelector");
+        const periodHeading = document.getElementById("periodHeading");
+        const periodEntriesTag = document.getElementById("periodEntriesTag");
+        const financialTableBody = document.getElementById("financialTableBody");
+        const financialTableWrap = document.getElementById("financialTableWrap");
+        const financialEmptyState = document.getElementById("financialEmptyState");
+
+        const summaryTotalAmount = document.getElementById("summaryTotalAmount");
+        const summaryEntriesHint = document.getElementById("summaryEntriesHint");
+        const summaryTypeBreakdown = document.getElementById("summaryTypeBreakdown");
+        const summaryBreakdownEmpty = document.getElementById("summaryBreakdownEmpty");
+
+        const financialClientName = document.getElementById("financialClientName");
+        const financialClientTin = document.getElementById("financialClientTin");
+        const financialClientTradeName = document.getElementById("financialClientTradeName");
+        const financialBreadcrumbClient = document.getElementById("financialBreadcrumbClient");
+        const openClientAnalyticsButton = document.getElementById("openClientAnalyticsButton");
+        const financialAnalyticsNavLink = document.getElementById("financialAnalyticsNavLink");
+        const financialAddEntryButton = document.querySelector(".financial-add-entry-btn");
+        const uiToastContainer = document.getElementById("uiToastContainer");
+
+        const addEntryForm = document.getElementById("addEntryForm");
+        const editEntryForm = document.getElementById("editEntryForm");
+        const addLineItemsBody = document.getElementById("addLineItemsBody");
+        const editLineItemsBody = document.getElementById("editLineItemsBody");
+        const addLineItemBtn = document.getElementById("addLineItemBtn");
+        const editAddLineItemBtn = document.getElementById("editAddLineItemBtn");
+        const confirmDeleteEntryBtn = document.getElementById("confirmDeleteEntryBtn");
+        const deleteEntryPeriodLabel = document.getElementById("deleteEntryPeriodLabel");
+
+        const addEntryModalElement = document.getElementById("addEntryModal");
+        const editEntryModalElement = document.getElementById("editEntryModal");
+        const deleteEntryModalElement = document.getElementById("deleteEntryModal");
+
+        const addEntryModal = addEntryModalElement && window.bootstrap ? new window.bootstrap.Modal(addEntryModalElement) : null;
+        const editEntryModal = editEntryModalElement && window.bootstrap ? new window.bootstrap.Modal(editEntryModalElement) : null;
+        const deleteEntryModal = deleteEntryModalElement && window.bootstrap ? new window.bootstrap.Modal(deleteEntryModalElement) : null;
+
+        const CLIENTS_API_URL = "{% url 'api_clients' %}";
+        const FINANCIAL_RECORDS_CLIENT_TEMPLATE_URL = "{% url 'api_financial_records' client_id=999999 %}";
+        const FINANCIAL_RECORDS_DETAIL_TEMPLATE_URL = "{% url 'api_financial_record_detail' client_id=999999 record_id=888888 %}";
+        const ANALYTICS_PAGE_URL = "{% url 'analytics' %}";
+
+        const currencyFormatter = new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let activeClientId = Number.parseInt(urlParams.get("client_id") || "", 10);
+        if (!Number.isFinite(activeClientId) || activeClientId <= 0) {
+            activeClientId = null;
+        }
+
+        const clientContext = {
+            name: urlParams.get("client") || "",
+            tin: urlParams.get("tin") || "",
+            tradeName: urlParams.get("trade") || "",
+        };
+
+        let activeMonth = Number.parseInt(urlParams.get("month") || "", 10);
+        if (!Number.isFinite(activeMonth) || activeMonth < 1 || activeMonth > 12) {
+            activeMonth = new Date().getMonth() + 1;
+        }
+
+        let activeYear = Number.parseInt(urlParams.get("year") || "", 10);
+        if (!Number.isFinite(activeYear) || activeYear < 2000 || activeYear > 2100) {
+            activeYear = new Date().getFullYear();
+        }
+
+        let activeRecords = [];
+        let activeSummary = null;
+        let filterTransitionTimer = null;
+        let pendingDeleteEntryId = null;
+        let lineItemCounter = 20;
+        let isAddSubmitting = false;
+        let isEditSubmitting = false;
+        let recordsLoadRequestToken = 0;
+        let recordsLoadAbortController = null;
+        let isRecordsLoading = false;
+        const expandedEntryIds = new Set();
+        const lineItemAnimationMs = 180;
+
+        const parseAmount = (value) => {
+            const parsedValue = Number.parseFloat(value || "0");
+            return Number.isFinite(parsedValue) ? parsedValue : 0;
+        };
+
+        const formatCurrency = (value) => currencyFormatter.format(value || 0);
+
+        const hasValidClientId = () => Number.isFinite(activeClientId) && activeClientId > 0;
+
+        const buildRecordsApiUrl = (clientId) => {
+            return FINANCIAL_RECORDS_CLIENT_TEMPLATE_URL.replace("999999", String(clientId));
+        };
+
+        const buildRecordDetailApiUrl = (clientId, recordId) => {
+            return FINANCIAL_RECORDS_DETAIL_TEMPLATE_URL
+                .replace("999999", String(clientId))
+                .replace("888888", String(recordId));
+        };
+
+        const buildClientAnalyticsUrl = () => {
+            if (!hasValidClientId()) {
+                return ANALYTICS_PAGE_URL;
+            }
+
+            const params = new URLSearchParams();
+            params.set("client_id", String(activeClientId));
+            params.set("client", clientContext.name || "");
+            params.set("tin", clientContext.tin || "");
+            params.set("trade", clientContext.tradeName || "");
+            return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
+        };
+
+        const syncAnalyticsLinks = () => {
+            const targetUrl = buildClientAnalyticsUrl();
+            if (financialAnalyticsNavLink) {
+                financialAnalyticsNavLink.href = targetUrl;
+            }
+            if (openClientAnalyticsButton) {
+                openClientAnalyticsButton.disabled = isRecordsLoading || !hasValidClientId();
+            }
+            if (financialAddEntryButton) {
+                financialAddEntryButton.disabled = isRecordsLoading || !hasValidClientId();
+            }
+        };
+
+        const goToClientAnalytics = () => {
+            if (isRecordsLoading) {
+                showToast("Please wait for records to finish loading.");
+                return;
+            }
+
+            if (!hasValidClientId()) {
+                showToast("Select a valid client first.");
+                return;
+            }
+
+            window.location.assign(buildClientAnalyticsUrl());
+        };
+
+        const getCookieValue = (cookieName) => {
+            if (!shared || typeof shared.getCookieValue !== "function") {
+                return "";
+            }
+
+            return shared.getCookieValue(cookieName);
+        };
+
+        const parseJsonSafe = (response) => {
+            if (!shared || typeof shared.parseJsonSafe !== "function") {
+                return Promise.resolve(null);
+            }
+
+            return shared.parseJsonSafe(response);
+        };
+
+        const redirectToLogin = () => {
+            const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+        };
+
+        const escapeHtml = (value) => {
+            return String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        };
+
+        const showToast = (message) => {
+            if (!shared || typeof shared.showToast !== "function") {
+                return;
+            }
+
+            shared.showToast(uiToastContainer, message, "", {
+                delay: 2400,
+            });
+        };
+
+        const logoutCurrentUser = async () => {
+            if (!shared || typeof shared.logoutCurrentUser !== "function") {
+                return "{% url 'login' %}";
+            }
+
+            return shared.logoutCurrentUser({
+                logoutUrl: "{% url 'api_logout' %}",
+                loginUrl: "{% url 'login' %}",
+                authUserKey: AUTH_USER_KEY,
+                loginWelcomeKey: LOGIN_WELCOME_KEY,
+            });
+        };
+
+        const hydrateHeaderUser = () => {
+            if (!shared || typeof shared.hydrateHeaderUser !== "function") {
+                return;
+            }
+
+            shared.hydrateHeaderUser({
+                avatarElement: dashboardUserAvatar,
+                nameElement: dashboardUserName,
+                authUserKey: AUTH_USER_KEY,
+                defaultName: "Bookkeeper User",
+                defaultInitials: "SB",
+            });
+        };
+
+        const toDisplayText = (value) => {
+            const normalized = String(value || "").trim();
+            return normalized || "-";
+        };
+
+        const getActiveMonthLabel = () => MONTH_NAMES[activeMonth] || "Selected Period";
+        const getActivePeriodLabel = () => `${getActiveMonthLabel()} ${activeYear}`;
+
+        const getEntryLineItems = (entry) => {
+            if (!entry || !Array.isArray(entry.line_items)) {
+                return [];
+            }
+            return entry.line_items;
+        };
+
+        const getEntryTotal = (entry) => {
+            return getEntryLineItems(entry).reduce((total, lineItem) => total + parseAmount(lineItem.amount), 0);
+        };
+
+        const getEntryById = (entryId) => {
+            return activeRecords.find((entry) => entry.id === entryId) || null;
+        };
+
+        const updateLineItemRemoveButtons = (tbodyElement) => {
+            if (!tbodyElement) {
+                return;
+            }
+            const rows = Array.from(tbodyElement.querySelectorAll("tr"));
+            rows.forEach((row) => {
+                const removeButton = row.querySelector("[data-line-action='remove']");
+                if (removeButton) {
+                    removeButton.disabled = rows.length <= 1;
                 }
-                renderEntriesTable();
-            };
+            });
+        };
 
-            const updateClientContext = (name, tin, tradeName) => {
-                const displayName = toDisplayText(name);
-                const displayTin = toDisplayText(tin);
-                const displayTradeName = toDisplayText(tradeName);
+        const createLineItemRow = (lineItem = {}) => {
+            const row = document.createElement("tr");
+            row.className = "financial-line-item-row is-entering";
+            row.dataset.lineItemId = String(lineItem.id || ++lineItemCounter);
 
-                if (financialClientName) {
-                    financialClientName.textContent = displayName;
-                }
-                if (financialClientTin) {
-                    financialClientTin.textContent = displayTin;
-                }
-                if (financialClientTradeName) {
-                    financialClientTradeName.textContent = displayTradeName;
-                }
-                if (financialBreadcrumbClient) {
-                    financialBreadcrumbClient.textContent = displayName;
-                }
+            const safeTypeCode = escapeHtml(lineItem.type_code || lineItem.typeCode || "");
+            const safeDescription = escapeHtml(lineItem.description || "");
+            const safeAmount = Number.isFinite(Number.parseFloat(lineItem.amount)) ? escapeHtml(String(lineItem.amount)) : "";
 
-                syncAnalyticsLinks();
-            };
+            row.innerHTML = `
+                <td>
+                    <input type="text" class="form-control financial-form-input financial-line-code-input" list="financialTypeCodeOptions" placeholder="Enter or select tax code (e.g., 1701, 2550M)" value="${safeTypeCode}" required>
+                </td>
+                <td>
+                    <input type="text" class="form-control financial-form-input financial-line-description-input" placeholder="Describe this line item" value="${safeDescription}" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control financial-form-input financial-line-amount-input" min="0" step="0.01" placeholder="Enter amount here" value="${safeAmount}" required>
+                </td>
+                <td>
+                    <button type="button" class="btn financial-line-remove-btn" data-line-action="remove" aria-label="Remove line item">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </td>
+            `;
 
-            const setRecordsLoadingState = (isLoading, message = "Loading financial records...") => {
-                isRecordsLoading = Boolean(isLoading);
+            window.requestAnimationFrame(() => {
+                row.classList.remove("is-entering");
+            });
 
-                if (financialTableBody) {
-                    financialTableBody.setAttribute("aria-busy", String(isRecordsLoading));
-                    if (isRecordsLoading) {
-                        financialTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4">${escapeHtml(message)}</td></tr>`;
-                    }
-                }
+            return row;
+        };
 
-                if (financialTableWrap && isRecordsLoading) {
-                    financialTableWrap.hidden = false;
-                }
+        const addLineItemRow = (tbodyElement, lineItem = {}) => {
+            if (!tbodyElement) {
+                return;
+            }
+            tbodyElement.appendChild(createLineItemRow(lineItem));
+            updateLineItemRemoveButtons(tbodyElement);
+        };
 
-                if (financialEmptyState && isRecordsLoading) {
-                    financialEmptyState.hidden = true;
-                }
+        const resetLineItemsBody = (tbodyElement, lineItems = []) => {
+            if (!tbodyElement) {
+                return;
+            }
 
-                if (periodEntriesTag && isRecordsLoading) {
-                    periodEntriesTag.textContent = "Loading...";
-                }
+            tbodyElement.innerHTML = "";
+            const itemsToRender = Array.isArray(lineItems) && lineItems.length ? lineItems : [{}];
+            itemsToRender.forEach((lineItem) => addLineItemRow(tbodyElement, lineItem));
+        };
 
-                if (openClientAnalyticsButton) {
-                    openClientAnalyticsButton.disabled = isRecordsLoading || !hasValidClientId();
-                }
+        const removeLineItemRow = (tbodyElement, rowElement) => {
+            if (!tbodyElement || !rowElement) {
+                return;
+            }
 
-                if (financialAddEntryButton) {
-                    financialAddEntryButton.disabled = isRecordsLoading || !hasValidClientId();
-                }
-            };
+            const rows = Array.from(tbodyElement.querySelectorAll("tr"));
+            if (rows.length <= 1) {
+                return;
+            }
 
-            const renderEntriesTable = () => {
-                if (!financialTableBody) {
-                    return;
-                }
+            rowElement.classList.add("is-removing");
+            window.setTimeout(() => {
+                rowElement.remove();
+                updateLineItemRemoveButtons(tbodyElement);
+            }, lineItemAnimationMs);
+        };
 
-                const entries = activeRecords;
-                const periodLabel = getActiveMonthLabel();
+        const collectLineItems = (tbodyElement) => {
+            if (!tbodyElement) {
+                return [];
+            }
 
-                if (periodHeading) {
-                    periodHeading.textContent = `${periodLabel} Records`;
-                }
-                if (periodEntriesTag) {
-                    periodEntriesTag.textContent = `${entries.length} ${entries.length === 1 ? "Entry" : "Entries"}`;
-                }
-
-                financialTableBody.innerHTML = "";
-
-                if (!entries.length) {
-                    if (financialTableWrap) {
-                        financialTableWrap.hidden = true;
-                    }
-                    if (financialEmptyState) {
-                        financialEmptyState.hidden = false;
-                    }
-                    renderSummary();
-                    return;
-                }
-
-                entries.forEach((entry) => {
-                    const row = document.createElement("tr");
-                    const detailsRow = document.createElement("tr");
-                    const totalAmount = getEntryTotal(entry);
-                    const lineItemCount = getEntryLineItems(entry).length;
-                    const isExpanded = expandedEntryIds.has(entry.id);
-                    const safeDate = escapeHtml(toDisplayText(entry.date));
-                    const safeNotes = escapeHtml(toDisplayText(entry.notes));
-
-                    row.className = "financial-entry-row";
-                    row.dataset.entryId = String(entry.id);
-                    row.setAttribute("tabindex", "0");
-                    row.setAttribute("role", "button");
-                    row.setAttribute("aria-expanded", String(isExpanded));
-                    row.setAttribute("aria-label", `Toggle details for entry on ${toDisplayText(entry.date)}`);
-
-                    row.innerHTML = `
-                        <td>${safeDate}</td>
-                        <td>${formatCurrency(totalAmount)}</td>
-                        <td><span class="financial-line-item-count">${lineItemCount} ${lineItemCount === 1 ? "Line Item" : "Line Items"}</span></td>
-                        <td class="financial-entry-actions-cell">
-                            <div class="financial-entry-actions">
-                                <button type="button" class="btn financial-entry-btn toggle" data-entry-action="toggle" data-entry-id="${entry.id}"><i class="bi ${isExpanded ? "bi-chevron-up" : "bi-chevron-down"}"></i><span>${isExpanded ? "Collapse" : "Expand"}</span></button>
-                                <button type="button" class="btn financial-entry-btn edit" data-entry-action="edit" data-entry-id="${entry.id}"><i class="bi bi-pencil-square"></i><span>Edit Entry</span></button>
-                                <button type="button" class="btn financial-entry-btn delete" data-entry-action="delete" data-entry-id="${entry.id}"><i class="bi bi-trash3"></i><span>Delete Entry</span></button>
-                            </div>
-                        </td>
-                    `;
-
-                    detailsRow.className = "financial-entry-details-row";
-                    detailsRow.setAttribute("aria-hidden", String(!isExpanded));
-                    detailsRow.innerHTML = `
-                        <td colspan="4">
-                            <div class="financial-entry-details-shell${isExpanded ? " is-open" : ""}">
-                                <div class="financial-entry-details-head">
-                                    <h3>Line Items</h3>
-                                    <span class="dashboard-tag">${lineItemCount}</span>
-                                </div>
-                                ${renderEntryDetailsTable(entry)}
-                                <p class="financial-entry-notes"><span>Notes:</span> ${safeNotes}</p>
-                            </div>
-                        </td>
-                    `;
-
-                    financialTableBody.appendChild(row);
-                    financialTableBody.appendChild(detailsRow);
-                });
-
-                if (financialTableBody) {
-                    financialTableBody.classList.add("is-filtering");
-                    window.clearTimeout(filterTransitionTimer);
-                    filterTransitionTimer = window.setTimeout(() => {
-                        financialTableBody.classList.remove("is-filtering");
-                    }, 170);
-                }
-
-                if (financialTableWrap) {
-                    financialTableWrap.hidden = false;
-                }
-                if (financialEmptyState) {
-                    financialEmptyState.hidden = true;
-                }
-
-                renderSummary();
-            };
-
-            const populateEditForm = (entry) => {
-                const editEntryId = document.getElementById("editEntryId");
-                const editEntryDate = document.getElementById("editEntryDate");
-                const editEntryNotes = document.getElementById("editEntryNotes");
-
-                if (editEntryId) {
-                    editEntryId.value = String(entry.id);
-                }
-                if (editEntryDate) {
-                    editEntryDate.value = entry.date || "";
-                }
-                if (editEntryNotes) {
-                    editEntryNotes.value = entry.notes || "";
-                }
-
-                resetLineItemsBody(editLineItemsBody, getEntryLineItems(entry));
-            };
-
-            const buildPayloadFromForm = (formType) => {
-                const isEdit = formType === "edit";
-                const dateInput = document.getElementById(isEdit ? "editEntryDate" : "addEntryDate");
-                const notesInput = document.getElementById(isEdit ? "editEntryNotes" : "addEntryNotes");
-                const lineItemsBody = isEdit ? editLineItemsBody : addLineItemsBody;
-
-                const lineItems = collectLineItems(lineItemsBody);
+            return Array.from(tbodyElement.querySelectorAll("tr")).map((row) => {
+                const typeCodeInput = row.querySelector(".financial-line-code-input");
+                const descriptionInput = row.querySelector(".financial-line-description-input");
+                const amountInput = row.querySelector(".financial-line-amount-input");
 
                 return {
-                    month: activeMonth,
-                    year: activeYear,
-                    date: dateInput ? dateInput.value.trim() : "",
-                    notes: notesInput ? notesInput.value.trim() : "",
-                    line_items: lineItems,
+                    type_code: typeCodeInput ? typeCodeInput.value.trim() : "",
+                    description: descriptionInput ? descriptionInput.value.trim() : "",
+                    amount: amountInput ? amountInput.value.trim() : ""
                 };
+            });
+        };
+
+        const buildBreakdownByType = (entries) => {
+            const totalsByType = new Map();
+
+            entries.forEach((entry) => {
+                getEntryLineItems(entry).forEach((lineItem) => {
+                    const key = toDisplayText(lineItem.type_code || "Uncategorized");
+                    const currentTotal = totalsByType.get(key) || 0;
+                    totalsByType.set(key, currentTotal + parseAmount(lineItem.amount));
+                });
+            });
+
+            return Array.from(totalsByType.entries())
+                .map(([typeCode, totalAmount]) => ({ typeCode, totalAmount }))
+                .sort((a, b) => b.totalAmount - a.totalAmount);
+        };
+
+        const renderSummary = () => {
+            const fallbackTotalAmount = activeRecords.reduce((grandTotal, entry) => grandTotal + getEntryTotal(entry), 0);
+            const fallbackLineItemsCount = activeRecords.reduce((count, entry) => count + getEntryLineItems(entry).length, 0);
+            const fallbackBreakdown = buildBreakdownByType(activeRecords);
+
+            const totalAmount = activeSummary ? parseAmount(activeSummary.total_amount) : fallbackTotalAmount;
+            const totalLineItems = activeSummary ? Number.parseInt(activeSummary.line_item_count || 0, 10) : fallbackLineItemsCount;
+            const breakdownByType = activeSummary && Array.isArray(activeSummary.breakdown)
+                ? activeSummary.breakdown.map((item) => ({
+                    typeCode: item.type_code || "Uncategorized",
+                    totalAmount: parseAmount(item.total_amount),
+                }))
+                : fallbackBreakdown;
+
+            if (summaryTotalAmount) {
+                summaryTotalAmount.textContent = formatCurrency(totalAmount);
+            }
+
+            if (summaryEntriesHint) {
+                const entryCountLabel = `${activeRecords.length} ${activeRecords.length === 1 ? "entry" : "entries"}`;
+                const itemCountLabel = `${totalLineItems} ${totalLineItems === 1 ? "line item" : "line items"}`;
+                summaryEntriesHint.textContent = `${entryCountLabel} • ${itemCountLabel}`;
+            }
+
+            if (summaryTypeBreakdown) {
+                summaryTypeBreakdown.innerHTML = "";
+                breakdownByType.forEach((item) => {
+                    const listItem = document.createElement("li");
+                    listItem.className = "financial-breakdown-item";
+                    listItem.innerHTML = `<span>${escapeHtml(item.typeCode)}</span><strong>${formatCurrency(parseAmount(item.totalAmount))}</strong>`;
+                    summaryTypeBreakdown.appendChild(listItem);
+                });
+            }
+
+            if (summaryBreakdownEmpty) {
+                summaryBreakdownEmpty.hidden = breakdownByType.length !== 0;
+            }
+        };
+
+        const renderEntryDetailsTable = (entry) => {
+            const lineItems = getEntryLineItems(entry);
+            if (!lineItems.length) {
+                return '<p class="financial-entry-no-items">No line items available for this entry.</p>';
+            }
+
+            const rowsMarkup = lineItems
+                .map((lineItem) => {
+                    const safeTypeCode = escapeHtml(toDisplayText(lineItem.type_code));
+                    const safeDescription = escapeHtml(toDisplayText(lineItem.description));
+                    return `
+                        <tr>
+                            <td>${safeTypeCode}</td>
+                            <td>${safeDescription}</td>
+                            <td>${formatCurrency(parseAmount(lineItem.amount))}</td>
+                        </tr>
+                    `;
+                })
+                .join("");
+
+            return `
+                <div class="table-responsive">
+                    <table class="table align-middle financial-line-items-preview-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Type / Code</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsMarkup}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        };
+
+        const toggleEntryExpansion = (entryId) => {
+            if (expandedEntryIds.has(entryId)) {
+                expandedEntryIds.delete(entryId);
+            } else {
+                expandedEntryIds.add(entryId);
+            }
+            renderEntriesTable();
+        };
+
+        const updateClientContext = (name, tin, tradeName) => {
+            const displayName = toDisplayText(name);
+            const displayTin = toDisplayText(tin);
+            const displayTradeName = toDisplayText(tradeName);
+
+            if (financialClientName) {
+                financialClientName.textContent = displayName;
+            }
+            if (financialClientTin) {
+                financialClientTin.textContent = displayTin;
+            }
+            if (financialClientTradeName) {
+                financialClientTradeName.textContent = displayTradeName;
+            }
+            if (financialBreadcrumbClient) {
+                financialBreadcrumbClient.textContent = displayName;
+            }
+
+            syncAnalyticsLinks();
+        };
+
+        const setRecordsLoadingState = (isLoading, message = "Loading financial records...") => {
+            isRecordsLoading = Boolean(isLoading);
+
+            if (financialTableBody) {
+                financialTableBody.setAttribute("aria-busy", String(isRecordsLoading));
+                if (isRecordsLoading) {
+                    financialTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4">${escapeHtml(message)}</td></tr>`;
+                }
+            }
+
+            if (financialTableWrap && isRecordsLoading) {
+                financialTableWrap.hidden = false;
+            }
+
+            if (financialEmptyState && isRecordsLoading) {
+                financialEmptyState.hidden = true;
+            }
+
+            if (periodEntriesTag && isRecordsLoading) {
+                periodEntriesTag.textContent = "Loading...";
+            }
+
+            if (openClientAnalyticsButton) {
+                openClientAnalyticsButton.disabled = isRecordsLoading || !hasValidClientId();
+            }
+
+            if (financialAddEntryButton) {
+                financialAddEntryButton.disabled = isRecordsLoading || !hasValidClientId();
+            }
+        };
+
+        const renderEntriesTable = () => {
+            if (!financialTableBody) {
+                return;
+            }
+
+            const entries = activeRecords;
+            const periodLabel = getActivePeriodLabel();
+
+            if (periodHeading) {
+                periodHeading.textContent = `${periodLabel} Records`;
+            }
+            if (periodEntriesTag) {
+                periodEntriesTag.textContent = `${entries.length} ${entries.length === 1 ? "Entry" : "Entries"}`;
+            }
+
+            financialTableBody.innerHTML = "";
+
+            if (!entries.length) {
+                if (financialTableWrap) {
+                    financialTableWrap.hidden = true;
+                }
+                if (financialEmptyState) {
+                    financialEmptyState.hidden = false;
+                }
+                renderSummary();
+                return;
+            }
+
+            entries.forEach((entry) => {
+                const row = document.createElement("tr");
+                const detailsRow = document.createElement("tr");
+                const totalAmount = getEntryTotal(entry);
+                const lineItemCount = getEntryLineItems(entry).length;
+                const isExpanded = expandedEntryIds.has(entry.id);
+                const safeDate = escapeHtml(toDisplayText(entry.date));
+                const safeNotes = escapeHtml(toDisplayText(entry.notes));
+
+                row.className = "financial-entry-row";
+                row.dataset.entryId = String(entry.id);
+                row.setAttribute("tabindex", "0");
+                row.setAttribute("role", "button");
+                row.setAttribute("aria-expanded", String(isExpanded));
+                row.setAttribute("aria-label", `Toggle details for entry on ${toDisplayText(entry.date)}`);
+
+                row.innerHTML = `
+                    <td>${safeDate}</td>
+                    <td>${formatCurrency(totalAmount)}</td>
+                    <td><span class="financial-line-item-count">${lineItemCount} ${lineItemCount === 1 ? "Line Item" : "Line Items"}</span></td>
+                    <td class="financial-entry-actions-cell">
+                        <div class="financial-entry-actions">
+                            <button type="button" class="btn financial-entry-btn toggle" data-entry-action="toggle" data-entry-id="${entry.id}"><i class="bi ${isExpanded ? "bi-chevron-up" : "bi-chevron-down"}"></i><span>${isExpanded ? "Collapse" : "Expand"}</span></button>
+                            <button type="button" class="btn financial-entry-btn edit" data-entry-action="edit" data-entry-id="${entry.id}"><i class="bi bi-pencil-square"></i><span>Edit Entry</span></button>
+                            <button type="button" class="btn financial-entry-btn delete" data-entry-action="delete" data-entry-id="${entry.id}"><i class="bi bi-trash3"></i><span>Delete Entry</span></button>
+                        </div>
+                    </td>
+                `;
+
+                detailsRow.className = "financial-entry-details-row";
+                detailsRow.setAttribute("aria-hidden", String(!isExpanded));
+                detailsRow.innerHTML = `
+                    <td colspan="4">
+                        <div class="financial-entry-details-shell${isExpanded ? " is-open" : ""}">
+                            <div class="financial-entry-details-head">
+                                <h3>Line Items</h3>
+                                <span class="dashboard-tag">${lineItemCount}</span>
+                            </div>
+                            ${renderEntryDetailsTable(entry)}
+                            <p class="financial-entry-notes"><span>Notes:</span> ${safeNotes}</p>
+                        </div>
+                    </td>
+                `;
+
+                financialTableBody.appendChild(row);
+                financialTableBody.appendChild(detailsRow);
+            });
+
+            if (financialTableBody) {
+                financialTableBody.classList.add("is-filtering");
+                window.clearTimeout(filterTransitionTimer);
+                filterTransitionTimer = window.setTimeout(() => {
+                    financialTableBody.classList.remove("is-filtering");
+                }, 170);
+            }
+
+            if (financialTableWrap) {
+                financialTableWrap.hidden = false;
+            }
+            if (financialEmptyState) {
+                financialEmptyState.hidden = true;
+            }
+
+            renderSummary();
+        };
+
+        const populateEditForm = (entry) => {
+            const editEntryId = document.getElementById("editEntryId");
+            const editEntryDate = document.getElementById("editEntryDate");
+            const editEntryNotes = document.getElementById("editEntryNotes");
+
+            if (editEntryId) {
+                editEntryId.value = String(entry.id);
+            }
+            if (editEntryDate) {
+                editEntryDate.value = entry.date || "";
+            }
+            if (editEntryNotes) {
+                editEntryNotes.value = entry.notes || "";
+            }
+
+            resetLineItemsBody(editLineItemsBody, getEntryLineItems(entry));
+        };
+
+        const buildPayloadFromForm = (formType) => {
+            const isEdit = formType === "edit";
+            const dateInput = document.getElementById(isEdit ? "editEntryDate" : "addEntryDate");
+            const notesInput = document.getElementById(isEdit ? "editEntryNotes" : "addEntryNotes");
+            const lineItemsBody = isEdit ? editLineItemsBody : addLineItemsBody;
+
+            const lineItems = collectLineItems(lineItemsBody);
+
+            return {
+                month: activeMonth,
+                year: activeYear,
+                date: dateInput ? dateInput.value.trim() : "",
+                notes: notesInput ? notesInput.value.trim() : "",
+                line_items: lineItems,
             };
+        };
 
-            const parseIsoDateParts = (value) => {
-                const cleanedValue = String(value || "").trim();
-                const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(cleanedValue);
-                if (!dateMatch) {
-                    return null;
+        const parseIsoDateParts = (value) => {
+            const cleanedValue = String(value || "").trim();
+            const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(cleanedValue);
+            if (!dateMatch) {
+                return null;
+            }
+
+            const year = Number.parseInt(dateMatch[1], 10);
+            const month = Number.parseInt(dateMatch[2], 10);
+            const day = Number.parseInt(dateMatch[3], 10);
+            if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+                return null;
+            }
+
+            const candidate = new Date(Date.UTC(year, month - 1, day));
+            if (
+                candidate.getUTCFullYear() !== year
+                || candidate.getUTCMonth() + 1 !== month
+                || candidate.getUTCDate() !== day
+            ) {
+                return null;
+            }
+
+            return { year, month, day };
+        };
+
+        const getDefaultDateForActivePeriod = () => {
+            const now = new Date();
+            const isCurrentSelectedPeriod = now.getFullYear() === activeYear && now.getMonth() + 1 === activeMonth;
+            const selectedDay = isCurrentSelectedPeriod ? now.getDate() : 1;
+
+            const monthPart = String(activeMonth).padStart(2, "0");
+            const dayPart = String(selectedDay).padStart(2, "0");
+            return `${activeYear}-${monthPart}-${dayPart}`;
+        };
+
+        const syncAddEntryDateToActivePeriod = () => {
+            const addEntryDate = document.getElementById("addEntryDate");
+            if (!addEntryDate) {
+                return;
+            }
+
+            if (String(addEntryDate.value || "").trim()) {
+                return;
+            }
+
+            addEntryDate.value = getDefaultDateForActivePeriod();
+        };
+
+        const syncActivePeriodToDate = (dateValue) => {
+            const parsedDate = parseIsoDateParts(dateValue);
+            if (!parsedDate) {
+                return false;
+            }
+
+            if (parsedDate.month === activeMonth && parsedDate.year === activeYear) {
+                return false;
+            }
+
+            activeMonth = parsedDate.month;
+            activeYear = parsedDate.year;
+
+            if (periodSelector) {
+                periodSelector.value = String(activeMonth);
+            }
+
+            expandedEntryIds.clear();
+            syncAddEntryDateToActivePeriod();
+            return true;
+        };
+
+        const validateEntryPayload = (payload) => {
+            const dateValue = String(payload && payload.date ? payload.date : "").trim();
+            if (!dateValue) {
+                return "Entry date is required.";
+            }
+
+            const parsedDate = parseIsoDateParts(dateValue);
+            if (!parsedDate) {
+                return "Entry date must use YYYY-MM-DD format.";
+            }
+
+            if (!Array.isArray(payload.line_items) || payload.line_items.length === 0) {
+                return "At least one line item is required.";
+            }
+
+            const normalizedLineItems = [];
+            for (let index = 0; index < payload.line_items.length; index += 1) {
+                const lineItem = payload.line_items[index] || {};
+                const lineNumber = index + 1;
+
+                const typeCode = String(lineItem.type_code || "").trim();
+                const description = String(lineItem.description || "").trim();
+                const amountText = String(lineItem.amount || "").trim();
+
+                if (!typeCode) {
+                    return `Line item #${lineNumber} type/code is required.`;
+                }
+                if (!description) {
+                    return `Line item #${lineNumber} description is required.`;
+                }
+                if (!amountText) {
+                    return `Line item #${lineNumber}: Amount is required.`;
                 }
 
-                const year = Number.parseInt(dateMatch[1], 10);
-                const month = Number.parseInt(dateMatch[2], 10);
-                const day = Number.parseInt(dateMatch[3], 10);
-                if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
-                    return null;
+                const amountValue = Number.parseFloat(amountText);
+                if (!Number.isFinite(amountValue)) {
+                    return `Line item #${lineNumber}: Amount must be a valid number.`;
+                }
+                if (amountValue < 0) {
+                    return `Line item #${lineNumber}: Amount cannot be negative.`;
                 }
 
-                const candidate = new Date(Date.UTC(year, month - 1, day));
-                if (
-                    candidate.getUTCFullYear() !== year
-                    || candidate.getUTCMonth() + 1 !== month
-                    || candidate.getUTCDate() !== day
-                ) {
-                    return null;
-                }
+                normalizedLineItems.push({
+                    type_code: typeCode,
+                    description,
+                    amount: amountText,
+                });
+            }
 
-                return { year, month, day };
-            };
+            payload.date = dateValue;
+            payload.month = parsedDate.month;
+            payload.year = parsedDate.year;
+            payload.notes = String(payload.notes || "").trim();
+            payload.line_items = normalizedLineItems;
+            return "";
+        };
 
-            const getDefaultDateForActivePeriod = () => {
-                const now = new Date();
-                const isCurrentSelectedPeriod = now.getFullYear() === activeYear && now.getMonth() + 1 === activeMonth;
-                const selectedDay = isCurrentSelectedPeriod ? now.getDate() : 1;
+        const setFormSubmitState = (formElement, isSubmitting, idleLabel, loadingLabel) => {
+            if (!formElement) {
+                return;
+            }
 
-                const monthPart = String(activeMonth).padStart(2, "0");
-                const dayPart = String(selectedDay).padStart(2, "0");
-                return `${activeYear}-${monthPart}-${dayPart}`;
-            };
+            const submitButton = formElement.querySelector("button[type='submit']");
+            if (!submitButton) {
+                return;
+            }
 
-            const syncAddEntryDateToActivePeriod = () => {
-                const addEntryDate = document.getElementById("addEntryDate");
-                if (!addEntryDate) {
-                    return;
-                }
+            submitButton.disabled = isSubmitting;
+            submitButton.textContent = isSubmitting ? loadingLabel : idleLabel;
+        };
 
-                if (String(addEntryDate.value || "").trim()) {
-                    return;
-                }
+        const resolveClientIdFromTin = async () => {
+            if (hasValidClientId() || !clientContext.tin) {
+                return;
+            }
 
-                addEntryDate.value = getDefaultDateForActivePeriod();
-            };
+            const response = await fetch(CLIENTS_API_URL, {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                },
+                credentials: "same-origin"
+            });
 
-            const validateEntryPayload = (payload) => {
-                const dateValue = String(payload && payload.date ? payload.date : "").trim();
-                if (!dateValue) {
-                    return "Entry date is required.";
-                }
+            if (response.status === 401) {
+                redirectToLogin();
+                return;
+            }
 
-                const parsedDate = parseIsoDateParts(dateValue);
-                if (!parsedDate) {
-                    return "Entry date must use YYYY-MM-DD format.";
-                }
+            const result = await parseJsonSafe(response);
+            if (!response.ok || !result || !result.ok) {
+                return;
+            }
 
-                if (parsedDate.month !== activeMonth || parsedDate.year !== activeYear) {
-                    return `Entry date must be within ${getActiveMonthLabel()} ${activeYear}.`;
-                }
+            const clients = Array.isArray(result.clients) ? result.clients : [];
+            const matchedClient = clients.find((client) => {
+                return String(client.tin_number || "").trim().toLowerCase() === String(clientContext.tin || "").trim().toLowerCase();
+            });
 
-                if (!Array.isArray(payload.line_items) || payload.line_items.length === 0) {
-                    return "At least one line item is required.";
-                }
+            if (!matchedClient) {
+                return;
+            }
 
-                const normalizedLineItems = [];
-                for (let index = 0; index < payload.line_items.length; index += 1) {
-                    const lineItem = payload.line_items[index] || {};
-                    const lineNumber = index + 1;
+            activeClientId = Number.parseInt(matchedClient.id || "", 10);
+            clientContext.name = matchedClient.client_name || clientContext.name;
+            clientContext.tin = matchedClient.tin_number || clientContext.tin;
+            clientContext.tradeName = matchedClient.trade_name || clientContext.tradeName;
+        };
 
-                    const typeCode = String(lineItem.type_code || "").trim();
-                    const description = String(lineItem.description || "").trim();
-                    const amountText = String(lineItem.amount || "").trim();
+        const loadRecordsFromApi = async () => {
+            if (!hasValidClientId()) {
+                setRecordsLoadingState(false);
+                activeRecords = [];
+                activeSummary = null;
+                renderEntriesTable();
+                return;
+            }
 
-                    if (!typeCode) {
-                        return `Line item #${lineNumber} type/code is required.`;
-                    }
-                    if (!description) {
-                        return `Line item #${lineNumber} description is required.`;
-                    }
-                    if (!amountText) {
-                        return `Line item #${lineNumber}: Amount is required.`;
-                    }
+            const requestToken = ++recordsLoadRequestToken;
+            if (recordsLoadAbortController) {
+                recordsLoadAbortController.abort();
+            }
+            recordsLoadAbortController = new AbortController();
+            setRecordsLoadingState(true);
 
-                    const amountValue = Number.parseFloat(amountText);
-                    if (!Number.isFinite(amountValue)) {
-                        return `Line item #${lineNumber}: Amount must be a valid number.`;
-                    }
-                    if (amountValue < 0) {
-                        return `Line item #${lineNumber}: Amount cannot be negative.`;
-                    }
+            const params = new URLSearchParams();
+            params.set("month", String(activeMonth));
+            params.set("year", String(activeYear));
 
-                    normalizedLineItems.push({
-                        type_code: typeCode,
-                        description,
-                        amount: amountText,
-                    });
-                }
-
-                payload.date = dateValue;
-                payload.notes = String(payload.notes || "").trim();
-                payload.line_items = normalizedLineItems;
-                return "";
-            };
-
-            const setFormSubmitState = (formElement, isSubmitting, idleLabel, loadingLabel) => {
-                if (!formElement) {
-                    return;
-                }
-
-                const submitButton = formElement.querySelector("button[type='submit']");
-                if (!submitButton) {
-                    return;
-                }
-
-                submitButton.disabled = isSubmitting;
-                submitButton.textContent = isSubmitting ? loadingLabel : idleLabel;
-            };
-
-            const resolveClientIdFromTin = async () => {
-                if (hasValidClientId() || !clientContext.tin) {
-                    return;
-                }
-
-                const response = await fetch(CLIENTS_API_URL, {
+            try {
+                const response = await fetch(`${buildRecordsApiUrl(activeClientId)}?${params.toString()}`, {
                     method: "GET",
                     headers: {
                         "Accept": "application/json"
+                    },
+                    credentials: "same-origin",
+                    signal: recordsLoadAbortController.signal,
+                });
+
+                if (requestToken !== recordsLoadRequestToken) {
+                    return;
+                }
+
+                if (response.status === 401) {
+                    setRecordsLoadingState(false);
+                    redirectToLogin();
+                    return;
+                }
+
+                const result = await parseJsonSafe(response);
+                if (!response.ok || !result || !result.ok) {
+                    setRecordsLoadingState(false);
+                    const message = result && result.message ? result.message : "Unable to load financial records.";
+                    showToast(message);
+                    activeRecords = [];
+                    activeSummary = null;
+                    renderEntriesTable();
+                    return;
+                }
+
+                const resultClient = result.client || {};
+                if (resultClient.id) {
+                    activeClientId = Number.parseInt(resultClient.id, 10);
+                }
+                clientContext.name = resultClient.client_name || clientContext.name;
+                clientContext.tin = resultClient.tin_number || clientContext.tin;
+                clientContext.tradeName = resultClient.trade_name || clientContext.tradeName;
+
+                const period = result.period || {};
+                const resultMonth = Number.parseInt(period.month || "", 10);
+                const resultYear = Number.parseInt(period.year || "", 10);
+
+                if (Number.isFinite(resultMonth) && resultMonth >= 1 && resultMonth <= 12) {
+                    activeMonth = resultMonth;
+                }
+                if (Number.isFinite(resultYear) && resultYear >= 2000 && resultYear <= 2100) {
+                    activeYear = resultYear;
+                }
+
+                if (periodSelector) {
+                    periodSelector.value = String(activeMonth);
+                }
+
+                updateClientContext(clientContext.name, clientContext.tin, clientContext.tradeName);
+
+                activeRecords = Array.isArray(result.records) ? result.records : [];
+                activeSummary = result.summary || null;
+
+                expandedEntryIds.clear();
+                setRecordsLoadingState(false);
+                renderEntriesTable();
+            } catch (error) {
+                if (error && error.name === "AbortError") {
+                    return;
+                }
+
+                if (requestToken !== recordsLoadRequestToken) {
+                    return;
+                }
+
+                setRecordsLoadingState(false);
+                showToast("Unable to load financial records.");
+                activeRecords = [];
+                activeSummary = null;
+                renderEntriesTable();
+            }
+        };
+
+        if (addLineItemBtn && addLineItemsBody) {
+            addLineItemBtn.addEventListener("click", () => {
+                addLineItemRow(addLineItemsBody);
+            });
+        }
+
+        if (editAddLineItemBtn && editLineItemsBody) {
+            editAddLineItemBtn.addEventListener("click", () => {
+                addLineItemRow(editLineItemsBody);
+            });
+        }
+
+        if (addLineItemsBody) {
+            addLineItemsBody.addEventListener("click", (event) => {
+                const removeButton = event.target.closest("[data-line-action='remove']");
+                if (!removeButton) {
+                    return;
+                }
+                event.preventDefault();
+                removeLineItemRow(addLineItemsBody, removeButton.closest("tr"));
+            });
+        }
+
+        if (editLineItemsBody) {
+            editLineItemsBody.addEventListener("click", (event) => {
+                const removeButton = event.target.closest("[data-line-action='remove']");
+                if (!removeButton) {
+                    return;
+                }
+                event.preventDefault();
+                removeLineItemRow(editLineItemsBody, removeButton.closest("tr"));
+            });
+        }
+
+        if (addEntryModalElement) {
+            addEntryModalElement.addEventListener("show.bs.modal", () => {
+                syncAddEntryDateToActivePeriod();
+            });
+
+            addEntryModalElement.addEventListener("hidden.bs.modal", () => {
+                if (addEntryForm) {
+                    addEntryForm.reset();
+                }
+                resetLineItemsBody(addLineItemsBody);
+            });
+        }
+
+        if (editEntryModalElement) {
+            editEntryModalElement.addEventListener("hidden.bs.modal", () => {
+                if (editEntryForm) {
+                    editEntryForm.reset();
+                }
+                resetLineItemsBody(editLineItemsBody);
+            });
+        }
+
+        if (periodSelector) {
+            periodSelector.addEventListener("change", (event) => {
+                const selectedMonth = Number.parseInt(event.target.value || "", 10);
+                if (!Number.isFinite(selectedMonth) || selectedMonth < 1 || selectedMonth > 12) {
+                    return;
+                }
+
+                activeMonth = selectedMonth;
+                expandedEntryIds.clear();
+                syncAddEntryDateToActivePeriod();
+
+                loadRecordsFromApi().catch(() => {
+                    showToast("Unable to load financial records.");
+                });
+            });
+        }
+
+        if (openClientAnalyticsButton) {
+            openClientAnalyticsButton.addEventListener("click", (event) => {
+                event.preventDefault();
+                goToClientAnalytics();
+            });
+        }
+
+        if (financialTableBody) {
+            financialTableBody.addEventListener("click", (event) => {
+                const actionButton = event.target.closest("[data-entry-action]");
+                const row = event.target.closest(".financial-entry-row");
+
+                if (!actionButton && row) {
+                    const rowEntryId = Number.parseInt(row.dataset.entryId || "", 10);
+                    if (Number.isFinite(rowEntryId)) {
+                        toggleEntryExpansion(rowEntryId);
+                    }
+                    return;
+                }
+
+                if (!actionButton) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                const action = actionButton.getAttribute("data-entry-action");
+                const entryId = Number.parseInt(actionButton.getAttribute("data-entry-id"), 10);
+                if (!Number.isFinite(entryId)) {
+                    return;
+                }
+
+                if (action === "toggle") {
+                    toggleEntryExpansion(entryId);
+                } else if (action === "edit") {
+                    const entry = getEntryById(entryId);
+                    if (entry && editEntryModal) {
+                        populateEditForm(entry);
+                        editEntryModal.show();
+                    }
+                } else if (action === "delete") {
+                    const entry = getEntryById(entryId);
+                    if (!entry) {
+                        return;
+                    }
+
+                    pendingDeleteEntryId = entryId;
+                    if (deleteEntryPeriodLabel) {
+                        deleteEntryPeriodLabel.textContent = `${getActivePeriodLabel()} • ${toDisplayText(entry.date)} • ${formatCurrency(getEntryTotal(entry))}`;
+                    }
+                    if (deleteEntryModal) {
+                        deleteEntryModal.show();
+                    }
+                }
+            });
+
+            financialTableBody.addEventListener("keydown", (event) => {
+                const row = event.target.closest(".financial-entry-row");
+                if (!row) {
+                    return;
+                }
+
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    const entryId = Number.parseInt(row.dataset.entryId || "", 10);
+                    if (Number.isFinite(entryId)) {
+                        toggleEntryExpansion(entryId);
+                    }
+                }
+            });
+        }
+
+        if (addEntryForm) {
+            addEntryForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+
+                if (isAddSubmitting) {
+                    return;
+                }
+
+                if (!addEntryForm.checkValidity()) {
+                    addEntryForm.reportValidity();
+                    return;
+                }
+
+                if (!hasValidClientId()) {
+                    showToast("Select a valid client before adding entries.");
+                    return;
+                }
+
+                const payload = buildPayloadFromForm("add");
+                const payloadError = validateEntryPayload(payload);
+                if (payloadError) {
+                    showToast(payloadError);
+                    return;
+                }
+
+                isAddSubmitting = true;
+                setFormSubmitState(addEntryForm, true, "Save Financial Entry", "Saving...");
+
+                const csrfToken = getCookieValue("csrftoken");
+                try {
+                    const response = await fetch(buildRecordsApiUrl(activeClientId), {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": csrfToken
+                        },
+                        credentials: "same-origin",
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 401) {
+                        redirectToLogin();
+                        return;
+                    }
+
+                    const result = await parseJsonSafe(response);
+                    if (!response.ok || !result || !result.ok) {
+                        const message = result && result.message ? result.message : "Unable to add financial entry.";
+                        showToast(message);
+                        return;
+                    }
+
+                    if (addEntryModal) {
+                        addEntryModal.hide();
+                    }
+
+                    const periodChanged = syncActivePeriodToDate(payload.date);
+                    await loadRecordsFromApi();
+                    const baseMessage = result.message || "Financial entry added successfully.";
+                    const finalMessage = periodChanged ? `${baseMessage} Switched to ${getActivePeriodLabel()}.` : baseMessage;
+                    showToast(finalMessage);
+                } finally {
+                    isAddSubmitting = false;
+                    setFormSubmitState(addEntryForm, false, "Save Financial Entry", "Saving...");
+                }
+            });
+        }
+
+        if (editEntryForm) {
+            editEntryForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+
+                if (isEditSubmitting) {
+                    return;
+                }
+
+                if (!editEntryForm.checkValidity()) {
+                    editEntryForm.reportValidity();
+                    return;
+                }
+
+                if (!hasValidClientId()) {
+                    showToast("Select a valid client before updating entries.");
+                    return;
+                }
+
+                const editEntryId = document.getElementById("editEntryId");
+
+                const targetId = Number.parseInt(editEntryId ? editEntryId.value : "", 10);
+                if (!Number.isFinite(targetId)) {
+                    return;
+                }
+
+                const payload = buildPayloadFromForm("edit");
+                const payloadError = validateEntryPayload(payload);
+                if (payloadError) {
+                    showToast(payloadError);
+                    return;
+                }
+
+                isEditSubmitting = true;
+                setFormSubmitState(editEntryForm, true, "Update Financial Entry", "Updating...");
+
+                const csrfToken = getCookieValue("csrftoken");
+                try {
+                    const response = await fetch(buildRecordDetailApiUrl(activeClientId, targetId), {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": csrfToken
+                        },
+                        credentials: "same-origin",
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 401) {
+                        redirectToLogin();
+                        return;
+                    }
+
+                    const result = await parseJsonSafe(response);
+                    if (!response.ok || !result || !result.ok) {
+                        const message = result && result.message ? result.message : "Unable to update financial entry.";
+                        showToast(message);
+                        return;
+                    }
+
+                    if (editEntryModal) {
+                        editEntryModal.hide();
+                    }
+
+                    const periodChanged = syncActivePeriodToDate(payload.date);
+                    await loadRecordsFromApi();
+                    const baseMessage = result.message || "Financial entry updated successfully.";
+                    const finalMessage = periodChanged ? `${baseMessage} Switched to ${getActivePeriodLabel()}.` : baseMessage;
+                    showToast(finalMessage);
+                } finally {
+                    isEditSubmitting = false;
+                    setFormSubmitState(editEntryForm, false, "Update Financial Entry", "Updating...");
+                }
+            });
+        }
+
+        if (confirmDeleteEntryBtn) {
+            confirmDeleteEntryBtn.addEventListener("click", async () => {
+                if (!Number.isFinite(pendingDeleteEntryId)) {
+                    return;
+                }
+
+                if (!hasValidClientId()) {
+                    showToast("Select a valid client before deleting entries.");
+                    return;
+                }
+
+                const csrfToken = getCookieValue("csrftoken");
+                const response = await fetch(buildRecordDetailApiUrl(activeClientId, pendingDeleteEntryId), {
+                    method: "DELETE",
+                    headers: {
+                        "X-CSRFToken": csrfToken
                     },
                     credentials: "same-origin"
                 });
@@ -1215,518 +1591,90 @@
 
                 const result = await parseJsonSafe(response);
                 if (!response.ok || !result || !result.ok) {
+                    const message = result && result.message ? result.message : "Unable to delete financial entry.";
+                    showToast(message);
                     return;
                 }
 
-                const clients = Array.isArray(result.clients) ? result.clients : [];
-                const matchedClient = clients.find((client) => {
-                    return String(client.tin_number || "").trim().toLowerCase() === String(clientContext.tin || "").trim().toLowerCase();
-                });
-
-                if (!matchedClient) {
-                    return;
-                }
-
-                activeClientId = Number.parseInt(matchedClient.id || "", 10);
-                clientContext.name = matchedClient.client_name || clientContext.name;
-                clientContext.tin = matchedClient.tin_number || clientContext.tin;
-                clientContext.tradeName = matchedClient.trade_name || clientContext.tradeName;
-            };
-
-            const loadRecordsFromApi = async () => {
-                if (!hasValidClientId()) {
-                    setRecordsLoadingState(false);
-                    activeRecords = [];
-                    activeSummary = null;
-                    renderEntriesTable();
-                    return;
-                }
-
-                const requestToken = ++recordsLoadRequestToken;
-                if (recordsLoadAbortController) {
-                    recordsLoadAbortController.abort();
-                }
-                recordsLoadAbortController = new AbortController();
-                setRecordsLoadingState(true);
-
-                const params = new URLSearchParams();
-                params.set("month", String(activeMonth));
-                params.set("year", String(activeYear));
-
-                try {
-                    const response = await fetch(`${buildRecordsApiUrl(activeClientId)}?${params.toString()}`, {
-                        method: "GET",
-                        headers: {
-                            "Accept": "application/json"
-                        },
-                        credentials: "same-origin",
-                        signal: recordsLoadAbortController.signal,
-                    });
-
-                    if (requestToken !== recordsLoadRequestToken) {
-                        return;
-                    }
-
-                    if (response.status === 401) {
-                        setRecordsLoadingState(false);
-                        redirectToLogin();
-                        return;
-                    }
-
-                    const result = await parseJsonSafe(response);
-                    if (!response.ok || !result || !result.ok) {
-                        setRecordsLoadingState(false);
-                        const message = result && result.message ? result.message : "Unable to load financial records.";
-                        showToast(message);
-                        activeRecords = [];
-                        activeSummary = null;
-                        renderEntriesTable();
-                        return;
-                    }
-
-                    const resultClient = result.client || {};
-                    if (resultClient.id) {
-                        activeClientId = Number.parseInt(resultClient.id, 10);
-                    }
-                    clientContext.name = resultClient.client_name || clientContext.name;
-                    clientContext.tin = resultClient.tin_number || clientContext.tin;
-                    clientContext.tradeName = resultClient.trade_name || clientContext.tradeName;
-
-                    const period = result.period || {};
-                    const resultMonth = Number.parseInt(period.month || "", 10);
-                    const resultYear = Number.parseInt(period.year || "", 10);
-
-                    if (Number.isFinite(resultMonth) && resultMonth >= 1 && resultMonth <= 12) {
-                        activeMonth = resultMonth;
-                    }
-                    if (Number.isFinite(resultYear) && resultYear >= 2000 && resultYear <= 2100) {
-                        activeYear = resultYear;
-                    }
-
-                    if (periodSelector) {
-                        periodSelector.value = String(activeMonth);
-                    }
-
-                    updateClientContext(clientContext.name, clientContext.tin, clientContext.tradeName);
-
-                    activeRecords = Array.isArray(result.records) ? result.records : [];
-                    activeSummary = result.summary || null;
-
-                    expandedEntryIds.clear();
-                    setRecordsLoadingState(false);
-                    renderEntriesTable();
-                } catch (error) {
-                    if (error && error.name === "AbortError") {
-                        return;
-                    }
-
-                    if (requestToken !== recordsLoadRequestToken) {
-                        return;
-                    }
-
-                    setRecordsLoadingState(false);
-                    showToast("Unable to load financial records.");
-                    activeRecords = [];
-                    activeSummary = null;
-                    renderEntriesTable();
-                }
-            };
-
-            if (addLineItemBtn && addLineItemsBody) {
-                addLineItemBtn.addEventListener("click", () => {
-                    addLineItemRow(addLineItemsBody);
-                });
-            }
-
-            if (editAddLineItemBtn && editLineItemsBody) {
-                editAddLineItemBtn.addEventListener("click", () => {
-                    addLineItemRow(editLineItemsBody);
-                });
-            }
-
-            if (addLineItemsBody) {
-                addLineItemsBody.addEventListener("click", (event) => {
-                    const removeButton = event.target.closest("[data-line-action='remove']");
-                    if (!removeButton) {
-                        return;
-                    }
-                    event.preventDefault();
-                    removeLineItemRow(addLineItemsBody, removeButton.closest("tr"));
-                });
-            }
-
-            if (editLineItemsBody) {
-                editLineItemsBody.addEventListener("click", (event) => {
-                    const removeButton = event.target.closest("[data-line-action='remove']");
-                    if (!removeButton) {
-                        return;
-                    }
-                    event.preventDefault();
-                    removeLineItemRow(editLineItemsBody, removeButton.closest("tr"));
-                });
-            }
-
-            if (addEntryModalElement) {
-                addEntryModalElement.addEventListener("show.bs.modal", () => {
-                    syncAddEntryDateToActivePeriod();
-                });
-
-                addEntryModalElement.addEventListener("hidden.bs.modal", () => {
-                    if (addEntryForm) {
-                        addEntryForm.reset();
-                    }
-                    resetLineItemsBody(addLineItemsBody);
-                });
-            }
-
-            if (editEntryModalElement) {
-                editEntryModalElement.addEventListener("hidden.bs.modal", () => {
-                    if (editEntryForm) {
-                        editEntryForm.reset();
-                    }
-                    resetLineItemsBody(editLineItemsBody);
-                });
-            }
-
-            if (periodSelector) {
-                periodSelector.addEventListener("change", (event) => {
-                    const selectedMonth = Number.parseInt(event.target.value || "", 10);
-                    if (!Number.isFinite(selectedMonth) || selectedMonth < 1 || selectedMonth > 12) {
-                        return;
-                    }
-
-                    activeMonth = selectedMonth;
-                    expandedEntryIds.clear();
-                    syncAddEntryDateToActivePeriod();
-
-                    loadRecordsFromApi().catch(() => {
-                        showToast("Unable to load financial records.");
-                    });
-                });
-            }
-
-            if (openClientAnalyticsButton) {
-                openClientAnalyticsButton.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    goToClientAnalytics();
-                });
-            }
-
-            if (financialTableBody) {
-                financialTableBody.addEventListener("click", (event) => {
-                    const actionButton = event.target.closest("[data-entry-action]");
-                    const row = event.target.closest(".financial-entry-row");
-
-                    if (!actionButton && row) {
-                        const rowEntryId = Number.parseInt(row.dataset.entryId || "", 10);
-                        if (Number.isFinite(rowEntryId)) {
-                            toggleEntryExpansion(rowEntryId);
-                        }
-                        return;
-                    }
-
-                    if (!actionButton) {
-                        return;
-                    }
-
-                    event.preventDefault();
-                    event.stopPropagation();
-
-                    const action = actionButton.getAttribute("data-entry-action");
-                    const entryId = Number.parseInt(actionButton.getAttribute("data-entry-id"), 10);
-                    if (!Number.isFinite(entryId)) {
-                        return;
-                    }
-
-                    if (action === "toggle") {
-                        toggleEntryExpansion(entryId);
-                    } else if (action === "edit") {
-                        const entry = getEntryById(entryId);
-                        if (entry && editEntryModal) {
-                            populateEditForm(entry);
-                            editEntryModal.show();
-                        }
-                    } else if (action === "delete") {
-                        const entry = getEntryById(entryId);
-                        if (!entry) {
-                            return;
-                        }
-
-                        pendingDeleteEntryId = entryId;
-                        if (deleteEntryPeriodLabel) {
-                            deleteEntryPeriodLabel.textContent = `${getActiveMonthLabel()} • ${toDisplayText(entry.date)} • ${formatCurrency(getEntryTotal(entry))}`;
-                        }
-                        if (deleteEntryModal) {
-                            deleteEntryModal.show();
-                        }
-                    }
-                });
-
-                financialTableBody.addEventListener("keydown", (event) => {
-                    const row = event.target.closest(".financial-entry-row");
-                    if (!row) {
-                        return;
-                    }
-
-                    if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        const entryId = Number.parseInt(row.dataset.entryId || "", 10);
-                        if (Number.isFinite(entryId)) {
-                            toggleEntryExpansion(entryId);
-                        }
-                    }
-                });
-            }
-
-            if (addEntryForm) {
-                addEntryForm.addEventListener("submit", async (event) => {
-                    event.preventDefault();
-
-                    if (isAddSubmitting) {
-                        return;
-                    }
-
-                    if (!addEntryForm.checkValidity()) {
-                        addEntryForm.reportValidity();
-                        return;
-                    }
-
-                    if (!hasValidClientId()) {
-                        showToast("Select a valid client before adding entries.");
-                        return;
-                    }
-
-                    const payload = buildPayloadFromForm("add");
-                    const payloadError = validateEntryPayload(payload);
-                    if (payloadError) {
-                        showToast(payloadError);
-                        return;
-                    }
-
-                    isAddSubmitting = true;
-                    setFormSubmitState(addEntryForm, true, "Save Financial Entry", "Saving...");
-
-                    const csrfToken = getCookieValue("csrftoken");
-                    try {
-                        const response = await fetch(buildRecordsApiUrl(activeClientId), {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRFToken": csrfToken
-                            },
-                            credentials: "same-origin",
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (response.status === 401) {
-                            redirectToLogin();
-                            return;
-                        }
-
-                        const result = await parseJsonSafe(response);
-                        if (!response.ok || !result || !result.ok) {
-                            const message = result && result.message ? result.message : "Unable to add financial entry.";
-                            showToast(message);
-                            return;
-                        }
-
-                        if (addEntryModal) {
-                            addEntryModal.hide();
-                        }
-
-                        await loadRecordsFromApi();
-                        showToast(result.message || "Financial entry added successfully.");
-                    } finally {
-                        isAddSubmitting = false;
-                        setFormSubmitState(addEntryForm, false, "Save Financial Entry", "Saving...");
-                    }
-                });
-            }
-
-            if (editEntryForm) {
-                editEntryForm.addEventListener("submit", async (event) => {
-                    event.preventDefault();
-
-                    if (isEditSubmitting) {
-                        return;
-                    }
-
-                    if (!editEntryForm.checkValidity()) {
-                        editEntryForm.reportValidity();
-                        return;
-                    }
-
-                    if (!hasValidClientId()) {
-                        showToast("Select a valid client before updating entries.");
-                        return;
-                    }
-
-                    const editEntryId = document.getElementById("editEntryId");
-
-                    const targetId = Number.parseInt(editEntryId ? editEntryId.value : "", 10);
-                    if (!Number.isFinite(targetId)) {
-                        return;
-                    }
-
-                    const payload = buildPayloadFromForm("edit");
-                    const payloadError = validateEntryPayload(payload);
-                    if (payloadError) {
-                        showToast(payloadError);
-                        return;
-                    }
-
-                    isEditSubmitting = true;
-                    setFormSubmitState(editEntryForm, true, "Update Financial Entry", "Updating...");
-
-                    const csrfToken = getCookieValue("csrftoken");
-                    try {
-                        const response = await fetch(buildRecordDetailApiUrl(activeClientId, targetId), {
-                            method: "PUT",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRFToken": csrfToken
-                            },
-                            credentials: "same-origin",
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (response.status === 401) {
-                            redirectToLogin();
-                            return;
-                        }
-
-                        const result = await parseJsonSafe(response);
-                        if (!response.ok || !result || !result.ok) {
-                            const message = result && result.message ? result.message : "Unable to update financial entry.";
-                            showToast(message);
-                            return;
-                        }
-
-                        if (editEntryModal) {
-                            editEntryModal.hide();
-                        }
-
-                        await loadRecordsFromApi();
-                        showToast(result.message || "Financial entry updated successfully.");
-                    } finally {
-                        isEditSubmitting = false;
-                        setFormSubmitState(editEntryForm, false, "Update Financial Entry", "Updating...");
-                    }
-                });
-            }
-
-            if (confirmDeleteEntryBtn) {
-                confirmDeleteEntryBtn.addEventListener("click", async () => {
-                    if (!Number.isFinite(pendingDeleteEntryId)) {
-                        return;
-                    }
-
-                    if (!hasValidClientId()) {
-                        showToast("Select a valid client before deleting entries.");
-                        return;
-                    }
-
-                    const csrfToken = getCookieValue("csrftoken");
-                    const response = await fetch(buildRecordDetailApiUrl(activeClientId, pendingDeleteEntryId), {
-                        method: "DELETE",
-                        headers: {
-                            "X-CSRFToken": csrfToken
-                        },
-                        credentials: "same-origin"
-                    });
-
-                    if (response.status === 401) {
-                        redirectToLogin();
-                        return;
-                    }
-
-                    const result = await parseJsonSafe(response);
-                    if (!response.ok || !result || !result.ok) {
-                        const message = result && result.message ? result.message : "Unable to delete financial entry.";
-                        showToast(message);
-                        return;
-                    }
-
-                    pendingDeleteEntryId = null;
-                    if (deleteEntryModal) {
-                        deleteEntryModal.hide();
-                    }
-
-                    await loadRecordsFromApi();
-                    showToast(result.message || "Financial entry deleted successfully.");
-                });
-            }
-
-            if (deleteEntryModalElement) {
-                deleteEntryModalElement.addEventListener("hidden.bs.modal", () => {
-                    pendingDeleteEntryId = null;
-                });
-            }
-
-            if (dashboardProfileAction) {
-                dashboardProfileAction.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    window.location.assign("{% url 'profile' %}");
-                });
-            }
-
-            if (dashboardLogoutAction) {
-                dashboardLogoutAction.addEventListener("click", async () => {
-                    dashboardLogoutAction.disabled = true;
-
-                    try {
-                        const redirectUrl = await logoutCurrentUser();
-                        showToast("Logging out...");
-                        window.location.assign(redirectUrl);
-                    } finally {
-                        dashboardLogoutAction.disabled = false;
-                    }
-                });
-            }
-
-            plannedFeatureButtons.forEach((buttonElement) => {
-                buttonElement.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
-                    showToast(`${featureLabel} is planned and will be available soon.`);
-                });
-            });
-
-            hydrateHeaderUser();
-            resetLineItemsBody(addLineItemsBody);
-            resetLineItemsBody(editLineItemsBody);
-
-            if (periodSelector) {
-                periodSelector.value = String(activeMonth);
-            }
-
-            updateClientContext(clientContext.name, clientContext.tin, clientContext.tradeName);
-            renderEntriesTable();
-
-            const initializePage = async () => {
-                try {
-                    await resolveClientIdFromTin();
-                } catch (error) {
-                    // Keep page available even if background client id resolution fails.
-                }
-
-                if (!hasValidClientId()) {
-                    showToast("Select a client from the Clients page first.");
-                    return;
+                pendingDeleteEntryId = null;
+                if (deleteEntryModal) {
+                    deleteEntryModal.hide();
                 }
 
                 await loadRecordsFromApi();
-            };
-
-            initializePage().catch(() => {
-                showToast("Unable to load financial records.");
+                showToast(result.message || "Financial entry deleted successfully.");
             });
+        }
 
-            window.addEventListener("resize", () => {
-                sidebarState.closeMobileSidebar();
-                sidebarState.restoreDesktopState();
+        if (deleteEntryModalElement) {
+            deleteEntryModalElement.addEventListener("hidden.bs.modal", () => {
+                pendingDeleteEntryId = null;
             });
-        })();
-    </script>
-</body>
-</html>
+        }
+
+        if (dashboardProfileAction) {
+            dashboardProfileAction.addEventListener("click", (event) => {
+                event.preventDefault();
+                window.location.assign("{% url 'profile' %}");
+            });
+        }
+
+        if (dashboardLogoutAction) {
+            dashboardLogoutAction.addEventListener("click", async () => {
+                dashboardLogoutAction.disabled = true;
+
+                try {
+                    const redirectUrl = await logoutCurrentUser();
+                    showToast("Logging out...");
+                    window.location.assign(redirectUrl);
+                } finally {
+                    dashboardLogoutAction.disabled = false;
+                }
+            });
+        }
+
+        plannedFeatureButtons.forEach((buttonElement) => {
+            buttonElement.addEventListener("click", (event) => {
+                event.preventDefault();
+                const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
+                showToast(`${featureLabel} is planned and will be available soon.`);
+            });
+        });
+
+        hydrateHeaderUser();
+        resetLineItemsBody(addLineItemsBody);
+        resetLineItemsBody(editLineItemsBody);
+
+        if (periodSelector) {
+            periodSelector.value = String(activeMonth);
+        }
+
+        updateClientContext(clientContext.name, clientContext.tin, clientContext.tradeName);
+        renderEntriesTable();
+
+        const initializePage = async () => {
+            try {
+                await resolveClientIdFromTin();
+            } catch (error) {
+                // Keep page available even if background client id resolution fails.
+            }
+
+            if (!hasValidClientId()) {
+                showToast("Select a client from the Clients page first.");
+                return;
+            }
+
+            await loadRecordsFromApi();
+        };
+
+        initializePage().catch(() => {
+            showToast("Unable to load financial records.");
+        });
+
+        window.addEventListener("resize", () => {
+            sidebarState.closeMobileSidebar();
+            sidebarState.restoreDesktopState();
+        });
+    })();
+</script>
+{% endblock %}

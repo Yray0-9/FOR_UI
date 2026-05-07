@@ -66,6 +66,14 @@ def _normalize_search_text(value: str) -> str:
     return " ".join(re.sub(r"[^a-z0-9]+", " ", str(value or "").lower()).split())
 
 
+def _normalize_type_code_label(value: str) -> str:
+    return " ".join(str(value or "").strip().split())
+
+
+def _normalize_type_code_key(value: str) -> str:
+    return _normalize_type_code_label(value).lower()
+
+
 NORMALIZED_TAX_KEYWORDS = tuple(_normalize_search_text(keyword) for keyword in TAX_KEYWORDS)
 NORMALIZED_EXPENSE_KEYWORDS = tuple(_normalize_search_text(keyword) for keyword in EXPENSE_KEYWORDS)
 NORMALIZED_SALES_KEYWORDS = tuple(_normalize_search_text(keyword) for keyword in SALES_KEYWORDS)
@@ -298,8 +306,10 @@ def get_analytics_summary_for_bookkeeper(bookkeeper, client_id: int | None = Non
     )
 
     monthly_totals = {key: _empty_bucket() for key in slot_keys}
+    monthly_type_totals = {key: defaultdict(lambda: Decimal("0.00")) for key in slot_keys}
     grand_totals = _empty_bucket()
     client_sales_totals: dict[int, Decimal] = defaultdict(lambda: Decimal("0.00"))
+    type_label_map: dict[str, str] = {}
 
     for line in all_lines:
         amount = line.amount or Decimal("0.00")
@@ -317,12 +327,27 @@ def get_analytics_summary_for_bookkeeper(bookkeeper, client_id: int | None = Non
         if month_key in monthly_totals:
             monthly_totals[month_key][category] += amount
 
+            type_label = _normalize_type_code_label(line.type_code)
+            if type_label:
+                type_key = _normalize_type_code_key(line.type_code)
+                monthly_type_totals[month_key][type_key] += amount
+                if type_key not in type_label_map:
+                    type_label_map[type_key] = type_label
+
+    type_pairs = sorted(type_label_map.items(), key=lambda item: item[1].lower())
+    type_columns = [label for _, label in type_pairs]
+
     monthly_trend = []
     monthly_net_values: list[Decimal] = []
     for year, month, month_label in month_slots:
         totals = monthly_totals[(year, month)]
         net_value = totals["sales"] - totals["expenses"] - totals["tax"]
         monthly_net_values.append(net_value)
+
+        type_breakdown = {
+            label: _to_money_number(monthly_type_totals[(year, month)].get(type_key, Decimal("0.00")))
+            for type_key, label in type_pairs
+        }
 
         monthly_trend.append(
             {
@@ -333,6 +358,7 @@ def get_analytics_summary_for_bookkeeper(bookkeeper, client_id: int | None = Non
                 "expenses": _to_money_number(totals["expenses"]),
                 "tax": _to_money_number(totals["tax"]),
                 "net_value": _to_money_number(net_value),
+                "type_breakdown": type_breakdown,
             }
         )
 
@@ -380,6 +406,7 @@ def get_analytics_summary_for_bookkeeper(bookkeeper, client_id: int | None = Non
             "client_trade_name": scope_client.trade_name if scope_client is not None else "",
         },
         "available_clients": available_clients,
+        "type_columns": type_columns,
         "has_data": has_data,
         "summary": summary,
         "monthly_trend": monthly_trend,

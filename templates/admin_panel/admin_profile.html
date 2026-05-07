@@ -1,0 +1,262 @@
+{% extends 'admin_panel/admin_base.html' %}
+{% load static %}
+
+{% block page_title %}Admin Profile{% endblock %}
+{% block page_heading %}Admin Profile{% endblock %}
+{% block page_subtitle %}
+<!-- <p class="dashboard-page-subtitle">Review your identity and security preferences.</p> -->
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-content admin-dashboard">
+    <div class="profile-layout">
+        <div class="profile-main">
+            <article class="dashboard-card admin-card profile-hero-card dashboard-fade-up" style="--delay: 0.05s;">
+                <div class="profile-hero-top">
+                    <div class="profile-hero-identity">
+                        <div class="profile-avatar" id="adminProfileAvatar">{{ current_admin_initials|default:"SA" }}</div>
+                        <div>
+                            <p class="profile-hero-eyebrow">{{ current_admin_role_label|default:"System Manager" }}</p>
+                            <h2 class="profile-hero-name" id="adminProfileName">{{ current_admin_name|default:"System Admin" }}</h2>
+                            <div class="profile-hero-meta">
+                                <span class="profile-meta-item"><i class="bi bi-envelope"></i><span id="adminProfileEmail">{{ current_admin_email|default:"admin@safebooks.com" }}</span></span>
+                                <span class="profile-meta-item"><i class="bi bi-clock"></i><span>Last login: {% if current_admin_last_login %}{{ current_admin_last_login|date:"M d, Y H:i" }}{% else %}Never{% endif %}</span></span>
+                                <span class="profile-status-pill"><i class="bi bi-shield-check"></i>Active</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-hero-actions">
+                        <button type="button" class="btn dashboard-action-btn primary" data-scroll-target="#adminIdentity">Edit profile</button>
+                        <button type="button" class="btn dashboard-action-btn outline" data-scroll-target="#adminSecurity">Security preferences</button>
+                        <a href="{% url 'admin_audit_log' %}" class="btn dashboard-action-btn outline">View audit log</a>
+                        <a href="{% url 'admin_system_settings' %}" class="btn dashboard-action-btn outline">System settings</a>
+                    </div>
+                </div>
+            </article>
+
+            <form class="dashboard-card admin-card profile-card dashboard-fade-up profile-scroll-target" style="--delay: 0.08s;" id="adminIdentity" novalidate tabindex="-1">
+                <div class="profile-card-head">
+                    <div>
+                        <h2>Identity details</h2>
+                        <!-- <p class="dashboard-section-hint">Update how your admin profile appears in the console.</p> -->
+                    </div>
+                    <span class="admin-card-tag">Required</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="adminFullName">Full name</label>
+                        <input type="text" id="adminFullName" class="form-control profile-input" value="{{ current_admin_name|default:'System Admin' }}" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="adminUsername">Username</label>
+                        <input type="text" id="adminUsername" class="form-control profile-input" placeholder="admin-ops">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="adminEmail">Email address</label>
+                        <input type="email" id="adminEmail" class="form-control profile-input" value="{{ current_admin_email|default:'admin@safebooks.com' }}" placeholder="admin@safebooks.com" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="adminPhone">Phone number</label>
+                        <input type="tel" id="adminPhone" class="form-control profile-input" placeholder="+63 900 000 0000">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="adminTimeZone">Time zone</label>
+                        <select id="adminTimeZone" class="form-select profile-select">
+                            <option value="asia-manila">(GMT+8) Asia/Manila</option>
+                            <option value="asia-singapore">(GMT+8) Asia/Singapore</option>
+                            <option value="asia-kuala-lumpur">(GMT+8) Asia/Kuala Lumpur</option>
+                            <option value="asia-jakarta">(GMT+7) Asia/Jakarta</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="adminLocation">Location</label>
+                        <input type="text" id="adminLocation" class="form-control profile-input" placeholder="City, Country">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label">Role label</label>
+                        <div class="profile-readonly-pill">{{ current_admin_role_label|default:"System Manager" }}</div>
+                    </div>
+                </div>
+
+                <div class="profile-section-footer">
+                    <span class="profile-save-status">Not saved</span>
+                    <div class="dashboard-actions admin-actions">
+                        <button type="button" class="dashboard-action-btn primary" data-planned-feature>Save profile</button>
+                        <button type="button" class="dashboard-action-btn outline" data-planned-feature>Reset changes</button>
+                    </div>
+                </div>
+            </form>
+
+            <article class="dashboard-card admin-card profile-card profile-activity-card dashboard-fade-up profile-scroll-target" style="--delay: 0.12s;" id="adminActivity" tabindex="-1">
+                <div class="profile-card-head">
+                    <div>
+                        <h2>Activity and audit snapshot</h2>
+                        <!-- <p class="dashboard-section-hint">Latest administrative actions and reviews.</p> -->
+                    </div>
+                    <span class="admin-card-tag">Latest</span>
+                </div>
+
+                <ul class="profile-activity-list" aria-label="Recent admin activity">
+                    <li class="profile-activity-item">
+                        <span class="profile-activity-dot" aria-hidden="true"></span>
+                        <div>
+                            <p class="profile-activity-title">Approved bookkeeper onboarding</p>
+                            <p class="profile-field-hint">Today, 8:20 AM</p>
+                        </div>
+                    </li>
+                    <li class="profile-activity-item">
+                        <span class="profile-activity-dot" aria-hidden="true"></span>
+                        <div>
+                            <p class="profile-activity-title">Updated system settings</p>
+                            <p class="profile-field-hint">Yesterday, 5:10 PM</p>
+                        </div>
+                    </li>
+                    <li class="profile-activity-item">
+                        <span class="profile-activity-dot" aria-hidden="true"></span>
+                        <div>
+                            <p class="profile-activity-title">Reviewed audit log retention</p>
+                            <p class="profile-field-hint">Yesterday, 1:40 PM</p>
+                        </div>
+                    </li>
+                    <li class="profile-activity-item">
+                        <span class="profile-activity-dot" aria-hidden="true"></span>
+                        <div>
+                            <p class="profile-activity-title">Suspended inactive account</p>
+                            <p class="profile-field-hint">Apr 29, 3:05 PM</p>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="profile-section-footer">
+                    <a href="{% url 'admin_audit_log' %}" class="btn dashboard-action-btn outline">View full audit log</a>
+                </div>
+            </article>
+        </div>
+
+        <aside class="profile-side">
+            <article class="dashboard-card admin-card profile-card dashboard-fade-up profile-scroll-target" style="--delay: 0.1s;" id="adminSecurity" tabindex="-1">
+                <div class="profile-card-head">
+                    <div>
+                        <h2>Security preferences</h2>
+                        <!-- <p class="dashboard-section-hint">Protect access to the admin console.</p> -->
+                    </div>
+                </div>
+
+                <div class="profile-security-list">
+                    <div class="profile-security-row">
+                        <div>
+                            <p class="profile-field-label">Multi-factor authentication</p>
+                            <!-- <p class="profile-field-hint">Require a second step for login.</p> -->
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="adminMfaToggle" disabled>
+                        </div>
+                    </div>
+                    <div class="profile-security-row">
+                        <div>
+                            <p class="profile-field-label">Session timeout</p>
+                            <!-- <p class="profile-field-hint">Auto sign-out after inactivity.</p> -->
+                        </div>
+                        <select class="form-select profile-select" aria-label="Admin session timeout" disabled>
+                            <option>30 minutes</option>
+                            <option>60 minutes</option>
+                            <option>120 minutes</option>
+                        </select>
+                    </div>
+                    <div class="profile-security-row">
+                        <div>
+                            <p class="profile-field-label">Re-auth for high-risk actions</p>
+                            <!-- <p class="profile-field-hint">Require password before approvals.</p> -->
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="adminReauthToggle" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-actions admin-actions">
+                    <button type="button" class="dashboard-action-btn outline" data-planned-feature>Sign out all sessions</button>
+                </div>
+            </article>
+
+            <article class="dashboard-card admin-card profile-card dashboard-fade-up" style="--delay: 0.14s;">
+                <div class="profile-card-head">
+                    <div>
+                        <h2>Trusted devices</h2>
+                        <!-- <p class="dashboard-section-hint">Devices recently used by this admin.</p> -->
+                    </div>
+                </div>
+
+                <div class="profile-device-list" aria-label="Trusted devices">
+                    <div class="profile-device-row">
+                        <div class="profile-device-meta">
+                            <span>Chrome on Windows</span>
+                            <small>Last active: Today, 10:12 AM · Quezon City</small>
+                        </div>
+                        <button type="button" class="btn dashboard-action-btn outline" data-planned-feature>Revoke</button>
+                    </div>
+                    <div class="profile-device-row">
+                        <div class="profile-device-meta">
+                            <span>Edge on Windows</span>
+                            <small>Last active: Apr 30, 2:45 PM · Makati</small>
+                        </div>
+                        <button type="button" class="btn dashboard-action-btn outline" data-planned-feature>Revoke</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="dashboard-card admin-card profile-card dashboard-fade-up" style="--delay: 0.18s;">
+                <div class="profile-card-head">
+                    <div>
+                        <h2>Access scope summary</h2>
+                        <!-- <p class="dashboard-section-hint">Scope controlled by system policy.</p> -->
+                    </div>
+                </div>
+
+                <div class="profile-chip-grid">
+                    <span class="profile-chip"><i class="bi bi-check2-circle"></i> Approvals</span>
+                    <span class="profile-chip"><i class="bi bi-people"></i> Bookkeepers</span>
+                    <span class="profile-chip"><i class="bi bi-clipboard-data"></i> Audit Log</span>
+                    <span class="profile-chip"><i class="bi bi-gear"></i> System Settings</span>
+                </div>
+            </article>
+        </aside>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (() => {
+        const scrollTargets = Array.from(document.querySelectorAll("[data-scroll-target]"));
+        if (!scrollTargets.length) {
+            return;
+        }
+
+        scrollTargets.forEach((button) => {
+            button.addEventListener("click", (event) => {
+                const selector = String(button.dataset.scrollTarget || "").trim();
+                if (!selector) {
+                    return;
+                }
+
+                const target = document.querySelector(selector);
+                if (!target) {
+                    return;
+                }
+
+                event.preventDefault();
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+                if (target.hasAttribute("tabindex")) {
+                    target.focus({ preventScroll: true });
+                }
+            });
+        });
+    })();
+</script>
+{% endblock %}

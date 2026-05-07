@@ -1,0 +1,168 @@
+{% extends 'admin_panel/admin_base.html' %}
+
+{% block page_title %}Bookkeepers{% endblock %}
+{% block page_heading %}Bookkeepers{% endblock %}
+{% block page_subtitle %}
+<!--   <p class="dashboard-page-subtitle">Monitor account health and access status for your bookkeeper team.</p> -->
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-content admin-dashboard">
+    <div class="row g-3">
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-people"></i></span>
+                <div>
+                    <p class="stat-label">Total bookkeepers</p>
+                    <h3>N/A</h3>
+                    <p class="stat-note">Directory data pending</p>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-person-check"></i></span>
+                <div>
+                    <p class="stat-label">Active accounts</p>
+                    <h3>N/A</h3>
+                    <p class="stat-note">Awaiting directory sync</p>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-hourglass-split"></i></span>
+                <div>
+                    <p class="stat-label">Pending approvals</p>
+                    <h3>N/A</h3>
+                    <p class="stat-note">Approval feed pending</p>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-person-x"></i></span>
+                <div>
+                    <p class="stat-label">Suspended accounts</p>
+                    <h3>N/A</h3>
+                    <p class="stat-note">Status feed pending</p>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-lg-8">
+            <article class="dashboard-card admin-card h-100">
+                <div class="dashboard-card-head">
+                    <h2>Bookkeeper directory</h2>
+                </div>
+              <!--  <p class="dashboard-section-hint">Search and review bookkeeper accounts. Actions remain disabled until wiring is complete.</p> -->
+                <div class="dashboard-table-toolbar" aria-label="Bookkeeper directory controls">
+                    <div class="admin-bookkeeper-toolbar-row d-flex align-items-center gap-2 w-100">
+                        <label class="dashboard-table-search admin-bookkeeper-search" aria-label="Search bookkeepers by name or email">
+                            <i class="bi bi-search"></i>
+                            <input type="search" placeholder="Search by name or email" autocomplete="off">
+                        </label>
+                        <select class="form-select dashboard-filter-select admin-bookkeeper-sort" aria-label="Sort bookkeepers" disabled>
+                            <option>Sort: Most recent</option>
+                            <option>Sort: Alphabetical</option>
+                            <option>Sort: Most clients</option>
+                        </select>
+                    </div>
+                    <div class="dashboard-filter-chips" role="group" aria-label="Filter bookkeepers by status or client load">
+                        <button type="button" class="dashboard-filter-chip is-active" aria-pressed="true" data-planned-feature>All</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Pending</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Approved</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Suspended</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Inactive</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>0-15</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>16+</button>
+                    </div>
+                </div>
+              <!--  <p class="dashboard-filter-summary">Filters and sorting are UI-only in this phase.</p> -->
+                <div class="table-responsive">
+                    <table class="table admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Bookkeeper</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Clients</th>
+                                <th scope="col">Last login</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="admin-table-empty">
+                                <td>No bookkeepers available yet.</td>
+                                <td>--</td>
+                                <td><span class="admin-status-chip inactive">N/A</span></td>
+                                <td>--</td>
+                                <td>--</td>
+                                <td>
+                                    <div class="admin-table-actions">
+                                        <button type="button" class="admin-action-btn approve" disabled>Approve</button>
+                                        <button type="button" class="admin-action-btn reject" disabled>Reject</button>
+                                        <button type="button" class="admin-action-btn suspend" disabled>Suspend</button>
+                                        <button type="button" class="admin-action-btn reactivate" disabled>Reactivate</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </div>
+        <div class="col-lg-4 d-grid gap-3">
+            <article class="dashboard-card admin-card">
+                <div class="dashboard-card-head">
+                    <h2>Status summary</h2>
+                </div>
+               <!-- <p class="dashboard-panel-hint">Account distribution by status.</p> -->
+                <ul class="admin-status-list">
+                    <li class="admin-status-item"><span>Pending</span><span class="admin-status-chip pending">0</span></li>
+                    <li class="admin-status-item"><span>Approved</span><span class="admin-status-chip approved">0</span></li>
+                    <li class="admin-status-item"><span>Suspended</span><span class="admin-status-chip suspended">0</span></li>
+                    <li class="admin-status-item"><span>Inactive</span><span class="admin-status-chip inactive">0</span></li>
+                </ul>
+            </article>
+            <article class="dashboard-card admin-card">
+                <div class="dashboard-card-head">
+                    <h2>Client load summary</h2>
+                </div>
+               <!-- <p class="dashboard-panel-hint">Client counts per bookkeeper (no client details).</p> -->
+                <ul class="admin-status-list">
+                    <li class="admin-status-item"><span>0-5 clients</span><span class="admin-status-chip approved">0</span></li>
+                    <li class="admin-status-item"><span>6-15 clients</span><span class="admin-status-chip pending">0</span></li>
+                    <li class="admin-status-item"><span>16+ clients</span><span class="admin-status-chip suspended">0</span></li>
+                </ul>
+            </article>
+            <article class="dashboard-card admin-card">
+                <div class="dashboard-card-head">
+                    <h2>Approval shortcut</h2>
+                    <a href="{% url 'admin_approvals' %}" class="dashboard-link-muted">Open approvals</a>
+                </div>
+               <!-- <p class="dashboard-panel-hint">Pending approvals summary.</p> -->
+                <div class="admin-empty-state">No approval requests yet.</div>
+            </article>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-12">
+            <article class="dashboard-card admin-card">
+                <div class="dashboard-card-head">
+                    <h2>Quick actions</h2>
+                </div>
+               <!-- <p class="dashboard-panel-hint">Admin-only actions. Exports remain disabled until data is wired.</p> -->
+                <div class="dashboard-actions admin-actions">
+                    <button type="button" class="dashboard-action-btn primary" data-planned-feature>Refresh list</button>
+                    <a href="{% url 'admin_approvals' %}" class="btn dashboard-action-btn outline">View approvals</a>
+                    <button type="button" class="dashboard-action-btn outline" disabled>Export list (disabled)</button>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+{% endblock %}

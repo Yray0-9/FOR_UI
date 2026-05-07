@@ -1,333 +1,253 @@
+{% extends 'base/bookkeeper_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeBooks | Reports</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% block page_title %}Reports{% endblock %}
+{% block body_class %}reports-page{% endblock %}
+{% block page_heading %}Reports{% endblock %}
+{% block page_subtitle %}
+<p class="dashboard-page-subtitle">Generate clear financial reports with fast filters and downloadable results</p>
+{% endblock %}
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
-    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
-    <link rel="stylesheet" href="{% static 'css/reports.css' %}">
-</head>
-<body class="dashboard-page reports-page skeleton-active">
-    <div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
-        <div class="skeleton-shell">
-            <div class="dash-sk-layout">
-                <aside class="dash-sk-sidebar">
-                    <div class="skeleton-shimmer dash-sk-logo"></div>
-                    <div class="dash-sk-nav">
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                    </div>
-                </aside>
-                <section class="dash-sk-main">
-                    <div class="dash-sk-topbar">
-                        <div class="skeleton-shimmer dash-sk-title"></div>
-                        <div class="skeleton-shimmer dash-sk-search"></div>
-                        <div class="skeleton-shimmer dash-sk-profile"></div>
-                    </div>
-                    <div class="dash-sk-metrics">
-                        <div class="skeleton-shimmer dash-sk-metric"></div>
-                        <div class="skeleton-shimmer dash-sk-metric"></div>
-                        <div class="skeleton-shimmer dash-sk-metric"></div>
-                        <div class="skeleton-shimmer dash-sk-metric"></div>
-                    </div>
-                    <div class="dash-sk-content">
-                        <div class="dash-sk-left">
-                            <div class="dash-sk-card">
-                                <div class="skeleton-shimmer dash-sk-card-head"></div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reports.css' %}">
+{% endblock %}
+
+{% block skeleton %}
+<div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+        <div class="dash-sk-layout">
+            <aside class="dash-sk-sidebar">
+                <div class="skeleton-shimmer dash-sk-logo"></div>
+                <div class="dash-sk-nav">
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                </div>
+            </aside>
+            <section class="dash-sk-main">
+                <div class="dash-sk-topbar">
+                    <div class="skeleton-shimmer dash-sk-title"></div>
+                    <div class="skeleton-shimmer dash-sk-search"></div>
+                    <div class="skeleton-shimmer dash-sk-profile"></div>
+                </div>
+                <div class="dash-sk-metrics">
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                </div>
+                <div class="dash-sk-content">
+                    <div class="dash-sk-left">
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
                             </div>
                         </div>
-                        <div class="dash-sk-right">
-                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
-                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
-                        </div>
                     </div>
-                </section>
-            </div>
+                    <div class="dash-sk-right">
+                        <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
+                        <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <div class="dashboard-layout">
-        <aside class="dashboard-sidebar" id="dashboardSidebar">
-            <div class="dashboard-sidebar-top">
-                <a href="{% url 'dashboard' %}" class="dashboard-logo" aria-label="SafeBooks">
-                    <span class="dashboard-logo-glyph">
-                        <img src="{% static 'images/Logo_safebooks.png' %}" alt="" class="dashboard-logo-image" aria-hidden="true">
-                    </span>
-                    <span class="dashboard-logo-text">SafeBooks</span>
-                </a>
-                <button class="btn dashboard-menu-toggle dashboard-collapse-btn d-none d-lg-inline-flex" type="button" id="sidebarCollapseToggle" aria-label="Collapse sidebar" aria-expanded="true">
-                    <i class="bi bi-layout-sidebar-inset" id="sidebarCollapseIcon"></i>
+{% block content %}
+<section class="dashboard-content">
+    <article class="dashboard-card dashboard-fade-up reports-filter-card" style="--delay: 0.06s;">
+        <div class="reports-filter-head">
+            <div>
+                <h2 class="reports-filter-title">Build Report</h2>
+                <p class="dashboard-section-hint">Set report type, scope, and date range, then generate a preview-ready report.</p>
+            </div>
+            <span class="dashboard-tag reports-ready-tag" id="reportsGenerationTag">Not generated</span>
+        </div>
+
+        <form id="reportsFilterForm" class="reports-filter-form" novalidate data-no-skeleton-submit>
+            <div class="reports-filter-grid" aria-label="Reports filter controls">
+                <div class="reports-filter-field">
+                    <label class="reports-control-label" for="reportsTypeSelect">Report Type</label>
+                    <select id="reportsTypeSelect" class="form-select reports-control-select" aria-label="Select report type" required>
+                        <option value="financial_summary">Financial summary report</option>
+                        <option value="compliance_snapshot">Compliance status snapshot</option>
+                        <option value="client_risk_overview">Client risk overview</option>
+                    </select>
+                </div>
+
+                <div class="reports-filter-field">
+                    <label class="reports-control-label" for="reportsClientSelect">Client Scope</label>
+                    <select id="reportsClientSelect" class="form-select reports-control-select" aria-label="Select client scope">
+                        <option value="all">All clients</option>
+                    </select>
+                </div>
+
+                <div class="reports-filter-field">
+                    <label class="reports-control-label" for="reportsDateFrom">Date From</label>
+                    <input id="reportsDateFrom" class="form-control reports-control-input" type="date" aria-label="Filter date from" required>
+                </div>
+
+                <div class="reports-filter-field">
+                    <label class="reports-control-label" for="reportsDateTo">Date To</label>
+                    <input id="reportsDateTo" class="form-control reports-control-input" type="date" aria-label="Filter date to" required>
+                </div>
+            </div>
+
+            <div class="reports-filter-actions" aria-label="Reports actions">
+                <button type="submit" class="btn dashboard-action-btn primary reports-action-btn" id="reportsGenerateButton">
+                    <i class="bi bi-play-circle"></i>
+                    <span>Generate</span>
+                </button>
+                <button type="button" class="btn dashboard-action-btn outline reports-action-btn" id="reportsPreviewButton">
+                    <i class="bi bi-eye"></i>
+                    <span>Preview</span>
+                </button>
+                <button type="button" class="btn dashboard-action-btn outline reports-action-btn" id="reportsDownloadButton" disabled>
+                    <i class="bi bi-download"></i>
+                    <span>Download CSV</span>
+                </button>
+                <button type="button" class="btn dashboard-action-btn outline reports-action-btn" id="reportsPrintButton" disabled>
+                    <i class="bi bi-printer"></i>
+                    <span>Print Layout</span>
+                </button>
+                <button type="button" class="btn dashboard-action-btn outline reports-action-btn" id="reportsResetButton">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <span>Reset</span>
                 </button>
             </div>
-            <p class="dashboard-sidebar-label">Main Navigation</p>
 
-            <nav class="dashboard-nav" aria-label="Sidebar navigation">
-                <a href="{% url 'dashboard' %}" class="dashboard-nav-item"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
-                <a href="{% url 'clients' %}" class="dashboard-nav-item"><i class="bi bi-people"></i><span>Clients</span></a>
-                <a href="{% url 'financial_records' %}" class="dashboard-nav-item"><i class="bi bi-journal-text"></i><span>Financial Records</span></a>
-                <a href="{% url 'analytics' %}" class="dashboard-nav-item"><i class="bi bi-bar-chart-line"></i><span>Analytics</span></a>
-                <a href="{% url 'reports' %}" class="dashboard-nav-item active" aria-current="page"><i class="bi bi-file-earmark-text"></i><span>Reports</span></a>
-                <a href="{% url 'settings' %}" class="dashboard-nav-item"><i class="bi bi-gear"></i><span>Settings</span></a>
-            </nav>
+            <p class="reports-filter-status" id="reportsFilterStatus" role="status" aria-live="polite">Set filters then select Generate to prepare your report.</p>
+        </form>
+    </article>
 
-            <a href="{% url 'home' %}" class="dashboard-landing-link">
-                <i class="bi bi-box-arrow-left"></i>
-                <span>Back to Landing</span>
-            </a>
-        </aside>
+    <article class="dashboard-card dashboard-fade-up reports-feedback-card" style="--delay: 0.1s;" id="reportsFeedbackCard" aria-live="polite">
+        <div class="reports-feedback-state reports-loading-state" id="reportsLoadingState" hidden>
+            <span class="reports-spinner" aria-hidden="true"></span>
+            <div>
+                <h3>Generating report...</h3>
+                <p>SafeBooks is collecting and shaping your report data.</p>
+            </div>
+        </div>
 
-        <main class="dashboard-main">
-            <header class="dashboard-topbar animate-fade-in">
-                <div class="dashboard-topbar-left">
-                    <button class="btn dashboard-menu-toggle d-lg-none" type="button" id="sidebarToggle" aria-label="Toggle sidebar menu">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <div>
-                        <h1 class="dashboard-page-title">Reports</h1>
-                        <p class="dashboard-page-subtitle">Generate clear financial reports with fast filters and downloadable results</p>
-                    </div>
+        <div class="reports-feedback-state reports-error-state" id="reportsErrorState" hidden>
+            <i class="bi bi-exclamation-octagon"></i>
+            <div>
+                <h3>Unable to generate report</h3>
+                <p id="reportsErrorText">Please review your filters and try again.</p>
+                <button type="button" class="btn dashboard-action-btn outline reports-retry-btn" id="reportsRetryButton">Try Again</button>
+            </div>
+        </div>
+
+        <div class="reports-feedback-state reports-empty-state" id="reportsEmptyState">
+            <i class="bi bi-file-earmark-bar-graph"></i>
+            <div>
+                <h3>No report generated yet</h3>
+                <p>Use the filters above and select Generate to display report cards, preview rows, and CSV export.</p>
+            </div>
+        </div>
+    </article>
+
+    <div id="reportsPreviewArea" hidden>
+        <div class="row g-3 dashboard-stats-row mt-1" id="reportsSummaryCards"></div>
+
+        <article class="dashboard-card dashboard-fade-up reports-preview-card mt-3" style="--delay: 0.14s;">
+            <div class="dashboard-card-head reports-preview-head">
+                <div>
+                    <h2 id="reportsPreviewTitle">Report Preview</h2>
+                    <p class="dashboard-section-hint" id="reportsPreviewHint">Generated rows will appear here for quick review before download.</p>
                 </div>
+                <span class="dashboard-tag" id="reportsPreviewMetaTag">Preview ready</span>
+            </div>
 
-                <div class="dashboard-topbar-right">
-                    <div class="dropdown dashboard-user-dropdown">
-                        <button type="button" class="btn dashboard-profile-btn" id="dashboardProfileMenuButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open user menu">
-                            <span class="dashboard-avatar" id="dashboardUserAvatar">{{ current_user_initials|default:"SB" }}</span>
-                            <span class="dashboard-user-meta">
-                                <strong id="dashboardUserName">{{ current_user_name|default:"Bookkeeper User" }}</strong>
-                                <small>Profile</small>
-                            </span>
-                            <i class="bi bi-chevron-down"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="dashboardProfileMenuButton">
-                            <li>
-                                <button type="button" class="dropdown-item" id="dashboardProfileAction">
-                                    <i class="bi bi-person"></i>
-                                    <span>Profile</span>
-                                </button>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <button type="button" class="dropdown-item text-danger" id="dashboardLogoutAction">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                    <span>Log out</span>
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
+            <div class="reports-preview-meta" id="reportsPreviewMeta"></div>
+
+            <div class="table-responsive" id="reportsPreviewTableWrap">
+                <table class="table table-hover align-middle dashboard-table reports-preview-table mb-0" id="reportsPreviewTable" aria-describedby="reportsPreviewHint">
+                    <thead id="reportsPreviewHead"></thead>
+                    <tbody id="reportsPreviewBody"></tbody>
+                </table>
+            </div>
+
+            <div class="dashboard-data-empty" id="reportsPreviewTableEmpty" hidden>
+                <p>No rows matched the current filters.</p>
+                <div class="dashboard-empty-actions">
+                    <button type="button" class="btn dashboard-action-btn outline" id="reportsEmptyAdjustButton">Adjust Filters</button>
                 </div>
-            </header>
+            </div>
+        </article>
 
-            <section class="dashboard-content">
-                <article class="dashboard-card dashboard-fade-up reports-filter-card" style="--delay: 0.06s;">
-                    <div class="reports-filter-head">
-                        <div>
-                            <h2 class="reports-filter-title">Build Report</h2>
-                            <p class="dashboard-section-hint">Set report type, scope, and date range, then generate a preview-ready report.</p>
-                        </div>
-                        <span class="dashboard-tag reports-ready-tag" id="reportsGenerationTag">Not generated</span>
-                    </div>
-
-                    <form id="reportsFilterForm" class="reports-filter-form" novalidate data-no-skeleton-submit>
-                        <div class="reports-filter-grid" aria-label="Reports filter controls">
-                            <div class="reports-filter-field">
-                                <label class="reports-control-label" for="reportsTypeSelect">Report Type</label>
-                                <select id="reportsTypeSelect" class="form-select reports-control-select" aria-label="Select report type" required>
-                                    <option value="financial_summary">Financial summary report</option>
-                                    <option value="compliance_snapshot">Compliance status snapshot</option>
-                                    <option value="client_risk_overview">Client risk overview</option>
-                                </select>
-                            </div>
-
-                            <div class="reports-filter-field">
-                                <label class="reports-control-label" for="reportsClientSelect">Client Scope</label>
-                                <select id="reportsClientSelect" class="form-select reports-control-select" aria-label="Select client scope">
-                                    <option value="all">All clients</option>
-                                </select>
-                            </div>
-
-                            <div class="reports-filter-field">
-                                <label class="reports-control-label" for="reportsDateFrom">Date From</label>
-                                <input id="reportsDateFrom" class="form-control reports-control-input" type="date" aria-label="Filter date from" required>
-                            </div>
-
-                            <div class="reports-filter-field">
-                                <label class="reports-control-label" for="reportsDateTo">Date To</label>
-                                <input id="reportsDateTo" class="form-control reports-control-input" type="date" aria-label="Filter date to" required>
-                            </div>
-                        </div>
-
-                        <div class="reports-filter-actions" aria-label="Reports actions">
-                            <button type="submit" class="btn dashboard-action-btn primary reports-action-btn" id="reportsGenerateButton">
-                                <i class="bi bi-play-circle"></i>
-                                <span>Generate</span>
-                            </button>
-                            <button type="button" class="btn dashboard-action-btn outline reports-action-btn" id="reportsPreviewButton">
-                                <i class="bi bi-eye"></i>
-                                <span>Preview</span>
-                            </button>
-                            <button type="button" class="btn dashboard-action-btn outline reports-action-btn" id="reportsDownloadButton" disabled>
-                                <i class="bi bi-download"></i>
-                                <span>Download CSV</span>
-                            </button>
-                            <button type="button" class="btn dashboard-action-btn outline reports-action-btn" id="reportsPrintButton" disabled>
-                                <i class="bi bi-printer"></i>
-                                <span>Print Layout</span>
-                            </button>
-                            <button type="button" class="btn dashboard-action-btn outline reports-action-btn" id="reportsResetButton">
-                                <i class="bi bi-arrow-clockwise"></i>
-                                <span>Reset</span>
-                            </button>
-                        </div>
-
-                        <p class="reports-filter-status" id="reportsFilterStatus" role="status" aria-live="polite">Set filters then select Generate to prepare your report.</p>
-                    </form>
-                </article>
-
-                <article class="dashboard-card dashboard-fade-up reports-feedback-card" style="--delay: 0.1s;" id="reportsFeedbackCard" aria-live="polite">
-                    <div class="reports-feedback-state reports-loading-state" id="reportsLoadingState" hidden>
-                        <span class="reports-spinner" aria-hidden="true"></span>
-                        <div>
-                            <h3>Generating report...</h3>
-                            <p>SafeBooks is collecting and shaping your report data.</p>
-                        </div>
-                    </div>
-
-                    <div class="reports-feedback-state reports-error-state" id="reportsErrorState" hidden>
-                        <i class="bi bi-exclamation-octagon"></i>
-                        <div>
-                            <h3>Unable to generate report</h3>
-                            <p id="reportsErrorText">Please review your filters and try again.</p>
-                            <button type="button" class="btn dashboard-action-btn outline reports-retry-btn" id="reportsRetryButton">Try Again</button>
-                        </div>
-                    </div>
-
-                    <div class="reports-feedback-state reports-empty-state" id="reportsEmptyState">
-                        <i class="bi bi-file-earmark-bar-graph"></i>
-                        <div>
-                            <h3>No report generated yet</h3>
-                            <p>Use the filters above and select Generate to display report cards, preview rows, and CSV export.</p>
-                        </div>
-                    </div>
-                </article>
-
-                <div id="reportsPreviewArea" hidden>
-                    <div class="row g-3 dashboard-stats-row mt-1" id="reportsSummaryCards"></div>
-
-                    <article class="dashboard-card dashboard-fade-up reports-preview-card mt-3" style="--delay: 0.14s;">
-                        <div class="dashboard-card-head reports-preview-head">
-                            <div>
-                                <h2 id="reportsPreviewTitle">Report Preview</h2>
-                                <p class="dashboard-section-hint" id="reportsPreviewHint">Generated rows will appear here for quick review before download.</p>
-                            </div>
-                            <span class="dashboard-tag" id="reportsPreviewMetaTag">Preview ready</span>
-                        </div>
-
-                        <div class="reports-preview-meta" id="reportsPreviewMeta"></div>
-
-                        <div class="table-responsive" id="reportsPreviewTableWrap">
-                            <table class="table table-hover align-middle dashboard-table reports-preview-table mb-0" id="reportsPreviewTable" aria-describedby="reportsPreviewHint">
-                                <thead id="reportsPreviewHead"></thead>
-                                <tbody id="reportsPreviewBody"></tbody>
-                            </table>
-                        </div>
-
-                        <div class="dashboard-data-empty" id="reportsPreviewTableEmpty" hidden>
-                            <p>No rows matched the current filters.</p>
-                            <div class="dashboard-empty-actions">
-                                <button type="button" class="btn dashboard-action-btn outline" id="reportsEmptyAdjustButton">Adjust Filters</button>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="dashboard-card dashboard-fade-up reports-ledger-card mt-3" style="--delay: 0.18s;" id="reportsLedgerCard" hidden>
-                        <div class="dashboard-card-head reports-preview-head">
-                            <div>
-                                <h2>Client Print Layout Preview</h2>
-                                <p class="dashboard-section-hint" id="reportsLedgerHint">Familiar paper-style format for review and future printing.</p>
-                            </div>
-                            <span class="dashboard-tag" id="reportsLedgerMetaTag">Print-ready</span>
-                        </div>
-
-                        <div class="reports-ledger-wrapper" id="reportsLedgerWrapper">
-                            <div class="reports-ledger-sheet" id="reportsLedgerSheet" aria-live="polite"></div>
-                        </div>
-
-                        <div class="dashboard-data-empty" id="reportsLedgerEmpty" hidden>
-                            <p>Select one client and generate a report to see this print format.</p>
-                        </div>
-                    </article>
+        <article class="dashboard-card dashboard-fade-up reports-ledger-card mt-3" style="--delay: 0.18s;" id="reportsLedgerCard" hidden>
+            <div class="dashboard-card-head reports-preview-head">
+                <div>
+                    <h2>Client Print Layout Preview</h2>
+                    <p class="dashboard-section-hint" id="reportsLedgerHint">Familiar paper-style format for review and future printing.</p>
                 </div>
+                <span class="dashboard-tag" id="reportsLedgerMetaTag">Print-ready</span>
+            </div>
 
-                <article class="dashboard-card dashboard-fade-up reports-history-card mt-3" style="--delay: 0.18s;">
-                    <div class="dashboard-card-head">
-                        <h2>Recent Generated Reports</h2>
-                        <span class="dashboard-tag" id="reportsHistoryCountTag">0 items</span>
-                    </div>
-                    <p class="dashboard-section-hint">Latest reports generated in this browser session.</p>
+            <div class="reports-ledger-wrapper" id="reportsLedgerWrapper">
+                <div class="reports-ledger-sheet" id="reportsLedgerSheet" aria-live="polite"></div>
+            </div>
 
-                    <ul class="reports-history-list" id="reportsHistoryList" aria-label="Generated reports history"></ul>
-                    <div class="dashboard-data-empty reports-history-empty" id="reportsHistoryEmpty">
-                        <p>No generated reports yet in this session.</p>
-                    </div>
-                </article>
-            </section>
-        </main>
-
-        <button type="button" class="dashboard-backdrop" id="sidebarBackdrop" aria-label="Close sidebar"></button>
+            <div class="dashboard-data-empty" id="reportsLedgerEmpty" hidden>
+                <p id="reportsLedgerEmptyText">Select one client and generate a report to see this print format.</p>
+            </div>
+        </article>
     </div>
 
-    <div class="toast-container position-fixed top-0 end-0 p-3 safebooks-toast-container" id="uiToastContainer" aria-live="polite" aria-atomic="true"></div>
+    <article class="dashboard-card dashboard-fade-up reports-history-card mt-3" style="--delay: 0.18s;">
+        <div class="dashboard-card-head">
+            <h2>Recent Generated Reports</h2>
+            <span class="dashboard-tag" id="reportsHistoryCountTag">0 items</span>
+        </div>
+        <p class="dashboard-section-hint">Latest reports generated in this browser session.</p>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="{% static 'js/skeleton.js' %}"></script>
-    <script src="{% static 'js/app_shared.js' %}"></script>
-    <script>
-        window.SafeBooksReportsConfig = {
-            urls: {
-                clientsApi: "{% url 'api_clients' %}",
-                dashboardSummaryApi: "{% url 'api_dashboard_summary' %}",
-                analyticsSummaryApi: "{% url 'api_analytics_summary' %}",
-                logoutApi: "{% url 'api_logout' %}",
-                loginPage: "{% url 'login' %}",
-                reportsPage: "{% url 'reports' %}",
-                profilePage: "{% url 'profile' %}"
-            },
-            sidebarStateKey: "safebooks.sidebarCollapsed",
-            desktopQuery: "(min-width: 992px)",
-            authUserKey: "safebooks.authUser",
-            loginWelcomeKey: "safebooks.loginWelcome",
-            defaultName: "{{ current_user_name|default:'Bookkeeper User'|escapejs }}",
-            defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}"
-        };
-    </script>
-    <script src="{% static 'js/reports_page.js' %}"></script>
-</body>
-</html>
+        <ul class="reports-history-list" id="reportsHistoryList" aria-label="Generated reports history"></ul>
+        <div class="dashboard-data-empty reports-history-empty" id="reportsHistoryEmpty">
+            <p>No generated reports yet in this session.</p>
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.SafeBooksReportsConfig = {
+        urls: {
+            clientsApi: "{% url 'api_clients' %}",
+            dashboardSummaryApi: "{% url 'api_dashboard_summary' %}",
+            analyticsSummaryApi: "{% url 'api_analytics_summary' %}",
+            reportsPrintLayoutApi: "{% url 'api_reports_print_layout' %}",
+            logoutApi: "{% url 'api_logout' %}",
+            loginPage: "{% url 'login' %}",
+            reportsPage: "{% url 'reports' %}",
+            profilePage: "{% url 'profile' %}"
+        },
+        sidebarStateKey: "safebooks.sidebarCollapsed",
+        desktopQuery: "(min-width: 992px)",
+        authUserKey: "safebooks.authUser",
+        loginWelcomeKey: "safebooks.loginWelcome",
+        defaultName: "{{ current_user_name|default:'Bookkeeper User'|escapejs }}",
+        defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}"
+    };
+</script>
+<script src="{% static 'js/reports_shared.js' %}"></script>
+<script src="{% static 'js/reports_page.js' %}"></script>
+{% endblock %}

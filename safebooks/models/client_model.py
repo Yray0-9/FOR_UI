@@ -26,6 +26,7 @@ class Client(models.Model):
     permit_number = models.CharField(max_length=80)
     birthday = models.DateField(null=True, blank=True)
     email = models.EmailField(blank=True, default="")
+    custom_fields = models.JSONField(blank=True, default=list)
     risk_level = models.CharField(
         max_length=10,
         choices=RISK_LEVEL_CHOICES,

@@ -22,7 +22,7 @@ from django.views.generic import RedirectView
 from safebooks import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('django-admin/', admin.site.urls),
     path(
         'favicon.ico',
         RedirectView.as_view(url=staticfiles_storage.url('images/Logo_safebooks.png'), permanent=False),
@@ -38,9 +38,17 @@ urlpatterns = [
     path('api/clients/<int:client_id>/', views.client_detail_api_view, name='api_client_detail'),
     path('api/dashboard/summary/', views.dashboard_summary_api_view, name='api_dashboard_summary'),
     path('api/analytics/summary/', views.analytics_summary_api_view, name='api_analytics_summary'),
+    path('api/reports/print-layout/', views.reports_print_layout_api_view, name='api_reports_print_layout'),
     path('api/financial-records/clients/', views.financial_record_clients_api_view, name='api_financial_record_clients'),
     path('api/financial-records/client/<int:client_id>/records/', views.financial_records_api_view, name='api_financial_records'),
     path('api/financial-records/client/<int:client_id>/records/<int:record_id>/', views.financial_record_detail_api_view, name='api_financial_record_detail'),
+    path('admin/', views.admin_dashboard_page_view, name='admin_root'),
+    path('admin/dashboard/', views.admin_dashboard_page_view, name='admin_dashboard'),
+    path('admin/bookkeepers/', views.admin_bookkeepers_page_view, name='admin_bookkeepers'),
+    path('admin/approvals/', views.admin_approvals_page_view, name='admin_approvals'),
+    path('admin/audit-log/', views.admin_audit_log_page_view, name='admin_audit_log'),
+    path('admin/system-settings/', views.admin_system_settings_page_view, name='admin_system_settings'),
+    path('admin/profile/', views.admin_profile_page_view, name='admin_profile'),
     path('dashboard/', views.dashboard_page_view, name='dashboard'),
     path('clients/', views.clients_page_view, name='clients'),
     path('financial-records/', views.financial_records_page_view, name='financial_records'),

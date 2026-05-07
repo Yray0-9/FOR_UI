@@ -1,339 +1,257 @@
+{% extends 'base/bookkeeper_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeBooks | Profile</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% block page_title %}Profile{% endblock %}
+{% block body_class %}profile-page{% endblock %}
+{% block page_heading %}Profile{% endblock %}
+{% block page_subtitle %}
+<p class="dashboard-page-subtitle">Manage your account identity and visibility</p>
+{% endblock %}
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
-    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
-    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
-</head>
-<body class="dashboard-page profile-page skeleton-active">
-    <div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
-        <div class="skeleton-shell">
-            <div class="dash-sk-layout">
-                <aside class="dash-sk-sidebar">
-                    <div class="skeleton-shimmer dash-sk-logo"></div>
-                    <div class="dash-sk-nav">
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                    </div>
-                </aside>
-                <section class="dash-sk-main">
-                    <div class="dash-sk-topbar">
-                        <div class="skeleton-shimmer dash-sk-title"></div>
-                        <div class="skeleton-shimmer dash-sk-search"></div>
-                        <div class="skeleton-shimmer dash-sk-profile"></div>
-                    </div>
-                    <div class="dash-sk-content">
-                        <div class="dash-sk-left">
-                            <div class="dash-sk-card">
-                                <div class="skeleton-shimmer dash-sk-card-head"></div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block skeleton %}
+<div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+        <div class="dash-sk-layout">
+            <aside class="dash-sk-sidebar">
+                <div class="skeleton-shimmer dash-sk-logo"></div>
+                <div class="dash-sk-nav">
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                </div>
+            </aside>
+            <section class="dash-sk-main">
+                <div class="dash-sk-topbar">
+                    <div class="skeleton-shimmer dash-sk-title"></div>
+                    <div class="skeleton-shimmer dash-sk-search"></div>
+                    <div class="skeleton-shimmer dash-sk-profile"></div>
+                </div>
+                <div class="dash-sk-content">
+                    <div class="dash-sk-left">
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
                             </div>
                         </div>
-                        <div class="dash-sk-right">
-                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
-                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
-                        </div>
                     </div>
-                </section>
-            </div>
-        </div>
-    </div>
-
-    <div class="dashboard-layout">
-        <aside class="dashboard-sidebar" id="dashboardSidebar">
-            <div class="dashboard-sidebar-top">
-                <a href="{% url 'dashboard' %}" class="dashboard-logo" aria-label="SafeBooks">
-                    <span class="dashboard-logo-glyph">
-                        <img src="{% static 'images/Logo_safebooks.png' %}" alt="" class="dashboard-logo-image" aria-hidden="true">
-                    </span>
-                    <span class="dashboard-logo-text">SafeBooks</span>
-                </a>
-                <button class="btn dashboard-menu-toggle dashboard-collapse-btn d-none d-lg-inline-flex" type="button" id="sidebarCollapseToggle" aria-label="Collapse sidebar" aria-expanded="true">
-                    <i class="bi bi-layout-sidebar-inset" id="sidebarCollapseIcon"></i>
-                </button>
-            </div>
-            <p class="dashboard-sidebar-label">Main Navigation</p>
-
-            <nav class="dashboard-nav" aria-label="Sidebar navigation">
-                <a href="{% url 'dashboard' %}" class="dashboard-nav-item"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
-                <a href="{% url 'clients' %}" class="dashboard-nav-item"><i class="bi bi-people"></i><span>Clients</span></a>
-                <a href="{% url 'financial_records' %}" class="dashboard-nav-item"><i class="bi bi-journal-text"></i><span>Financial Records</span></a>
-                <a href="{% url 'analytics' %}" class="dashboard-nav-item"><i class="bi bi-bar-chart-line"></i><span>Analytics</span></a>
-                <a href="{% url 'reports' %}" class="dashboard-nav-item"><i class="bi bi-file-earmark-text"></i><span>Reports</span></a>
-                <a href="{% url 'settings' %}" class="dashboard-nav-item"><i class="bi bi-gear"></i><span>Settings</span></a>
-            </nav>
-
-            <a href="{% url 'home' %}" class="dashboard-landing-link">
-                <i class="bi bi-box-arrow-left"></i>
-                <span>Back to Landing</span>
-            </a>
-        </aside>
-
-        <main class="dashboard-main">
-            <header class="dashboard-topbar animate-fade-in">
-                <div class="dashboard-topbar-left">
-                    <button class="btn dashboard-menu-toggle d-lg-none" type="button" id="sidebarToggle" aria-label="Toggle sidebar menu">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <div>
-                        <h1 class="dashboard-page-title">Profile</h1>
-                        <p class="dashboard-page-subtitle">Manage your account identity and visibility</p>
+                    <div class="dash-sk-right">
+                        <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
+                        <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
                     </div>
-                </div>
-
-                <div class="dashboard-topbar-right">
-                    <div class="dropdown dashboard-user-dropdown">
-                        <button type="button" class="btn dashboard-profile-btn" id="dashboardProfileMenuButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open user menu">
-                            <span class="dashboard-avatar" id="dashboardUserAvatar">{{ current_user_initials|default:"SB" }}</span>
-                            <span class="dashboard-user-meta">
-                                <strong id="dashboardUserName">{{ current_user_name|default:"Bookkeeper User" }}</strong>
-                                <small>Profile</small>
-                            </span>
-                            <i class="bi bi-chevron-down"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="dashboardProfileMenuButton">
-                            <li>
-                                <button type="button" class="dropdown-item" id="dashboardProfileAction">
-                                    <i class="bi bi-person"></i>
-                                    <span>Profile</span>
-                                </button>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <button type="button" class="dropdown-item text-danger" id="dashboardLogoutAction">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                    <span>Log out</span>
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </header>
-
-            <section class="dashboard-content">
-                <div class="profile-layout">
-                    <div class="profile-main">
-                        <article class="dashboard-card profile-hero-card dashboard-fade-up" style="--delay: 0.05s;">
-                            <div class="profile-hero-top">
-                                <div class="profile-hero-identity">
-                                    <div class="profile-avatar" id="profileAvatar">{{ current_user_initials|default:"SB" }}</div>
-                                    <div>
-                                        <p class="profile-hero-eyebrow">Bookkeeper Account</p>
-                                        <h2 class="profile-hero-name" id="profileDisplayName">{{ current_user_name|default:"Bookkeeper User" }}</h2>
-                                        <div class="profile-hero-meta">
-                                            <span class="profile-meta-item"><i class="bi bi-envelope"></i><span id="profileDisplayEmail">name@company.com</span></span>
-                                            <span class="profile-status-pill"><i class="bi bi-shield-check"></i>Active</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="profile-hero-actions">
-                                    <button type="button" class="btn dashboard-action-btn primary" data-scroll-target="#profilePersonalDetails">Edit Profile</button>
-                                    <button type="button" class="btn dashboard-action-btn outline" data-planned-feature="Change password" aria-disabled="true">Change Password</button>
-                                    <button type="button" class="btn dashboard-action-btn outline" data-scroll-target="#profileActivity">View Activity</button>
-                                </div>
-                            </div>
-
-                            <div class="profile-hero-progress">
-                                <div class="profile-progress-label">
-                                    <span>Profile completeness</span>
-                                    <strong id="profileCompletionValue">0%</strong>
-                                </div>
-                                <div class="progress profile-progress-bar" id="profileCompletionTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                                    <div class="progress-bar" id="profileCompletionBar" style="width: 0%"></div>
-                                </div>
-                                <p class="profile-field-hint">Complete the basics to unlock faster approvals and reporting shortcuts.</p>
-                            </div>
-                        </article>
-
-                        <form class="dashboard-card profile-card dashboard-fade-up profile-scroll-target" style="--delay: 0.08s;" id="profilePersonalDetails" data-profile-section novalidate tabindex="-1">
-                            <div class="profile-card-head">
-                                <div>
-                                    <h2>Personal Details</h2>
-                                    <p class="dashboard-section-hint">Update how your name and contact details appear across SafeBooks.</p>
-                                </div>
-                                <span class="dashboard-tag">Required</span>
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="profile-field-label" for="profileFullName">Full Name</label>
-                                    <input type="text" id="profileFullName" class="form-control profile-input" placeholder="Enter your full name" required data-profile-track>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="profile-field-label" for="profileUsername">Username</label>
-                                    <input type="text" id="profileUsername" class="form-control profile-input" placeholder="Choose a username" required data-profile-track>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="profile-field-label" for="profileEmail">Email Address</label>
-                                    <input type="email" id="profileEmail" class="form-control profile-input" placeholder="name@company.com" required data-profile-track>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="profile-field-label" for="profilePhone">Phone Number</label>
-                                    <input type="tel" id="profilePhone" class="form-control profile-input" placeholder="+63 900 000 0000" data-profile-track>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="profile-field-label" for="profileTimeZone">Time Zone</label>
-                                    <select id="profileTimeZone" class="form-select profile-select" data-profile-track>
-                                        <option value="asia-manila">(GMT+8) Asia/Manila</option>
-                                        <option value="asia-singapore">(GMT+8) Asia/Singapore</option>
-                                        <option value="asia-kuala-lumpur">(GMT+8) Asia/Kuala Lumpur</option>
-                                        <option value="asia-jakarta">(GMT+7) Asia/Jakarta</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="profile-field-label" for="profileLocation">Location</label>
-                                    <input type="text" id="profileLocation" class="form-control profile-input" placeholder="City, Country" data-profile-track>
-                                </div>
-                            </div>
-
-                            <p class="profile-field-hint">Required fields help personalize your workspace.</p>
-
-                            <div class="profile-section-footer">
-                                <span class="profile-save-status" data-profile-status>Not saved</span>
-                                <button type="button" class="btn dashboard-action-btn primary profile-save-btn" data-profile-save disabled>Save Profile</button>
-                            </div>
-                        </form>
-
-                        <article class="dashboard-card profile-card profile-activity-card dashboard-fade-up profile-scroll-target" style="--delay: 0.12s;" id="profileActivity" tabindex="-1">
-                            <div class="profile-card-head">
-                                <div>
-                                    <h2>Activity And Audit</h2>
-                                    <p class="dashboard-section-hint">Track the most recent updates across your account.</p>
-                                </div>
-                                <span class="dashboard-tag">Latest</span>
-                            </div>
-
-                            <ul class="profile-activity-list" aria-label="Recent account activity">
-                                <li class="profile-activity-item">
-                                    <span class="profile-activity-dot" aria-hidden="true"></span>
-                                    <div>
-                                        <p class="profile-activity-title">Updated workspace defaults</p>
-                                        <p class="profile-field-hint">Today, 9:45 AM</p>
-                                    </div>
-                                </li>
-                                <li class="profile-activity-item">
-                                    <span class="profile-activity-dot" aria-hidden="true"></span>
-                                    <div>
-                                        <p class="profile-activity-title">Generated Financial Summary report</p>
-                                        <p class="profile-field-hint">Yesterday, 3:10 PM</p>
-                                    </div>
-                                </li>
-                                <li class="profile-activity-item">
-                                    <span class="profile-activity-dot" aria-hidden="true"></span>
-                                    <div>
-                                        <p class="profile-activity-title">Logged in from Quezon City</p>
-                                        <p class="profile-field-hint">Yesterday, 8:05 AM</p>
-                                    </div>
-                                </li>
-                                <li class="profile-activity-item">
-                                    <span class="profile-activity-dot" aria-hidden="true"></span>
-                                    <div>
-                                        <p class="profile-activity-title">Reviewed high risk client alerts</p>
-                                        <p class="profile-field-hint">Apr 23, 6:22 PM</p>
-                                    </div>
-                                </li>
-                            </ul>
-
-                            <div class="profile-section-footer">
-                                <button type="button" class="btn dashboard-action-btn outline" data-planned-feature="Export activity log" aria-disabled="true">Export activity log</button>
-                                <button type="button" class="btn dashboard-action-btn outline" data-planned-feature="Full audit log" aria-disabled="true">View full audit log</button>
-                            </div>
-                        </article>
-                    </div>
-
-                    <aside class="profile-side">
-                        <article class="dashboard-card profile-card dashboard-fade-up profile-scroll-target" style="--delay: 0.1s;" id="profilePreferences" tabindex="-1">
-                            <div class="profile-card-head">
-                                <div>
-                                    <h2>Preferences Snapshot</h2>
-                                    <p class="dashboard-section-hint">Quick view of your current workspace settings.</p>
-                                </div>
-                            </div>
-
-                            <div class="profile-chip-grid">
-                                <span class="profile-chip"><i class="bi bi-brightness-high"></i> Light Theme</span>
-                                <span class="profile-chip"><i class="bi bi-bell"></i> Alerts On</span>
-                                <span class="profile-chip"><i class="bi bi-calendar3"></i> YTD Reports</span>
-                            </div>
-
-                            <a href="{% url 'settings' %}" class="btn dashboard-action-btn outline profile-link-btn">Manage in Settings</a>
-                        </article>
-
-                        <article class="dashboard-card profile-card profile-danger-card dashboard-fade-up profile-scroll-target" style="--delay: 0.14s;" id="profileDanger" tabindex="-1">
-                            <div class="profile-card-head">
-                                <div>
-                                    <h2>Danger Zone</h2>
-                                    <p class="dashboard-section-hint">Account removal requires confirmation.</p>
-                                </div>
-                                <span class="dashboard-tag">Planned</span>
-                            </div>
-
-                            <div class="profile-planned-row">
-                                <div>
-                                    <p class="profile-field-label">Request account deactivation</p>
-                                    <p class="profile-field-hint">This action will be available after defense.</p>
-                                </div>
-                                <button type="button" class="btn dashboard-action-btn outline profile-planned-btn" data-planned-feature="Account deactivation" aria-disabled="true">Request</button>
-                            </div>
-                        </article>
-                    </aside>
                 </div>
             </section>
-        </main>
-
-        <button type="button" class="dashboard-backdrop" id="sidebarBackdrop" aria-label="Close sidebar"></button>
+        </div>
     </div>
+</div>
+{% endblock %}
 
-    <div class="toast-container position-fixed top-0 end-0 p-3 safebooks-toast-container" id="uiToastContainer" aria-live="polite" aria-atomic="true"></div>
+{% block content %}
+<section class="dashboard-content">
+    <div class="profile-layout">
+        <div class="profile-main">
+            <article class="dashboard-card profile-hero-card dashboard-fade-up" style="--delay: 0.05s;">
+                <div class="profile-hero-top">
+                    <div class="profile-hero-identity">
+                        <div class="profile-avatar" id="profileAvatar">{{ current_user_initials|default:"SB" }}</div>
+                        <div>
+                            <p class="profile-hero-eyebrow">Bookkeeper Account</p>
+                            <h2 class="profile-hero-name" id="profileDisplayName">{{ current_user_name|default:"Bookkeeper User" }}</h2>
+                            <div class="profile-hero-meta">
+                                <span class="profile-meta-item"><i class="bi bi-envelope"></i><span id="profileDisplayEmail">name@company.com</span></span>
+                                <span class="profile-status-pill"><i class="bi bi-shield-check"></i>Active</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-hero-actions">
+                        <button type="button" class="btn dashboard-action-btn primary" data-scroll-target="#profilePersonalDetails">Edit Profile</button>
+                        <button type="button" class="btn dashboard-action-btn outline" data-planned-feature="Change password" aria-disabled="true">Change Password</button>
+                        <button type="button" class="btn dashboard-action-btn outline" data-scroll-target="#profileActivity">View Activity</button>
+                    </div>
+                </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="{% static 'js/skeleton.js' %}"></script>
-    <script src="{% static 'js/app_shared.js' %}"></script>
-    <script>
-        window.SafeBooksProfileConfig = {
-            urls: {
-                logoutApi: "{% url 'api_logout' %}",
-                loginPage: "{% url 'login' %}",
-                profilePage: "{% url 'profile' %}",
-                settingsPage: "{% url 'settings' %}"
-            },
-            sidebarStateKey: "safebooks.sidebarCollapsed",
-            desktopQuery: "(min-width: 992px)",
-            authUserKey: "safebooks.authUser",
-            loginWelcomeKey: "safebooks.loginWelcome",
-            defaultName: "{{ current_user_name|default:'Bookkeeper User'|escapejs }}",
-            defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}"
-        };
-    </script>
-    <script src="{% static 'js/profile_page.js' %}"></script>
-</body>
-</html>
+                <div class="profile-hero-progress">
+                    <div class="profile-progress-label">
+                        <span>Profile completeness</span>
+                        <strong id="profileCompletionValue">0%</strong>
+                    </div>
+                    <div class="progress profile-progress-bar" id="profileCompletionTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div class="progress-bar" id="profileCompletionBar" style="width: 0%"></div>
+                    </div>
+                    <p class="profile-field-hint">Complete the basics to unlock faster approvals and reporting shortcuts.</p>
+                </div>
+            </article>
+
+            <form class="dashboard-card profile-card dashboard-fade-up profile-scroll-target" style="--delay: 0.08s;" id="profilePersonalDetails" data-profile-section novalidate tabindex="-1">
+                <div class="profile-card-head">
+                    <div>
+                        <h2>Personal Details</h2>
+                        <p class="dashboard-section-hint">Update how your name and contact details appear across SafeBooks.</p>
+                    </div>
+                    <span class="dashboard-tag">Required</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="profileFullName">Full Name</label>
+                        <input type="text" id="profileFullName" class="form-control profile-input" placeholder="Enter your full name" required data-profile-track>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="profileUsername">Username</label>
+                        <input type="text" id="profileUsername" class="form-control profile-input" placeholder="Choose a username" required data-profile-track>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="profileEmail">Email Address</label>
+                        <input type="email" id="profileEmail" class="form-control profile-input" placeholder="name@company.com" required data-profile-track>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="profilePhone">Phone Number</label>
+                        <input type="tel" id="profilePhone" class="form-control profile-input" placeholder="+63 900 000 0000" data-profile-track>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="profileTimeZone">Time Zone</label>
+                        <select id="profileTimeZone" class="form-select profile-select" data-profile-track>
+                            <option value="asia-manila">(GMT+8) Asia/Manila</option>
+                            <option value="asia-singapore">(GMT+8) Asia/Singapore</option>
+                            <option value="asia-kuala-lumpur">(GMT+8) Asia/Kuala Lumpur</option>
+                            <option value="asia-jakarta">(GMT+7) Asia/Jakarta</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-field-label" for="profileLocation">Location</label>
+                        <input type="text" id="profileLocation" class="form-control profile-input" placeholder="City, Country" data-profile-track>
+                    </div>
+                </div>
+
+                <p class="profile-field-hint">Required fields help personalize your workspace.</p>
+
+                <div class="profile-section-footer">
+                    <span class="profile-save-status" data-profile-status>Not saved</span>
+                    <button type="button" class="btn dashboard-action-btn primary profile-save-btn" data-profile-save disabled>Save Profile</button>
+                </div>
+            </form>
+
+            <article class="dashboard-card profile-card profile-activity-card dashboard-fade-up profile-scroll-target" style="--delay: 0.12s;" id="profileActivity" tabindex="-1">
+                <div class="profile-card-head">
+                    <div>
+                        <h2>Activity And Audit</h2>
+                        <p class="dashboard-section-hint">Track the most recent updates across your account.</p>
+                    </div>
+                    <span class="dashboard-tag">Latest</span>
+                </div>
+
+                <ul class="profile-activity-list" aria-label="Recent account activity">
+                    <li class="profile-activity-item">
+                        <span class="profile-activity-dot" aria-hidden="true"></span>
+                        <div>
+                            <p class="profile-activity-title">Updated workspace defaults</p>
+                            <p class="profile-field-hint">Today, 9:45 AM</p>
+                        </div>
+                    </li>
+                    <li class="profile-activity-item">
+                        <span class="profile-activity-dot" aria-hidden="true"></span>
+                        <div>
+                            <p class="profile-activity-title">Generated Financial Summary report</p>
+                            <p class="profile-field-hint">Yesterday, 3:10 PM</p>
+                        </div>
+                    </li>
+                    <li class="profile-activity-item">
+                        <span class="profile-activity-dot" aria-hidden="true"></span>
+                        <div>
+                            <p class="profile-activity-title">Logged in from Quezon City</p>
+                            <p class="profile-field-hint">Yesterday, 8:05 AM</p>
+                        </div>
+                    </li>
+                    <li class="profile-activity-item">
+                        <span class="profile-activity-dot" aria-hidden="true"></span>
+                        <div>
+                            <p class="profile-activity-title">Reviewed high risk client alerts</p>
+                            <p class="profile-field-hint">Apr 23, 6:22 PM</p>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="profile-section-footer">
+                    <button type="button" class="btn dashboard-action-btn outline" data-planned-feature="Export activity log" aria-disabled="true">Export activity log</button>
+                    <button type="button" class="btn dashboard-action-btn outline" data-planned-feature="Full audit log" aria-disabled="true">View full audit log</button>
+                </div>
+            </article>
+        </div>
+
+        <aside class="profile-side">
+            <article class="dashboard-card profile-card dashboard-fade-up profile-scroll-target" style="--delay: 0.1s;" id="profilePreferences" tabindex="-1">
+                <div class="profile-card-head">
+                    <div>
+                        <h2>Preferences Snapshot</h2>
+                        <p class="dashboard-section-hint">Quick view of your current workspace settings.</p>
+                    </div>
+                </div>
+
+                <div class="profile-chip-grid">
+                    <span class="profile-chip"><i class="bi bi-brightness-high"></i> Light Theme</span>
+                    <span class="profile-chip"><i class="bi bi-bell"></i> Alerts On</span>
+                    <span class="profile-chip"><i class="bi bi-calendar3"></i> YTD Reports</span>
+                </div>
+
+                <a href="{% url 'settings' %}" class="btn dashboard-action-btn outline profile-link-btn">Manage in Settings</a>
+            </article>
+
+            <article class="dashboard-card profile-card profile-danger-card dashboard-fade-up profile-scroll-target" style="--delay: 0.14s;" id="profileDanger" tabindex="-1">
+                <div class="profile-card-head">
+                    <div>
+                        <h2>Danger Zone</h2>
+                        <p class="dashboard-section-hint">Account removal requires confirmation.</p>
+                    </div>
+                    <span class="dashboard-tag">Planned</span>
+                </div>
+
+                <div class="profile-planned-row">
+                    <div>
+                        <p class="profile-field-label">Request account deactivation</p>
+                        <p class="profile-field-hint">This action will be available after defense.</p>
+                    </div>
+                    <button type="button" class="btn dashboard-action-btn outline profile-planned-btn" data-planned-feature="Account deactivation" aria-disabled="true">Request</button>
+                </div>
+            </article>
+        </aside>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.SafeBooksProfileConfig = {
+        urls: {
+            logoutApi: "{% url 'api_logout' %}",
+            loginPage: "{% url 'login' %}",
+            profilePage: "{% url 'profile' %}",
+            settingsPage: "{% url 'settings' %}"
+        },
+        sidebarStateKey: "safebooks.sidebarCollapsed",
+        desktopQuery: "(min-width: 992px)",
+        authUserKey: "safebooks.authUser",
+        loginWelcomeKey: "safebooks.loginWelcome",
+        defaultName: "{{ current_user_name|default:'Bookkeeper User'|escapejs }}",
+        defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}"
+    };
+</script>
+<script src="{% static 'js/profile_page.js' %}"></script>
+{% endblock %}

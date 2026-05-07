@@ -2,6 +2,7 @@
     const config = window.SafeBooksReportsConfig || {};
     const urls = config.urls || {};
     const shared = window.SafeBooksShared || null;
+    const reportsShared = window.SafeBooksReportsShared || null;
 
     const REPORT_TYPE_META = {
         financial_summary: {
@@ -93,6 +94,7 @@
     const reportsLedgerWrapper = document.getElementById("reportsLedgerWrapper");
     const reportsLedgerSheet = document.getElementById("reportsLedgerSheet");
     const reportsLedgerEmpty = document.getElementById("reportsLedgerEmpty");
+    const reportsLedgerEmptyText = document.getElementById("reportsLedgerEmptyText");
 
     const reportsHistoryList = document.getElementById("reportsHistoryList");
     const reportsHistoryCountTag = document.getElementById("reportsHistoryCountTag");
@@ -133,6 +135,7 @@
         || !reportsLedgerWrapper
         || !reportsLedgerSheet
         || !reportsLedgerEmpty
+        || !reportsLedgerEmptyText
         || !reportsHistoryList
         || !reportsHistoryCountTag
         || !reportsHistoryEmpty
@@ -428,8 +431,7 @@
                     return false;
                 }
                 return !ignoredColumnKeys.has(columnKey);
-            })
-            .slice(0, 8);
+            });
 
         if (!dataColumns.length) {
             dataColumns = reportColumns
@@ -439,8 +441,7 @@
                     }
 
                     return String(column && column.key || "").toLowerCase() !== String(periodColumn.key || "").toLowerCase();
-                })
-                .slice(0, 8);
+                });
         }
 
         if (!dataColumns.length) {
@@ -485,6 +486,47 @@
         });
     };
 
+    const buildPrintLayoutDefinition = (report) => {
+        const reportColumns = Array.isArray(report && report.columns) ? report.columns : [];
+        const columnMeta = reportColumns
+            .map((column) => {
+                return {
+                    key: String(column && column.key || ""),
+                    label: toDisplayText(column && (column.label || column.key), "Value"),
+                };
+            })
+            .filter((column) => Boolean(column.label));
+
+        const columns = columnMeta.length
+            ? columnMeta.map((column) => column.label)
+            : ["Details"];
+
+        const rows = Array.isArray(report && report.rows) ? report.rows : [];
+        const formattedRows = rows.map((row) => {
+            const safeRow = row && typeof row === "object" ? row : {};
+            if (!columnMeta.length) {
+                return [toDisplayText(row)];
+            }
+
+            return columnMeta.map((column) => toDisplayText(safeRow[column.key]));
+        });
+
+        const rowCount = formattedRows.length;
+        const rowHint = rowCount
+            ? "Prepared from generated report values."
+            : "No rows matched the selected date range. Blank lines are available for manual notes.";
+
+        return {
+            columns,
+            rows: formattedRows,
+            rowCount,
+            rowHint,
+            reportTitle: "SafeBooks Client Report Sheet",
+            reportSubtitle: "Client-facing format for quick review and print handover",
+            minRows: 14,
+        };
+    };
+
     const setFilterStatus = (message) => {
         reportsFilterStatus.textContent = String(message || "");
     };
@@ -522,7 +564,9 @@
             reportsPrintButton.disabled = true;
         } else {
             reportsDownloadButton.disabled = loading || !latestGeneratedReport.rows.length;
-            reportsPrintButton.disabled = loading || !isClientScopedReport(latestGeneratedReport);
+            reportsPrintButton.disabled = loading
+                || !isClientScopedReport(latestGeneratedReport)
+                || !latestGeneratedReport.printLayout;
         }
     };
 
@@ -818,6 +862,10 @@
     };
 
     const buildLedgerSheetHtml = (report) => {
+        if (!reportsShared || typeof reportsShared.buildReportSheetHtml !== "function") {
+            return "";
+        }
+
         const client = getClientForReport(report);
         const clientName = toDisplayText(client && client.client_name ? client.client_name : report.scopeLabel, "Selected client");
         const clientTin = toDisplayText(client && client.tin_number);
@@ -831,96 +879,66 @@
         const generatedLabel = formatGeneratedDateTime(report.generatedAt);
         const dateRangeLabel = `${toDisplayText(report.dateFrom)} to ${toDisplayText(report.dateTo)}`;
 
-        const schema = buildLedgerColumnSchema(report);
-        const periodLabel = toLedgerHeaderLabel(
-            schema.periodColumn
-                ? schema.periodColumn.label || schema.periodColumn.key
-                : "Period"
-        );
+        const printLayout = report && report.printLayout ? report.printLayout : null;
+        const usePrintLayout = Boolean(printLayout && Array.isArray(printLayout.columns));
 
-        const ledgerRows = buildLedgerRowCells(report, schema.periodColumn, schema.dataColumns);
-        const visibleRows = Math.max(14, ledgerRows.length);
+        let columns = [];
+        let rows = [];
+        let rowHint = "";
+        let minRows = 14;
+        let reportTitle = "SafeBooks Client Report Sheet";
+        let reportSubtitle = "Client-facing format for quick review and print handover";
 
-        const headerMarkup = schema.dataColumns
-            .map((column) => `<th>${escapeHtml(toLedgerHeaderLabel(column.label || column.key))}</th>`)
-            .join("");
+        if (usePrintLayout) {
+            columns = printLayout.columns;
+            rows = printLayout.rows || [];
+            rowHint = toDisplayText(printLayout.rowHint, "Prepared from generated report values.");
+            minRows = Number.isFinite(printLayout.minRows) ? printLayout.minRows : minRows;
+            reportTitle = toDisplayText(printLayout.reportTitle, reportTitle);
+            reportSubtitle = toDisplayText(printLayout.reportSubtitle, reportSubtitle);
+        } else {
+            const schema = buildLedgerColumnSchema(report);
+            const periodLabel = toLedgerHeaderLabel(
+                schema.periodColumn
+                    ? schema.periodColumn.label || schema.periodColumn.key
+                    : "Period"
+            );
 
-        const rowsMarkup = Array.from({ length: visibleRows }, (_, rowIndex) => {
-            const sourceRow = ledgerRows[rowIndex];
-            if (!sourceRow) {
-                return `
-                    <tr>
-                        <td>&nbsp;</td>
-                        ${schema.dataColumns.map(() => "<td>&nbsp;</td>").join("")}
-                    </tr>
-                `;
-            }
+            const ledgerRows = buildLedgerRowCells(report, schema.periodColumn, schema.dataColumns);
+            columns = [
+                periodLabel,
+                ...schema.dataColumns.map((column) => toLedgerHeaderLabel(column.label || column.key)),
+            ];
+            rows = ledgerRows.map((row) => [row.period, ...row.cells]);
+            rowHint = ledgerRows.length
+                ? "Prepared from generated report values."
+                : "No rows matched the selected date range. Blank lines are available for manual notes.";
+        }
 
-            return `
-                <tr>
-                    <td>${escapeHtml(toDisplayText(sourceRow.period))}</td>
-                    ${sourceRow.cells.map((cell) => `<td>${escapeHtml(toDisplayText(cell))}</td>`).join("")}
-                </tr>
-            `;
-        }).join("");
-
-        const rowHint = ledgerRows.length
-            ? "Prepared from generated report values."
-            : "No rows matched the selected date range. Blank lines are available for manual notes.";
-
-        return `
-            <h3 class="reports-ledger-title">SafeBooks Client Report Sheet</h3>
-            <p class="reports-ledger-subtitle">Client-facing format for quick review and print handover</p>
-
-            <div class="reports-ledger-meta-row">
-                <span class="reports-ledger-meta-pill">Type: ${escapeHtml(reportTypeLabel)}</span>
-                <span class="reports-ledger-meta-pill">Range: ${escapeHtml(dateRangeLabel)}</span>
-                <span class="reports-ledger-meta-pill">Generated: ${escapeHtml(generatedLabel)}</span>
-            </div>
-
-            <table class="reports-ledger-client-table" aria-label="Client details">
-                <tbody>
-                    <tr>
-                        <th>TIN</th>
-                        <td>${escapeHtml(clientTin)}</td>
-                        <th>Trade Name</th>
-                        <td>${escapeHtml(tradeName)}</td>
-                    </tr>
-                    <tr>
-                        <th>Taxpayer</th>
-                        <td>${escapeHtml(clientName)}</td>
-                        <th>Location</th>
-                        <td>${escapeHtml(location)}</td>
-                    </tr>
-                    <tr>
-                        <th>Permit No.</th>
-                        <td>${escapeHtml(permitNumber)}</td>
-                        <th>Birthday</th>
-                        <td>${escapeHtml(birthday)}</td>
-                    </tr>
-                    <tr>
-                        <th>Email</th>
-                        <td colspan="3">${escapeHtml(email)}</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="reports-ledger-grid-wrap">
-                <table class="reports-ledger-grid-table" aria-label="Ledger entries">
-                    <thead>
-                        <tr>
-                            <th>${escapeHtml(periodLabel)}</th>
-                            ${headerMarkup}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rowsMarkup}
-                    </tbody>
-                </table>
-            </div>
-
-            <p class="reports-ledger-note">${escapeHtml(rowHint)}</p>
-        `;
+        return reportsShared.buildReportSheetHtml({
+            reportTitle,
+            reportSubtitle,
+            meta: {
+                reportTypeLabel,
+                dateRangeLabel,
+                generatedLabel,
+            },
+            client: {
+                clientName,
+                tin: clientTin,
+                tradeName,
+                location,
+                permitNumber,
+                birthday,
+                email,
+            },
+            table: {
+                columns,
+                rows,
+                minRows,
+            },
+            rowHint,
+        });
     };
 
     const renderLedgerPreview = (report) => {
@@ -933,6 +951,9 @@
         if (!isClientScopedReport(report)) {
             reportsLedgerWrapper.hidden = true;
             reportsLedgerEmpty.hidden = false;
+            if (reportsLedgerEmptyText) {
+                reportsLedgerEmptyText.textContent = "Select one client and generate a report to see this print format.";
+            }
             reportsLedgerSheet.innerHTML = "";
             reportsLedgerHint.textContent = "This familiar format appears when one client is selected.";
             reportsLedgerMetaTag.textContent = "Client scope required";
@@ -940,10 +961,27 @@
             return;
         }
 
+        const printLayout = report.printLayout || null;
+        if (!printLayout) {
+            reportsLedgerWrapper.hidden = true;
+            reportsLedgerEmpty.hidden = false;
+            if (reportsLedgerEmptyText) {
+                reportsLedgerEmptyText.textContent = report.printLayoutError
+                    ? String(report.printLayoutError)
+                    : "Client report layout is not available yet. Generate the report again.";
+            }
+            reportsLedgerHint.textContent = "Client report sheet uses the generated report data.";
+            reportsLedgerMetaTag.textContent = "Print layout unavailable";
+            reportsLedgerSheet.innerHTML = "";
+            reportsPrintButton.disabled = true;
+            return;
+        }
+
         reportsLedgerWrapper.hidden = false;
         reportsLedgerEmpty.hidden = true;
-        reportsLedgerHint.textContent = "Paper-style sheet preview for client review and printing.";
-        reportsLedgerMetaTag.textContent = toDisplayText(report.scopeLabel, "Selected client");
+        reportsLedgerHint.textContent = "Client report sheet for the selected client and date range.";
+        const rowCountLabel = `${formatCount(printLayout.rowCount || 0)} row${printLayout.rowCount === 1 ? "" : "s"}`;
+        reportsLedgerMetaTag.textContent = `${toDisplayText(report.scopeLabel, "Selected client")} | ${rowCountLabel}`;
         reportsLedgerSheet.innerHTML = buildLedgerSheetHtml(report);
         reportsPrintButton.disabled = false;
     };
@@ -953,6 +991,9 @@
         reportsLedgerWrapper.hidden = false;
         reportsLedgerEmpty.hidden = true;
         reportsLedgerSheet.innerHTML = "";
+        if (reportsLedgerEmptyText) {
+            reportsLedgerEmptyText.textContent = "Select one client and generate a report to see this print format.";
+        }
         reportsLedgerHint.textContent = "Familiar paper-style format for review and future printing.";
         reportsLedgerMetaTag.textContent = "Print-ready";
         reportsPrintButton.disabled = true;
@@ -1090,27 +1131,45 @@
             return;
         }
 
+        if (!latestGeneratedReport.printLayout) {
+            showToast("Print layout is not available yet. Generate the report again.", "warning");
+            return;
+        }
+
         const sheetMarkup = String(reportsLedgerSheet.innerHTML || "").trim();
         if (!sheetMarkup) {
             showToast("Print layout is not ready yet. Generate the report again.", "warning");
             return;
         }
 
-        const printWindow = window.open("", "_blank", "noopener,noreferrer,width=1024,height=860");
-        if (!printWindow) {
+        const printWindow = window.open("", "_blank", "width=1024,height=860");
+        if (!printWindow || !printWindow.document) {
             showToast("Allow pop-ups to print the report layout.", "warning");
             return;
         }
 
         const documentMarkup = buildLedgerPrintDocumentHtml(latestGeneratedReport, sheetMarkup);
-        printWindow.document.open();
-        printWindow.document.write(documentMarkup);
-        printWindow.document.close();
+        try {
+            printWindow.document.open();
+            printWindow.document.write(documentMarkup);
+            printWindow.document.close();
+        } catch (error) {
+            showToast("Print preview could not be prepared. Please try again.", "warning");
+            return;
+        }
 
-        window.setTimeout(() => {
+        const triggerPrint = () => {
             printWindow.focus();
             printWindow.print();
-        }, 120);
+        };
+
+        if (printWindow.document.readyState === "complete") {
+            window.setTimeout(triggerPrint, 60);
+        } else {
+            printWindow.addEventListener("load", () => {
+                window.setTimeout(triggerPrint, 60);
+            });
+        }
     };
 
     const renderGeneratedReport = (report) => {
@@ -1128,7 +1187,11 @@
         setGenerationTag(`Generated ${formatGeneratedDateTime(report.generatedAt)}`);
         setFilterStatus(`${report.reportLabel} generated successfully.`);
         reportsDownloadButton.disabled = report.rows.length === 0;
-        reportsPrintButton.disabled = !isClientScopedReport(report);
+        reportsPrintButton.disabled = !isClientScopedReport(report) || !report.printLayout;
+
+        if (report.printLayoutError) {
+            showToast(report.printLayoutError, "warning");
+        }
 
         setFeedbackState("ready");
     };
@@ -1143,6 +1206,7 @@
         clearLedgerPreview();
         setGenerationTag("Not generated");
         reportsDownloadButton.disabled = true;
+        reportsPrintButton.disabled = true;
     };
 
     const syncUrlFromFilters = (filters) => {
@@ -1176,6 +1240,19 @@
 
         const query = new URLSearchParams();
         query.set("client_id", String(clientId));
+        return `${baseUrl}?${query.toString()}`;
+    };
+
+    const buildPrintLayoutUrl = (filters) => {
+        const baseUrl = String(urls.reportsPrintLayoutApi || "");
+        if (!baseUrl) {
+            return "";
+        }
+
+        const query = new URLSearchParams();
+        query.set("client_id", String(filters.clientId));
+        query.set("date_from", String(filters.dateFrom || ""));
+        query.set("date_to", String(filters.dateTo || ""));
         return `${baseUrl}?${query.toString()}`;
     };
 
@@ -1221,17 +1298,41 @@
             ? payload.monthly_trend.filter((row) => isTrendMonthWithinRange(row.year, row.month, filters))
             : [];
 
+        const typeColumns = Array.isArray(payload && payload.type_columns)
+            ? payload.type_columns.filter((value) => String(value || "").trim())
+            : [];
+        const typeColumnMeta = typeColumns.map((label, index) => ({
+            key: `type_${index}`,
+            label: String(label),
+        }));
+        const useTypeColumns = typeColumnMeta.length > 0;
+
         const scope = payload && payload.scope ? payload.scope : {};
         const scopeLabel = Number.isFinite(filters.clientId) && filters.clientId > 0
             ? buildScopeLabel(filters.clientId, String(scope.client_name || "Selected client"))
             : "All clients";
 
         const rows = trendRows.map((row) => {
+            const periodLabel = `${row.month_label || row.month || "-"} ${row.year || ""}`.trim();
+            if (!useTypeColumns) {
+                return {
+                    period: periodLabel,
+                    sales: formatCurrency(row.sales),
+                    expenses: formatCurrency(row.expenses),
+                    tax: formatCurrency(row.tax),
+                    net_value: formatCurrency(row.net_value),
+                };
+            }
+
+            const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
+            const typeValues = {};
+            typeColumnMeta.forEach((column) => {
+                typeValues[column.key] = formatCurrency(typeBreakdown[column.label]);
+            });
+
             return {
-                period: `${row.month_label || row.month || "-"} ${row.year || ""}`.trim(),
-                sales: formatCurrency(row.sales),
-                expenses: formatCurrency(row.expenses),
-                tax: formatCurrency(row.tax),
+                period: periodLabel,
+                ...typeValues,
                 net_value: formatCurrency(row.net_value),
             };
         });
@@ -1271,13 +1372,19 @@
                     icon: "bi-graph-up-arrow",
                 },
             ],
-            columns: [
-                { key: "period", label: "Period" },
-                { key: "sales", label: "Sales" },
-                { key: "expenses", label: "Expenses" },
-                { key: "tax", label: "Tax" },
-                { key: "net_value", label: "Net Value" },
-            ],
+            columns: useTypeColumns
+                ? [
+                    { key: "period", label: "Period" },
+                    ...typeColumnMeta,
+                    { key: "net_value", label: "Net Value" },
+                ]
+                : [
+                    { key: "period", label: "Period" },
+                    { key: "sales", label: "Sales" },
+                    { key: "expenses", label: "Expenses" },
+                    { key: "tax", label: "Tax" },
+                    { key: "net_value", label: "Net Value" },
+                ],
             rows,
         };
     };
@@ -1458,6 +1565,11 @@
                     id: safeNumber(client.id),
                     client_name: String(client.client_name || "Client"),
                     tin_number: String(client.tin_number || ""),
+                    trade_name: String(client.trade_name || ""),
+                    location: String(client.location || ""),
+                    permit_number: String(client.permit_number || ""),
+                    birthday: String(client.birthday || ""),
+                    email: String(client.email || ""),
                 }))
                 : [];
         } catch (error) {
@@ -1512,6 +1624,12 @@
                 reportsClientSelect.value = initialClientId;
             }
         }
+    };
+
+    const shouldAutoGenerate = () => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const autoValue = String(queryParams.get("auto_generate") || "").trim().toLowerCase();
+        return autoValue === "1" || autoValue === "true" || autoValue === "yes";
     };
 
     const runReportGeneration = async (options = {}) => {
@@ -1575,6 +1693,13 @@
 
             if (!generatedReport) {
                 throw new Error("Report generation returned no payload.");
+            }
+
+            generatedReport.printLayout = null;
+            generatedReport.printLayoutError = "";
+
+            if (Number.isFinite(filters.clientId) && filters.clientId > 0) {
+                generatedReport.printLayout = buildPrintLayoutDefinition(generatedReport);
             }
 
             renderGeneratedReport(generatedReport);
@@ -1762,6 +1887,10 @@
         applyInitialFilterValues();
 
         bindCoreEvents();
+
+        if (shouldAutoGenerate()) {
+            runReportGeneration({ focusAfterGenerate: true });
+        }
     };
 
     initializeReportsPage();

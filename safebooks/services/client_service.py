@@ -31,6 +31,32 @@ def _normalize_risk_level(value) -> str:
     return Client.RISK_MEDIUM
 
 
+def _normalize_custom_fields(value):
+    if value is None:
+        return None, None
+
+    if not isinstance(value, list):
+        return None, "Custom fields must be a list."
+
+    cleaned_fields = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+
+        label = _normalize_text(item.get("label"))
+        field_value = _normalize_text(item.get("value"))
+
+        if not label and not field_value:
+            continue
+
+        cleaned_fields.append({
+            "label": label or "Custom Field",
+            "value": field_value,
+        })
+
+    return cleaned_fields, None
+
+
 def _serialize_client(client: Client) -> dict:
     return {
         "id": client.id,
@@ -41,6 +67,7 @@ def _serialize_client(client: Client) -> dict:
         "permit_number": client.permit_number,
         "birthday": client.birthday.isoformat() if client.birthday else "",
         "email": client.email,
+        "custom_fields": client.custom_fields or [],
         "risk_level": client.risk_level,
         "date_registered": client.date_registered.isoformat() if client.date_registered else "",
         "created_at": client.created_at.isoformat() if client.created_at else "",
@@ -56,6 +83,8 @@ def _build_clean_payload(data: dict):
     permit_number = _normalize_text(data.get("permit_number"))
     email = _normalize_text(data.get("email"))
     risk_level = _normalize_risk_level(data.get("risk_level") or data.get("risk"))
+
+    custom_fields, custom_fields_error = _normalize_custom_fields(data.get("custom_fields"))
 
     birthday_value, birthday_error = _normalize_optional_date(data.get("birthday"))
 
@@ -80,6 +109,9 @@ def _build_clean_payload(data: dict):
         except ValidationError:
             errors.append("Email format is invalid.")
 
+    if custom_fields_error:
+        errors.append(custom_fields_error)
+
     return {
         "client_name": client_name,
         "tin_number": tin_number,
@@ -88,6 +120,7 @@ def _build_clean_payload(data: dict):
         "permit_number": permit_number,
         "birthday": birthday_value,
         "email": email,
+        "custom_fields": custom_fields,
         "risk_level": risk_level,
     }, errors
 
@@ -126,6 +159,7 @@ def create_client_for_bookkeeper(bookkeeper, data: dict) -> dict:
         permit_number=payload["permit_number"],
         birthday=payload["birthday"],
         email=payload["email"],
+        custom_fields=payload["custom_fields"] or [],
         risk_level=payload["risk_level"],
     )
 
@@ -169,7 +203,7 @@ def update_client_for_bookkeeper(bookkeeper, client_id: int, data: dict) -> dict
     client.birthday = payload["birthday"]
     client.email = payload["email"]
     client.risk_level = payload["risk_level"]
-    client.save(update_fields=[
+    update_fields = [
         "client_name",
         "tin_number",
         "trade_name",
@@ -179,7 +213,13 @@ def update_client_for_bookkeeper(bookkeeper, client_id: int, data: dict) -> dict
         "email",
         "risk_level",
         "updated_at",
-    ])
+    ]
+
+    if payload["custom_fields"] is not None:
+        client.custom_fields = payload["custom_fields"]
+        update_fields.append("custom_fields")
+
+    client.save(update_fields=update_fields)
 
     return {
         "ok": True,

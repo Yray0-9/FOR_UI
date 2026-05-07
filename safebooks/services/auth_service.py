@@ -1,7 +1,8 @@
 from django.contrib.auth.hashers import check_password, make_password
+from django.utils import timezone
 from django.db.models import Q
 
-from safebooks.models import BookkeeperAccount
+from safebooks.models import AdminAccount, BookkeeperAccount
 from safebooks.validators.password_validator import missing_password_requirements
 
 
@@ -133,3 +134,62 @@ def login_user(data: dict) -> dict:
             "username": account.username,
         },
     }
+
+
+def _login_admin_account(account: AdminAccount, password: str) -> dict:
+    if not account.is_active:
+        return {
+            "ok": False,
+            "message": AUTH_FAILURE_MESSAGE,
+            "errors": [AUTH_FAILURE_MESSAGE],
+        }
+
+    stored_password_hash = str(account.password_hash or "")
+    is_authenticated = check_password(password, stored_password_hash)
+
+    if not is_authenticated and stored_password_hash and not _looks_like_supported_hash(stored_password_hash):
+        if password == stored_password_hash:
+            is_authenticated = True
+            account.password_hash = make_password(password)
+
+    if not is_authenticated:
+        return {
+            "ok": False,
+            "message": AUTH_FAILURE_MESSAGE,
+            "errors": [AUTH_FAILURE_MESSAGE],
+        }
+
+    account.last_login = timezone.now()
+    account.save(update_fields=["password_hash", "last_login"])
+
+    return {
+        "ok": True,
+        "message": "Login successful.",
+        "user": {
+            "id": account.id,
+            "full_name": account.full_name,
+            "email": account.email,
+        },
+        "role": "admin",
+    }
+
+
+def login_user_or_admin(data: dict) -> dict:
+    identifier = str(data.get("identifier", "")).strip()
+    password = str(data.get("password", ""))
+
+    if not identifier or not password:
+        return {
+            "ok": False,
+            "message": "Email or username and password are required.",
+            "errors": ["Email or username and password are required."],
+        }
+
+    admin_account = AdminAccount.objects.filter(email__iexact=identifier).first()
+    if admin_account is not None:
+        return _login_admin_account(admin_account, password)
+
+    result = login_user(data)
+    if result.get("ok"):
+        result["role"] = "bookkeeper"
+    return result

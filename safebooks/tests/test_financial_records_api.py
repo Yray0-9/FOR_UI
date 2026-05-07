@@ -356,8 +356,14 @@ class FinancialRecordsApiTests(TestCase):
             data=json.dumps(date_mismatch_payload),
             content_type="application/json",
         )
-        self.assertEqual(mismatch_response.status_code, 400)
-        self.assertEqual(
-            mismatch_response.json().get("message"),
-            "Entry date must be within the selected period month and year.",
-        )
+        self.assertEqual(mismatch_response.status_code, 201)
+        payload = mismatch_response.json()
+        self.assertTrue(payload.get("ok"))
+
+        record_id = payload.get("record", {}).get("id")
+        self.assertTrue(record_id)
+
+        record = FinancialRecord.objects.get(id=record_id)
+        self.assertEqual(record.entry_date.isoformat(), "2026-05-01")
+        self.assertEqual(record.period.month, 5)
+        self.assertEqual(record.period.year, 2026)

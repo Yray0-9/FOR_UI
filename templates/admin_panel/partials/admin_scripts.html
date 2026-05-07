@@ -1,0 +1,87 @@
+<script>
+    (() => {
+        const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
+        const DESKTOP_QUERY = "(min-width: 992px)";
+
+        const body = document.body;
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
+        const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
+        const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+        const adminLogoutActions = Array.from(document.querySelectorAll("[data-admin-logout]"));
+        const uiToastContainer = document.getElementById("uiToastContainer");
+        const plannedFeatureButtons = Array.from(document.querySelectorAll("[data-planned-feature]"));
+        const shared = window.SafeBooksShared || null;
+
+        if (!body) {
+            return;
+        }
+
+        if (shared && typeof shared.initializeSidebarBehavior === "function") {
+            shared.initializeSidebarBehavior({
+                bodyElement: body,
+                sidebarToggle,
+                sidebarCollapseToggle,
+                sidebarCollapseIcon,
+                sidebarBackdrop,
+                storageKey: SIDEBAR_STATE_KEY,
+                desktopQuery: DESKTOP_QUERY,
+            });
+        }
+
+        const showPlannedToast = () => {
+            if (!shared || typeof shared.showToast !== "function") {
+                return;
+            }
+
+            shared.showToast(uiToastContainer, "This admin feature is planned and will be available soon.");
+        };
+
+        plannedFeatureButtons.forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                showPlannedToast();
+            });
+        });
+
+        const handleAdminLogout = async (event) => {
+            event.preventDefault();
+            const action = event.currentTarget;
+            if (!action || action.dataset.logoutPending === "1") {
+                return;
+            }
+
+            action.dataset.logoutPending = "1";
+            action.setAttribute("aria-disabled", "true");
+            if (action.tagName === "BUTTON") {
+                action.disabled = true;
+            }
+
+            let redirectUrl = "{% url 'login' %}";
+
+            try {
+                if (shared && typeof shared.logoutCurrentUser === "function") {
+                    redirectUrl = await shared.logoutCurrentUser({
+                        logoutUrl: "{% url 'api_logout' %}",
+                        loginUrl: "{% url 'login' %}",
+                        authUserKey: "safebooks.authUser",
+                        loginWelcomeKey: "safebooks.loginWelcome",
+                    });
+                }
+            } catch (logoutError) {
+                // Keep fallback redirect in place.
+            }
+
+            window.location.assign(redirectUrl);
+            action.dataset.logoutPending = "0";
+            action.removeAttribute("aria-disabled");
+            if (action.tagName === "BUTTON") {
+                action.disabled = false;
+            }
+        };
+
+        adminLogoutActions.forEach((action) => {
+            action.addEventListener("click", handleAdminLogout);
+        });
+    })();
+</script>

@@ -1,599 +1,518 @@
+{% extends 'base/bookkeeper_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeBooks | Financial Records</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% block page_title %}Financial Records{% endblock %}
+{% block body_class %}financial-records-list-page{% endblock %}
+{% block page_heading %}Financial Records{% endblock %}
+{% block page_subtitle %}
+<p class="dashboard-page-subtitle">Select a client to view and manage financial transactions</p>
+{% endblock %}
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
-    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
-</head>
-<body class="dashboard-page financial-records-list-page skeleton-active">
-    <div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
-        <div class="skeleton-shell">
-            <div class="dash-sk-layout">
-                <aside class="dash-sk-sidebar">
-                    <div class="skeleton-shimmer dash-sk-logo"></div>
-                    <div class="dash-sk-nav">
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                    </div>
-                </aside>
-                <section class="dash-sk-main">
-                    <div class="dash-sk-topbar">
-                        <div class="skeleton-shimmer dash-sk-title"></div>
-                        <div class="skeleton-shimmer dash-sk-search"></div>
-                        <div class="skeleton-shimmer dash-sk-profile"></div>
-                    </div>
-                    <div class="dash-sk-content">
-                        <div class="dash-sk-left">
-                            <div class="dash-sk-card">
-                                <div class="skeleton-shimmer dash-sk-card-head"></div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
+{% block skeleton %}
+<div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+        <div class="dash-sk-layout">
+            <aside class="dash-sk-sidebar">
+                <div class="skeleton-shimmer dash-sk-logo"></div>
+                <div class="dash-sk-nav">
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                </div>
+            </aside>
+            <section class="dash-sk-main">
+                <div class="dash-sk-topbar">
+                    <div class="skeleton-shimmer dash-sk-title"></div>
+                    <div class="skeleton-shimmer dash-sk-search"></div>
+                    <div class="skeleton-shimmer dash-sk-profile"></div>
+                </div>
+                <div class="dash-sk-content">
+                    <div class="dash-sk-left">
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
                             </div>
                         </div>
                     </div>
-                </section>
-            </div>
+                </div>
+            </section>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <div class="dashboard-layout">
-        <aside class="dashboard-sidebar" id="dashboardSidebar">
-            <div class="dashboard-sidebar-top">
-                <a href="{% url 'dashboard' %}" class="dashboard-logo" aria-label="SafeBooks">
-                    <span class="dashboard-logo-glyph">
-                        <img src="{% static 'images/Logo_safebooks.png' %}" alt="" class="dashboard-logo-image" aria-hidden="true">
-                    </span>
-                    <span class="dashboard-logo-text">SafeBooks</span>
-                </a>
-                <button class="btn dashboard-menu-toggle dashboard-collapse-btn d-none d-lg-inline-flex" type="button" id="sidebarCollapseToggle" aria-label="Collapse sidebar" aria-expanded="true">
-                    <i class="bi bi-layout-sidebar-inset" id="sidebarCollapseIcon"></i>
-                </button>
-            </div>
-            <p class="dashboard-sidebar-label">Main Navigation</p>
+{% block content %}
+<section class="dashboard-content">
+    <article class="dashboard-card dashboard-fade-up clients-action-card" style="--delay: 0.05s;">
+        <div class="clients-action-bar">
+            <label class="dashboard-table-search clients-page-search" aria-label="Search clients by name or TIN">
+                <i class="bi bi-search"></i>
+                <input type="search" id="financialClientsSearchInput" placeholder="Search by client name or TIN" autocomplete="off">
+            </label>
+            <label class="visually-hidden" for="financialClientsFilter">Filter financial records client list</label>
+            <select id="financialClientsFilter" class="form-select dashboard-filter-select" aria-label="Filter clients in financial records list">
+                <option value="all">All Clients</option>
+                <option value="active">Recently Active</option>
+                <option value="none">No Activity</option>
+            </select>
+        </div>
+    </article>
 
-            <nav class="dashboard-nav" aria-label="Sidebar navigation">
-                <a href="{% url 'dashboard' %}" class="dashboard-nav-item"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
-                <a href="{% url 'clients' %}" class="dashboard-nav-item"><i class="bi bi-people"></i><span>Clients</span></a>
-                <a href="{% url 'financial_records' %}" class="dashboard-nav-item active" aria-current="page"><i class="bi bi-journal-text"></i><span>Financial Records</span></a>
-                <a href="{% url 'analytics' %}" class="dashboard-nav-item"><i class="bi bi-bar-chart-line"></i><span>Analytics</span></a>
-                <a href="{% url 'reports' %}" class="dashboard-nav-item"><i class="bi bi-file-earmark-text"></i><span>Reports</span></a>
-                <a href="{% url 'settings' %}" class="dashboard-nav-item"><i class="bi bi-gear"></i><span>Settings</span></a>
-            </nav>
+    <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.12s;">
+        <div class="dashboard-card-head">
+            <h2>Clients with Financial Records</h2>
+            <span class="dashboard-tag" id="financialClientsCountTag">0 Clients</span>
+        </div>
 
-            <a href="{% url 'home' %}" class="dashboard-landing-link">
-                <i class="bi bi-box-arrow-left"></i>
-                <span>Back to Landing</span>
-            </a>
-        </aside>
+        <div class="table-responsive" id="financialClientsTableWrap">
+            <table class="table table-hover align-middle dashboard-table clients-table mb-0" id="financialClientsTable">
+                <thead>
+                    <tr>
+                        <th>Client Name</th>
+                        <th>TIN</th>
+                        <th>Trade Name</th>
+                        <th>Last Activity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="financialClientsTableBody"></tbody>
+            </table>
+        </div>
 
-        <main class="dashboard-main">
-            <header class="dashboard-topbar animate-fade-in">
-                <div class="dashboard-topbar-left">
-                    <button class="btn dashboard-menu-toggle d-lg-none" type="button" id="sidebarToggle" aria-label="Toggle sidebar menu">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <div>
-                        <h1 class="dashboard-page-title">Financial Records</h1>
-                        <p class="dashboard-page-subtitle">Select a client to view and manage financial transactions</p>
-                    </div>
-                </div>
+        <div class="clients-empty-state" id="financialClientsEmptyState" hidden>
+            <p>No clients with financial records yet.</p>
+            <a href="{% url 'clients' %}" class="btn dashboard-action-btn primary">Add Client</a>
+        </div>
+    </article>
+</section>
+{% endblock %}
 
-                <div class="dashboard-topbar-right">
-                    <div class="dropdown dashboard-user-dropdown">
-                        <button type="button" class="btn dashboard-profile-btn" id="dashboardProfileMenuButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open user menu">
-                            <span class="dashboard-avatar" id="dashboardUserAvatar">{{ current_user_initials|default:"SB" }}</span>
-                            <span class="dashboard-user-meta">
-                                <strong id="dashboardUserName">{{ current_user_name|default:"Bookkeeper User" }}</strong>
-                                <small>Profile</small>
-                            </span>
-                            <i class="bi bi-chevron-down"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="dashboardProfileMenuButton">
-                            <li>
-                                <button type="button" class="dropdown-item" id="dashboardProfileAction">
-                                    <i class="bi bi-person"></i>
-                                    <span>Profile</span>
-                                </button>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <button type="button" class="dropdown-item text-danger" id="dashboardLogoutAction">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                    <span>Log out</span>
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </header>
+{% block toast_container %}
+<div class="toast-container position-fixed bottom-0 end-0 p-3 safebooks-toast-container" id="uiToastContainer" aria-live="polite" aria-atomic="true"></div>
+{% endblock %}
 
-            <section class="dashboard-content">
-                <article class="dashboard-card dashboard-fade-up clients-action-card" style="--delay: 0.05s;">
-                    <div class="clients-action-bar">
-                        <label class="dashboard-table-search clients-page-search" aria-label="Search clients by name or TIN">
-                            <i class="bi bi-search"></i>
-                            <input type="search" id="financialClientsSearchInput" placeholder="Search by client name or TIN" autocomplete="off">
-                        </label>
-                        <label class="visually-hidden" for="financialClientsFilter">Filter financial records client list</label>
-                        <select id="financialClientsFilter" class="form-select dashboard-filter-select" aria-label="Filter clients in financial records list">
-                            <option value="all">All Clients</option>
-                            <option value="active">Recently Active</option>
-                            <option value="none">No Activity</option>
-                        </select>
-                    </div>
-                </article>
+{% block extra_js %}
+<script>
+    (() => {
+        const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
+        const DESKTOP_QUERY = "(min-width: 992px)";
+        const AUTH_USER_KEY = "safebooks.authUser";
+        const LOGIN_WELCOME_KEY = "safebooks.loginWelcome";
 
-                <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.12s;">
-                    <div class="dashboard-card-head">
-                        <h2>Clients with Financial Records</h2>
-                        <span class="dashboard-tag" id="financialClientsCountTag">0 Clients</span>
-                    </div>
+        const body = document.body;
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
+        const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
+        const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+        const dashboardUserAvatar = document.getElementById("dashboardUserAvatar");
+        const dashboardUserName = document.getElementById("dashboardUserName");
+        const dashboardProfileAction = document.getElementById("dashboardProfileAction");
+        const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
+        const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
+        const shared = window.SafeBooksShared || null;
 
-                    <div class="table-responsive" id="financialClientsTableWrap">
-                        <table class="table table-hover align-middle dashboard-table clients-table mb-0" id="financialClientsTable">
-                            <thead>
-                                <tr>
-                                    <th>Client Name</th>
-                                    <th>TIN</th>
-                                    <th>Trade Name</th>
-                                    <th>Last Activity</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="financialClientsTableBody"></tbody>
-                        </table>
-                    </div>
+        if (!body) {
+            return;
+        }
 
-                    <div class="clients-empty-state" id="financialClientsEmptyState" hidden>
-                        <p>No clients with financial records yet.</p>
-                        <a href="{% url 'clients' %}" class="btn dashboard-action-btn primary">Add Client</a>
-                    </div>
-                </article>
-            </section>
-        </main>
+        window.setTimeout(() => {
+            if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
+                body.classList.remove("skeleton-active");
+                body.classList.add("skeleton-loaded");
+            }
+        }, 1800);
 
-        <button type="button" class="dashboard-backdrop" id="sidebarBackdrop" aria-label="Close sidebar"></button>
-    </div>
+        const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
+            ? shared.initializeSidebarBehavior({
+                bodyElement: body,
+                sidebarToggle,
+                sidebarCollapseToggle,
+                sidebarCollapseIcon,
+                sidebarBackdrop,
+                storageKey: SIDEBAR_STATE_KEY,
+                desktopQuery: DESKTOP_QUERY,
+            })
+            : {
+                closeMobileSidebar: () => {},
+                restoreDesktopState: () => {},
+            };
 
-    <div class="toast-container position-fixed bottom-0 end-0 p-3 safebooks-toast-container" id="uiToastContainer" aria-live="polite" aria-atomic="true"></div>
+        const financialClientsTableBody = document.getElementById("financialClientsTableBody");
+        const financialClientsSearchInput = document.getElementById("financialClientsSearchInput");
+        const financialClientsFilter = document.getElementById("financialClientsFilter");
+        const financialClientsCountTag = document.getElementById("financialClientsCountTag");
+        const financialClientsEmptyState = document.getElementById("financialClientsEmptyState");
+        const uiToastContainer = document.getElementById("uiToastContainer");
+        const FINANCIAL_RECORDS_DETAIL_BASE_URL = "{% url 'financial_records_client' %}";
+        const FINANCIAL_RECORD_CLIENTS_API_URL = "{% url 'api_financial_record_clients' %}";
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="{% static 'js/skeleton.js' %}"></script>
-    <script src="{% static 'js/app_shared.js' %}"></script>
-    <script>
-        (() => {
-            const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
-            const DESKTOP_QUERY = "(min-width: 992px)";
-            const AUTH_USER_KEY = "safebooks.authUser";
-            const LOGIN_WELCOME_KEY = "safebooks.loginWelcome";
+        let filterTransitionTimer = null;
+        let financialClientsSearchDebounceTimer = null;
+        let financialClientsRequestToken = 0;
+        let financialClientsAbortController = null;
+        let isFinancialClientsLoading = false;
 
-            const body = document.body;
-            const sidebarToggle = document.getElementById("sidebarToggle");
-            const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
-            const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
-            const sidebarBackdrop = document.getElementById("sidebarBackdrop");
-            const dashboardUserAvatar = document.getElementById("dashboardUserAvatar");
-            const dashboardUserName = document.getElementById("dashboardUserName");
-            const dashboardProfileAction = document.getElementById("dashboardProfileAction");
-            const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
-            const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
-            const shared = window.SafeBooksShared || null;
+        const normalize = (value) => String(value || "").trim().toLowerCase();
 
-            if (!body) {
+        const debounce = (callback, waitMs = 180) => {
+            return (...args) => {
+                window.clearTimeout(financialClientsSearchDebounceTimer);
+                financialClientsSearchDebounceTimer = window.setTimeout(() => {
+                    callback(...args);
+                }, waitMs);
+            };
+        };
+
+        const escapeHtml = (value) => {
+            return String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        };
+
+        const showToast = (message) => {
+            if (!shared || typeof shared.showToast !== "function") {
                 return;
             }
 
-            window.setTimeout(() => {
-                if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
-                    body.classList.remove("skeleton-active");
-                    body.classList.add("skeleton-loaded");
-                }
-            }, 1800);
+            shared.showToast(uiToastContainer, message, "", {
+                delay: 2400,
+            });
+        };
 
-            const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
-                ? shared.initializeSidebarBehavior({
-                    bodyElement: body,
-                    sidebarToggle,
-                    sidebarCollapseToggle,
-                    sidebarCollapseIcon,
-                    sidebarBackdrop,
-                    storageKey: SIDEBAR_STATE_KEY,
-                    desktopQuery: DESKTOP_QUERY,
-                })
-                : {
-                    closeMobileSidebar: () => {},
-                    restoreDesktopState: () => {},
-                };
+        const getCookieValue = (cookieName) => {
+            if (!shared || typeof shared.getCookieValue !== "function") {
+                return "";
+            }
 
-            const financialClientsTableBody = document.getElementById("financialClientsTableBody");
-            const financialClientsSearchInput = document.getElementById("financialClientsSearchInput");
-            const financialClientsFilter = document.getElementById("financialClientsFilter");
-            const financialClientsCountTag = document.getElementById("financialClientsCountTag");
-            const financialClientsEmptyState = document.getElementById("financialClientsEmptyState");
-            const uiToastContainer = document.getElementById("uiToastContainer");
-            const FINANCIAL_RECORDS_DETAIL_BASE_URL = "{% url 'financial_records_client' %}";
-            const FINANCIAL_RECORD_CLIENTS_API_URL = "{% url 'api_financial_record_clients' %}";
+            return shared.getCookieValue(cookieName);
+        };
 
-            let filterTransitionTimer = null;
-            let financialClientsSearchDebounceTimer = null;
-            let financialClientsRequestToken = 0;
-            let financialClientsAbortController = null;
-            let isFinancialClientsLoading = false;
+        const parseJsonSafe = (response) => {
+            if (!shared || typeof shared.parseJsonSafe !== "function") {
+                return Promise.resolve(null);
+            }
 
-            const normalize = (value) => String(value || "").trim().toLowerCase();
+            return shared.parseJsonSafe(response);
+        };
 
-            const debounce = (callback, waitMs = 180) => {
-                return (...args) => {
-                    window.clearTimeout(financialClientsSearchDebounceTimer);
-                    financialClientsSearchDebounceTimer = window.setTimeout(() => {
-                        callback(...args);
-                    }, waitMs);
-                };
-            };
+        const logoutCurrentUser = async () => {
+            if (!shared || typeof shared.logoutCurrentUser !== "function") {
+                return "{% url 'login' %}";
+            }
 
-            const escapeHtml = (value) => {
-                return String(value || "")
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/\"/g, "&quot;")
-                    .replace(/'/g, "&#39;");
-            };
+            return shared.logoutCurrentUser({
+                logoutUrl: "{% url 'api_logout' %}",
+                loginUrl: "{% url 'login' %}",
+                authUserKey: AUTH_USER_KEY,
+                loginWelcomeKey: LOGIN_WELCOME_KEY,
+            });
+        };
 
-            const showToast = (message) => {
-                if (!shared || typeof shared.showToast !== "function") {
-                    return;
-                }
+        const hydrateHeaderUser = () => {
+            if (!shared || typeof shared.hydrateHeaderUser !== "function") {
+                return;
+            }
 
-                shared.showToast(uiToastContainer, message, "", {
-                    delay: 2400,
-                });
-            };
+            shared.hydrateHeaderUser({
+                avatarElement: dashboardUserAvatar,
+                nameElement: dashboardUserName,
+                authUserKey: AUTH_USER_KEY,
+                defaultName: "Bookkeeper User",
+                defaultInitials: "SB",
+            });
+        };
 
-            const getCookieValue = (cookieName) => {
-                if (!shared || typeof shared.getCookieValue !== "function") {
-                    return "";
-                }
+        const getRows = () => {
+            if (!financialClientsTableBody) {
+                return [];
+            }
+            return Array.from(financialClientsTableBody.querySelectorAll(".clients-row"));
+        };
 
-                return shared.getCookieValue(cookieName);
-            };
+        const updateCount = (count) => {
+            if (!financialClientsCountTag) {
+                return;
+            }
+            financialClientsCountTag.textContent = `${count} ${count === 1 ? "Client" : "Clients"}`;
+        };
 
-            const parseJsonSafe = (response) => {
-                if (!shared || typeof shared.parseJsonSafe !== "function") {
-                    return Promise.resolve(null);
-                }
-
-                return shared.parseJsonSafe(response);
-            };
-
-            const logoutCurrentUser = async () => {
-                if (!shared || typeof shared.logoutCurrentUser !== "function") {
-                    return "{% url 'login' %}";
-                }
-
-                return shared.logoutCurrentUser({
-                    logoutUrl: "{% url 'api_logout' %}",
-                    loginUrl: "{% url 'login' %}",
-                    authUserKey: AUTH_USER_KEY,
-                    loginWelcomeKey: LOGIN_WELCOME_KEY,
-                });
-            };
-
-            const hydrateHeaderUser = () => {
-                if (!shared || typeof shared.hydrateHeaderUser !== "function") {
-                    return;
-                }
-
-                shared.hydrateHeaderUser({
-                    avatarElement: dashboardUserAvatar,
-                    nameElement: dashboardUserName,
-                    authUserKey: AUTH_USER_KEY,
-                    defaultName: "Bookkeeper User",
-                    defaultInitials: "SB",
-                });
-            };
-
-            const getRows = () => {
-                if (!financialClientsTableBody) {
-                    return [];
-                }
-                return Array.from(financialClientsTableBody.querySelectorAll(".clients-row"));
-            };
-
-            const updateCount = (count) => {
-                if (!financialClientsCountTag) {
-                    return;
-                }
-                financialClientsCountTag.textContent = `${count} ${count === 1 ? "Client" : "Clients"}`;
-            };
-
-            const setFinancialClientsLoadingState = (isLoading, message = "Loading clients...") => {
-                isFinancialClientsLoading = Boolean(isLoading);
-
-                if (financialClientsTableBody) {
-                    financialClientsTableBody.setAttribute("aria-busy", String(isFinancialClientsLoading));
-                    if (isFinancialClientsLoading) {
-                        financialClientsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">${escapeHtml(message)}</td></tr>`;
-                    }
-                }
-
-                if (financialClientsEmptyState && isFinancialClientsLoading) {
-                    financialClientsEmptyState.hidden = true;
-                }
-            };
-
-            const buildDetailUrl = (clientData) => {
-                const params = new URLSearchParams();
-                params.set("client_id", String(clientData.clientId || ""));
-                params.set("client", clientData.clientName || "");
-                params.set("tin", clientData.tin || "");
-                params.set("trade", clientData.tradeName || "");
-                return `${FINANCIAL_RECORDS_DETAIL_BASE_URL}?${params.toString()}`;
-            };
-
-            const getClientDataFromRow = (row) => {
-                return {
-                    clientId: Number.parseInt(row.dataset.clientId || "", 10) || null,
-                    clientName: row.dataset.clientName || "",
-                    tin: row.dataset.tin || "",
-                    tradeName: row.dataset.tradeName || "",
-                };
-            };
-
-            const openClientRecords = (row) => {
-                if (!row) {
-                    window.location.assign(FINANCIAL_RECORDS_DETAIL_BASE_URL);
-                    return;
-                }
-
-                window.location.assign(buildDetailUrl(getClientDataFromRow(row)));
-            };
-
-            const renderClientRows = (clients) => {
-                if (!financialClientsTableBody) {
-                    return;
-                }
-
-                financialClientsTableBody.innerHTML = "";
-
-                clients.forEach((client) => {
-                    const row = document.createElement("tr");
-                    const lastActivity = client.last_activity || "No activity";
-                    const activityState = client.activity_state || (client.last_activity ? "active" : "none");
-
-                    row.className = "clients-row";
-                    row.setAttribute("tabindex", "0");
-                    row.setAttribute("role", "button");
-                    row.dataset.clientId = String(client.id || "");
-                    row.dataset.clientName = client.client_name || "";
-                    row.dataset.tin = client.tin_number || "";
-                    row.dataset.tradeName = client.trade_name || "";
-                    row.dataset.lastActivity = lastActivity;
-                    row.dataset.activityState = activityState;
-                    row.setAttribute("aria-label", `Open financial records for ${client.client_name || "selected client"}`);
-
-                    row.innerHTML = `
-                        <td>${escapeHtml(client.client_name || "")}</td>
-                        <td>${escapeHtml(client.tin_number || "")}</td>
-                        <td>${escapeHtml(client.trade_name || "")}</td>
-                        <td>${escapeHtml(lastActivity)}</td>
-                        <td class="clients-actions-cell">
-                            <div class="clients-actions">
-                                <button type="button" class="btn client-action-btn add-record" data-financial-action="open" title="Open client financial records"><i class="bi bi-journal-text"></i><span>View Financial Records</span></button>
-                            </div>
-                        </td>
-                    `;
-
-                    financialClientsTableBody.appendChild(row);
-                });
-
-                applyFilters();
-            };
-
-            const applyFilters = () => {
-                if (isFinancialClientsLoading) {
-                    if (financialClientsEmptyState) {
-                        financialClientsEmptyState.hidden = true;
-                    }
-                    return;
-                }
-
-                const rows = getRows();
-                const query = normalize(financialClientsSearchInput ? financialClientsSearchInput.value : "");
-                const activityFilter = normalize(financialClientsFilter ? financialClientsFilter.value : "all");
-                let visibleCount = 0;
-
-                rows.forEach((row) => {
-                    const matchesQuery = !query || normalize(row.dataset.clientName).includes(query) || normalize(row.dataset.tin).includes(query);
-                    const matchesActivity = activityFilter === "all" || normalize(row.dataset.activityState) === activityFilter;
-                    const isVisible = matchesQuery && matchesActivity;
-
-                    row.hidden = !isVisible;
-                    row.setAttribute("aria-hidden", String(!isVisible));
-
-                    if (isVisible) {
-                        visibleCount += 1;
-                    }
-                });
-
-                if (financialClientsTableBody) {
-                    financialClientsTableBody.classList.add("is-filtering");
-                    window.clearTimeout(filterTransitionTimer);
-                    filterTransitionTimer = window.setTimeout(() => {
-                        financialClientsTableBody.classList.remove("is-filtering");
-                    }, 170);
-                }
-
-                if (financialClientsEmptyState) {
-                    financialClientsEmptyState.hidden = visibleCount !== 0;
-                }
-
-                updateCount(visibleCount);
-            };
-
-            const loadClientsFromApi = async () => {
-                const requestToken = ++financialClientsRequestToken;
-                if (financialClientsAbortController) {
-                    financialClientsAbortController.abort();
-                }
-                financialClientsAbortController = new AbortController();
-                setFinancialClientsLoadingState(true, "Loading financial clients...");
-
-                try {
-                    const response = await fetch(FINANCIAL_RECORD_CLIENTS_API_URL, {
-                        method: "GET",
-                        headers: {
-                            "Accept": "application/json"
-                        },
-                        credentials: "same-origin",
-                        signal: financialClientsAbortController.signal,
-                    });
-
-                    if (requestToken !== financialClientsRequestToken) {
-                        return;
-                    }
-
-                    if (response.status === 401) {
-                        setFinancialClientsLoadingState(false);
-                        const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
-                        window.location.assign(`{% url 'login' %}?next=${nextPath}`);
-                        return;
-                    }
-
-                    const result = await parseJsonSafe(response);
-                    if (!response.ok || !result || !result.ok) {
-                        setFinancialClientsLoadingState(false);
-                        const message = result && result.message ? result.message : "Unable to load financial records clients.";
-                        showToast(message);
-                        renderClientRows([]);
-                        return;
-                    }
-
-                    setFinancialClientsLoadingState(false);
-                    renderClientRows(Array.isArray(result.clients) ? result.clients : []);
-                } catch (error) {
-                    if (error && error.name === "AbortError") {
-                        return;
-                    }
-
-                    if (requestToken !== financialClientsRequestToken) {
-                        return;
-                    }
-
-                    setFinancialClientsLoadingState(false);
-                    showToast("Unable to load financial records clients.");
-                    renderClientRows([]);
-                }
-            };
+        const setFinancialClientsLoadingState = (isLoading, message = "Loading clients...") => {
+            isFinancialClientsLoading = Boolean(isLoading);
 
             if (financialClientsTableBody) {
-                financialClientsTableBody.addEventListener("click", (event) => {
-                    const row = event.target.closest(".clients-row");
-                    if (!row) {
-                        return;
-                    }
+                financialClientsTableBody.setAttribute("aria-busy", String(isFinancialClientsLoading));
+                if (isFinancialClientsLoading) {
+                    financialClientsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">${escapeHtml(message)}</td></tr>`;
+                }
+            }
 
-                    const actionButton = event.target.closest("[data-financial-action='open']");
-                    if (actionButton) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
+            if (financialClientsEmptyState && isFinancialClientsLoading) {
+                financialClientsEmptyState.hidden = true;
+            }
+        };
 
+        const buildDetailUrl = (clientData) => {
+            const params = new URLSearchParams();
+            params.set("client_id", String(clientData.clientId || ""));
+            params.set("client", clientData.clientName || "");
+            params.set("tin", clientData.tin || "");
+            params.set("trade", clientData.tradeName || "");
+            return `${FINANCIAL_RECORDS_DETAIL_BASE_URL}?${params.toString()}`;
+        };
+
+        const getClientDataFromRow = (row) => {
+            return {
+                clientId: Number.parseInt(row.dataset.clientId || "", 10) || null,
+                clientName: row.dataset.clientName || "",
+                tin: row.dataset.tin || "",
+                tradeName: row.dataset.tradeName || "",
+            };
+        };
+
+        const openClientRecords = (row) => {
+            if (!row) {
+                window.location.assign(FINANCIAL_RECORDS_DETAIL_BASE_URL);
+                return;
+            }
+
+            window.location.assign(buildDetailUrl(getClientDataFromRow(row)));
+        };
+
+        const renderClientRows = (clients) => {
+            if (!financialClientsTableBody) {
+                return;
+            }
+
+            financialClientsTableBody.innerHTML = "";
+
+            clients.forEach((client) => {
+                const row = document.createElement("tr");
+                const lastActivity = client.last_activity || "No activity";
+                const activityState = client.activity_state || (client.last_activity ? "active" : "none");
+
+                row.className = "clients-row";
+                row.setAttribute("tabindex", "0");
+                row.setAttribute("role", "button");
+                row.dataset.clientId = String(client.id || "");
+                row.dataset.clientName = client.client_name || "";
+                row.dataset.tin = client.tin_number || "";
+                row.dataset.tradeName = client.trade_name || "";
+                row.dataset.lastActivity = lastActivity;
+                row.dataset.activityState = activityState;
+                row.setAttribute("aria-label", `Open financial records for ${client.client_name || "selected client"}`);
+
+                row.innerHTML = `
+                    <td>${escapeHtml(client.client_name || "")}</td>
+                    <td>${escapeHtml(client.tin_number || "")}</td>
+                    <td>${escapeHtml(client.trade_name || "")}</td>
+                    <td>${escapeHtml(lastActivity)}</td>
+                    <td class="clients-actions-cell">
+                        <div class="clients-actions">
+                            <button type="button" class="btn client-action-btn add-record" data-financial-action="open" title="Open client financial records"><i class="bi bi-journal-text"></i><span>View Financial Records</span></button>
+                        </div>
+                    </td>
+                `;
+
+                financialClientsTableBody.appendChild(row);
+            });
+
+            applyFilters();
+        };
+
+        const applyFilters = () => {
+            if (isFinancialClientsLoading) {
+                if (financialClientsEmptyState) {
+                    financialClientsEmptyState.hidden = true;
+                }
+                return;
+            }
+
+            const rows = getRows();
+            const query = normalize(financialClientsSearchInput ? financialClientsSearchInput.value : "");
+            const activityFilter = normalize(financialClientsFilter ? financialClientsFilter.value : "all");
+            let visibleCount = 0;
+
+            rows.forEach((row) => {
+                const matchesQuery = !query || normalize(row.dataset.clientName).includes(query) || normalize(row.dataset.tin).includes(query);
+                const matchesActivity = activityFilter === "all" || normalize(row.dataset.activityState) === activityFilter;
+                const isVisible = matchesQuery && matchesActivity;
+
+                row.hidden = !isVisible;
+                row.setAttribute("aria-hidden", String(!isVisible));
+
+                if (isVisible) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (financialClientsTableBody) {
+                financialClientsTableBody.classList.add("is-filtering");
+                window.clearTimeout(filterTransitionTimer);
+                filterTransitionTimer = window.setTimeout(() => {
+                    financialClientsTableBody.classList.remove("is-filtering");
+                }, 170);
+            }
+
+            if (financialClientsEmptyState) {
+                financialClientsEmptyState.hidden = visibleCount !== 0;
+            }
+
+            updateCount(visibleCount);
+        };
+
+        const loadClientsFromApi = async () => {
+            const requestToken = ++financialClientsRequestToken;
+            if (financialClientsAbortController) {
+                financialClientsAbortController.abort();
+            }
+            financialClientsAbortController = new AbortController();
+            setFinancialClientsLoadingState(true, "Loading financial clients...");
+
+            try {
+                const response = await fetch(FINANCIAL_RECORD_CLIENTS_API_URL, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json"
+                    },
+                    credentials: "same-origin",
+                    signal: financialClientsAbortController.signal,
+                });
+
+                if (requestToken !== financialClientsRequestToken) {
+                    return;
+                }
+
+                if (response.status === 401) {
+                    setFinancialClientsLoadingState(false);
+                    const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                    return;
+                }
+
+                const result = await parseJsonSafe(response);
+                if (!response.ok || !result || !result.ok) {
+                    setFinancialClientsLoadingState(false);
+                    const message = result && result.message ? result.message : "Unable to load financial records clients.";
+                    showToast(message);
+                    renderClientRows([]);
+                    return;
+                }
+
+                setFinancialClientsLoadingState(false);
+                renderClientRows(Array.isArray(result.clients) ? result.clients : []);
+            } catch (error) {
+                if (error && error.name === "AbortError") {
+                    return;
+                }
+
+                if (requestToken !== financialClientsRequestToken) {
+                    return;
+                }
+
+                setFinancialClientsLoadingState(false);
+                showToast("Unable to load financial records clients.");
+                renderClientRows([]);
+            }
+        };
+
+        if (financialClientsTableBody) {
+            financialClientsTableBody.addEventListener("click", (event) => {
+                const row = event.target.closest(".clients-row");
+                if (!row) {
+                    return;
+                }
+
+                const actionButton = event.target.closest("[data-financial-action='open']");
+                if (actionButton) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                openClientRecords(row);
+            });
+
+            financialClientsTableBody.addEventListener("keydown", (event) => {
+                const row = event.target.closest(".clients-row");
+                if (!row) {
+                    return;
+                }
+
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
                     openClientRecords(row);
-                });
-
-                financialClientsTableBody.addEventListener("keydown", (event) => {
-                    const row = event.target.closest(".clients-row");
-                    if (!row) {
-                        return;
-                    }
-
-                    if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        openClientRecords(row);
-                    }
-                });
-            }
-
-            if (financialClientsSearchInput) {
-                financialClientsSearchInput.addEventListener("input", debounce(applyFilters));
-            }
-
-            if (financialClientsFilter) {
-                financialClientsFilter.addEventListener("change", applyFilters);
-            }
-
-            if (dashboardProfileAction) {
-                dashboardProfileAction.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    window.location.assign("{% url 'profile' %}");
-                });
-            }
-
-            if (dashboardLogoutAction) {
-                dashboardLogoutAction.addEventListener("click", async () => {
-                    dashboardLogoutAction.disabled = true;
-
-                    try {
-                        const redirectUrl = await logoutCurrentUser();
-                        showToast("Logging out...");
-                        window.location.assign(redirectUrl);
-                    } finally {
-                        dashboardLogoutAction.disabled = false;
-                    }
-                });
-            }
-
-            plannedFeatureButtons.forEach((buttonElement) => {
-                buttonElement.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
-                    showToast(`${featureLabel} is planned and will be available soon.`);
-                });
+                }
             });
+        }
 
-            hydrateHeaderUser();
-            loadClientsFromApi();
+        if (financialClientsSearchInput) {
+            financialClientsSearchInput.addEventListener("input", debounce(applyFilters));
+        }
 
-            window.addEventListener("resize", () => {
-                sidebarState.closeMobileSidebar();
-                sidebarState.restoreDesktopState();
+        if (financialClientsFilter) {
+            financialClientsFilter.addEventListener("change", applyFilters);
+        }
+
+        if (dashboardProfileAction) {
+            dashboardProfileAction.addEventListener("click", (event) => {
+                event.preventDefault();
+                window.location.assign("{% url 'profile' %}");
             });
-        })();
-    </script>
-</body>
-</html>
+        }
+
+        if (dashboardLogoutAction) {
+            dashboardLogoutAction.addEventListener("click", async () => {
+                dashboardLogoutAction.disabled = true;
+
+                try {
+                    const redirectUrl = await logoutCurrentUser();
+                    showToast("Logging out...");
+                    window.location.assign(redirectUrl);
+                } finally {
+                    dashboardLogoutAction.disabled = false;
+                }
+            });
+        }
+
+        plannedFeatureButtons.forEach((buttonElement) => {
+            buttonElement.addEventListener("click", (event) => {
+                event.preventDefault();
+                const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
+                showToast(`${featureLabel} is planned and will be available soon.`);
+            });
+        });
+
+        hydrateHeaderUser();
+        loadClientsFromApi();
+
+        window.addEventListener("resize", () => {
+            sidebarState.closeMobileSidebar();
+            sidebarState.restoreDesktopState();
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% load static %}
+<aside class="dashboard-sidebar" id="dashboardSidebar">
+    <div class="dashboard-sidebar-top">
+        <a href="{% url 'dashboard' %}" class="dashboard-logo" aria-label="SafeBooks">
+            <span class="dashboard-logo-glyph">
+                <img src="{% static 'images/Logo_safebooks.png' %}" alt="" class="dashboard-logo-image" aria-hidden="true" />
+            </span>
+            <span class="dashboard-logo-text">SafeBooks</span>
+        </a>
+        <button class="btn dashboard-menu-toggle dashboard-collapse-btn d-none d-lg-inline-flex" type="button" id="sidebarCollapseToggle" aria-label="Collapse sidebar" aria-expanded="true">
+            <i class="bi bi-layout-sidebar-inset" id="sidebarCollapseIcon"></i>
+        </button>
+    </div>
+    <p class="dashboard-sidebar-label">Main Navigation</p>
+
+    <nav class="dashboard-nav" aria-label="Sidebar navigation">
+        <a href="{% url 'dashboard' %}" class="dashboard-nav-item{% if active_nav == 'dashboard' %} active{% endif %}"{% if active_nav == 'dashboard' %} aria-current="page"{% endif %}><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+        <a href="{% url 'clients' %}" class="dashboard-nav-item{% if active_nav == 'clients' %} active{% endif %}"{% if active_nav == 'clients' %} aria-current="page"{% endif %}><i class="bi bi-people"></i><span>Clients</span></a>
+        <a href="{% url 'financial_records' %}" class="dashboard-nav-item{% if active_nav == 'financial_records' %} active{% endif %}"{% if active_nav == 'financial_records' %} aria-current="page"{% endif %}><i class="bi bi-journal-text"></i><span>Financial Records</span></a>
+        <a href="{% url 'analytics' %}" id="financialAnalyticsNavLink" class="dashboard-nav-item{% if active_nav == 'analytics' %} active{% endif %}"{% if active_nav == 'analytics' %} aria-current="page"{% endif %}><i class="bi bi-bar-chart-line"></i><span>Analytics</span></a>
+        <a href="{% url 'reports' %}" class="dashboard-nav-item{% if active_nav == 'reports' %} active{% endif %}"{% if active_nav == 'reports' %} aria-current="page"{% endif %}><i class="bi bi-file-earmark-text"></i><span>Reports</span></a>
+        <a href="{% url 'settings' %}" class="dashboard-nav-item{% if active_nav == 'settings' %} active{% endif %}"{% if active_nav == 'settings' %} aria-current="page"{% endif %}><i class="bi bi-gear"></i><span>Settings</span></a>
+    </nav>
+
+    <a href="{% url 'login' %}" class="dashboard-landing-link" data-bookkeeper-logout>
+        <i class="bi bi-box-arrow-left"></i>
+        <span>Logout</span>
+    </a>
+</aside>

@@ -1,0 +1,14 @@
+<div class="dropdown">
+    <button class="btn dashboard-profile-btn dropdown-toggle" type="button" id="adminProfileToggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="dashboard-avatar" id="adminUserAvatar">{{ current_admin_initials|default:"SA" }}</span>
+        <span class="dashboard-user-meta">
+            <strong id="adminUserName">{{ current_admin_name|default:"System Admin" }}</strong>
+            <small>{{ current_admin_role_label|default:"System Manager" }}</small>
+        </span>
+        <i class="bi bi-chevron-down"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="adminProfileToggle">
+        <a href="{% url 'admin_profile' %}" class="dropdown-item"><i class="bi bi-person-gear"></i>Admin profile</a>
+        <button type="button" class="dropdown-item text-danger" id="adminLogoutAction" data-admin-logout><i class="bi bi-box-arrow-right"></i>Logout</button>
+    </div>
+</div>

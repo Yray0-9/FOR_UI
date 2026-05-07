@@ -9,8 +9,8 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST
 
-from safebooks.models import BookkeeperAccount
-from safebooks.services.auth_service import login_user, register_user
+from safebooks.models import AdminAccount, BookkeeperAccount
+from safebooks.services.auth_service import login_user_or_admin, register_user
 from safebooks.services.client_service import (
     create_client_for_bookkeeper,
     delete_client_for_bookkeeper,
@@ -22,6 +22,7 @@ from safebooks.services.financial_record_service import (
     delete_record_for_client,
     list_financial_clients_for_bookkeeper,
     list_records_for_client_period,
+    list_transactions_for_client_range,
     update_record_for_client_period,
 )
 from safebooks.services.dashboard_service import get_dashboard_summary_for_bookkeeper
@@ -29,6 +30,7 @@ from safebooks.services.analytics_service import get_analytics_summary_for_bookk
 
 
 SESSION_BOOKKEEPER_ID_KEY = "safebooks_bookkeeper_id"
+SESSION_ADMIN_ID_KEY = "safebooks_admin_id"
 
 
 def _decode_request_data(request):
@@ -74,6 +76,18 @@ def _get_session_bookkeeper(request):
     return account
 
 
+def _get_session_admin(request):
+    account_id = request.session.get(SESSION_ADMIN_ID_KEY)
+    if not account_id:
+        return None
+
+    account = AdminAccount.objects.filter(id=account_id, is_active=True).first()
+    if account is None:
+        request.session.pop(SESSION_ADMIN_ID_KEY, None)
+
+    return account
+
+
 def _build_user_context(account):
     display_name = (
         (account.full_name or "").strip()
@@ -115,11 +129,41 @@ def _resolve_post_login_redirect(request, payload):
     return candidate
 
 
+def _build_admin_context(account):
+    display_name = (account.full_name or "").strip() or (account.email or "").strip() or "System Admin"
+
+    name_parts = display_name.split()
+    if not name_parts:
+        initials = "SA"
+    elif len(name_parts) == 1:
+        initials = name_parts[0][:2].upper()
+    else:
+        initials = f"{name_parts[0][0]}{name_parts[1][0]}".upper()
+
+    return {
+        "current_admin_name": display_name,
+        "current_admin_initials": initials,
+        "current_admin_email": account.email,
+        "current_admin_last_login": account.last_login,
+        "current_admin_role_label": "System Manager",
+    }
+
+
 def require_bookkeeper_auth(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         account = _get_session_bookkeeper(request)
         if account is None:
+            admin_account = _get_session_admin(request)
+            if admin_account is not None:
+                if _is_api_request(request):
+                    return JsonResponse(
+                        {"ok": False, "message": "Bookkeeper access required."},
+                        status=403,
+                    )
+
+                return redirect("admin_dashboard")
+
             if _is_api_request(request):
                 return JsonResponse(
                     {"ok": False, "message": "Authentication required."},
@@ -140,7 +184,65 @@ def require_bookkeeper_auth(view_func):
     return _wrapped_view
 
 
+def require_admin_auth(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        account = _get_session_admin(request)
+        if account is None:
+            bookkeeper_account = _get_session_bookkeeper(request)
+            if bookkeeper_account is not None:
+                if _is_api_request(request):
+                    return JsonResponse(
+                        {"ok": False, "message": "Admin access required."},
+                        status=403,
+                    )
+
+                return redirect("dashboard")
+
+            if _is_api_request(request):
+                return JsonResponse(
+                    {"ok": False, "message": "Admin authentication required."},
+                    status=401,
+                )
+
+            login_url = reverse("login")
+            next_path = request.get_full_path()
+            if next_path and next_path != login_url:
+                query = urlencode({"next": next_path})
+                return redirect(f"{login_url}?{query}")
+
+            return redirect(login_url)
+
+        request.admin_account = account
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped_view
+
+
+def require_any_auth(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        admin_account = _get_session_admin(request)
+        bookkeeper_account = _get_session_bookkeeper(request)
+
+        if admin_account is None and bookkeeper_account is None:
+            if _is_api_request(request):
+                return JsonResponse(
+                    {"ok": False, "message": "Authentication required."},
+                    status=401,
+                )
+
+            return redirect("login")
+
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped_view
+
+
 def home_page_view(request):
+    if _get_session_admin(request):
+        return redirect("admin_dashboard")
+
     if _get_session_bookkeeper(request):
         return redirect("dashboard")
 
@@ -148,6 +250,9 @@ def home_page_view(request):
 
 
 def login_page_view(request):
+    if _get_session_admin(request):
+        return redirect("admin_dashboard")
+
     if _get_session_bookkeeper(request):
         return redirect("dashboard")
 
@@ -155,6 +260,9 @@ def login_page_view(request):
 
 
 def signup_page_view(request):
+    if _get_session_admin(request):
+        return redirect("admin_dashboard")
+
     if _get_session_bookkeeper(request):
         return redirect("dashboard")
 
@@ -165,6 +273,7 @@ def signup_page_view(request):
 @ensure_csrf_cookie
 def dashboard_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = "dashboard"
     return render(request, "base/dashboard.html", context)
 
 
@@ -172,6 +281,7 @@ def dashboard_page_view(request):
 @ensure_csrf_cookie
 def clients_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = "clients"
     return render(request, "base/clients.html", context)
 
 
@@ -179,6 +289,7 @@ def clients_page_view(request):
 @ensure_csrf_cookie
 def financial_records_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = "financial_records"
     return render(request, "base/financial_records.html", context)
 
 
@@ -186,6 +297,7 @@ def financial_records_page_view(request):
 @ensure_csrf_cookie
 def financial_records_client_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = "financial_records"
     return render(request, "base/financial_records_client.html", context)
 
 
@@ -193,6 +305,7 @@ def financial_records_client_page_view(request):
 @ensure_csrf_cookie
 def analytics_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = "analytics"
     return render(request, "base/analytics.html", context)
 
 
@@ -200,6 +313,7 @@ def analytics_page_view(request):
 @ensure_csrf_cookie
 def reports_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = "reports"
     return render(request, "base/reports.html", context)
 
 
@@ -207,6 +321,7 @@ def reports_page_view(request):
 @ensure_csrf_cookie
 def settings_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = "settings"
     return render(request, "base/settings.html", context)
 
 
@@ -214,7 +329,56 @@ def settings_page_view(request):
 @ensure_csrf_cookie
 def profile_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = "profile"
     return render(request, "base/profile.html", context)
+
+
+@require_admin_auth
+@ensure_csrf_cookie
+def admin_dashboard_page_view(request):
+    context = _build_admin_context(request.admin_account)
+    context["active_admin_nav"] = "dashboard"
+    return render(request, "admin_panel/dashboard.html", context)
+
+
+@require_admin_auth
+@ensure_csrf_cookie
+def admin_bookkeepers_page_view(request):
+    context = _build_admin_context(request.admin_account)
+    context["active_admin_nav"] = "bookkeepers"
+    return render(request, "admin_panel/bookkeepers.html", context)
+
+
+@require_admin_auth
+@ensure_csrf_cookie
+def admin_approvals_page_view(request):
+    context = _build_admin_context(request.admin_account)
+    context["active_admin_nav"] = "approvals"
+    return render(request, "admin_panel/approvals.html", context)
+
+
+@require_admin_auth
+@ensure_csrf_cookie
+def admin_audit_log_page_view(request):
+    context = _build_admin_context(request.admin_account)
+    context["active_admin_nav"] = "audit_log"
+    return render(request, "admin_panel/audit_log.html", context)
+
+
+@require_admin_auth
+@ensure_csrf_cookie
+def admin_system_settings_page_view(request):
+    context = _build_admin_context(request.admin_account)
+    context["active_admin_nav"] = "system_settings"
+    return render(request, "admin_panel/system_settings.html", context)
+
+
+@require_admin_auth
+@ensure_csrf_cookie
+def admin_profile_page_view(request):
+    context = _build_admin_context(request.admin_account)
+    context["active_admin_nav"] = "profile"
+    return render(request, "admin_panel/admin_profile.html", context)
 
 
 def _resolve_client_error_status(result):
@@ -322,6 +486,33 @@ def analytics_summary_api_view(request):
     return JsonResponse(result, status=_resolve_analytics_error_status(result))
 
 
+@require_http_methods(["GET"])
+@require_bookkeeper_auth
+def reports_print_layout_api_view(request):
+    client_id_param = (request.GET.get("client_id") or "").strip()
+    if not client_id_param:
+        return JsonResponse(
+            {"ok": False, "message": "Client id is required."},
+            status=400,
+        )
+    if not client_id_param.isdigit():
+        return JsonResponse(
+            {"ok": False, "message": "Invalid client id."},
+            status=400,
+        )
+
+    result = list_transactions_for_client_range(
+        request.bookkeeper_account,
+        int(client_id_param),
+        request.GET.get("date_from"),
+        request.GET.get("date_to"),
+    )
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=_resolve_financial_record_error_status(result))
+
+
 @require_http_methods(["GET", "POST"])
 @require_bookkeeper_auth
 def financial_records_api_view(request, client_id):
@@ -408,15 +599,22 @@ def login_view(request):
             status=400,
         )
 
-    result = login_user(payload)
+    result = login_user_or_admin(payload)
     if result.get("ok"):
+        role = result.get("role")
         user_payload = result.get("user") or {}
         account_id = user_payload.get("id")
-        if account_id:
-            request.session[SESSION_BOOKKEEPER_ID_KEY] = account_id
+        if account_id and role == "admin":
+            request.session[SESSION_ADMIN_ID_KEY] = account_id
+            request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
             request.session.modified = True
-
-        result["redirect_url"] = _resolve_post_login_redirect(request, payload)
+            result["redirect_url"] = reverse("admin_dashboard")
+        else:
+            if account_id:
+                request.session[SESSION_BOOKKEEPER_ID_KEY] = account_id
+                request.session.pop(SESSION_ADMIN_ID_KEY, None)
+                request.session.modified = True
+            result["redirect_url"] = _resolve_post_login_redirect(request, payload)
         return JsonResponse(result)
 
     error_message = result.get("message", "Unable to login.")
@@ -428,7 +626,7 @@ def login_view(request):
 
 
 @require_POST
-@require_bookkeeper_auth
+@require_any_auth
 def logout_view(request):
     request.session.flush()
     return JsonResponse(

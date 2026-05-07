@@ -1,493 +1,1271 @@
+{% extends 'base/bookkeeper_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeBooks | Dashboard</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% block page_title %}Dashboard{% endblock %}
+{% block page_heading %}Dashboard{% endblock %}
+{% block page_subtitle %}
+<p class="dashboard-page-subtitle">Overview of your clients and recent financial activity</p>
+{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reports.css' %}">
+{% endblock %}
+{% block topbar_meta %}
+<div class="dashboard-utility-strip" aria-label="Dashboard context">
+    <span class="dashboard-utility-item"><i class="bi bi-calendar3"></i> Current period: <strong>April 2026</strong></span>
+    <span class="dashboard-utility-item"><i class="bi bi-clock"></i> Last updated: <strong>Just now</strong></span>
+    <a href="{% url 'reports' %}" class="dashboard-utility-link" aria-label="Open Reports page">Open Reports</a>
+</div>
+{% endblock %}
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
-    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
-</head>
-<body class="dashboard-page skeleton-active">
-    <div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
-        <div class="skeleton-shell">
-            <div class="dash-sk-layout">
-                <aside class="dash-sk-sidebar">
-                    <div class="skeleton-shimmer dash-sk-logo"></div>
-                    <div class="dash-sk-nav">
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                        <div class="skeleton-shimmer dash-sk-nav-item"></div>
-                    </div>
-                </aside>
-                <section class="dash-sk-main">
-                    <div class="dash-sk-topbar">
-                        <div class="skeleton-shimmer dash-sk-title"></div>
-                        <div class="skeleton-shimmer dash-sk-search"></div>
-                        <div class="skeleton-shimmer dash-sk-profile"></div>
-                    </div>
-                    <div class="dash-sk-metrics">
-                        <div class="skeleton-shimmer dash-sk-metric"></div>
-                        <div class="skeleton-shimmer dash-sk-metric"></div>
-                        <div class="skeleton-shimmer dash-sk-metric"></div>
-                        <div class="skeleton-shimmer dash-sk-metric"></div>
-                    </div>
-                    <div class="dash-sk-content">
-                        <div class="dash-sk-left">
-                            <div class="dash-sk-card">
-                                <div class="skeleton-shimmer dash-sk-card-head"></div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
-                                <div class="dash-sk-table-row">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
+{% block skeleton %}
+<div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+        <div class="dash-sk-layout">
+            <aside class="dash-sk-sidebar">
+                <div class="skeleton-shimmer dash-sk-logo"></div>
+                <div class="dash-sk-nav">
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                </div>
+            </aside>
+            <section class="dash-sk-main">
+                <div class="dash-sk-topbar">
+                    <div class="skeleton-shimmer dash-sk-title"></div>
+                    <div class="skeleton-shimmer dash-sk-search"></div>
+                    <div class="skeleton-shimmer dash-sk-profile"></div>
+                </div>
+                <div class="dash-sk-metrics">
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                </div>
+                <div class="dash-sk-content">
+                    <div class="dash-sk-left">
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
                             </div>
-                            <div class="dash-sk-card dash-sk-chart-card">
-                                <div class="skeleton-shimmer dash-sk-card-head"></div>
-                                <div class="dash-sk-bars">
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                    <span class="skeleton-shimmer"></span>
-                                </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
                             </div>
                         </div>
-                        <div class="dash-sk-right">
-                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
-                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
-                            <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
+                        <div class="dash-sk-card dash-sk-chart-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="dash-sk-bars">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
                         </div>
                     </div>
-                    <div class="dash-sk-card dash-sk-recent">
-                        <div class="skeleton-shimmer dash-sk-card-head"></div>
-                        <div class="skeleton-shimmer dash-sk-line"></div>
-                        <div class="skeleton-shimmer dash-sk-line"></div>
-                        <div class="skeleton-shimmer dash-sk-line"></div>
+                    <div class="dash-sk-right">
+                        <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
+                        <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
+                        <div class="dash-sk-card"><div class="skeleton-shimmer dash-sk-card-head"></div><div class="skeleton-shimmer dash-sk-line"></div><div class="skeleton-shimmer dash-sk-line"></div></div>
                     </div>
-                </section>
-            </div>
+                </div>
+                <div class="dash-sk-card dash-sk-recent">
+                    <div class="skeleton-shimmer dash-sk-card-head"></div>
+                    <div class="skeleton-shimmer dash-sk-line"></div>
+                    <div class="skeleton-shimmer dash-sk-line"></div>
+                    <div class="skeleton-shimmer dash-sk-line"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-content">
+    <div class="row g-3 dashboard-stats-row">
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.05s;" data-nav-target="{% url 'clients' %}" tabindex="0" role="button" aria-label="Open Clients page">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div>
+                    <p class="stat-label">Total Clients</p>
+                    <h3 id="totalClientsValue">0</h3>
+                    <p class="stat-note">Clients currently managed</p>
+                    <span class="stat-trend-chip">vs last month</span>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.1s;" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page">
+                <div class="stat-icon"><i class="bi bi-journal-check"></i></div>
+                <div>
+                    <p class="stat-label">Total Entries This Month</p>
+                    <h3 id="totalEntriesMonthValue">0</h3>
+                    <p class="stat-note">Entries recorded this month</p>
+                    <span class="stat-trend-chip">vs last month</span>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.15s;" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page for compliance follow-up">
+                <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div>
+                    <p class="stat-label">Pending Compliance</p>
+                    <h3 id="pendingComplianceValue">0</h3>
+                    <p class="stat-note">Requires attention</p>
+                    <span class="stat-trend-chip">vs last month</span>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.2s;" data-nav-target="{% url 'clients' %}?risk=high" tabindex="0" role="button" aria-label="Open Clients page with high-risk filter preview">
+                <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                <div>
+                    <p class="stat-label">High Risk Clients</p>
+                    <h3 id="highRiskClientsValue">0</h3>
+                    <p class="stat-note">Needs review</p>
+                    <span class="stat-trend-chip">vs last month</span>
+                </div>
+            </article>
         </div>
     </div>
 
-    <div class="dashboard-layout">
-        <aside class="dashboard-sidebar" id="dashboardSidebar">
-            <div class="dashboard-sidebar-top">
-                <a href="{% url 'dashboard' %}" class="dashboard-logo" aria-label="SafeBooks">
-                    <span class="dashboard-logo-glyph">
-                        <img src="{% static 'images/Logo_safebooks.png' %}" alt="" class="dashboard-logo-image" aria-hidden="true">
-                    </span>
-                    <span class="dashboard-logo-text">SafeBooks</span>
-                </a>
-                <button class="btn dashboard-menu-toggle dashboard-collapse-btn d-none d-lg-inline-flex" type="button" id="sidebarCollapseToggle" aria-label="Collapse sidebar" aria-expanded="true">
-                    <i class="bi bi-layout-sidebar-inset" id="sidebarCollapseIcon"></i>
-                </button>
-            </div>
-            <p class="dashboard-sidebar-label">Main Navigation</p>
+    <!-- <p class="dashboard-overview-note">Overview of your clients and recent financial activity</p> -->
 
-            <nav class="dashboard-nav" aria-label="Sidebar navigation">
-                <button type="button" class="dashboard-nav-item active" aria-current="page"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></button>
-                <a href="{% url 'clients' %}" class="dashboard-nav-item"><i class="bi bi-people"></i><span>Clients</span></a>
-                <a href="{% url 'financial_records' %}" class="dashboard-nav-item"><i class="bi bi-journal-text"></i><span>Financial Records</span></a>
-                <a href="{% url 'analytics' %}" class="dashboard-nav-item"><i class="bi bi-bar-chart-line"></i><span>Analytics</span></a>
-                <a href="{% url 'reports' %}" class="dashboard-nav-item"><i class="bi bi-file-earmark-text"></i><span>Reports</span></a>
-                <a href="{% url 'settings' %}" class="dashboard-nav-item"><i class="bi bi-gear"></i><span>Settings</span></a>
-            </nav>
-
-            <a href="{% url 'home' %}" class="dashboard-landing-link">
-                <i class="bi bi-box-arrow-left"></i>
-                <span>Back to Landing</span>
-            </a>
-        </aside>
-
-        <main class="dashboard-main">
-            <header class="dashboard-topbar animate-fade-in">
-                <div class="dashboard-topbar-left">
-                    <button class="btn dashboard-menu-toggle d-lg-none" type="button" id="sidebarToggle" aria-label="Toggle sidebar menu">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <div>
-                        <h1 class="dashboard-page-title">Dashboard</h1>
-                        <p class="dashboard-page-subtitle">Overview of your clients and recent financial activity</p>
-                        <div class="dashboard-utility-strip" aria-label="Dashboard context">
-                            <span class="dashboard-utility-item"><i class="bi bi-calendar3"></i> Current period: <strong>April 2026</strong></span>
-                            <span class="dashboard-utility-item"><i class="bi bi-clock"></i> Last updated: <strong>Just now</strong></span>
-                            <a href="{% url 'reports' %}" class="dashboard-utility-link" aria-label="Open Reports page">Open Reports</a>
+    <div class="row g-3 mt-1 align-items-start">
+        <div class="col-12 col-xl-8 d-grid gap-3">
+            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.25s;">
+                <div class="dashboard-card-head">
+                    <h2>Recent Client Activity</h2>
+                    <button type="button" class="btn dashboard-link-muted" id="clientFiltersReset">View All</button>
+                </div>
+                <p class="dashboard-section-hint">Latest updates from your clients.</p>
+                <div class="dashboard-table-toolbar" aria-label="Recent client activity controls">
+                    <label class="dashboard-table-search" aria-label="Search clients by name or TIN">
+                        <i class="bi bi-search"></i>
+                        <input type="search" id="clientTableSearch" placeholder="Search by client name or TIN" autocomplete="off">
+                    </label>
+                    <div class="dashboard-table-filters">
+                        <div class="dashboard-filter-chips" role="group" aria-label="Filter recent client activity">
+                            <button type="button" class="dashboard-filter-chip is-active" data-filter="all" aria-pressed="true">All</button>
+                            <button type="button" class="dashboard-filter-chip" data-filter="updated" aria-pressed="false">Updated</button>
+                            <button type="button" class="dashboard-filter-chip" data-filter="no-entries" aria-pressed="false">No Entries</button>
+                            <button type="button" class="dashboard-filter-chip" data-filter="needs-attention" aria-pressed="false">Needs Attention</button>
                         </div>
                     </div>
                 </div>
-
-                <div class="dashboard-topbar-right">
-                    <div class="dropdown dashboard-user-dropdown">
-                        <button type="button" class="btn dashboard-profile-btn" id="dashboardProfileMenuButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open user menu">
-                            <span class="dashboard-avatar" id="dashboardUserAvatar">SB</span>
-                            <span class="dashboard-user-meta">
-                                <strong id="dashboardUserName">Bookkeeper User</strong>
-                                <small>Profile</small>
-                            </span>
-                            <i class="bi bi-chevron-down"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="dashboardProfileMenuButton">
-                            <li>
-                                <button type="button" class="dropdown-item" id="dashboardProfileAction">
-                                    <i class="bi bi-person"></i>
-                                    <span>Profile</span>
-                                </button>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <button type="button" class="dropdown-item text-danger" id="dashboardLogoutAction">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                    <span>Log out</span>
-                                </button>
-                            </li>
-                        </ul>
+                <p class="dashboard-filter-summary" id="clientFilterSummary">Active filter: All (0 results)</p>
+                <div class="table-responsive" id="clientTableWrap">
+                    <table class="table table-hover align-middle dashboard-table mb-0" id="clientTable">
+                        <thead>
+                            <tr>
+                                <th>Client Name</th>
+                                <th>TIN</th>
+                                <th>Last Entry Date</th>
+                                <th>Current Period</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="dashboard-data-empty" id="clientActivityEmpty" hidden>
+                    <p>No data available yet</p>
+                    <div class="dashboard-empty-actions">
+                        <a href="{% url 'clients' %}" class="btn dashboard-action-btn outline">Add Client</a>
+                        <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn primary">Add Financial Entry</a>
                     </div>
                 </div>
-            </header>
+            </article>
 
-            <section class="dashboard-content">
-                <div class="row g-3 dashboard-stats-row">
-                    <div class="col-sm-6 col-xl-3">
-                        <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.05s;" data-nav-target="{% url 'clients' %}" tabindex="0" role="button" aria-label="Open Clients page">
-                            <div class="stat-icon"><i class="bi bi-people"></i></div>
-                            <div>
-                                <p class="stat-label">Total Clients</p>
-                                <h3 id="totalClientsValue">0</h3>
-                                <p class="stat-note">Clients currently managed</p>
-                                <span class="stat-trend-chip">vs last month</span>
-                            </div>
-                        </article>
-                    </div>
-                    <div class="col-sm-6 col-xl-3">
-                        <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.1s;" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page">
-                            <div class="stat-icon"><i class="bi bi-journal-check"></i></div>
-                            <div>
-                                <p class="stat-label">Total Entries This Month</p>
-                                <h3 id="totalEntriesMonthValue">0</h3>
-                                <p class="stat-note">Entries recorded this month</p>
-                                <span class="stat-trend-chip">vs last month</span>
-                            </div>
-                        </article>
-                    </div>
-                    <div class="col-sm-6 col-xl-3">
-                        <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.15s;" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page for compliance follow-up">
-                            <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-                            <div>
-                                <p class="stat-label">Pending Compliance</p>
-                                <h3 id="pendingComplianceValue">0</h3>
-                                <p class="stat-note">Requires attention</p>
-                                <span class="stat-trend-chip">vs last month</span>
-                            </div>
-                        </article>
-                    </div>
-                    <div class="col-sm-6 col-xl-3">
-                        <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.2s;" data-nav-target="{% url 'clients' %}?risk=high" tabindex="0" role="button" aria-label="Open Clients page with high-risk filter preview">
-                            <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
-                            <div>
-                                <p class="stat-label">High Risk Clients</p>
-                                <h3 id="highRiskClientsValue">0</h3>
-                                <p class="stat-note">Needs review</p>
-                                <span class="stat-trend-chip">vs last month</span>
-                            </div>
-                        </article>
+            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.3s;">
+                <div class="dashboard-card-head">
+                    <h2>Recent Entries</h2>
+                    <span class="dashboard-tag" id="recentEntriesCountTag">0 Entries</span>
+                </div>
+                <p class="dashboard-section-hint">Latest updates from your clients.</p>
+                <p class="dashboard-table-label">Last 5 entries</p>
+                <div class="table-responsive" id="recentEntriesWrap">
+                    <table class="table table-hover align-middle dashboard-table mb-0" id="recentEntriesTable">
+                        <thead>
+                            <tr>
+                                <th>Client Name</th>
+                                <th>Entry Date</th>
+                                <th>Total Amount</th>
+                            </tr>
+                            <tr class="dashboard-table-summary">
+                                <th colspan="3">Total amount: --</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentEntriesBody"></tbody>
+                    </table>
+                </div>
+                <div class="dashboard-data-empty" id="recentEntriesEmpty" hidden>
+                    <p>No data available yet</p>
+                    <div class="dashboard-empty-actions">
+                        <a href="{% url 'clients' %}" class="btn dashboard-action-btn outline">Add Client</a>
+                        <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn primary">Add Financial Entry</a>
                     </div>
                 </div>
+            </article>
+        </div>
 
-                <!-- <p class="dashboard-overview-note">Overview of your clients and recent financial activity</p> -->
+        <div class="col-12 col-xl-4 d-grid gap-3">
+            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.35s;">
+                <div class="dashboard-card-head">
+                    <h2>Risk Classification Summary</h2>
+                </div>
+                <p class="dashboard-panel-hint">Based on completeness of financial records.</p>
+                <ul class="insight-list">
+                    <li class="insight-item risk-low-item">
+                        <span class="insight-dot"></span>
+                        <div>
+                            <strong>Low Risk</strong>
+                            <small>Has consistent entries</small>
+                        </div>
+                        <span class="insight-value" id="riskLowCount">0</span>
+                    </li>
+                    <li class="insight-item risk-medium-item">
+                        <span class="insight-dot"></span>
+                        <div>
+                            <strong>Medium Risk</strong>
+                            <small>Missing some entries</small>
+                        </div>
+                        <span class="insight-value" id="riskMediumCount">0</span>
+                    </li>
+                    <li class="insight-item risk-high-item">
+                        <span class="insight-dot"></span>
+                        <div>
+                            <strong>High Risk</strong>
+                            <small>No entries or incomplete</small>
+                        </div>
+                        <span class="insight-value" id="riskHighCount">0</span>
+                    </li>
+                </ul>
+                <div class="dashboard-card-footer">
+                    <a href="{% url 'reports' %}" class="dashboard-card-link">View Details</a>
+                </div>
+            </article>
 
-                <div class="row g-3 mt-1 align-items-start">
-                    <div class="col-12 col-xl-8 d-grid gap-3">
-                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.25s;">
-                            <div class="dashboard-card-head">
-                                <h2>Recent Client Activity</h2>
-                                <button type="button" class="btn dashboard-link-muted" id="clientFiltersReset">View All</button>
+            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.4s;">
+                <div class="dashboard-card-head">
+                    <h2>Compliance Status Overview</h2>
+                </div>
+                <p class="dashboard-panel-hint">Status based on record completeness and recent entry activity.</p>
+                <div class="compliance-meters">
+                    <div class="compliance-row">
+                        <div class="compliance-meta">
+                            <div>
+                                <span>Filed</span>
+                                <small>Complete records</small>
                             </div>
-                            <p class="dashboard-section-hint">Latest updates from your clients.</p>
-                            <div class="dashboard-table-toolbar" aria-label="Recent client activity controls">
-                                <label class="dashboard-table-search" aria-label="Search clients by name or TIN">
-                                    <i class="bi bi-search"></i>
-                                    <input type="search" id="clientTableSearch" placeholder="Search by client name or TIN" autocomplete="off">
-                                </label>
-                                <div class="dashboard-table-filters">
-                                    <div class="dashboard-filter-chips" role="group" aria-label="Filter recent client activity">
-                                        <button type="button" class="dashboard-filter-chip is-active" data-filter="all" aria-pressed="true">All</button>
-                                        <button type="button" class="dashboard-filter-chip" data-filter="updated" aria-pressed="false">Updated</button>
-                                        <button type="button" class="dashboard-filter-chip" data-filter="no-entries" aria-pressed="false">No Entries</button>
-                                        <button type="button" class="dashboard-filter-chip" data-filter="needs-attention" aria-pressed="false">Needs Attention</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="dashboard-filter-summary" id="clientFilterSummary">Active filter: All (0 results)</p>
-                            <div class="table-responsive" id="clientTableWrap">
-                                <table class="table table-hover align-middle dashboard-table mb-0" id="clientTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Client Name</th>
-                                            <th>TIN</th>
-                                            <th>Last Entry Date</th>
-                                            <th>Current Period</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="clientTableBody"></tbody>
-                                </table>
-                            </div>
-                            <div class="dashboard-data-empty" id="clientActivityEmpty" hidden>
-                                <p>No data available yet</p>
-                                <div class="dashboard-empty-actions">
-                                    <a href="{% url 'clients' %}" class="btn dashboard-action-btn outline">Add Client</a>
-                                    <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn primary">Add Financial Entry</a>
-                                </div>
-                            </div>
-                        </article>
-
-                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.3s;">
-                            <div class="dashboard-card-head">
-                                <h2>Recent Entries</h2>
-                                <span class="dashboard-tag" id="recentEntriesCountTag">0 Entries</span>
-                            </div>
-                            <p class="dashboard-section-hint">Latest updates from your clients.</p>
-                            <p class="dashboard-table-label">Last 5 entries</p>
-                            <div class="table-responsive" id="recentEntriesWrap">
-                                <table class="table table-hover align-middle dashboard-table mb-0" id="recentEntriesTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Client Name</th>
-                                            <th>Entry Date</th>
-                                            <th>Total Amount</th>
-                                        </tr>
-                                        <tr class="dashboard-table-summary">
-                                            <th colspan="3">Total amount: --</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="recentEntriesBody"></tbody>
-                                </table>
-                            </div>
-                            <div class="dashboard-data-empty" id="recentEntriesEmpty" hidden>
-                                <p>No data available yet</p>
-                                <div class="dashboard-empty-actions">
-                                    <a href="{% url 'clients' %}" class="btn dashboard-action-btn outline">Add Client</a>
-                                    <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn primary">Add Financial Entry</a>
-                                </div>
-                            </div>
-                        </article>
+                            <strong id="complianceFiledPct">0%</strong>
+                        </div>
+                        <div class="progress"><div class="progress-bar filed" id="complianceFiledBar" style="width: 0%;"></div></div>
                     </div>
-
-                    <div class="col-12 col-xl-4 d-grid gap-3">
-                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.35s;">
-                            <div class="dashboard-card-head">
-                                <h2>Risk Classification Summary</h2>
+                    <div class="compliance-row">
+                        <div class="compliance-meta">
+                            <div>
+                                <span>Pending</span>
+                                <small>Missing entries</small>
                             </div>
-                            <p class="dashboard-panel-hint">Based on completeness of financial records.</p>
-                            <ul class="insight-list">
-                                <li class="insight-item risk-low-item">
-                                    <span class="insight-dot"></span>
-                                    <div>
-                                        <strong>Low Risk</strong>
-                                        <small>Has consistent entries</small>
-                                    </div>
-                                    <span class="insight-value" id="riskLowCount">0</span>
-                                </li>
-                                <li class="insight-item risk-medium-item">
-                                    <span class="insight-dot"></span>
-                                    <div>
-                                        <strong>Medium Risk</strong>
-                                        <small>Missing some entries</small>
-                                    </div>
-                                    <span class="insight-value" id="riskMediumCount">0</span>
-                                </li>
-                                <li class="insight-item risk-high-item">
-                                    <span class="insight-dot"></span>
-                                    <div>
-                                        <strong>High Risk</strong>
-                                        <small>No entries or incomplete</small>
-                                    </div>
-                                    <span class="insight-value" id="riskHighCount">0</span>
-                                </li>
-                            </ul>
-                            <div class="dashboard-card-footer">
-                                <a href="{% url 'reports' %}" class="dashboard-card-link">View Details</a>
+                            <strong id="compliancePendingPct">0%</strong>
+                        </div>
+                        <div class="progress"><div class="progress-bar pending" id="compliancePendingBar" style="width: 0%;"></div></div>
+                    </div>
+                    <div class="compliance-row">
+                        <div class="compliance-meta">
+                            <div>
+                                <span>Late</span>
+                                <small>No recent activity</small>
                             </div>
-                        </article>
-
-                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.4s;">
-                            <div class="dashboard-card-head">
-                                <h2>Compliance Status Overview</h2>
-                            </div>
-                            <p class="dashboard-panel-hint">Status based on record completeness and recent entry activity.</p>
-                            <div class="compliance-meters">
-                                <div class="compliance-row">
-                                    <div class="compliance-meta">
-                                        <div>
-                                            <span>Filed</span>
-                                            <small>Complete records</small>
-                                        </div>
-                                        <strong id="complianceFiledPct">0%</strong>
-                                    </div>
-                                    <div class="progress"><div class="progress-bar filed" id="complianceFiledBar" style="width: 0%;"></div></div>
-                                </div>
-                                <div class="compliance-row">
-                                    <div class="compliance-meta">
-                                        <div>
-                                            <span>Pending</span>
-                                            <small>Missing entries</small>
-                                        </div>
-                                        <strong id="compliancePendingPct">0%</strong>
-                                    </div>
-                                    <div class="progress"><div class="progress-bar pending" id="compliancePendingBar" style="width: 0%;"></div></div>
-                                </div>
-                                <div class="compliance-row">
-                                    <div class="compliance-meta">
-                                        <div>
-                                            <span>Late</span>
-                                            <small>No recent activity</small>
-                                        </div>
-                                        <strong id="complianceLatePct">0%</strong>
-                                    </div>
-                                    <div class="progress"><div class="progress-bar late" id="complianceLateBar" style="width: 0%;"></div></div>
-                                </div>
-                            </div>
-                            <div class="dashboard-card-footer">
-                                <a href="{% url 'reports' %}" class="dashboard-card-link">View Details</a>
-                            </div>
-                        </article>
-
-                        <article class="dashboard-card dashboard-fade-up" style="--delay: 0.45s;">
-                            <div class="dashboard-card-head">
-                                <h2>Quick Actions</h2>
-                            </div>
-                            <div class="dashboard-actions">
-                                <a href="{% url 'clients' %}" class="btn dashboard-action-btn primary">Add Client</a>
-                                <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline">Add Financial Entry</a>
-                                <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline">View Financial Records</a>
-                            </div>
-                        </article>
+                            <strong id="complianceLatePct">0%</strong>
+                        </div>
+                        <div class="progress"><div class="progress-bar late" id="complianceLateBar" style="width: 0%;"></div></div>
                     </div>
                 </div>
-            </section>
-        </main>
+                <div class="dashboard-card-footer">
+                    <a href="{% url 'reports' %}" class="dashboard-card-link">View Details</a>
+                </div>
+            </article>
 
-        <button type="button" class="dashboard-backdrop" id="sidebarBackdrop" aria-label="Close sidebar"></button>
+            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.45s;">
+                <div class="dashboard-card-head">
+                    <h2>Quick Actions</h2>
+                </div>
+                <div class="dashboard-actions">
+                    <a href="{% url 'clients' %}" class="btn dashboard-action-btn primary">Add Client</a>
+                    <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline">Add Financial Entry</a>
+                    <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline">View Financial Records</a>
+                </div>
+            </article>
+        </div>
     </div>
+</section>
+{% endblock %}
 
-    <div class="toast-container position-fixed top-0 end-0 p-3 safebooks-toast-container" id="uiToastContainer" aria-live="polite" aria-atomic="true"></div>
+{% block after_layout %}
+<div class="modal fade client-manage-modal" id="viewClientModal" tabindex="-1" aria-labelledby="viewClientModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="viewClientModalTitle">Client Details</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="client-details-grid">
+                    <div class="client-details-row"><span class="client-details-key">Client Name</span><strong id="viewClientName">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">TIN</span><strong id="viewClientTin">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">Trade Name</span><strong id="viewClientTradeName">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">Location</span><strong id="viewClientLocation">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">Permit Number</span><strong id="viewClientPermitNumber">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">Birthday</span><strong id="viewClientBirthday">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">Email</span><strong id="viewClientEmail">-</strong></div>
+                </div>
+                <p class="client-details-note">Manage this client's financial transactions.</p>
+            </div>
+            <div class="modal-footer client-details-actions">
+                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn dashboard-action-btn outline" id="viewClientAnalyticsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Analytics for this client">View Analytics</button>
+                <button type="button" class="btn dashboard-action-btn outline" id="viewClientReportBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Generate a report for this client">Generate Report</button>
+                <button type="button" class="btn dashboard-action-btn outline" id="viewFinancialRecordsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">View Financial Records</button>
+                <button type="button" class="btn dashboard-action-btn primary" id="viewAddFinancialRecordBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">Add Financial Entry</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade client-manage-modal client-report-modal" id="clientReportModal" tabindex="-1" aria-labelledby="clientReportModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title h5" id="clientReportModalTitle">Client Report</h2>
+                    <p class="dashboard-section-hint mb-0" id="clientReportHint">Paper-style sheet preview for client review and printing.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="reports-ledger-wrapper" id="clientReportWrapper" hidden>
+                    <div class="reports-ledger-sheet" id="clientReportSheet" aria-live="polite"></div>
+                </div>
+                <p class="dashboard-section-hint mt-3" id="clientReportStatus" role="status" aria-live="polite" hidden></p>
+            </div>
+            <div class="modal-footer client-details-actions">
+                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn dashboard-action-btn outline" id="clientReportOpenPageBtn">Open Reports Page</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="{% static 'js/skeleton.js' %}"></script>
-    <script src="{% static 'js/app_shared.js' %}"></script>
-    <script>
-        (() => {
-            const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
-            const DESKTOP_QUERY = "(min-width: 992px)";
-            const LOGIN_WELCOME_KEY = "safebooks.loginWelcome";
-            const AUTH_USER_KEY = "safebooks.authUser";
+{% block extra_js %}
+<script src="{% static 'js/reports_shared.js' %}"></script>
+<script>
+    (() => {
+        const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
+        const DESKTOP_QUERY = "(min-width: 992px)";
+        const LOGIN_WELCOME_KEY = "safebooks.loginWelcome";
+        const AUTH_USER_KEY = "safebooks.authUser";
 
-            const body = document.body;
-            const sidebarToggle = document.getElementById("sidebarToggle");
-            const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
-            const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
-            const sidebarBackdrop = document.getElementById("sidebarBackdrop");
-            const uiToastContainer = document.getElementById("uiToastContainer");
-            const dashboardUserAvatar = document.getElementById("dashboardUserAvatar");
-            const dashboardUserName = document.getElementById("dashboardUserName");
-            const dashboardProfileAction = document.getElementById("dashboardProfileAction");
-            const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
-            const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
-            const shared = window.SafeBooksShared || null;
+        const body = document.body;
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
+        const sidebarCollapseIcon = document.getElementById("sidebarCollapseIcon");
+        const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+        const uiToastContainer = document.getElementById("uiToastContainer");
+        const dashboardUserAvatar = document.getElementById("dashboardUserAvatar");
+        const dashboardUserName = document.getElementById("dashboardUserName");
+        const dashboardProfileAction = document.getElementById("dashboardProfileAction");
+        const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
+        const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
+        const shared = window.SafeBooksShared || null;
+        const reportsShared = window.SafeBooksReportsShared || null;
 
-            if (!body) {
+        if (!body) {
+            return;
+        }
+
+        // Failsafe so UI controls remain usable even if a transition state gets stuck.
+        window.setTimeout(() => {
+            if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
+                body.classList.remove("skeleton-active");
+                body.classList.add("skeleton-loaded");
+            }
+        }, 1800);
+
+        const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
+            ? shared.initializeSidebarBehavior({
+                bodyElement: body,
+                sidebarToggle,
+                sidebarCollapseToggle,
+                sidebarCollapseIcon,
+                sidebarBackdrop,
+                storageKey: SIDEBAR_STATE_KEY,
+                desktopQuery: DESKTOP_QUERY,
+            })
+            : {
+                closeMobileSidebar: () => {},
+                restoreDesktopState: () => {},
+            };
+
+        const clientTableBody = document.getElementById("clientTableBody");
+        const clientTableWrap = document.getElementById("clientTableWrap");
+        const clientTableSearch = document.getElementById("clientTableSearch");
+        const clientFilterChips = Array.from(document.querySelectorAll(".dashboard-filter-chip"));
+        const clientFilterSummary = document.getElementById("clientFilterSummary");
+        const clientFiltersReset = document.getElementById("clientFiltersReset");
+        const clientActivityEmpty = document.getElementById("clientActivityEmpty");
+
+        const viewClientName = document.getElementById("viewClientName");
+        const viewClientTin = document.getElementById("viewClientTin");
+        const viewClientTradeName = document.getElementById("viewClientTradeName");
+        const viewClientLocation = document.getElementById("viewClientLocation");
+        const viewClientPermitNumber = document.getElementById("viewClientPermitNumber");
+        const viewClientBirthday = document.getElementById("viewClientBirthday");
+        const viewClientEmail = document.getElementById("viewClientEmail");
+
+        const viewClientModalElement = document.getElementById("viewClientModal");
+        const viewClientModal = viewClientModalElement && window.bootstrap ? new window.bootstrap.Modal(viewClientModalElement) : null;
+
+        const clientReportModalElement = document.getElementById("clientReportModal");
+        const clientReportModal = clientReportModalElement && window.bootstrap ? new window.bootstrap.Modal(clientReportModalElement) : null;
+        const clientReportWrapper = document.getElementById("clientReportWrapper");
+        const clientReportSheet = document.getElementById("clientReportSheet");
+        const clientReportStatus = document.getElementById("clientReportStatus");
+        const clientReportOpenPageBtn = document.getElementById("clientReportOpenPageBtn");
+
+        const viewClientAnalyticsBtn = document.getElementById("viewClientAnalyticsBtn");
+        const viewClientReportBtn = document.getElementById("viewClientReportBtn");
+        const viewFinancialRecordsBtn = document.getElementById("viewFinancialRecordsBtn");
+        const viewAddFinancialRecordBtn = document.getElementById("viewAddFinancialRecordBtn");
+
+        const recentEntriesWrap = document.getElementById("recentEntriesWrap");
+        const recentEntriesBody = document.getElementById("recentEntriesBody");
+        const recentEntriesEmpty = document.getElementById("recentEntriesEmpty");
+        const recentEntriesCountTag = document.getElementById("recentEntriesCountTag");
+
+        const totalClientsValue = document.getElementById("totalClientsValue");
+        const totalEntriesMonthValue = document.getElementById("totalEntriesMonthValue");
+        const pendingComplianceValue = document.getElementById("pendingComplianceValue");
+        const highRiskClientsValue = document.getElementById("highRiskClientsValue");
+
+        const riskLowCount = document.getElementById("riskLowCount");
+        const riskMediumCount = document.getElementById("riskMediumCount");
+        const riskHighCount = document.getElementById("riskHighCount");
+
+        const complianceFiledPct = document.getElementById("complianceFiledPct");
+        const compliancePendingPct = document.getElementById("compliancePendingPct");
+        const complianceLatePct = document.getElementById("complianceLatePct");
+        const complianceFiledBar = document.getElementById("complianceFiledBar");
+        const compliancePendingBar = document.getElementById("compliancePendingBar");
+        const complianceLateBar = document.getElementById("complianceLateBar");
+
+        const CLIENTS_API_URL = "{% url 'api_clients' %}";
+        const FINANCIAL_RECORDS_BASE_URL = "{% url 'financial_records_client' %}";
+        const ANALYTICS_PAGE_URL = "{% url 'analytics' %}";
+        const REPORTS_PAGE_URL = "{% url 'reports' %}";
+        const ANALYTICS_SUMMARY_API_URL = "{% url 'api_analytics_summary' %}";
+        const DASHBOARD_SUMMARY_API_URL = "{% url 'api_dashboard_summary' %}";
+
+        let CURRENT_PERIOD_LABEL = "";
+        let activeViewedClient = null;
+        let cachedClientDetails = new Map();
+        let clientDetailsLoaded = false;
+        let clientDetailsLoading = false;
+        let CLIENT_ACTIVITY_DATA = [];
+        let RECENT_ENTRIES_DATA = [];
+        let DASHBOARD_METRICS = {
+            totalClients: 0,
+            totalEntriesThisMonth: 0,
+            pendingCompliance: 0,
+            highRiskClients: 0,
+            risk: {
+                low: 0,
+                medium: 0,
+                high: 0,
+            },
+            compliancePct: {
+                filed: 0,
+                pending: 0,
+                late: 0,
+            },
+        };
+
+        const STATUS_META = {
+            updated: {
+                label: "Updated",
+                badgeClass: "status-updated"
+            },
+            "no-entries": {
+                label: "No Entries",
+                badgeClass: "status-no-entries"
+            },
+            "needs-attention": {
+                label: "Needs Attention",
+                badgeClass: "status-needs-attention"
+            }
+        };
+
+        const CLIENT_FILTER_LABELS = {
+            all: "All",
+            updated: "Updated",
+            "no-entries": "No Entries",
+            "needs-attention": "Needs Attention"
+        };
+
+        const normalize = (value) => String(value || "").trim().toLowerCase();
+
+        const toDisplayValue = (value) => {
+            const trimmedValue = String(value || "").trim();
+            return trimmedValue ? trimmedValue : "Not provided";
+        };
+
+        const toReportValue = (value, fallback = "-") => {
+            const trimmedValue = String(value || "").trim();
+            return trimmedValue ? trimmedValue : fallback;
+        };
+
+        const getActiveClientFilter = () => {
+            const activeChip = clientFilterChips.find((chip) => chip.classList.contains("is-active"));
+            return activeChip ? String(activeChip.dataset.filter || "all") : "all";
+        };
+
+        const setActiveClientFilter = (value) => {
+            const normalizedValue = normalize(value) || "all";
+            clientFilterChips.forEach((chip) => {
+                const chipValue = normalize(chip.dataset.filter || "all");
+                const isActive = chipValue === normalizedValue;
+                chip.classList.toggle("is-active", isActive);
+                chip.setAttribute("aria-pressed", String(isActive));
+            });
+        };
+
+        const updateClientFilterSummary = (statusFilter, resultCount) => {
+            if (!clientFilterSummary) {
                 return;
             }
 
-            // Failsafe so UI controls remain usable even if a transition state gets stuck.
-            window.setTimeout(() => {
-                if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
-                    body.classList.remove("skeleton-active");
-                    body.classList.add("skeleton-loaded");
+            const label = CLIENT_FILTER_LABELS[statusFilter] || CLIENT_FILTER_LABELS.all;
+            const countLabel = resultCount === 1 ? "result" : "results";
+            clientFilterSummary.textContent = `Active filter: ${label} (${resultCount} ${countLabel})`;
+        };
+
+        const currencyFormatter = new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        const displayDateTimeFormatter = new Intl.DateTimeFormat("en-PH", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+
+        let filterTransitionTimer = null;
+
+        const escapeHtml = (value) => {
+            return String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        };
+
+        const safeNumber = (value) => {
+            const parsed = Number(value || 0);
+            return Number.isFinite(parsed) ? parsed : 0;
+        };
+
+        const formatCurrency = (value) => currencyFormatter.format(value || 0);
+
+        const formatGeneratedDateTime = (value) => {
+            const parsed = new Date(String(value || ""));
+            if (Number.isNaN(parsed.getTime())) {
+                return "-";
+            }
+            return displayDateTimeFormatter.format(parsed);
+        };
+
+        const formatEntryDate = (value) => {
+            if (!value) {
+                return "No entries";
+            }
+
+            const parsedDate = new Date(`${value}T00:00:00`);
+            if (Number.isNaN(parsedDate.getTime())) {
+                return value;
+            }
+
+            return parsedDate.toLocaleDateString("en-PH", {
+                month: "short",
+                day: "2-digit",
+                year: "numeric"
+            });
+        };
+
+        const buildFinancialRecordsUrl = (clientData) => {
+            const params = new URLSearchParams();
+            params.set("client_id", String(clientData.clientId || ""));
+            params.set("client", clientData.clientName || "");
+            params.set("tin", clientData.tin || "");
+            params.set("trade", clientData.tradeName || "");
+            return `${FINANCIAL_RECORDS_BASE_URL}?${params.toString()}`;
+        };
+
+        const buildClientAnalyticsUrl = (clientData) => {
+            const params = new URLSearchParams();
+            params.set("client_id", String(clientData.clientId || ""));
+            params.set("client", clientData.clientName || "");
+            params.set("tin", clientData.tin || "");
+            params.set("trade", clientData.tradeName || "");
+            return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
+        };
+
+        const toDateInputValue = (value) => {
+            if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+                return "";
+            }
+
+            const year = value.getFullYear();
+            const month = String(value.getMonth() + 1).padStart(2, "0");
+            const day = String(value.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        };
+
+        const parseDateInput = (value) => {
+            const cleaned = String(value || "").trim();
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+                return null;
+            }
+
+            const parsed = new Date(`${cleaned}T00:00:00`);
+            if (Number.isNaN(parsed.getTime())) {
+                return null;
+            }
+
+            return parsed;
+        };
+
+        const getDefaultReportRange = () => {
+            const now = new Date();
+            const yearStart = new Date(now.getFullYear(), 0, 1);
+            return {
+                dateFrom: toDateInputValue(yearStart),
+                dateTo: toDateInputValue(now),
+            };
+        };
+
+        const buildClientReportUrl = (clientData) => {
+            const range = getDefaultReportRange();
+
+            const params = new URLSearchParams();
+            params.set("report_type", "financial_summary");
+            params.set("client_id", String(clientData.clientId || ""));
+            params.set("date_from", range.dateFrom);
+            params.set("date_to", range.dateTo);
+            params.set("auto_generate", "1");
+            return `${REPORTS_PAGE_URL}?${params.toString()}`;
+        };
+
+        const isTrendMonthWithinRange = (yearValue, monthValue, filters) => {
+            const year = safeNumber(yearValue);
+            const month = safeNumber(monthValue);
+            const rangeFrom = parseDateInput(filters.dateFrom);
+            const rangeTo = parseDateInput(filters.dateTo);
+
+            if (!year || !month || !rangeFrom || !rangeTo) {
+                return true;
+            }
+
+            const monthStart = new Date(year, month - 1, 1);
+            const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+            return monthEnd.getTime() >= rangeFrom.getTime() && monthStart.getTime() <= rangeTo.getTime();
+        };
+
+        const buildClientReportRows = (trendRows, filters, typeColumns = []) => {
+            const rows = Array.isArray(trendRows) ? trendRows : [];
+            const cleanedTypeColumns = Array.isArray(typeColumns)
+                ? typeColumns.filter((value) => String(value || "").trim())
+                : [];
+            const useTypeColumns = cleanedTypeColumns.length > 0;
+
+            const reportColumns = useTypeColumns
+                ? ["Period", ...cleanedTypeColumns, "Net Value"]
+                : ["Period", "Sales", "Expenses", "Tax", "Net Value"];
+
+            const reportRows = rows
+                .filter((row) => isTrendMonthWithinRange(row.year, row.month, filters))
+                .map((row) => {
+                    const periodLabel = `${row.month_label || row.month || "-"} ${row.year || ""}`.trim();
+                    if (!useTypeColumns) {
+                        return [
+                            periodLabel,
+                            formatCurrency(row.sales),
+                            formatCurrency(row.expenses),
+                            formatCurrency(row.tax),
+                            formatCurrency(row.net_value),
+                        ];
+                    }
+
+                    const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
+                    const typeValues = cleanedTypeColumns.map((label) => formatCurrency(typeBreakdown[label]));
+                    return [periodLabel, ...typeValues, formatCurrency(row.net_value)];
+                });
+
+            return {
+                columns: reportColumns,
+                rows: reportRows,
+                useTypeColumns,
+            };
+        };
+
+        const buildClientReportSheetHtml = (clientData, reportData, filters) => {
+            if (!reportsShared || typeof reportsShared.buildReportSheetHtml !== "function") {
+                return "";
+            }
+
+            const generatedAt = new Date().toISOString();
+
+            const clientName = toReportValue(clientData.clientName, "Selected client");
+            const clientTin = toReportValue(clientData.tin);
+            const tradeName = toReportValue(clientData.tradeName);
+            const location = toReportValue(clientData.location);
+            const permitNumber = toReportValue(clientData.permitNumber);
+            const birthday = toReportValue(clientData.birthday);
+            const email = toReportValue(clientData.email);
+
+            const reportTypeLabel = "Financial Summary Report";
+            const dateRangeLabel = `${toReportValue(filters.dateFrom)} to ${toReportValue(filters.dateTo)}`;
+            const generatedLabel = formatGeneratedDateTime(generatedAt);
+
+            const columns = reportData && Array.isArray(reportData.columns)
+                ? reportData.columns
+                : ["Period", "Sales", "Expenses", "Tax", "Net Value"];
+            const rows = reportData && Array.isArray(reportData.rows)
+                ? reportData.rows
+                : [];
+
+            const rowHint = rows.length
+                ? "Prepared from generated report values."
+                : "No rows matched the selected date range. Blank lines are available for manual notes.";
+
+            return reportsShared.buildReportSheetHtml({
+                reportTitle: "SafeBooks Client Report Sheet",
+                reportSubtitle: "Client-facing format for quick review and print handover",
+                meta: {
+                    reportTypeLabel,
+                    dateRangeLabel,
+                    generatedLabel,
+                },
+                client: {
+                    clientName,
+                    tin: clientTin,
+                    tradeName,
+                    location,
+                    permitNumber,
+                    birthday,
+                    email,
+                },
+                table: {
+                    columns,
+                    rows,
+                    minRows: 14,
+                },
+                rowHint,
+            });
+        };
+
+        const setClientReportState = (state, message = "") => {
+            if (!clientReportWrapper || !clientReportStatus) {
+                return;
+            }
+
+            const normalizedState = String(state || "ready").toLowerCase();
+            if (normalizedState === "loading") {
+                clientReportWrapper.hidden = true;
+                clientReportStatus.hidden = false;
+                clientReportStatus.textContent = message || "Generating report...";
+                return;
+            }
+
+            if (normalizedState === "error") {
+                clientReportWrapper.hidden = true;
+                clientReportStatus.hidden = false;
+                clientReportStatus.textContent = message || "Unable to generate report.";
+                return;
+            }
+
+            clientReportWrapper.hidden = false;
+            clientReportStatus.hidden = true;
+        };
+
+        const fetchClientReportData = async (clientId) => {
+            const query = new URLSearchParams();
+            query.set("client_id", String(clientId));
+
+            const response = await fetch(`${ANALYTICS_SUMMARY_API_URL}?${query.toString()}`, {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json",
+                },
+                credentials: "same-origin",
+            });
+
+            if (response.status === 401) {
+                const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                throw new Error("Authentication required.");
+            }
+
+            const result = await parseJsonSafe(response);
+            if (!response.ok || !result || !result.ok) {
+                const message = result && result.message ? result.message : "Unable to load report data.";
+                throw new Error(message);
+            }
+
+            return result;
+        };
+
+        const openClientFinancialRecords = (clientData) => {
+            if (!clientData) {
+                window.location.assign(FINANCIAL_RECORDS_BASE_URL);
+                return;
+            }
+
+            window.location.assign(buildFinancialRecordsUrl(clientData));
+        };
+
+        const openClientAnalytics = (clientData) => {
+            if (!clientData || !Number.isFinite(clientData.clientId) || clientData.clientId <= 0) {
+                showToast("Select a valid client first.");
+                return;
+            }
+
+            window.location.assign(buildClientAnalyticsUrl(clientData));
+        };
+
+        const openClientReportModal = async (clientData) => {
+            if (!clientData || !Number.isFinite(clientData.clientId) || clientData.clientId <= 0) {
+                showToast("Select a valid client first.");
+                return;
+            }
+
+            activeViewedClient = clientData;
+
+            await loadClientDetailsCache();
+            const detailData = cachedClientDetails.get(clientData.clientId);
+            const mergedClient = mergeClientDetails(clientData, detailData);
+            activeViewedClient = mergedClient;
+
+            if (viewClientModal) {
+                viewClientModal.hide();
+            }
+
+            if (clientReportModal) {
+                clientReportModal.show();
+            }
+
+            if (!clientReportSheet || !clientReportWrapper || !clientReportStatus) {
+                window.location.assign(buildClientReportUrl(clientData));
+                return;
+            }
+
+            setClientReportState("loading");
+
+            try {
+                const reportRange = getDefaultReportRange();
+                const payload = await fetchClientReportData(mergedClient.clientId);
+                const reportData = buildClientReportRows(payload.monthly_trend, reportRange, payload.type_columns);
+                clientReportSheet.innerHTML = buildClientReportSheetHtml(mergedClient, reportData, reportRange);
+                setClientReportState("ready");
+            } catch (error) {
+                const message = error && error.message ? String(error.message) : "Unable to generate report.";
+                setClientReportState("error", message);
+                showToast(message);
+            }
+        };
+
+        const openClientReportPage = (clientData) => {
+            if (!clientData || !Number.isFinite(clientData.clientId) || clientData.clientId <= 0) {
+                showToast("Select a valid client first.");
+                return;
+            }
+
+            window.location.assign(buildClientReportUrl(clientData));
+        };
+
+        const getClientDataFromRow = (row) => {
+            return {
+                clientId: Number.parseInt(row.dataset.clientId || "", 10) || null,
+                clientName: row.dataset.clientName || "",
+                tin: row.dataset.tin || "",
+                tradeName: row.dataset.trade || "",
+                location: row.dataset.location || "",
+                permitNumber: row.dataset.permitNumber || "",
+                birthday: row.dataset.birthday || "",
+                email: row.dataset.email || "",
+            };
+        };
+
+        const mapClientDetailsFromApi = (client) => {
+            return {
+                clientId: Number.parseInt(client.id || "", 10) || null,
+                clientName: client.client_name || "",
+                tin: client.tin_number || "",
+                tradeName: client.trade_name || "",
+                location: client.location || "",
+                permitNumber: client.permit_number || "",
+                birthday: client.birthday || "",
+                email: client.email || "",
+            };
+        };
+
+        const loadClientDetailsCache = async () => {
+            if (clientDetailsLoaded || clientDetailsLoading) {
+                return;
+            }
+
+            clientDetailsLoading = true;
+
+            try {
+                const response = await fetch(CLIENTS_API_URL, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                    },
+                    credentials: "same-origin",
+                });
+
+                if (response.status === 401) {
+                    const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                    return;
                 }
-            }, 1800);
 
-            const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
-                ? shared.initializeSidebarBehavior({
-                    bodyElement: body,
-                    sidebarToggle,
-                    sidebarCollapseToggle,
-                    sidebarCollapseIcon,
-                    sidebarBackdrop,
-                    storageKey: SIDEBAR_STATE_KEY,
-                    desktopQuery: DESKTOP_QUERY,
+                const result = await parseJsonSafe(response);
+                if (!response.ok || !result || !result.ok) {
+                    return;
+                }
+
+                const clients = Array.isArray(result.clients) ? result.clients : [];
+                cachedClientDetails = new Map();
+                clients.forEach((client) => {
+                    const mapped = mapClientDetailsFromApi(client);
+                    if (Number.isFinite(mapped.clientId)) {
+                        cachedClientDetails.set(mapped.clientId, mapped);
+                    }
+                });
+
+                clientDetailsLoaded = true;
+            } catch (error) {
+                // Keep modal usable even if details lookup fails.
+            } finally {
+                clientDetailsLoading = false;
+            }
+        };
+
+        const mergeClientDetails = (baseData, detailData) => {
+            if (!detailData) {
+                return baseData;
+            }
+
+            return {
+                clientId: baseData.clientId || detailData.clientId,
+                clientName: detailData.clientName || baseData.clientName,
+                tin: detailData.tin || baseData.tin,
+                tradeName: detailData.tradeName || baseData.tradeName,
+                location: detailData.location || baseData.location,
+                permitNumber: detailData.permitNumber || baseData.permitNumber,
+                birthday: detailData.birthday || baseData.birthday,
+                email: detailData.email || baseData.email,
+            };
+        };
+
+        const setViewModalData = (clientData) => {
+            if (viewClientName) {
+                viewClientName.textContent = toDisplayValue(clientData.clientName);
+            }
+            if (viewClientTin) {
+                viewClientTin.textContent = toDisplayValue(clientData.tin);
+            }
+            if (viewClientTradeName) {
+                viewClientTradeName.textContent = toDisplayValue(clientData.tradeName);
+            }
+            if (viewClientLocation) {
+                viewClientLocation.textContent = toDisplayValue(clientData.location);
+            }
+            if (viewClientPermitNumber) {
+                viewClientPermitNumber.textContent = toDisplayValue(clientData.permitNumber);
+            }
+            if (viewClientBirthday) {
+                viewClientBirthday.textContent = toDisplayValue(clientData.birthday);
+            }
+            if (viewClientEmail) {
+                viewClientEmail.textContent = toDisplayValue(clientData.email);
+            }
+        };
+
+        const openClientDetailsModal = async (clientData) => {
+            if (!viewClientModal || !clientData) {
+                return;
+            }
+
+            activeViewedClient = clientData;
+            setViewModalData(clientData);
+            viewClientModal.show();
+
+            if (!Number.isFinite(clientData.clientId)) {
+                return;
+            }
+
+            await loadClientDetailsCache();
+            const detailData = cachedClientDetails.get(clientData.clientId);
+            if (detailData) {
+                const mergedData = mergeClientDetails(clientData, detailData);
+                activeViewedClient = mergedData;
+                setViewModalData(mergedData);
+            }
+        };
+
+        const renderClientTableRows = (rows) => {
+            if (!clientTableBody) {
+                return;
+            }
+
+            clientTableBody.innerHTML = rows
+                .map((row) => {
+                    const statusMeta = STATUS_META[row.status] || STATUS_META["needs-attention"];
+                    const rowClientId = Number.isFinite(row.clientId) ? row.clientId : "";
+
+                    return `
+                        <tr class="dashboard-client-row" data-client-id="${escapeHtml(String(rowClientId))}" data-client-name="${escapeHtml(row.clientName)}" data-tin="${escapeHtml(row.tin)}" data-trade="${escapeHtml(row.tradeName)}" tabindex="0" role="button" aria-label="View details for ${escapeHtml(row.clientName)}">
+                            <td>${escapeHtml(row.clientName)}</td>
+                            <td>${escapeHtml(row.tin)}</td>
+                            <td>${escapeHtml(formatEntryDate(row.lastEntryDate))}</td>
+                            <td>${escapeHtml(row.currentPeriod)}</td>
+                            <td><span class="status-badge ${statusMeta.badgeClass}">${statusMeta.label}</span></td>
+                        </tr>
+                    `;
                 })
-                : {
-                    closeMobileSidebar: () => {},
-                    restoreDesktopState: () => {},
-                };
+                .join("");
 
-            const clientTableBody = document.getElementById("clientTableBody");
-            const clientTableWrap = document.getElementById("clientTableWrap");
-            const clientTableSearch = document.getElementById("clientTableSearch");
-            const clientFilterChips = Array.from(document.querySelectorAll(".dashboard-filter-chip"));
-            const clientFilterSummary = document.getElementById("clientFilterSummary");
-            const clientFiltersReset = document.getElementById("clientFiltersReset");
-            const clientActivityEmpty = document.getElementById("clientActivityEmpty");
+            if (clientTableBody) {
+                clientTableBody.classList.add("is-filtering");
+                window.clearTimeout(filterTransitionTimer);
+                filterTransitionTimer = window.setTimeout(() => {
+                    clientTableBody.classList.remove("is-filtering");
+                }, 170);
+            }
 
-            const recentEntriesWrap = document.getElementById("recentEntriesWrap");
-            const recentEntriesBody = document.getElementById("recentEntriesBody");
-            const recentEntriesEmpty = document.getElementById("recentEntriesEmpty");
-            const recentEntriesCountTag = document.getElementById("recentEntriesCountTag");
+            const hasRows = rows.length > 0;
+            if (clientTableWrap) {
+                clientTableWrap.hidden = !hasRows;
+            }
+            if (clientActivityEmpty) {
+                clientActivityEmpty.hidden = hasRows;
+            }
+        };
 
-            const totalClientsValue = document.getElementById("totalClientsValue");
-            const totalEntriesMonthValue = document.getElementById("totalEntriesMonthValue");
-            const pendingComplianceValue = document.getElementById("pendingComplianceValue");
-            const highRiskClientsValue = document.getElementById("highRiskClientsValue");
+        const applyClientFilters = () => {
+            const query = normalize(clientTableSearch ? clientTableSearch.value : "");
+            const statusFilter = normalize(getActiveClientFilter());
 
-            const riskLowCount = document.getElementById("riskLowCount");
-            const riskMediumCount = document.getElementById("riskMediumCount");
-            const riskHighCount = document.getElementById("riskHighCount");
+            const filteredRows = CLIENT_ACTIVITY_DATA.filter((row) => {
+                const matchesQuery = !query || normalize(row.clientName).includes(query) || normalize(row.tin).includes(query);
+                const matchesStatus = statusFilter === "all" || normalize(row.status) === statusFilter;
+                return matchesQuery && matchesStatus;
+            });
 
-            const complianceFiledPct = document.getElementById("complianceFiledPct");
-            const compliancePendingPct = document.getElementById("compliancePendingPct");
-            const complianceLatePct = document.getElementById("complianceLatePct");
-            const complianceFiledBar = document.getElementById("complianceFiledBar");
-            const compliancePendingBar = document.getElementById("compliancePendingBar");
-            const complianceLateBar = document.getElementById("complianceLateBar");
+            renderClientTableRows(filteredRows);
+            updateClientFilterSummary(statusFilter, filteredRows.length);
+        };
 
-            const FINANCIAL_RECORDS_BASE_URL = "{% url 'financial_records_client' %}";
-            const DASHBOARD_SUMMARY_API_URL = "{% url 'api_dashboard_summary' %}";
+        const renderRecentEntries = () => {
+            if (!recentEntriesBody) {
+                return;
+            }
 
-            let CURRENT_PERIOD_LABEL = "";
-            let CLIENT_ACTIVITY_DATA = [];
-            let RECENT_ENTRIES_DATA = [];
-            let DASHBOARD_METRICS = {
+            const entriesToShow = [...RECENT_ENTRIES_DATA]
+                .sort((a, b) => normalize(b.entryDate).localeCompare(normalize(a.entryDate)))
+                .slice(0, 5);
+
+            recentEntriesBody.innerHTML = entriesToShow
+                .map((entry) => {
+                    return `
+                        <tr>
+                            <td>${escapeHtml(entry.clientName)}</td>
+                            <td>${escapeHtml(formatEntryDate(entry.entryDate))}</td>
+                            <td>${escapeHtml(formatCurrency(entry.totalAmount))}</td>
+                        </tr>
+                    `;
+                })
+                .join("");
+
+            if (recentEntriesCountTag) {
+                recentEntriesCountTag.textContent = `${entriesToShow.length} ${entriesToShow.length === 1 ? "Entry" : "Entries"}`;
+            }
+
+            const hasEntries = entriesToShow.length > 0;
+            if (recentEntriesWrap) {
+                recentEntriesWrap.hidden = !hasEntries;
+            }
+            if (recentEntriesEmpty) {
+                recentEntriesEmpty.hidden = hasEntries;
+            }
+        };
+
+        const updateSummaryCards = () => {
+            const totalClients = DASHBOARD_METRICS.totalClients || 0;
+            const totalEntriesThisMonth = DASHBOARD_METRICS.totalEntriesThisMonth || 0;
+            const pendingCompliance = DASHBOARD_METRICS.pendingCompliance || 0;
+            const highRiskClients = DASHBOARD_METRICS.highRiskClients || 0;
+
+            if (totalClientsValue) {
+                totalClientsValue.textContent = String(totalClients);
+            }
+            if (totalEntriesMonthValue) {
+                totalEntriesMonthValue.textContent = String(totalEntriesThisMonth);
+            }
+            if (pendingComplianceValue) {
+                pendingComplianceValue.textContent = String(pendingCompliance);
+            }
+            if (highRiskClientsValue) {
+                highRiskClientsValue.textContent = String(highRiskClients);
+            }
+        };
+
+        const updateRiskSummary = () => {
+            const lowRisk = DASHBOARD_METRICS.risk.low || 0;
+            const mediumRisk = DASHBOARD_METRICS.risk.medium || 0;
+            const highRisk = DASHBOARD_METRICS.risk.high || 0;
+
+            if (riskLowCount) {
+                riskLowCount.textContent = String(lowRisk);
+            }
+            if (riskMediumCount) {
+                riskMediumCount.textContent = String(mediumRisk);
+            }
+            if (riskHighCount) {
+                riskHighCount.textContent = String(highRisk);
+            }
+        };
+
+        const updateComplianceSummary = () => {
+            const filedPct = DASHBOARD_METRICS.compliancePct.filed || 0;
+            const pendingPct = DASHBOARD_METRICS.compliancePct.pending || 0;
+            const latePct = DASHBOARD_METRICS.compliancePct.late || 0;
+
+            if (complianceFiledPct) {
+                complianceFiledPct.textContent = `${filedPct}%`;
+            }
+            if (compliancePendingPct) {
+                compliancePendingPct.textContent = `${pendingPct}%`;
+            }
+            if (complianceLatePct) {
+                complianceLatePct.textContent = `${latePct}%`;
+            }
+
+            if (complianceFiledBar) {
+                complianceFiledBar.style.width = `${filedPct}%`;
+            }
+            if (compliancePendingBar) {
+                compliancePendingBar.style.width = `${pendingPct}%`;
+            }
+            if (complianceLateBar) {
+                complianceLateBar.style.width = `${latePct}%`;
+            }
+        };
+
+        const navigateFromCard = (cardElement) => {
+            if (!cardElement) {
+                return;
+            }
+
+            const targetUrl = cardElement.getAttribute("data-nav-target");
+            if (!targetUrl) {
+                return;
+            }
+
+            window.location.assign(targetUrl);
+        };
+
+        const showToast = (message, variantClass = "") => {
+            if (!shared || typeof shared.showToast !== "function") {
+                return;
+            }
+
+            shared.showToast(uiToastContainer, message, variantClass, {
+                delay: 2800,
+            });
+        };
+
+        const parseJsonSafe = (response) => {
+            if (!shared || typeof shared.parseJsonSafe !== "function") {
+                return Promise.resolve(null);
+            }
+
+            return shared.parseJsonSafe(response);
+        };
+
+        const mapActivityRowFromApi = (row) => {
+            return {
+                clientId: Number.parseInt(row.client_id || "", 10) || null,
+                clientName: row.client_name || "",
+                tin: row.tin_number || "",
+                tradeName: row.trade_name || "",
+                lastEntryDate: row.last_entry_date || "",
+                currentPeriod: row.current_period || CURRENT_PERIOD_LABEL || "",
+                status: row.status || "needs-attention",
+                risk: row.risk || "medium",
+                compliance: row.compliance || "pending",
+            };
+        };
+
+        const mapRecentEntryFromApi = (entry) => {
+            const parsedAmount = Number.parseFloat(entry.total_amount || "0");
+
+            return {
+                clientId: Number.parseInt(entry.client_id || "", 10) || null,
+                clientName: entry.client_name || "",
+                tin: entry.tin_number || "",
+                tradeName: entry.trade_name || "",
+                entryDate: entry.entry_date || "",
+                period: entry.period || CURRENT_PERIOD_LABEL || "",
+                totalAmount: Number.isFinite(parsedAmount) ? parsedAmount : 0,
+            };
+        };
+
+        const setDashboardFallbackState = () => {
+            CURRENT_PERIOD_LABEL = "";
+            CLIENT_ACTIVITY_DATA = [];
+            RECENT_ENTRIES_DATA = [];
+            DASHBOARD_METRICS = {
                 totalClients: 0,
                 totalEntriesThisMonth: 0,
                 pendingCompliance: 0,
@@ -503,606 +1281,309 @@
                     late: 0,
                 },
             };
+        };
 
-            const STATUS_META = {
-                updated: {
-                    label: "Updated",
-                    badgeClass: "status-updated"
-                },
-                "no-entries": {
-                    label: "No Entries",
-                    badgeClass: "status-no-entries"
-                },
-                "needs-attention": {
-                    label: "Needs Attention",
-                    badgeClass: "status-needs-attention"
-                }
-            };
-
-            const CLIENT_FILTER_LABELS = {
-                all: "All",
-                updated: "Updated",
-                "no-entries": "No Entries",
-                "needs-attention": "Needs Attention"
-            };
-
-            const normalize = (value) => String(value || "").trim().toLowerCase();
-
-            const getActiveClientFilter = () => {
-                const activeChip = clientFilterChips.find((chip) => chip.classList.contains("is-active"));
-                return activeChip ? String(activeChip.dataset.filter || "all") : "all";
-            };
-
-            const setActiveClientFilter = (value) => {
-                const normalizedValue = normalize(value) || "all";
-                clientFilterChips.forEach((chip) => {
-                    const chipValue = normalize(chip.dataset.filter || "all");
-                    const isActive = chipValue === normalizedValue;
-                    chip.classList.toggle("is-active", isActive);
-                    chip.setAttribute("aria-pressed", String(isActive));
-                });
-            };
-
-            const updateClientFilterSummary = (statusFilter, resultCount) => {
-                if (!clientFilterSummary) {
-                    return;
-                }
-
-                const label = CLIENT_FILTER_LABELS[statusFilter] || CLIENT_FILTER_LABELS.all;
-                const countLabel = resultCount === 1 ? "result" : "results";
-                clientFilterSummary.textContent = `Active filter: ${label} (${resultCount} ${countLabel})`;
-            };
-
-            const currencyFormatter = new Intl.NumberFormat("en-PH", {
-                style: "currency",
-                currency: "PHP",
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-
-            let filterTransitionTimer = null;
-
-            const escapeHtml = (value) => {
-                return String(value || "")
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/\"/g, "&quot;")
-                    .replace(/'/g, "&#39;");
-            };
-
-            const formatCurrency = (value) => currencyFormatter.format(value || 0);
-
-            const formatEntryDate = (value) => {
-                if (!value) {
-                    return "No entries";
-                }
-
-                const parsedDate = new Date(`${value}T00:00:00`);
-                if (Number.isNaN(parsedDate.getTime())) {
-                    return value;
-                }
-
-                return parsedDate.toLocaleDateString("en-PH", {
-                    month: "short",
-                    day: "2-digit",
-                    year: "numeric"
-                });
-            };
-
-            const buildFinancialRecordsUrl = (clientData) => {
-                const params = new URLSearchParams();
-                params.set("client_id", String(clientData.clientId || ""));
-                params.set("client", clientData.clientName || "");
-                params.set("tin", clientData.tin || "");
-                params.set("trade", clientData.tradeName || "");
-                return `${FINANCIAL_RECORDS_BASE_URL}?${params.toString()}`;
-            };
-
-            const openClientFinancialRecords = (clientData) => {
-                if (!clientData) {
-                    window.location.assign(FINANCIAL_RECORDS_BASE_URL);
-                    return;
-                }
-
-                window.location.assign(buildFinancialRecordsUrl(clientData));
-            };
-
-            const renderClientTableRows = (rows) => {
-                if (!clientTableBody) {
-                    return;
-                }
-
-                clientTableBody.innerHTML = rows
-                    .map((row) => {
-                        const statusMeta = STATUS_META[row.status] || STATUS_META["needs-attention"];
-                        const rowClientId = Number.isFinite(row.clientId) ? row.clientId : "";
-
-                        return `
-                            <tr class="dashboard-client-row" data-client-id="${escapeHtml(String(rowClientId))}" data-client-name="${escapeHtml(row.clientName)}" data-tin="${escapeHtml(row.tin)}" data-trade="${escapeHtml(row.tradeName)}" tabindex="0" role="button" aria-label="Open financial records for ${escapeHtml(row.clientName)}">
-                                <td>${escapeHtml(row.clientName)}</td>
-                                <td>${escapeHtml(row.tin)}</td>
-                                <td>${escapeHtml(formatEntryDate(row.lastEntryDate))}</td>
-                                <td>${escapeHtml(row.currentPeriod)}</td>
-                                <td><span class="status-badge ${statusMeta.badgeClass}">${statusMeta.label}</span></td>
-                            </tr>
-                        `;
-                    })
-                    .join("");
-
-                if (clientTableBody) {
-                    clientTableBody.classList.add("is-filtering");
-                    window.clearTimeout(filterTransitionTimer);
-                    filterTransitionTimer = window.setTimeout(() => {
-                        clientTableBody.classList.remove("is-filtering");
-                    }, 170);
-                }
-
-                const hasRows = rows.length > 0;
-                if (clientTableWrap) {
-                    clientTableWrap.hidden = !hasRows;
-                }
-                if (clientActivityEmpty) {
-                    clientActivityEmpty.hidden = hasRows;
-                }
-            };
-
-            const applyClientFilters = () => {
-                const query = normalize(clientTableSearch ? clientTableSearch.value : "");
-                const statusFilter = normalize(getActiveClientFilter());
-
-                const filteredRows = CLIENT_ACTIVITY_DATA.filter((row) => {
-                    const matchesQuery = !query || normalize(row.clientName).includes(query) || normalize(row.tin).includes(query);
-                    const matchesStatus = statusFilter === "all" || normalize(row.status) === statusFilter;
-                    return matchesQuery && matchesStatus;
-                });
-
-                renderClientTableRows(filteredRows);
-                updateClientFilterSummary(statusFilter, filteredRows.length);
-            };
-
-            const renderRecentEntries = () => {
-                if (!recentEntriesBody) {
-                    return;
-                }
-
-                const entriesToShow = [...RECENT_ENTRIES_DATA]
-                    .sort((a, b) => normalize(b.entryDate).localeCompare(normalize(a.entryDate)))
-                    .slice(0, 5);
-
-                recentEntriesBody.innerHTML = entriesToShow
-                    .map((entry) => {
-                        return `
-                            <tr>
-                                <td>${escapeHtml(entry.clientName)}</td>
-                                <td>${escapeHtml(formatEntryDate(entry.entryDate))}</td>
-                                <td>${escapeHtml(formatCurrency(entry.totalAmount))}</td>
-                            </tr>
-                        `;
-                    })
-                    .join("");
-
-                if (recentEntriesCountTag) {
-                    recentEntriesCountTag.textContent = `${entriesToShow.length} ${entriesToShow.length === 1 ? "Entry" : "Entries"}`;
-                }
-
-                const hasEntries = entriesToShow.length > 0;
-                if (recentEntriesWrap) {
-                    recentEntriesWrap.hidden = !hasEntries;
-                }
-                if (recentEntriesEmpty) {
-                    recentEntriesEmpty.hidden = hasEntries;
-                }
-            };
-
-            const updateSummaryCards = () => {
-                const totalClients = DASHBOARD_METRICS.totalClients || 0;
-                const totalEntriesThisMonth = DASHBOARD_METRICS.totalEntriesThisMonth || 0;
-                const pendingCompliance = DASHBOARD_METRICS.pendingCompliance || 0;
-                const highRiskClients = DASHBOARD_METRICS.highRiskClients || 0;
-
-                if (totalClientsValue) {
-                    totalClientsValue.textContent = String(totalClients);
-                }
-                if (totalEntriesMonthValue) {
-                    totalEntriesMonthValue.textContent = String(totalEntriesThisMonth);
-                }
-                if (pendingComplianceValue) {
-                    pendingComplianceValue.textContent = String(pendingCompliance);
-                }
-                if (highRiskClientsValue) {
-                    highRiskClientsValue.textContent = String(highRiskClients);
-                }
-            };
-
-            const updateRiskSummary = () => {
-                const lowRisk = DASHBOARD_METRICS.risk.low || 0;
-                const mediumRisk = DASHBOARD_METRICS.risk.medium || 0;
-                const highRisk = DASHBOARD_METRICS.risk.high || 0;
-
-                if (riskLowCount) {
-                    riskLowCount.textContent = String(lowRisk);
-                }
-                if (riskMediumCount) {
-                    riskMediumCount.textContent = String(mediumRisk);
-                }
-                if (riskHighCount) {
-                    riskHighCount.textContent = String(highRisk);
-                }
-            };
-
-            const updateComplianceSummary = () => {
-                const filedPct = DASHBOARD_METRICS.compliancePct.filed || 0;
-                const pendingPct = DASHBOARD_METRICS.compliancePct.pending || 0;
-                const latePct = DASHBOARD_METRICS.compliancePct.late || 0;
-
-                if (complianceFiledPct) {
-                    complianceFiledPct.textContent = `${filedPct}%`;
-                }
-                if (compliancePendingPct) {
-                    compliancePendingPct.textContent = `${pendingPct}%`;
-                }
-                if (complianceLatePct) {
-                    complianceLatePct.textContent = `${latePct}%`;
-                }
-
-                if (complianceFiledBar) {
-                    complianceFiledBar.style.width = `${filedPct}%`;
-                }
-                if (compliancePendingBar) {
-                    compliancePendingBar.style.width = `${pendingPct}%`;
-                }
-                if (complianceLateBar) {
-                    complianceLateBar.style.width = `${latePct}%`;
-                }
-            };
-
-            const navigateFromCard = (cardElement) => {
-                if (!cardElement) {
-                    return;
-                }
-
-                const targetUrl = cardElement.getAttribute("data-nav-target");
-                if (!targetUrl) {
-                    return;
-                }
-
-                window.location.assign(targetUrl);
-            };
-
-            const showToast = (message, variantClass = "") => {
-                if (!shared || typeof shared.showToast !== "function") {
-                    return;
-                }
-
-                shared.showToast(uiToastContainer, message, variantClass, {
-                    delay: 2800,
-                });
-            };
-
-            const parseJsonSafe = (response) => {
-                if (!shared || typeof shared.parseJsonSafe !== "function") {
-                    return Promise.resolve(null);
-                }
-
-                return shared.parseJsonSafe(response);
-            };
-
-            const mapActivityRowFromApi = (row) => {
-                return {
-                    clientId: Number.parseInt(row.client_id || "", 10) || null,
-                    clientName: row.client_name || "",
-                    tin: row.tin_number || "",
-                    tradeName: row.trade_name || "",
-                    lastEntryDate: row.last_entry_date || "",
-                    currentPeriod: row.current_period || CURRENT_PERIOD_LABEL || "",
-                    status: row.status || "needs-attention",
-                    risk: row.risk || "medium",
-                    compliance: row.compliance || "pending",
-                };
-            };
-
-            const mapRecentEntryFromApi = (entry) => {
-                const parsedAmount = Number.parseFloat(entry.total_amount || "0");
-
-                return {
-                    clientId: Number.parseInt(entry.client_id || "", 10) || null,
-                    clientName: entry.client_name || "",
-                    tin: entry.tin_number || "",
-                    tradeName: entry.trade_name || "",
-                    entryDate: entry.entry_date || "",
-                    period: entry.period || CURRENT_PERIOD_LABEL || "",
-                    totalAmount: Number.isFinite(parsedAmount) ? parsedAmount : 0,
-                };
-            };
-
-            const setDashboardFallbackState = () => {
-                CURRENT_PERIOD_LABEL = "";
-                CLIENT_ACTIVITY_DATA = [];
-                RECENT_ENTRIES_DATA = [];
-                DASHBOARD_METRICS = {
-                    totalClients: 0,
-                    totalEntriesThisMonth: 0,
-                    pendingCompliance: 0,
-                    highRiskClients: 0,
-                    risk: {
-                        low: 0,
-                        medium: 0,
-                        high: 0,
+        const loadDashboardSummaryFromApi = async () => {
+            try {
+                const response = await fetch(DASHBOARD_SUMMARY_API_URL, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json"
                     },
-                    compliancePct: {
-                        filed: 0,
-                        pending: 0,
-                        late: 0,
-                    },
-                };
-            };
+                    credentials: "same-origin"
+                });
 
-            const loadDashboardSummaryFromApi = async () => {
-                try {
-                    const response = await fetch(DASHBOARD_SUMMARY_API_URL, {
-                        method: "GET",
-                        headers: {
-                            "Accept": "application/json"
-                        },
-                        credentials: "same-origin"
-                    });
+                if (response.status === 401) {
+                    const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                    return;
+                }
 
-                    if (response.status === 401) {
-                        const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
-                        window.location.assign(`{% url 'login' %}?next=${nextPath}`);
-                        return;
-                    }
-
-                    const result = await parseJsonSafe(response);
-                    if (!response.ok || !result || !result.ok) {
-                        const message = result && result.message ? result.message : "Unable to load dashboard data.";
-                        setDashboardFallbackState();
-                        updateSummaryCards();
-                        updateRiskSummary();
-                        updateComplianceSummary();
-                        renderRecentEntries();
-                        applyClientFilters();
-                        showToast(message);
-                        return;
-                    }
-
-                    CURRENT_PERIOD_LABEL = result.current_period_label || "";
-
-                    const metrics = result.metrics || {};
-                    const riskSummary = result.risk_summary || {};
-                    const complianceSummary = result.compliance_summary || {};
-
-                    DASHBOARD_METRICS = {
-                        totalClients: Number.parseInt(metrics.total_clients || 0, 10) || 0,
-                        totalEntriesThisMonth: Number.parseInt(metrics.total_entries_this_month || 0, 10) || 0,
-                        pendingCompliance: Number.parseInt(metrics.pending_compliance || 0, 10) || 0,
-                        highRiskClients: Number.parseInt(metrics.high_risk_clients || 0, 10) || 0,
-                        risk: {
-                            low: Number.parseInt(riskSummary.low || 0, 10) || 0,
-                            medium: Number.parseInt(riskSummary.medium || 0, 10) || 0,
-                            high: Number.parseInt(riskSummary.high || 0, 10) || 0,
-                        },
-                        compliancePct: {
-                            filed: Number.parseInt((complianceSummary.filed || {}).percentage || 0, 10) || 0,
-                            pending: Number.parseInt((complianceSummary.pending || {}).percentage || 0, 10) || 0,
-                            late: Number.parseInt((complianceSummary.late || {}).percentage || 0, 10) || 0,
-                        },
-                    };
-
-                    CLIENT_ACTIVITY_DATA = Array.isArray(result.recent_client_activity)
-                        ? result.recent_client_activity.map(mapActivityRowFromApi)
-                        : [];
-
-                    RECENT_ENTRIES_DATA = Array.isArray(result.recent_entries)
-                        ? result.recent_entries.map(mapRecentEntryFromApi)
-                        : [];
-
-                    updateSummaryCards();
-                    updateRiskSummary();
-                    updateComplianceSummary();
-                    renderRecentEntries();
-                    applyClientFilters();
-                } catch (requestError) {
+                const result = await parseJsonSafe(response);
+                if (!response.ok || !result || !result.ok) {
+                    const message = result && result.message ? result.message : "Unable to load dashboard data.";
                     setDashboardFallbackState();
                     updateSummaryCards();
                     updateRiskSummary();
                     updateComplianceSummary();
                     renderRecentEntries();
                     applyClientFilters();
-                    showToast("Unable to load dashboard data.");
-                }
-            };
-
-            const showLoginWelcomeIfPresent = () => {
-                let welcomeRaw = "";
-                try {
-                    welcomeRaw = window.sessionStorage.getItem(LOGIN_WELCOME_KEY) || "";
-                    window.sessionStorage.removeItem(LOGIN_WELCOME_KEY);
-                } catch (storageError) {
+                    showToast(message);
                     return;
                 }
 
-                if (!welcomeRaw) {
-                    return;
-                }
+                CURRENT_PERIOD_LABEL = result.current_period_label || "";
 
-                let payload = null;
-                try {
-                    payload = JSON.parse(welcomeRaw);
-                } catch (parseError) {
-                    payload = null;
-                }
+                const metrics = result.metrics || {};
+                const riskSummary = result.risk_summary || {};
+                const complianceSummary = result.compliance_summary || {};
 
-                const message = payload && typeof payload.message === "string"
-                    ? payload.message.trim()
-                    : "";
+                DASHBOARD_METRICS = {
+                    totalClients: Number.parseInt(metrics.total_clients || 0, 10) || 0,
+                    totalEntriesThisMonth: Number.parseInt(metrics.total_entries_this_month || 0, 10) || 0,
+                    pendingCompliance: Number.parseInt(metrics.pending_compliance || 0, 10) || 0,
+                    highRiskClients: Number.parseInt(metrics.high_risk_clients || 0, 10) || 0,
+                    risk: {
+                        low: Number.parseInt(riskSummary.low || 0, 10) || 0,
+                        medium: Number.parseInt(riskSummary.medium || 0, 10) || 0,
+                        high: Number.parseInt(riskSummary.high || 0, 10) || 0,
+                    },
+                    compliancePct: {
+                        filed: Number.parseInt((complianceSummary.filed || {}).percentage || 0, 10) || 0,
+                        pending: Number.parseInt((complianceSummary.pending || {}).percentage || 0, 10) || 0,
+                        late: Number.parseInt((complianceSummary.late || {}).percentage || 0, 10) || 0,
+                    },
+                };
 
-                if (!message) {
-                    return;
-                }
+                CLIENT_ACTIVITY_DATA = Array.isArray(result.recent_client_activity)
+                    ? result.recent_client_activity.map(mapActivityRowFromApi)
+                    : [];
 
-                showToast(message, "safebooks-toast-welcome");
-            };
+                RECENT_ENTRIES_DATA = Array.isArray(result.recent_entries)
+                    ? result.recent_entries.map(mapRecentEntryFromApi)
+                    : [];
 
-            const getCookieValue = (cookieName) => {
-                if (!shared || typeof shared.getCookieValue !== "function") {
-                    return "";
-                }
+                updateSummaryCards();
+                updateRiskSummary();
+                updateComplianceSummary();
+                renderRecentEntries();
+                applyClientFilters();
+            } catch (requestError) {
+                setDashboardFallbackState();
+                updateSummaryCards();
+                updateRiskSummary();
+                updateComplianceSummary();
+                renderRecentEntries();
+                applyClientFilters();
+                showToast("Unable to load dashboard data.");
+            }
+        };
 
-                return shared.getCookieValue(cookieName);
-            };
-
-            const logoutCurrentUser = async () => {
-                if (!shared || typeof shared.logoutCurrentUser !== "function") {
-                    return "{% url 'login' %}";
-                }
-
-                return shared.logoutCurrentUser({
-                    logoutUrl: "{% url 'api_logout' %}",
-                    loginUrl: "{% url 'login' %}",
-                    authUserKey: AUTH_USER_KEY,
-                    loginWelcomeKey: LOGIN_WELCOME_KEY,
-                });
-            };
-
-            const hydrateHeaderUser = () => {
-                if (!shared || typeof shared.hydrateHeaderUser !== "function") {
-                    return;
-                }
-
-                shared.hydrateHeaderUser({
-                    avatarElement: dashboardUserAvatar,
-                    nameElement: dashboardUserName,
-                    authUserKey: AUTH_USER_KEY,
-                    defaultName: "Bookkeeper User",
-                    defaultInitials: "SB",
-                });
-            };
-
-            if (window.bootstrap) {
-                document.querySelectorAll("[data-bs-toggle='tooltip']").forEach((element) => {
-                    new window.bootstrap.Tooltip(element);
-                });
+        const showLoginWelcomeIfPresent = () => {
+            let welcomeRaw = "";
+            try {
+                welcomeRaw = window.sessionStorage.getItem(LOGIN_WELCOME_KEY) || "";
+                window.sessionStorage.removeItem(LOGIN_WELCOME_KEY);
+            } catch (storageError) {
+                return;
             }
 
-            const dashboardStatCards = Array.from(document.querySelectorAll(".dashboard-stat-card[data-nav-target]"));
-            dashboardStatCards.forEach((cardElement) => {
-                cardElement.addEventListener("click", () => {
+            if (!welcomeRaw) {
+                return;
+            }
+
+            let payload = null;
+            try {
+                payload = JSON.parse(welcomeRaw);
+            } catch (parseError) {
+                payload = null;
+            }
+
+            const message = payload && typeof payload.message === "string"
+                ? payload.message.trim()
+                : "";
+
+            if (!message) {
+                return;
+            }
+
+            showToast(message, "safebooks-toast-welcome");
+        };
+
+        const getCookieValue = (cookieName) => {
+            if (!shared || typeof shared.getCookieValue !== "function") {
+                return "";
+            }
+
+            return shared.getCookieValue(cookieName);
+        };
+
+        const logoutCurrentUser = async () => {
+            if (!shared || typeof shared.logoutCurrentUser !== "function") {
+                return "{% url 'login' %}";
+            }
+
+            return shared.logoutCurrentUser({
+                logoutUrl: "{% url 'api_logout' %}",
+                loginUrl: "{% url 'login' %}",
+                authUserKey: AUTH_USER_KEY,
+                loginWelcomeKey: LOGIN_WELCOME_KEY,
+            });
+        };
+
+        const hydrateHeaderUser = () => {
+            if (!shared || typeof shared.hydrateHeaderUser !== "function") {
+                return;
+            }
+
+            shared.hydrateHeaderUser({
+                avatarElement: dashboardUserAvatar,
+                nameElement: dashboardUserName,
+                authUserKey: AUTH_USER_KEY,
+                defaultName: "Bookkeeper User",
+                defaultInitials: "SB",
+            });
+        };
+
+        if (window.bootstrap) {
+            document.querySelectorAll("[data-bs-toggle='tooltip']").forEach((element) => {
+                new window.bootstrap.Tooltip(element);
+            });
+        }
+
+        const dashboardStatCards = Array.from(document.querySelectorAll(".dashboard-stat-card[data-nav-target]"));
+        dashboardStatCards.forEach((cardElement) => {
+            cardElement.addEventListener("click", () => {
+                navigateFromCard(cardElement);
+            });
+
+            cardElement.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
                     navigateFromCard(cardElement);
-                });
+                }
+            });
+        });
 
-                cardElement.addEventListener("keydown", (event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        navigateFromCard(cardElement);
-                    }
-                });
+        if (clientTableBody) {
+            clientTableBody.addEventListener("click", (event) => {
+                const row = event.target.closest(".dashboard-client-row");
+                if (!row) {
+                    return;
+                }
+
+                openClientDetailsModal(getClientDataFromRow(row));
             });
 
-            if (clientTableBody) {
-                clientTableBody.addEventListener("click", (event) => {
-                    const row = event.target.closest(".dashboard-client-row");
-                    if (!row) {
-                        return;
-                    }
+            clientTableBody.addEventListener("keydown", (event) => {
+                const row = event.target.closest(".dashboard-client-row");
+                if (!row) {
+                    return;
+                }
 
-                    const parsedClientId = Number.parseInt(row.dataset.clientId || "", 10);
-
-                    openClientFinancialRecords({
-                        clientId: Number.isFinite(parsedClientId) ? parsedClientId : null,
-                        clientName: row.dataset.clientName || "",
-                        tin: row.dataset.tin || "",
-                        tradeName: row.dataset.trade || ""
-                    });
-                });
-
-                clientTableBody.addEventListener("keydown", (event) => {
-                    const row = event.target.closest(".dashboard-client-row");
-                    if (!row) {
-                        return;
-                    }
-
-                    if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        const parsedClientId = Number.parseInt(row.dataset.clientId || "", 10);
-                        openClientFinancialRecords({
-                            clientId: Number.isFinite(parsedClientId) ? parsedClientId : null,
-                            clientName: row.dataset.clientName || "",
-                            tin: row.dataset.tin || "",
-                            tradeName: row.dataset.trade || ""
-                        });
-                    }
-                });
-            }
-
-            if (clientTableSearch) {
-                clientTableSearch.addEventListener("input", applyClientFilters);
-            }
-
-            clientFilterChips.forEach((chip) => {
-                chip.addEventListener("click", () => {
-                    setActiveClientFilter(chip.dataset.filter || "all");
-                    applyClientFilters();
-                });
-            });
-
-            if (clientFiltersReset) {
-                clientFiltersReset.addEventListener("click", () => {
-                    if (clientTableSearch) {
-                        clientTableSearch.value = "";
-                    }
-                    setActiveClientFilter("all");
-                    applyClientFilters();
-                });
-            }
-
-            if (dashboardProfileAction) {
-                dashboardProfileAction.addEventListener("click", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    window.location.assign("{% url 'profile' %}");
-                });
-            }
-
-            if (dashboardLogoutAction) {
-                dashboardLogoutAction.addEventListener("click", async (event) => {
-                    event.preventDefault();
-
-                    const redirectUrl = await logoutCurrentUser();
-
-                    showToast("You have been logged out.");
-
-                    window.setTimeout(() => {
-                        document.body.classList.remove("skeleton-loaded");
-                        document.body.classList.add("skeleton-active");
-                        window.location.assign(redirectUrl);
-                    }, 300);
-                });
-            }
-
-            plannedFeatureButtons.forEach((buttonElement) => {
-                buttonElement.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
-                    showToast(`${featureLabel} is planned and will be available soon.`);
-                });
+                    openClientDetailsModal(getClientDataFromRow(row));
+                }
             });
+        }
 
-            hydrateHeaderUser();
-            setDashboardFallbackState();
-            updateSummaryCards();
-            updateRiskSummary();
-            updateComplianceSummary();
-            renderRecentEntries();
-            applyClientFilters();
-            showLoginWelcomeIfPresent();
-            loadDashboardSummaryFromApi();
+        if (clientTableSearch) {
+            clientTableSearch.addEventListener("input", applyClientFilters);
+        }
 
-            window.addEventListener("resize", () => {
-                sidebarState.closeMobileSidebar();
-                sidebarState.restoreDesktopState();
+        clientFilterChips.forEach((chip) => {
+            chip.addEventListener("click", () => {
+                setActiveClientFilter(chip.dataset.filter || "all");
+                applyClientFilters();
             });
-        })();
-    </script>
-</body>
-</html>
+        });
+
+        if (clientFiltersReset) {
+            clientFiltersReset.addEventListener("click", () => {
+                if (clientTableSearch) {
+                    clientTableSearch.value = "";
+                }
+                setActiveClientFilter("all");
+                applyClientFilters();
+            });
+        }
+
+        if (viewClientAnalyticsBtn) {
+            viewClientAnalyticsBtn.addEventListener("click", (event) => {
+                event.preventDefault();
+                openClientAnalytics(activeViewedClient);
+            });
+        }
+
+        if (viewClientReportBtn) {
+            viewClientReportBtn.addEventListener("click", (event) => {
+                event.preventDefault();
+                openClientReportModal(activeViewedClient);
+            });
+        }
+
+        if (viewFinancialRecordsBtn) {
+            viewFinancialRecordsBtn.addEventListener("click", (event) => {
+                event.preventDefault();
+                openClientFinancialRecords(activeViewedClient);
+            });
+        }
+
+        if (viewAddFinancialRecordBtn) {
+            viewAddFinancialRecordBtn.addEventListener("click", (event) => {
+                event.preventDefault();
+                openClientFinancialRecords(activeViewedClient);
+            });
+        }
+
+        if (clientReportOpenPageBtn) {
+            clientReportOpenPageBtn.addEventListener("click", (event) => {
+                event.preventDefault();
+                openClientReportPage(activeViewedClient);
+            });
+        }
+
+        if (clientReportModalElement) {
+            clientReportModalElement.addEventListener("hidden.bs.modal", () => {
+                if (clientReportSheet) {
+                    clientReportSheet.innerHTML = "";
+                }
+                if (clientReportWrapper) {
+                    clientReportWrapper.hidden = true;
+                }
+                if (clientReportStatus) {
+                    clientReportStatus.textContent = "";
+                    clientReportStatus.hidden = true;
+                }
+            });
+        }
+
+        if (dashboardProfileAction) {
+            dashboardProfileAction.addEventListener("click", (event) => {
+                event.preventDefault();
+                window.location.assign("{% url 'profile' %}");
+            });
+        }
+
+        if (dashboardLogoutAction) {
+            dashboardLogoutAction.addEventListener("click", async (event) => {
+                event.preventDefault();
+
+                const redirectUrl = await logoutCurrentUser();
+
+                showToast("You have been logged out.");
+
+                window.setTimeout(() => {
+                    document.body.classList.remove("skeleton-loaded");
+                    document.body.classList.add("skeleton-active");
+                    window.location.assign(redirectUrl);
+                }, 300);
+            });
+        }
+
+        plannedFeatureButtons.forEach((buttonElement) => {
+            buttonElement.addEventListener("click", (event) => {
+                event.preventDefault();
+                const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
+                showToast(`${featureLabel} is planned and will be available soon.`);
+            });
+        });
+
+        hydrateHeaderUser();
+        setDashboardFallbackState();
+        updateSummaryCards();
+        updateRiskSummary();
+        updateComplianceSummary();
+        renderRecentEntries();
+        applyClientFilters();
+        showLoginWelcomeIfPresent();
+        loadDashboardSummaryFromApi();
+
+        window.addEventListener("resize", () => {
+            sidebarState.closeMobileSidebar();
+            sidebarState.restoreDesktopState();
+        });
+    })();
+</script>
+{% endblock %}
