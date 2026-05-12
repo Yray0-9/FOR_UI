@@ -9,6 +9,18 @@ from safebooks.models import Client, FinancialRecord, FinancialRecordLine, Perio
 
 MONTH_NUMBER_TO_NAME = dict(Period.MONTH_CHOICES)
 MONTH_NAME_TO_NUMBER = {label.lower(): number for number, label in Period.MONTH_CHOICES}
+CALC_OPERATIONS = {
+    FinancialRecordLine.CALC_ADD,
+    FinancialRecordLine.CALC_SUBTRACT,
+    FinancialRecordLine.CALC_MULTIPLY,
+    FinancialRecordLine.CALC_DIVIDE,
+    FinancialRecordLine.CALC_PERCENT,
+}
+ALLOWED_FREQUENCIES = {
+    FinancialRecord.FREQUENCY_MONTHLY,
+    FinancialRecord.FREQUENCY_QUARTERLY,
+    FinancialRecord.FREQUENCY_ANNUALLY,
+}
 
 
 def _normalize_text(value) -> str:
@@ -68,6 +80,17 @@ def _normalize_entry_date(value):
     return entry_date, None
 
 
+def _normalize_frequency(value):
+    cleaned_value = _normalize_text(value).lower()
+    if not cleaned_value:
+        return FinancialRecord.FREQUENCY_MONTHLY, None
+
+    if cleaned_value not in ALLOWED_FREQUENCIES:
+        return None, "Frequency must be Monthly, Quarterly, or Annually."
+
+    return cleaned_value, None
+
+
 def _normalize_required_date(value, label: str):
     cleaned_value = _normalize_text(value)
     if not cleaned_value:
@@ -100,6 +123,88 @@ def _normalize_amount(value):
     return amount.quantize(Decimal("0.01")), None
 
 
+def _normalize_calc_operation(value):
+    cleaned_value = _normalize_text(value).lower()
+    if not cleaned_value:
+        return "", None
+
+    if cleaned_value not in CALC_OPERATIONS:
+        return None, "Invalid calculation operation."
+
+    return cleaned_value, None
+
+
+def _normalize_calc_percent(value):
+    cleaned_value = _normalize_text(value)
+    if not cleaned_value:
+        return None, None
+
+    try:
+        percent = Decimal(cleaned_value)
+    except (InvalidOperation, TypeError):
+        return None, "Percent must be a valid number."
+
+    if percent < 0:
+        return None, "Percent cannot be negative."
+
+    return percent.quantize(Decimal("0.01")), None
+
+
+def _normalize_calc_original_amount(value):
+    cleaned_value = _normalize_text(value)
+    if not cleaned_value:
+        return None, None
+
+    amount, amount_error = _normalize_amount(cleaned_value)
+    if amount_error:
+        return None, f"Original amount: {amount_error}"
+
+    return amount, None
+
+
+def _normalize_calc_applied(value) -> bool:
+    if isinstance(value, bool):
+        return value
+
+    cleaned_value = _normalize_text(value).lower()
+    return cleaned_value in {"1", "true", "yes", "applied"}
+
+
+def _calculate_line_result(line_item, target_amount: Decimal | None):
+    operation = line_item.get("calc_operation")
+    applied = line_item.get("calc_applied")
+    if not applied or not operation:
+        return None, None
+
+    base_amount = line_item.get("amount")
+    if base_amount is None:
+        return None, None
+
+    if operation == FinancialRecordLine.CALC_PERCENT:
+        percent = line_item.get("calc_percent")
+        if percent is None:
+            return None, "Percent is required for percentage calculations."
+        base_for_percent = line_item.get("calc_original_amount") or base_amount
+        result = base_for_percent * (percent / Decimal("100"))
+        return result.quantize(Decimal("0.01")), None
+
+    if target_amount is None:
+        return None, "Target line item is required for calculations."
+
+    if operation == FinancialRecordLine.CALC_ADD:
+        return (base_amount + target_amount).quantize(Decimal("0.01")), None
+    if operation == FinancialRecordLine.CALC_SUBTRACT:
+        return (base_amount - target_amount).quantize(Decimal("0.01")), None
+    if operation == FinancialRecordLine.CALC_MULTIPLY:
+        return (base_amount * target_amount).quantize(Decimal("0.01")), None
+    if operation == FinancialRecordLine.CALC_DIVIDE:
+        if target_amount == 0:
+            return None, "Division by zero is not allowed."
+        return (base_amount / target_amount).quantize(Decimal("0.01")), None
+
+    return None, "Invalid calculation operation."
+
+
 def _normalize_line_items(line_items):
     if not isinstance(line_items, list) or not line_items:
         return [], ["At least one line item is required."]
@@ -115,6 +220,12 @@ def _normalize_line_items(line_items):
         type_code = _normalize_text(line_item.get("type_code"))
         description = _normalize_text(line_item.get("description"))
         amount, amount_error = _normalize_amount(line_item.get("amount"))
+        client_line_id = _normalize_text(line_item.get("client_line_id") or line_item.get("line_id"))
+        calc_operation, calc_operation_error = _normalize_calc_operation(line_item.get("calc_operation"))
+        calc_target_id = _normalize_text(line_item.get("calc_target_id"))
+        calc_percent, calc_percent_error = _normalize_calc_percent(line_item.get("calc_percent"))
+        calc_original_amount, calc_original_error = _normalize_calc_original_amount(line_item.get("calc_original_amount"))
+        calc_applied = _normalize_calc_applied(line_item.get("calc_applied"))
 
         if not type_code:
             errors.append(f"Line item #{index} type/code is required.")
@@ -122,13 +233,25 @@ def _normalize_line_items(line_items):
             errors.append(f"Line item #{index} description is required.")
         if amount_error:
             errors.append(f"Line item #{index}: {amount_error}")
+        if calc_operation_error:
+            errors.append(f"Line item #{index}: {calc_operation_error}")
+        if calc_percent_error:
+            errors.append(f"Line item #{index}: {calc_percent_error}")
+        if calc_original_error:
+            errors.append(f"Line item #{index}: {calc_original_error}")
 
         if type_code and description and amount is not None:
             cleaned_line_items.append(
                 {
+                    "client_line_id": client_line_id,
                     "type_code": type_code,
                     "description": description,
                     "amount": amount,
+                    "calc_operation": calc_operation,
+                    "calc_target_id": calc_target_id,
+                    "calc_percent": calc_percent,
+                    "calc_original_amount": calc_original_amount,
+                    "calc_applied": calc_applied,
                     "sort_order": index,
                 }
             )
@@ -162,6 +285,12 @@ def _serialize_line_item(line_item: FinancialRecordLine) -> dict:
         "type_code": line_item.type_code,
         "description": line_item.description,
         "amount": str(line_item.amount),
+        "calc_operation": line_item.calc_operation or "",
+        "calc_target_id": line_item.calc_target_id,
+        "calc_percent": str(line_item.calc_percent) if line_item.calc_percent is not None else "",
+        "calc_result": str(line_item.calc_result) if line_item.calc_result is not None else "",
+        "calc_original_amount": str(line_item.calc_original_amount) if line_item.calc_original_amount is not None else "",
+        "calc_applied": bool(line_item.calc_applied),
     }
 
 
@@ -171,6 +300,7 @@ def _serialize_record(record: FinancialRecord) -> dict:
     return {
         "id": record.id,
         "date": record.entry_date.isoformat() if record.entry_date else "",
+        "frequency": record.frequency or FinancialRecord.FREQUENCY_MONTHLY,
         "notes": record.notes or "",
         "total_amount": str(record.total_amount or Decimal("0.00")),
         "line_items_count": len(line_items),
@@ -390,6 +520,14 @@ def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> d
 
     month, year = _resolve_period_from_entry_date(entry_date)
 
+    frequency, frequency_error = _normalize_frequency(data.get("frequency"))
+    if frequency_error:
+        return {
+            "ok": False,
+            "message": frequency_error,
+            "errors": [frequency_error],
+        }
+
     notes = _normalize_text(data.get("notes"))
     line_items, line_item_errors = _normalize_line_items(data.get("line_items"))
     if line_item_errors:
@@ -397,6 +535,35 @@ def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> d
             "ok": False,
             "message": line_item_errors[0],
             "errors": line_item_errors,
+        }
+
+    line_item_map = {}
+    for line_item in line_items:
+        line_id = line_item.get("client_line_id") or f"line-{line_item['sort_order']}"
+        line_item["client_line_id"] = line_id
+        line_item_map[line_id] = line_item
+
+    calc_errors = []
+    for line_item in line_items:
+        operation = line_item.get("calc_operation")
+        target_id = line_item.get("calc_target_id")
+        target_item = line_item_map.get(target_id) if target_id else None
+        target_amount = target_item.get("amount") if target_item else None
+        result, calc_error = _calculate_line_result(line_item, target_amount)
+        if calc_error:
+            calc_errors.append(calc_error)
+        line_item["calc_result"] = result
+
+        if operation == FinancialRecordLine.CALC_PERCENT and line_item.get("calc_applied") and result is not None:
+            if line_item.get("calc_original_amount") is None:
+                line_item["calc_original_amount"] = line_item.get("amount")
+            line_item["amount"] = result
+
+    if calc_errors:
+        return {
+            "ok": False,
+            "message": calc_errors[0],
+            "errors": calc_errors,
         }
 
     with transaction.atomic():
@@ -407,22 +574,38 @@ def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> d
             client=client,
             period=period,
             entry_date=entry_date,
+            frequency=frequency,
             notes=notes,
             total_amount=_sum_line_item_amounts(line_items),
         )
 
-        FinancialRecordLine.objects.bulk_create(
-            [
-                FinancialRecordLine(
-                    record=record,
-                    type_code=line_item["type_code"],
-                    description=line_item["description"],
-                    amount=line_item["amount"],
-                    sort_order=line_item["sort_order"],
-                )
-                for line_item in line_items
-            ]
-        )
+        created_line_items = {}
+        for line_item in line_items:
+            created_line = FinancialRecordLine.objects.create(
+                record=record,
+                type_code=line_item["type_code"],
+                description=line_item["description"],
+                amount=line_item["amount"],
+                sort_order=line_item["sort_order"],
+                calc_operation=line_item.get("calc_operation") or "",
+                calc_percent=line_item.get("calc_percent"),
+                calc_result=line_item.get("calc_result"),
+                calc_original_amount=line_item.get("calc_original_amount"),
+                calc_applied=bool(line_item.get("calc_applied")),
+            )
+            created_line_items[line_item["client_line_id"]] = created_line
+
+        for line_item in line_items:
+            target_id = line_item.get("calc_target_id")
+            operation = line_item.get("calc_operation")
+            if not target_id or operation == FinancialRecordLine.CALC_PERCENT:
+                continue
+
+            source_line = created_line_items.get(line_item["client_line_id"])
+            target_line = created_line_items.get(target_id)
+            if source_line and target_line:
+                source_line.calc_target = target_line
+                source_line.save(update_fields=["calc_target"])
 
     refreshed_record = FinancialRecord.objects.filter(id=record.id).prefetch_related("line_items").first()
 
@@ -464,6 +647,17 @@ def update_record_for_client_period(bookkeeper, client_id: int, record_id: int, 
 
     notes = _normalize_text(data.get("notes", record.notes))
 
+    if "frequency" in data:
+        frequency, frequency_error = _normalize_frequency(data.get("frequency"))
+        if frequency_error:
+            return {
+                "ok": False,
+                "message": frequency_error,
+                "errors": [frequency_error],
+            }
+    else:
+        frequency = record.frequency or FinancialRecord.FREQUENCY_MONTHLY
+
     if "line_items" in data:
         line_items, line_item_errors = _normalize_line_items(data.get("line_items"))
         if line_item_errors:
@@ -472,12 +666,46 @@ def update_record_for_client_period(bookkeeper, client_id: int, record_id: int, 
                 "message": line_item_errors[0],
                 "errors": line_item_errors,
             }
+
+        line_item_map = {}
+        for line_item in line_items:
+            line_id = line_item.get("client_line_id") or f"line-{line_item['sort_order']}"
+            line_item["client_line_id"] = line_id
+            line_item_map[line_id] = line_item
+
+        calc_errors = []
+        for line_item in line_items:
+            target_id = line_item.get("calc_target_id")
+            target_item = line_item_map.get(target_id) if target_id else None
+            target_amount = target_item.get("amount") if target_item else None
+            result, calc_error = _calculate_line_result(line_item, target_amount)
+            if calc_error:
+                calc_errors.append(calc_error)
+            line_item["calc_result"] = result
+
+            if line_item.get("calc_operation") == FinancialRecordLine.CALC_PERCENT and line_item.get("calc_applied") and result is not None:
+                if line_item.get("calc_original_amount") is None:
+                    line_item["calc_original_amount"] = line_item.get("amount")
+                line_item["amount"] = result
+
+        if calc_errors:
+            return {
+                "ok": False,
+                "message": calc_errors[0],
+                "errors": calc_errors,
+            }
     else:
         line_items = [
             {
                 "type_code": line_item.type_code,
                 "description": line_item.description,
                 "amount": line_item.amount,
+                "calc_operation": line_item.calc_operation,
+                "calc_target_id": line_item.calc_target_id,
+                "calc_percent": line_item.calc_percent,
+                "calc_result": line_item.calc_result,
+                "calc_original_amount": line_item.calc_original_amount,
+                "calc_applied": line_item.calc_applied,
                 "sort_order": line_item.sort_order,
             }
             for line_item in record.line_items.all().order_by("sort_order", "id")
@@ -488,24 +716,40 @@ def update_record_for_client_period(bookkeeper, client_id: int, record_id: int, 
 
         record.period = period
         record.entry_date = entry_date
+        record.frequency = frequency
         record.notes = notes
         record.total_amount = _sum_line_item_amounts(line_items)
-        record.save(update_fields=["period", "entry_date", "notes", "total_amount", "updated_at"])
+        record.save(update_fields=["period", "entry_date", "frequency", "notes", "total_amount", "updated_at"])
 
         if "line_items" in data:
             record.line_items.all().delete()
-            FinancialRecordLine.objects.bulk_create(
-                [
-                    FinancialRecordLine(
-                        record=record,
-                        type_code=line_item["type_code"],
-                        description=line_item["description"],
-                        amount=line_item["amount"],
-                        sort_order=line_item["sort_order"],
-                    )
-                    for line_item in line_items
-                ]
-            )
+            created_line_items = {}
+            for line_item in line_items:
+                created_line = FinancialRecordLine.objects.create(
+                    record=record,
+                    type_code=line_item["type_code"],
+                    description=line_item["description"],
+                    amount=line_item["amount"],
+                    sort_order=line_item["sort_order"],
+                    calc_operation=line_item.get("calc_operation") or "",
+                    calc_percent=line_item.get("calc_percent"),
+                    calc_result=line_item.get("calc_result"),
+                    calc_original_amount=line_item.get("calc_original_amount"),
+                    calc_applied=bool(line_item.get("calc_applied")),
+                )
+                created_line_items[line_item["client_line_id"]] = created_line
+
+            for line_item in line_items:
+                target_id = line_item.get("calc_target_id")
+                operation = line_item.get("calc_operation")
+                if not target_id or operation == FinancialRecordLine.CALC_PERCENT:
+                    continue
+
+                source_line = created_line_items.get(line_item["client_line_id"])
+                target_line = created_line_items.get(target_id)
+                if source_line and target_line:
+                    source_line.calc_target = target_line
+                    source_line.save(update_fields=["calc_target"])
 
     refreshed_record = FinancialRecord.objects.filter(id=record.id).prefetch_related("line_items").first()
 

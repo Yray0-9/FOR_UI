@@ -6,6 +6,15 @@ from .user_model import BookkeeperAccount
 
 
 class FinancialRecord(models.Model):
+    FREQUENCY_MONTHLY = "monthly"
+    FREQUENCY_QUARTERLY = "quarterly"
+    FREQUENCY_ANNUALLY = "annually"
+    FREQUENCY_CHOICES = [
+        (FREQUENCY_MONTHLY, "Monthly"),
+        (FREQUENCY_QUARTERLY, "Quarterly"),
+        (FREQUENCY_ANNUALLY, "Annually"),
+    ]
+
     bookkeeper = models.ForeignKey(
         BookkeeperAccount,
         on_delete=models.CASCADE,
@@ -22,6 +31,7 @@ class FinancialRecord(models.Model):
         related_name="financial_records",
     )
     entry_date = models.DateField()
+    frequency = models.CharField(max_length=16, choices=FREQUENCY_CHOICES, default=FREQUENCY_MONTHLY)
     notes = models.TextField(blank=True, default="")
     total_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)

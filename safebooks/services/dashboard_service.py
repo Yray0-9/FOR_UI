@@ -7,6 +7,11 @@ from safebooks.models import Client, FinancialRecord, Period
 
 
 MONTH_NUMBER_TO_NAME = dict(Period.MONTH_CHOICES)
+FREQUENCY_INTERVALS = {
+    FinancialRecord.FREQUENCY_MONTHLY: 1,
+    FinancialRecord.FREQUENCY_QUARTERLY: 3,
+    FinancialRecord.FREQUENCY_ANNUALLY: 12,
+}
 
 
 def _month_label(month_number: int) -> str:
@@ -29,16 +34,33 @@ def _serialize_recent_entry(record: FinancialRecord) -> dict:
     }
 
 
-def _build_client_activity_payload(client, current_period_label: str) -> dict:
+def _months_between(start_date, end_date) -> int:
+    if not start_date or not end_date:
+        return 0
+    months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
+    return max(months, 0)
+
+
+def _is_due_for_frequency(last_entry_date, frequency: str, reference_date) -> bool:
+    interval = FREQUENCY_INTERVALS.get(frequency, 1)
+    return _months_between(last_entry_date, reference_date) >= interval
+
+
+def _build_client_activity_payload(client, current_period_label: str, reference_date) -> dict:
     has_entries = (client.record_count or 0) > 0
     has_current_period_entries = (client.current_period_entries or 0) > 0
+    frequency = client.last_frequency or FinancialRecord.FREQUENCY_MONTHLY
+    is_due = has_entries and _is_due_for_frequency(client.last_entry_date, frequency, reference_date)
 
     if has_current_period_entries:
         status = "updated"
         compliance = "filed"
-    elif has_entries:
+    elif has_entries and is_due:
         status = "needs-attention"
         compliance = "pending"
+    elif has_entries:
+        status = "updated"
+        compliance = "filed"
     else:
         status = "no-entries"
         compliance = "late"
@@ -107,12 +129,13 @@ def get_dashboard_summary_for_bookkeeper(bookkeeper) -> dict:
             last_entry_date=Subquery(latest_record_for_client.values("entry_date")[:1]),
             last_period_month=Subquery(latest_record_for_client.values("period__month")[:1]),
             last_period_year=Subquery(latest_record_for_client.values("period__year")[:1]),
+            last_frequency=Subquery(latest_record_for_client.values("frequency")[:1]),
         )
         .order_by("-last_entry_date", "client_name", "id")
     )
 
     recent_client_activity = [
-        _build_client_activity_payload(client, current_period_label)
+        _build_client_activity_payload(client, current_period_label, today)
         for client in clients
     ]
 

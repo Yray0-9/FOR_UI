@@ -94,12 +94,8 @@ def _build_clean_payload(data: dict):
         errors.append("Client name is required.")
     if not tin_number:
         errors.append("TIN is required.")
-    if not trade_name:
-        errors.append("Trade name is required.")
     if not location:
         errors.append("Location is required.")
-    if not permit_number:
-        errors.append("Permit number is required.")
     if birthday_error:
         errors.append(birthday_error)
 

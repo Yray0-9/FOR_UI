@@ -25,6 +25,45 @@
         return "";
     };
 
+    const currencyFormatter = new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+
+    const formatCurrency = (value) => {
+        const parsedValue = Number.isFinite(value) ? value : 0;
+        return currencyFormatter.format(parsedValue);
+    };
+
+    const parseNumericValue = (value) => {
+        if (typeof value === "number" && Number.isFinite(value)) {
+            return value;
+        }
+
+        const cleaned = String(value || "").replace(/[^0-9.-]/g, "");
+        if (!cleaned) {
+            return null;
+        }
+
+        const parsed = Number.parseFloat(cleaned);
+        return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    const shouldIncludeTotalsRow = (columns) => {
+        if (!Array.isArray(columns) || columns.length < 2) {
+            return false;
+        }
+
+        const firstLabel = String(columns[0] || "").toLowerCase();
+        if (/period|month/.test(firstLabel)) {
+            return true;
+        }
+
+        return columns.some((label) => /net\s*value|sales|expenses|tax/i.test(String(label || "")));
+    };
+
     const buildReportSheetHtml = (options) => {
         const settings = options && typeof options === "object" ? options : {};
         const meta = settings.meta && typeof settings.meta === "object" ? settings.meta : {};
@@ -69,14 +108,56 @@
 
         const rows = Array.isArray(table.rows) ? table.rows : [];
         const minRows = Number.isFinite(table.minRows) ? table.minRows : 14;
-        const rowCount = Math.max(minRows, rows.length);
+
+        const includeTotals = rows.length > 0 && shouldIncludeTotalsRow(finalColumns);
+        let totalsRow = null;
+
+        if (includeTotals) {
+            const totals = finalColumns.map(() => 0);
+            const hasNumericValues = finalColumns.map(() => false);
+
+            rows.forEach((row) => {
+                const rowCells = Array.isArray(row)
+                    ? row
+                    : finalColumns.map((column) => row[column]);
+
+                rowCells.forEach((cell, index) => {
+                    if (index === 0) {
+                        return;
+                    }
+
+                    const parsedValue = parseNumericValue(cell);
+                    if (parsedValue == null) {
+                        return;
+                    }
+
+                    totals[index] += parsedValue;
+                    hasNumericValues[index] = true;
+                });
+            });
+
+            if (hasNumericValues.some((value) => value)) {
+                totalsRow = finalColumns.map((_, index) => {
+                    if (index === 0) {
+                        return "Total";
+                    }
+                    if (!hasNumericValues[index]) {
+                        return "-";
+                    }
+                    return formatCurrency(totals[index]);
+                });
+            }
+        }
+
+        const rowsWithTotals = totalsRow ? [...rows, totalsRow] : rows;
+        const rowCount = Math.max(minRows, rowsWithTotals.length);
 
         const headerMarkup = finalColumns
             .map((label) => `<th>${escapeHtml(toDisplayText(label, "VALUE"))}</th>`)
             .join("");
 
         const rowsMarkup = Array.from({ length: rowCount }, (_, rowIndex) => {
-            const row = rows[rowIndex];
+            const row = rowsWithTotals[rowIndex];
             if (!row) {
                 return `
                     <tr>

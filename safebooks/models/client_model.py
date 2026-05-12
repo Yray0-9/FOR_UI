@@ -23,7 +23,7 @@ class Client(models.Model):
     tin_number = models.CharField(max_length=40, unique=True)
     trade_name = models.CharField(max_length=180, blank=True, default="")
     location = models.CharField(max_length=180)
-    permit_number = models.CharField(max_length=80)
+    permit_number = models.CharField(max_length=80, blank=True, default="")
     birthday = models.DateField(null=True, blank=True)
     email = models.EmailField(blank=True, default="")
     custom_fields = models.JSONField(blank=True, default=list)

@@ -2817,6 +2817,211 @@ body.dashboard-page .modal {
     padding: 0.54rem 0.64rem;
 }
 
+.financial-line-amount-wrap {
+    display: grid;
+    gap: 0.3rem;
+    align-items: start;
+}
+
+.financial-line-amount-original {
+    color: #8a9bbd;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+}
+
+.financial-line-amount-calculated {
+    color: #1b3f7c;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.financial-line-item-row.has-percent-result .financial-line-amount-input {
+    border-color: #b6cff7;
+    background: #f4f8ff;
+    font-size: 0.74rem;
+    color: #6a7fa6;
+}
+
+.financial-line-calc-cell {
+    flex-wrap: wrap;
+}
+
+.financial-line-netvalue-tag {
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    background: #eaf2ff;
+    color: #1f4f9b;
+    font-size: 0.66rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.financial-line-percent-tag {
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    background: #f7ecff;
+    color: #6a2c8f;
+    font-size: 0.66rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.financial-line-calc-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.financial-line-calc-btn {
+    border: 1px solid #c9daf7;
+    border-radius: 9px;
+    background: #f2f7ff;
+    color: #24509a;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.financial-line-calc-btn:hover,
+.financial-line-calc-btn:focus-visible {
+    border-color: #b4caf2;
+    background: #e7f0ff;
+    color: #1b3f7c;
+}
+
+.financial-line-calc-indicator {
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    background: #e7f6ea;
+    color: #1c6b3a;
+    font-size: 0.66rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.financial-line-item-row.has-calculation {
+    background: transparent;
+}
+
+.financial-line-item-calc-row td {
+    padding: 0.6rem;
+    border-color: #edf3ff;
+}
+
+.financial-line-item-calc-row.is-removing {
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.financial-line-calc-panel {
+    border: 1px solid #dbe8ff;
+    border-radius: 12px;
+    background: #f8fbff;
+    padding: 0.65rem;
+}
+
+.financial-line-calc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+}
+
+.financial-line-calc-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #1f3f72;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.financial-line-calc-status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #5873a4;
+}
+
+.financial-line-calc-grid {
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin-bottom: 0.5rem;
+}
+
+.financial-line-calc-grid label {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #4a6396;
+}
+
+.financial-line-calc-grid label span {
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.financial-line-calc-result-wrap {
+    display: grid;
+    gap: 0.35rem;
+    align-content: center;
+}
+
+.financial-line-calc-result-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #4a6396;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.financial-line-calc-result {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #1a3a73;
+}
+
+.financial-line-calc-apply-btn {
+    border: 1px solid #c9daf7;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1c4aa3;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.3rem 0.65rem;
+    justify-self: start;
+}
+
+.financial-line-calc-apply-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.financial-line-calc-link {
+    margin: 0.2rem 0 0.35rem;
+    color: #5b72a1;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.financial-line-calc-note {
+    margin: 0;
+    color: #6c83b0;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
 .financial-line-remove-btn {
     border: 1px solid #e7c3c3;
     border-radius: 9px;

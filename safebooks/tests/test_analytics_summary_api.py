@@ -123,7 +123,7 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(payload["summary"]["total_sales"], 1500.0)
         self.assertEqual(payload["summary"]["total_expenses"], 500.0)
         self.assertEqual(payload["summary"]["total_tax"], 150.0)
-        self.assertEqual(payload["summary"]["net_value"], 850.0)
+        self.assertEqual(payload["summary"]["net_value"], 0.0)
 
         self.assertEqual(payload["risk_insight"]["level"], Client.RISK_HIGH)
         self.assertTrue(payload["has_data"])
@@ -190,7 +190,7 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(payload["summary"]["total_sales"], 700.0)
         self.assertEqual(payload["summary"]["total_expenses"], 250.0)
         self.assertEqual(payload["summary"]["total_tax"], 70.0)
-        self.assertEqual(payload["summary"]["net_value"], 380.0)
+        self.assertEqual(payload["summary"]["net_value"], 0.0)
 
         forbidden_response = self.client.get(
             reverse("api_analytics_summary"),
@@ -265,7 +265,7 @@ class AnalyticsSummaryApiTests(TestCase):
         payload = response.json()
         self.assertEqual(payload["summary"]["total_sales"], 160.0)
         self.assertEqual(payload["summary"]["total_tax"], 40.0)
-        self.assertEqual(payload["summary"]["net_value"], 110.0)
+        self.assertEqual(payload["summary"]["net_value"], 0.0)
 
         monthly_trend = payload.get("monthly_trend", [])
         trend_sales_sum = sum(float(row.get("sales", 0.0)) for row in monthly_trend)

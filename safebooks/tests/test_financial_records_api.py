@@ -75,6 +75,7 @@ class FinancialRecordsApiTests(TestCase):
             "month": 4,
             "year": 2026,
             "date": "2026-04-15",
+            "frequency": "quarterly",
             "notes": "Created via test",
             "line_items": [
                 {
@@ -224,6 +225,7 @@ class FinancialRecordsApiTests(TestCase):
         self.assertEqual(create_payload.get("message"), "Financial entry added successfully.")
         self.assertEqual(create_payload["record"]["total_amount"], "1120.00")
         self.assertEqual(create_payload["record"]["line_items_count"], 2)
+        self.assertEqual(create_payload["record"]["frequency"], "quarterly")
 
         record_id = create_payload["record"]["id"]
 
@@ -242,6 +244,7 @@ class FinancialRecordsApiTests(TestCase):
             "month": 4,
             "year": 2026,
             "date": "2026-04-18",
+            "frequency": "annually",
             "notes": "Updated via test",
             "line_items": [
                 {
@@ -269,6 +272,7 @@ class FinancialRecordsApiTests(TestCase):
         self.assertTrue(update_json.get("ok"))
         self.assertEqual(update_json.get("message"), "Financial entry updated successfully.")
         self.assertEqual(update_json["record"]["total_amount"], "1000.00")
+        self.assertEqual(update_json["record"]["frequency"], "annually")
 
         delete_response = self.client.delete(
             reverse(

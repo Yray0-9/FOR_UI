@@ -78,6 +78,13 @@ NORMALIZED_TAX_KEYWORDS = tuple(_normalize_search_text(keyword) for keyword in T
 NORMALIZED_EXPENSE_KEYWORDS = tuple(_normalize_search_text(keyword) for keyword in EXPENSE_KEYWORDS)
 NORMALIZED_SALES_KEYWORDS = tuple(_normalize_search_text(keyword) for keyword in SALES_KEYWORDS)
 
+NET_VALUE_OPERATIONS = {
+    FinancialRecordLine.CALC_ADD,
+    FinancialRecordLine.CALC_SUBTRACT,
+    FinancialRecordLine.CALC_MULTIPLY,
+    FinancialRecordLine.CALC_DIVIDE,
+}
+
 
 def _contains_keyword(normalized_text: str, normalized_keyword: str) -> bool:
     if not normalized_keyword:
@@ -307,7 +314,9 @@ def get_analytics_summary_for_bookkeeper(bookkeeper, client_id: int | None = Non
 
     monthly_totals = {key: _empty_bucket() for key in slot_keys}
     monthly_type_totals = {key: defaultdict(lambda: Decimal("0.00")) for key in slot_keys}
+    monthly_net_totals = {key: Decimal("0.00") for key in slot_keys}
     grand_totals = _empty_bucket()
+    total_net_value = Decimal("0.00")
     client_sales_totals: dict[int, Decimal] = defaultdict(lambda: Decimal("0.00"))
     type_label_map: dict[str, str] = {}
 
@@ -315,6 +324,9 @@ def get_analytics_summary_for_bookkeeper(bookkeeper, client_id: int | None = Non
         amount = line.amount or Decimal("0.00")
         category = _classify_line_item(line.type_code, line.description)
         grand_totals[category] += amount
+
+        if line.calc_applied and line.calc_operation in NET_VALUE_OPERATIONS:
+            total_net_value += line.calc_result or Decimal("0.00")
 
         if category == "sales":
             client_sales_totals[line.record.client_id] += amount
@@ -326,6 +338,9 @@ def get_analytics_summary_for_bookkeeper(bookkeeper, client_id: int | None = Non
 
         if month_key in monthly_totals:
             monthly_totals[month_key][category] += amount
+
+            if line.calc_applied and line.calc_operation in NET_VALUE_OPERATIONS:
+                monthly_net_totals[month_key] += line.calc_result or Decimal("0.00")
 
             type_label = _normalize_type_code_label(line.type_code)
             if type_label:
@@ -341,7 +356,7 @@ def get_analytics_summary_for_bookkeeper(bookkeeper, client_id: int | None = Non
     monthly_net_values: list[Decimal] = []
     for year, month, month_label in month_slots:
         totals = monthly_totals[(year, month)]
-        net_value = totals["sales"] - totals["expenses"] - totals["tax"]
+        net_value = monthly_net_totals[(year, month)]
         monthly_net_values.append(net_value)
 
         type_breakdown = {
@@ -366,9 +381,7 @@ def get_analytics_summary_for_bookkeeper(bookkeeper, client_id: int | None = Non
         "total_sales": _to_money_number(grand_totals["sales"]),
         "total_expenses": _to_money_number(grand_totals["expenses"]),
         "total_tax": _to_money_number(grand_totals["tax"]),
-        "net_value": _to_money_number(
-            grand_totals["sales"] - grand_totals["expenses"] - grand_totals["tax"]
-        ),
+        "net_value": _to_money_number(total_net_value),
     }
 
     comparison = []

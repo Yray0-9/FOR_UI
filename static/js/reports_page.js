@@ -1370,7 +1370,7 @@
                 {
                     label: "Net Value",
                     value: formatCurrency(summary.net_value),
-                    note: "Sales minus expenses and tax",
+                    note: "From applied calculations",
                     icon: "bi-graph-up-arrow",
                 },
             ],

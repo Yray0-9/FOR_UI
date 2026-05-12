@@ -140,6 +140,7 @@
                 <thead>
                     <tr>
                         <th>Date</th>
+                        <th>Frequency</th>
                         <th>Total Amount</th>
                         <th>Line Items</th>
                         <th>Actions</th>
@@ -220,6 +221,7 @@
                                     <th>Type / Code</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Calculator</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -285,6 +287,7 @@
                                     <th>Type / Code</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Calculator</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -616,6 +619,14 @@
             return normalized || "-";
         };
 
+        const formatFrequencyLabel = (value) => {
+            const normalized = String(value || "").trim().toLowerCase();
+            if (!normalized) {
+                return "Monthly";
+            }
+            return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+        };
+
         const getActiveMonthLabel = () => MONTH_NAMES[activeMonth] || "Selected Period";
         const getActivePeriodLabel = () => `${getActiveMonthLabel()} ${activeYear}`;
 
@@ -634,11 +645,331 @@
             return activeRecords.find((entry) => entry.id === entryId) || null;
         };
 
+        const getLineItemRows = (tbodyElement) => {
+            if (!tbodyElement) {
+                return [];
+            }
+            return Array.from(tbodyElement.querySelectorAll(".financial-line-item-row"));
+        };
+
+        const getCalcRowForItem = (tbodyElement, lineItemId) => {
+            if (!tbodyElement || !lineItemId) {
+                return null;
+            }
+            return tbodyElement.querySelector(`.financial-line-item-calc-row[data-line-calc-for='${lineItemId}']`);
+        };
+
+        const getLineItemLabel = (rowElement, index) => {
+            if (!rowElement) {
+                return `Line ${index}`;
+            }
+
+            const typeCodeInput = rowElement.querySelector(".financial-line-code-input");
+            const descriptionInput = rowElement.querySelector(".financial-line-description-input");
+            const typeCode = typeCodeInput ? typeCodeInput.value.trim() : "";
+            const description = descriptionInput ? descriptionInput.value.trim() : "";
+
+            if (typeCode && description) {
+                return `${typeCode} - ${description}`;
+            }
+            if (typeCode) {
+                return typeCode;
+            }
+            if (description) {
+                return description;
+            }
+
+            return `Line ${index}`;
+        };
+
+        const getLineItemAmountValue = (rowElement) => {
+            if (!rowElement) {
+                return null;
+            }
+            const amountInput = rowElement.querySelector(".financial-line-amount-input");
+            const amountValue = amountInput ? amountInput.value.trim() : "";
+            const parsed = Number.parseFloat(amountValue);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
+
+        const syncCalcTargetOptions = (tbodyElement) => {
+            const lineRows = getLineItemRows(tbodyElement);
+            const lineItems = lineRows.map((row, index) => {
+                return {
+                    id: row.dataset.lineItemId,
+                    label: getLineItemLabel(row, index + 1),
+                };
+            });
+
+            lineRows.forEach((row, index) => {
+                const calcRow = getCalcRowForItem(tbodyElement, row.dataset.lineItemId);
+                if (!calcRow) {
+                    return;
+                }
+
+                const targetSelect = calcRow.querySelector(".financial-line-calc-target");
+                if (!targetSelect) {
+                    return;
+                }
+
+                const currentValue = targetSelect.value;
+                const selfLabel = getLineItemLabel(row, index + 1);
+                const selfOption = `<option value="__self__">This line item - ${escapeHtml(selfLabel)}</option>`;
+                const otherOptions = lineItems
+                    .filter((item) => item.id && item.id !== row.dataset.lineItemId)
+                    .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`)
+                    .join("");
+
+                const optionsMarkup = `${selfOption}${otherOptions ? otherOptions : ""}`;
+                targetSelect.innerHTML = optionsMarkup;
+
+                const validValues = ["__self__", ...lineItems.filter((item) => item.id && item.id !== row.dataset.lineItemId).map((item) => item.id)];
+                const pendingTarget = calcRow.dataset.pendingTarget || "";
+                const preferredValue = pendingTarget || currentValue;
+                const nextValue = validValues.includes(preferredValue) ? preferredValue : "__self__";
+                targetSelect.value = nextValue;
+                if (pendingTarget) {
+                    calcRow.dataset.pendingTarget = "";
+                }
+            });
+        };
+
+        const hydrateCalcRowState = (tbodyElement, rowElement, calcRow, lineItem = {}) => {
+            if (!calcRow) {
+                return;
+            }
+
+            const operationSelect = calcRow.querySelector(".financial-line-calc-operation");
+            const percentInput = calcRow.querySelector(".financial-line-calc-percent");
+            const targetId = lineItem.calc_target_id ? String(lineItem.calc_target_id) : "__self__";
+            const originalAmount = lineItem.calc_original_amount ? String(lineItem.calc_original_amount) : "";
+
+            if (originalAmount) {
+                rowElement.dataset.originalAmount = originalAmount;
+            }
+
+            if (operationSelect) {
+                operationSelect.value = lineItem.calc_operation || "";
+            }
+            if (percentInput) {
+                percentInput.value = lineItem.calc_percent || "";
+            }
+
+            calcRow.dataset.calcApplied = lineItem.calc_applied ? "true" : "false";
+            calcRow.dataset.pendingTarget = targetId;
+
+            syncCalcTargetOptions(tbodyElement);
+            updateCalcPreview(tbodyElement, rowElement, calcRow);
+        };
+
+        const setCalculationIndicator = (rowElement, isActive, linkedLabel) => {
+            if (!rowElement) {
+                return;
+            }
+
+            rowElement.classList.toggle("has-calculation", Boolean(isActive));
+
+            const indicator = rowElement.querySelector(".financial-line-calc-indicator");
+            if (indicator) {
+                indicator.hidden = !isActive;
+                indicator.textContent = linkedLabel ? "Linked" : "Calc";
+            }
+
+            const netValueTag = rowElement.querySelector(".financial-line-netvalue-tag");
+            if (netValueTag) {
+                netValueTag.hidden = true;
+            }
+
+            const percentTag = rowElement.querySelector(".financial-line-percent-tag");
+            if (percentTag) {
+                percentTag.hidden = true;
+            }
+        };
+
+        const updatePercentAmountDisplay = (rowElement, calcRow, computedValue) => {
+            if (!rowElement || !calcRow) {
+                return;
+            }
+
+            const originalLabel = rowElement.querySelector(".financial-line-amount-original");
+            const calculatedLabel = rowElement.querySelector(".financial-line-amount-calculated");
+            const amountInput = rowElement.querySelector(".financial-line-amount-input");
+            const operationSelect = calcRow.querySelector(".financial-line-calc-operation");
+
+            const isPercent = operationSelect && operationSelect.value === "percent";
+            const isApplied = calcRow.dataset.calcApplied === "true";
+            const originalAmountValue = rowElement.dataset.originalAmount ? Number.parseFloat(rowElement.dataset.originalAmount) : null;
+
+            if (!originalLabel || !calculatedLabel || !amountInput) {
+                return;
+            }
+
+            if (!isPercent || !isApplied || computedValue == null) {
+                originalLabel.hidden = true;
+                calculatedLabel.hidden = true;
+                calculatedLabel.textContent = "";
+                rowElement.classList.remove("has-percent-result");
+                return;
+            }
+
+            const baseValue = originalAmountValue != null ? originalAmountValue : parseAmount(amountInput.value || "0");
+            originalLabel.textContent = `Original: ${formatCurrency(baseValue)}`;
+            calculatedLabel.textContent = "";
+            originalLabel.hidden = false;
+            calculatedLabel.hidden = true;
+            rowElement.classList.add("has-percent-result");
+        };
+
+        const refreshAllCalcPreviews = (tbodyElement) => {
+            getLineItemRows(tbodyElement).forEach((row) => {
+                const calcRow = getCalcRowForItem(tbodyElement, row.dataset.lineItemId);
+                if (!calcRow) {
+                    return;
+                }
+                if (!calcRow.hidden || calcRow.dataset.calcApplied === "true") {
+                    updateCalcPreview(tbodyElement, row, calcRow);
+                }
+            });
+        };
+
+        const updateCalcPreview = (tbodyElement, rowElement, calcRow) => {
+            if (!rowElement || !calcRow) {
+                return null;
+            }
+
+            const operationSelect = calcRow.querySelector(".financial-line-calc-operation");
+            const targetSelect = calcRow.querySelector(".financial-line-calc-target");
+            const percentInput = calcRow.querySelector(".financial-line-calc-percent");
+            const resultValue = calcRow.querySelector(".financial-line-calc-result");
+            const statusText = calcRow.querySelector(".financial-line-calc-status");
+            const linkText = calcRow.querySelector(".financial-line-calc-link");
+
+            const operation = operationSelect ? operationSelect.value : "";
+            const targetId = targetSelect ? targetSelect.value : "";
+            const percentValue = percentInput ? Number.parseFloat(percentInput.value) : null;
+
+            const baseValue = getLineItemAmountValue(rowElement);
+            const originalAmountValue = rowElement.dataset.originalAmount
+                ? Number.parseFloat(rowElement.dataset.originalAmount)
+                : null;
+            const targetRow = operation === "percent"
+                ? rowElement
+                : targetId && targetId !== "__self__"
+                    ? getLineItemRows(tbodyElement).find((row) => row.dataset.lineItemId === targetId)
+                    : null;
+            const targetValue = targetRow ? getLineItemAmountValue(targetRow) : null;
+
+            let computed = null;
+            let linkedLabel = "";
+
+            if (operationSelect && targetSelect) {
+                const isPercent = operation === "percent";
+                targetSelect.disabled = isPercent;
+                if (isPercent) {
+                    targetSelect.value = "__self__";
+                } else if (rowElement.dataset.originalAmount) {
+                    const amountInput = rowElement.querySelector(".financial-line-amount-input");
+                    if (amountInput) {
+                        amountInput.value = rowElement.dataset.originalAmount;
+                    }
+                    rowElement.dataset.originalAmount = "";
+                    calcRow.dataset.calcApplied = "false";
+                }
+                if (percentInput) {
+                    percentInput.disabled = !isPercent;
+                }
+            }
+
+            if (targetRow) {
+                const targetIndex = getLineItemRows(tbodyElement).indexOf(targetRow) + 1;
+                linkedLabel = getLineItemLabel(targetRow, targetIndex);
+            }
+
+            if (operation === "percent") {
+                linkedLabel = "";
+            }
+
+            if (operation === "percent") {
+                const percentBase = originalAmountValue != null ? originalAmountValue : baseValue;
+                if (percentBase != null && Number.isFinite(percentValue)) {
+                    computed = percentBase * (percentValue / 100);
+                }
+            } else if (operation && targetValue != null && baseValue != null) {
+                if (operation === "add") {
+                    computed = baseValue + targetValue;
+                } else if (operation === "subtract") {
+                    computed = baseValue - targetValue;
+                } else if (operation === "multiply") {
+                    computed = baseValue * targetValue;
+                } else if (operation === "divide") {
+                    computed = targetValue === 0 ? null : baseValue / targetValue;
+                }
+            }
+
+            if (resultValue) {
+                resultValue.textContent = computed != null ? formatCurrency(computed) : "-";
+            }
+
+            if (statusText) {
+                const isApplied = calcRow.dataset.calcApplied === "true";
+                if (computed == null) {
+                    statusText.textContent = "Not set";
+                } else if (isApplied) {
+                    statusText.textContent = "Applied";
+                } else {
+                    statusText.textContent = "Ready";
+                }
+            }
+
+            if (linkText) {
+                linkText.textContent = linkedLabel ? `Linked to: ${linkedLabel}` : "Linked to: none";
+            }
+
+            const isApplied = calcRow.dataset.calcApplied === "true";
+            setCalculationIndicator(rowElement, isApplied, linkedLabel);
+
+            const netValueTag = rowElement.querySelector(".financial-line-netvalue-tag");
+            if (netValueTag) {
+                const shouldShowNet = isApplied && operation && operation !== "percent";
+                netValueTag.hidden = !shouldShowNet;
+            }
+
+            const percentTag = rowElement.querySelector(".financial-line-percent-tag");
+            if (percentTag) {
+                const shouldShowPercent = isApplied && operation === "percent";
+                percentTag.hidden = !shouldShowPercent;
+            }
+            calcRow.dataset.calcValue = computed != null ? String(computed) : "";
+            calcRow.dataset.linkedLabel = linkedLabel || "";
+
+            if (computed == null && calcRow.dataset.calcApplied === "true") {
+                calcRow.dataset.calcApplied = "false";
+            }
+
+            if (operation === "percent" && calcRow.dataset.calcApplied === "true" && computed != null) {
+                const amountInput = rowElement.querySelector(".financial-line-amount-input");
+                if (amountInput) {
+                    amountInput.value = computed.toFixed(2);
+                }
+            }
+
+            updatePercentAmountDisplay(rowElement, calcRow, computed);
+
+            const applyButton = calcRow.querySelector(".financial-line-calc-apply-btn");
+            if (applyButton) {
+                applyButton.disabled = computed == null;
+                const label = operation === "percent" ? "Use result" : "Apply to Net Value";
+                applyButton.textContent = label;
+            }
+
+            return computed;
+        };
+
         const updateLineItemRemoveButtons = (tbodyElement) => {
             if (!tbodyElement) {
                 return;
             }
-            const rows = Array.from(tbodyElement.querySelectorAll("tr"));
+            const rows = getLineItemRows(tbodyElement);
             rows.forEach((row) => {
                 const removeButton = row.querySelector("[data-line-action='remove']");
                 if (removeButton) {
@@ -652,6 +983,51 @@
             row.className = "financial-line-item-row is-entering";
             row.dataset.lineItemId = String(lineItem.id || ++lineItemCounter);
 
+            const calcRow = document.createElement("tr");
+            calcRow.className = "financial-line-item-calc-row";
+            calcRow.dataset.lineCalcFor = row.dataset.lineItemId;
+            calcRow.hidden = true;
+            calcRow.innerHTML = `
+                <td colspan="5">
+                    <div class="financial-line-calc-panel">
+                        <div class="financial-line-calc-head">
+                            <span class="financial-line-calc-title">Line item calculator</span>
+                            <span class="financial-line-calc-status">Not set</span>
+                        </div>
+                        <div class="financial-line-calc-grid">
+                            <label>
+                                <span>Operation</span>
+                                <select class="form-select financial-line-calc-operation">
+                                    <option value="">Select</option>
+                                    <option value="add">Add</option>
+                                    <option value="subtract">Subtract</option>
+                                    <option value="multiply">Multiply</option>
+                                    <option value="divide">Divide</option>
+                                    <option value="percent">Percent</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Target line item</span>
+                                <select class="form-select financial-line-calc-target">
+                                    <option value="">No other line items</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Percent</span>
+                                <input type="number" class="form-control financial-line-calc-percent" min="0" step="0.01" placeholder="Enter percent">
+                            </label>
+                            <div class="financial-line-calc-result-wrap">
+                                <span class="financial-line-calc-result-label">Result</span>
+                                <strong class="financial-line-calc-result">-</strong>
+                                <button type="button" class="btn financial-line-calc-apply-btn" data-line-action="apply-calc" disabled>Use result</button>
+                            </div>
+                        </div>
+                        <p class="financial-line-calc-link">Linked to: none</p>
+                        <p class="financial-line-calc-note">Percent results stay on this line item. Other operations can be applied to Net Value.</p>
+                    </div>
+                </td>
+            `;
+
             const safeTypeCode = escapeHtml(lineItem.type_code || lineItem.typeCode || "");
             const safeDescription = escapeHtml(lineItem.description || "");
             const safeAmount = Number.isFinite(Number.parseFloat(lineItem.amount)) ? escapeHtml(String(lineItem.amount)) : "";
@@ -664,7 +1040,19 @@
                     <input type="text" class="form-control financial-form-input financial-line-description-input" placeholder="Describe this line item" value="${safeDescription}" required>
                 </td>
                 <td>
-                    <input type="number" class="form-control financial-form-input financial-line-amount-input" min="0" step="0.01" placeholder="Enter amount here" value="${safeAmount}" required>
+                    <div class="financial-line-amount-wrap">
+                        <span class="financial-line-amount-original" hidden></span>
+                        <input type="number" class="form-control financial-form-input financial-line-amount-input" min="0" step="0.01" placeholder="Enter amount here" value="${safeAmount}" required>
+                        <span class="financial-line-amount-calculated" hidden></span>
+                    </div>
+                </td>
+                <td class="financial-line-calc-cell">
+                    <button type="button" class="btn financial-line-calc-btn" data-line-action="calc" aria-expanded="false" aria-controls="calc-${row.dataset.lineItemId}">
+                        <i class="bi bi-calculator"></i>
+                    </button>
+                    <span class="financial-line-calc-indicator" hidden>Calc</span>
+                    <span class="financial-line-netvalue-tag" hidden>Net Value</span>
+                    <span class="financial-line-percent-tag" hidden>Percent</span>
                 </td>
                 <td>
                     <button type="button" class="btn financial-line-remove-btn" data-line-action="remove" aria-label="Remove line item">
@@ -673,19 +1061,25 @@
                 </td>
             `;
 
+            calcRow.id = `calc-${row.dataset.lineItemId}`;
+
             window.requestAnimationFrame(() => {
                 row.classList.remove("is-entering");
             });
 
-            return row;
+            return { row, calcRow };
         };
 
         const addLineItemRow = (tbodyElement, lineItem = {}) => {
             if (!tbodyElement) {
                 return;
             }
-            tbodyElement.appendChild(createLineItemRow(lineItem));
+            const { row, calcRow } = createLineItemRow(lineItem);
+            tbodyElement.appendChild(row);
+            tbodyElement.appendChild(calcRow);
             updateLineItemRemoveButtons(tbodyElement);
+            syncCalcTargetOptions(tbodyElement);
+            hydrateCalcRowState(tbodyElement, row, calcRow, lineItem);
         };
 
         const resetLineItemsBody = (tbodyElement, lineItems = []) => {
@@ -696,6 +1090,7 @@
             tbodyElement.innerHTML = "";
             const itemsToRender = Array.isArray(lineItems) && lineItems.length ? lineItems : [{}];
             itemsToRender.forEach((lineItem) => addLineItemRow(tbodyElement, lineItem));
+            syncCalcTargetOptions(tbodyElement);
         };
 
         const removeLineItemRow = (tbodyElement, rowElement) => {
@@ -703,15 +1098,24 @@
                 return;
             }
 
-            const rows = Array.from(tbodyElement.querySelectorAll("tr"));
+            const rows = getLineItemRows(tbodyElement);
             if (rows.length <= 1) {
                 return;
             }
 
+            const calcRow = getCalcRowForItem(tbodyElement, rowElement.dataset.lineItemId);
+
             rowElement.classList.add("is-removing");
+            if (calcRow) {
+                calcRow.classList.add("is-removing");
+            }
             window.setTimeout(() => {
                 rowElement.remove();
+                if (calcRow) {
+                    calcRow.remove();
+                }
                 updateLineItemRemoveButtons(tbodyElement);
+                syncCalcTargetOptions(tbodyElement);
             }, lineItemAnimationMs);
         };
 
@@ -720,15 +1124,31 @@
                 return [];
             }
 
-            return Array.from(tbodyElement.querySelectorAll("tr")).map((row) => {
+            return getLineItemRows(tbodyElement).map((row) => {
                 const typeCodeInput = row.querySelector(".financial-line-code-input");
                 const descriptionInput = row.querySelector(".financial-line-description-input");
                 const amountInput = row.querySelector(".financial-line-amount-input");
+                const calcRow = getCalcRowForItem(tbodyElement, row.dataset.lineItemId);
+                const operationSelect = calcRow ? calcRow.querySelector(".financial-line-calc-operation") : null;
+                const targetSelect = calcRow ? calcRow.querySelector(".financial-line-calc-target") : null;
+                const percentInput = calcRow ? calcRow.querySelector(".financial-line-calc-percent") : null;
+                const calcApplied = calcRow ? calcRow.dataset.calcApplied === "true" : false;
+                const targetValue = targetSelect ? targetSelect.value : "";
+                const calcTargetId = targetValue === "__self__" ? "" : targetValue;
+                const calcOperation = operationSelect ? operationSelect.value : "";
+                const calcPercent = percentInput ? percentInput.value.trim() : "";
+                const calcOriginalAmount = row.dataset.originalAmount || "";
 
                 return {
+                    client_line_id: row.dataset.lineItemId,
                     type_code: typeCodeInput ? typeCodeInput.value.trim() : "",
                     description: descriptionInput ? descriptionInput.value.trim() : "",
-                    amount: amountInput ? amountInput.value.trim() : ""
+                    amount: amountInput ? amountInput.value.trim() : "",
+                    calc_operation: calcOperation,
+                    calc_target_id: calcTargetId,
+                    calc_percent: calcPercent,
+                    calc_original_amount: calcOriginalAmount,
+                    calc_applied: calcApplied,
                 };
             });
         };
@@ -862,7 +1282,7 @@
             if (financialTableBody) {
                 financialTableBody.setAttribute("aria-busy", String(isRecordsLoading));
                 if (isRecordsLoading) {
-                    financialTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4">${escapeHtml(message)}</td></tr>`;
+                    financialTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">${escapeHtml(message)}</td></tr>`;
                 }
             }
 
@@ -922,6 +1342,7 @@
                 const lineItemCount = getEntryLineItems(entry).length;
                 const isExpanded = expandedEntryIds.has(entry.id);
                 const safeDate = escapeHtml(toDisplayText(entry.date));
+                const safeFrequency = escapeHtml(formatFrequencyLabel(entry.frequency));
                 const safeNotes = escapeHtml(toDisplayText(entry.notes));
 
                 row.className = "financial-entry-row";
@@ -933,6 +1354,7 @@
 
                 row.innerHTML = `
                     <td>${safeDate}</td>
+                    <td>${safeFrequency}</td>
                     <td>${formatCurrency(totalAmount)}</td>
                     <td><span class="financial-line-item-count">${lineItemCount} ${lineItemCount === 1 ? "Line Item" : "Line Items"}</span></td>
                     <td class="financial-entry-actions-cell">
@@ -947,7 +1369,7 @@
                 detailsRow.className = "financial-entry-details-row";
                 detailsRow.setAttribute("aria-hidden", String(!isExpanded));
                 detailsRow.innerHTML = `
-                    <td colspan="4">
+                    <td colspan="5">
                         <div class="financial-entry-details-shell${isExpanded ? " is-open" : ""}">
                             <div class="financial-entry-details-head">
                                 <h3>Line Items</h3>
@@ -955,6 +1377,7 @@
                             </div>
                             ${renderEntryDetailsTable(entry)}
                             <p class="financial-entry-notes"><span>Notes:</span> ${safeNotes}</p>
+                            <p class="financial-entry-notes"><span>Frequency:</span> ${safeFrequency}</p>
                         </div>
                     </td>
                 `;
@@ -1139,6 +1562,12 @@
                     type_code: typeCode,
                     description,
                     amount: amountText,
+                    client_line_id: lineItem.client_line_id || "",
+                    calc_operation: lineItem.calc_operation || "",
+                    calc_target_id: lineItem.calc_target_id || "",
+                    calc_percent: lineItem.calc_percent || "",
+                    calc_original_amount: lineItem.calc_original_amount || "",
+                    calc_applied: Boolean(lineItem.calc_applied),
                 });
             }
 
@@ -1304,6 +1733,113 @@
             }
         };
 
+        const handleLineItemClick = (tbodyElement, event) => {
+            const removeButton = event.target.closest("[data-line-action='remove']");
+            if (removeButton) {
+                event.preventDefault();
+                removeLineItemRow(tbodyElement, removeButton.closest("tr"));
+                return;
+            }
+
+            const applyButton = event.target.closest("[data-line-action='apply-calc']");
+            if (applyButton) {
+                event.preventDefault();
+
+                const calcRow = applyButton.closest(".financial-line-item-calc-row");
+                if (!calcRow) {
+                    return;
+                }
+
+                const targetId = calcRow.dataset.lineCalcFor;
+                const lineRow = targetId
+                    ? getLineItemRows(tbodyElement).find((item) => item.dataset.lineItemId === targetId)
+                    : null;
+                if (!lineRow) {
+                    return;
+                }
+
+                const operationSelect = calcRow.querySelector(".financial-line-calc-operation");
+                const operation = operationSelect ? operationSelect.value : "";
+                if (operation === "percent" && !lineRow.dataset.originalAmount) {
+                    const amountInput = lineRow.querySelector(".financial-line-amount-input");
+                    if (amountInput) {
+                        lineRow.dataset.originalAmount = amountInput.value.trim();
+                    }
+                }
+
+                calcRow.dataset.calcApplied = "true";
+                updateCalcPreview(tbodyElement, lineRow, calcRow);
+                return;
+            }
+
+            const calcButton = event.target.closest("[data-line-action='calc']");
+            if (!calcButton) {
+                return;
+            }
+
+            event.preventDefault();
+            const row = calcButton.closest(".financial-line-item-row");
+            if (!row) {
+                return;
+            }
+
+            const calcRow = getCalcRowForItem(tbodyElement, row.dataset.lineItemId);
+            if (!calcRow) {
+                return;
+            }
+
+            const shouldOpen = calcRow.hidden;
+            calcRow.hidden = !shouldOpen;
+            calcButton.setAttribute("aria-expanded", String(shouldOpen));
+
+            if (shouldOpen) {
+                syncCalcTargetOptions(tbodyElement);
+                updateCalcPreview(tbodyElement, row, calcRow);
+            }
+        };
+
+        const handleLineItemInput = (tbodyElement, event) => {
+            const row = event.target.closest(".financial-line-item-row");
+            const calcRow = event.target.closest(".financial-line-item-calc-row");
+
+            if (row) {
+                if (
+                    event.target.classList.contains("financial-line-code-input")
+                    || event.target.classList.contains("financial-line-description-input")
+                    || event.target.classList.contains("financial-line-amount-input")
+                ) {
+                    syncCalcTargetOptions(tbodyElement);
+                }
+
+                const relatedCalcRow = getCalcRowForItem(tbodyElement, row.dataset.lineItemId);
+                if (relatedCalcRow && !relatedCalcRow.hidden) {
+                    updateCalcPreview(tbodyElement, row, relatedCalcRow);
+                }
+
+                if (event.target.classList.contains("financial-line-amount-input")) {
+                    if (relatedCalcRow) {
+                        const operationSelect = relatedCalcRow.querySelector(".financial-line-calc-operation");
+                        const isPercent = operationSelect && operationSelect.value === "percent";
+                        if (isPercent && relatedCalcRow.dataset.calcApplied === "true") {
+                            relatedCalcRow.dataset.calcApplied = "false";
+                            row.dataset.originalAmount = "";
+                        }
+                    }
+                    refreshAllCalcPreviews(tbodyElement);
+                }
+            }
+
+            if (calcRow) {
+                const targetId = calcRow.dataset.lineCalcFor;
+                const lineRow = targetId
+                    ? getLineItemRows(tbodyElement).find((item) => item.dataset.lineItemId === targetId)
+                    : null;
+                if (lineRow) {
+                    updateCalcPreview(tbodyElement, lineRow, calcRow);
+                }
+            }
+        };
+
         if (addLineItemBtn && addLineItemsBody) {
             addLineItemBtn.addEventListener("click", () => {
                 addLineItemRow(addLineItemsBody);
@@ -1318,23 +1854,25 @@
 
         if (addLineItemsBody) {
             addLineItemsBody.addEventListener("click", (event) => {
-                const removeButton = event.target.closest("[data-line-action='remove']");
-                if (!removeButton) {
-                    return;
-                }
-                event.preventDefault();
-                removeLineItemRow(addLineItemsBody, removeButton.closest("tr"));
+                handleLineItemClick(addLineItemsBody, event);
+            });
+            addLineItemsBody.addEventListener("input", (event) => {
+                handleLineItemInput(addLineItemsBody, event);
+            });
+            addLineItemsBody.addEventListener("change", (event) => {
+                handleLineItemInput(addLineItemsBody, event);
             });
         }
 
         if (editLineItemsBody) {
             editLineItemsBody.addEventListener("click", (event) => {
-                const removeButton = event.target.closest("[data-line-action='remove']");
-                if (!removeButton) {
-                    return;
-                }
-                event.preventDefault();
-                removeLineItemRow(editLineItemsBody, removeButton.closest("tr"));
+                handleLineItemClick(editLineItemsBody, event);
+            });
+            editLineItemsBody.addEventListener("input", (event) => {
+                handleLineItemInput(editLineItemsBody, event);
+            });
+            editLineItemsBody.addEventListener("change", (event) => {
+                handleLineItemInput(editLineItemsBody, event);
             });
         }
 
