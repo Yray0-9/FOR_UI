@@ -26,10 +26,20 @@
     const themeStatus = document.getElementById("settingsThemeStatus");
     const applyThemeButton = document.getElementById("settingsApplyThemeButton");
 
+    const defaultsSection = document.getElementById("settingsDefaults");
+    const defaultScopeSelect = document.getElementById("settingsDefaultScope");
+    const defaultReportSelect = document.getElementById("settingsDefaultReport");
+    const defaultRangeSelect = document.getElementById("settingsDefaultRange");
+    const defaultsSaveButton = defaultsSection
+        ? defaultsSection.querySelector("[data-settings-defaults-save]")
+        : null;
+
     const plannedFeatureButtons = Array.from(document.querySelectorAll("[data-planned-feature]"));
 
     const settingsSections = Array.from(document.querySelectorAll("[data-settings-section]"));
     const settingsNavLinks = Array.from(document.querySelectorAll(".settings-nav-link"));
+
+    const workspaceDefaultsUrl = String(urls.workspaceDefaultsApi || "");
 
     if (!body || !uiToastContainer || !settingsSections.length) {
         return;
@@ -65,6 +75,24 @@
         shared.showToast(uiToastContainer, message, variantClass, {
             delay: 2800,
         });
+    };
+
+    const parseJsonSafe = (response) => {
+        if (shared && typeof shared.parseJsonSafe === "function") {
+            return shared.parseJsonSafe(response);
+        }
+
+        return response
+            .json()
+            .catch(() => null);
+    };
+
+    const getCookieValue = (cookieName) => {
+        if (shared && typeof shared.getCookieValue === "function") {
+            return shared.getCookieValue(cookieName);
+        }
+
+        return "";
     };
 
     const hydrateHeaderUser = () => {
@@ -137,7 +165,8 @@
                 return;
             }
 
-            if (saveButton.hasAttribute("data-theme-save")) {
+            if (saveButton.hasAttribute("data-theme-save")
+                || saveButton.hasAttribute("data-settings-defaults-save")) {
                 return;
             }
 
@@ -229,6 +258,152 @@
                 handleThemeSave();
             });
         }
+    };
+
+    const setSelectValue = (selectElement, nextValue) => {
+        if (!selectElement) {
+            return;
+        }
+
+        const value = String(nextValue || "").trim();
+        if (!value) {
+            return;
+        }
+
+        const optionExists = Array.from(selectElement.options)
+            .some((optionItem) => optionItem.value === value);
+        if (optionExists) {
+            selectElement.value = value;
+        }
+    };
+
+    const applyWorkspaceDefaults = (defaults) => {
+        if (!defaults || typeof defaults !== "object") {
+            return;
+        }
+
+        setSelectValue(defaultScopeSelect, defaults.default_client_scope);
+        setSelectValue(defaultReportSelect, defaults.default_report_type);
+        setSelectValue(defaultRangeSelect, defaults.default_report_range);
+    };
+
+    const loadWorkspaceDefaults = async () => {
+        if (!workspaceDefaultsUrl || !defaultsSection) {
+            return;
+        }
+
+        const status = defaultsSection.querySelector("[data-settings-status]");
+        if (status) {
+            status.textContent = "Loading...";
+        }
+        if (defaultsSaveButton) {
+            defaultsSaveButton.disabled = true;
+        }
+
+        try {
+            const response = await fetch(workspaceDefaultsUrl, {
+                method: "GET",
+                headers: {
+                    Accept: "application/json",
+                },
+                credentials: "same-origin",
+            });
+
+            if (response.status === 401) {
+                window.location.assign(String(urls.loginPage || "/login/"));
+                return;
+            }
+
+            const payload = await parseJsonSafe(response);
+            if (!response.ok || !payload || !payload.ok) {
+                throw new Error(payload && payload.message ? String(payload.message) : "Unable to load workspace defaults.");
+            }
+
+            applyWorkspaceDefaults(payload.defaults);
+            resetSectionDirty(defaultsSection);
+        } catch (error) {
+            if (status) {
+                status.textContent = "Unable to load";
+            }
+            showToast("Workspace defaults could not be loaded.", "warning");
+            if (defaultsSaveButton) {
+                defaultsSaveButton.disabled = false;
+            }
+        }
+    };
+
+    const saveWorkspaceDefaults = async () => {
+        if (!workspaceDefaultsUrl || !defaultsSection) {
+            showToast("Workspace defaults are unavailable.", "warning");
+            return;
+        }
+
+        const payload = {
+            default_client_scope: defaultScopeSelect ? defaultScopeSelect.value : "",
+            default_report_type: defaultReportSelect ? defaultReportSelect.value : "",
+            default_report_range: defaultRangeSelect ? defaultRangeSelect.value : "",
+        };
+
+        const status = defaultsSection.querySelector("[data-settings-status]");
+        if (status) {
+            status.textContent = "Saving...";
+        }
+        if (defaultsSaveButton) {
+            defaultsSaveButton.disabled = true;
+        }
+
+        try {
+            const csrfToken = getCookieValue("csrftoken");
+            const headers = {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            };
+            if (csrfToken) {
+                headers["X-CSRFToken"] = csrfToken;
+            }
+
+            const response = await fetch(workspaceDefaultsUrl, {
+                method: "POST",
+                headers,
+                credentials: "same-origin",
+                body: JSON.stringify(payload),
+            });
+
+            if (response.status === 401) {
+                window.location.assign(String(urls.loginPage || "/login/"));
+                return;
+            }
+
+            const result = await parseJsonSafe(response);
+            if (!response.ok || !result || !result.ok) {
+                const message = result && result.message
+                    ? String(result.message)
+                    : "Unable to save workspace defaults.";
+                throw new Error(message);
+            }
+
+            applyWorkspaceDefaults(result.defaults);
+            resetSectionDirty(defaultsSection);
+            showToast("Workspace defaults saved.", "success");
+        } catch (error) {
+            if (status) {
+                status.textContent = "Unsaved changes";
+            }
+            showToast(error && error.message ? String(error.message) : "Unable to save workspace defaults.", "danger");
+            if (defaultsSaveButton) {
+                defaultsSaveButton.disabled = false;
+            }
+        }
+    };
+
+    const bindWorkspaceDefaults = () => {
+        if (!defaultsSaveButton) {
+            return;
+        }
+
+        defaultsSaveButton.addEventListener("click", () => {
+            saveWorkspaceDefaults();
+        });
     };
 
     const bindPlannedFeatures = () => {
@@ -356,10 +531,12 @@
 
         bindSectionInputs();
         bindThemeControls();
+        bindWorkspaceDefaults();
         bindPlannedFeatures();
         bindSettingsScrollSpy();
         bindHeaderActions();
         syncThemeState();
+        loadWorkspaceDefaults();
 
         window.addEventListener("resize", () => {
             sidebarState.closeMobileSidebar();

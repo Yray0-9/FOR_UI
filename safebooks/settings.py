@@ -81,6 +81,14 @@ def _env_bool(name: str, default: str = "0") -> bool:
     return str(os.getenv(name, default)).strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _env_int(name: str, default: str = "0") -> int:
+    raw_value = os.getenv(name, default)
+    try:
+        return int(str(raw_value).strip())
+    except (TypeError, ValueError):
+        return int(default)
+
+
 def _first_env(*keys: str, default: str = "") -> str:
     for key in keys:
         value = os.getenv(key)
@@ -155,3 +163,27 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # Media files setup
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Email delivery (defaults to console backend for development).
+EMAIL_HOST = _first_env("SAFEBOOKS_EMAIL_HOST", "EMAIL_HOST", default="")
+EMAIL_BACKEND = _first_env(
+    "SAFEBOOKS_EMAIL_BACKEND",
+    "EMAIL_BACKEND",
+    default="",
+)
+if not EMAIL_BACKEND:
+    if EMAIL_HOST:
+        EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    else:
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+DEFAULT_FROM_EMAIL = _first_env(
+    "SAFEBOOKS_DEFAULT_FROM_EMAIL",
+    "DEFAULT_FROM_EMAIL",
+    default="SafeBooks <no-reply@safebooks.local>",
+)
+EMAIL_PORT = _env_int("SAFEBOOKS_EMAIL_PORT", "587")
+EMAIL_HOST_USER = _first_env("SAFEBOOKS_EMAIL_HOST_USER", "EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = _first_env("SAFEBOOKS_EMAIL_HOST_PASSWORD", "EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = _env_bool("SAFEBOOKS_EMAIL_USE_TLS", "1")
+EMAIL_USE_SSL = _env_bool("SAFEBOOKS_EMAIL_USE_SSL", "0")

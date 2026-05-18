@@ -40,6 +40,10 @@
     const DESKTOP_QUERY = String(config.desktopQuery || "(min-width: 992px)");
     const HISTORY_STORAGE_KEY = "safebooks.reportsHistory";
     const MAX_HISTORY_ITEMS = 8;
+    const DEFAULT_REPORT_TYPE = "financial_summary";
+    const DEFAULT_REPORT_RANGE = "ytd";
+    const DEFAULT_CLIENT_SCOPE = "all";
+    const VALID_REPORT_RANGES = new Set(["ytd", "30", "90", "custom"]);
 
     const body = document.body;
     const sidebarToggle = document.getElementById("sidebarToggle");
@@ -101,6 +105,7 @@
     const reportsHistoryEmpty = document.getElementById("reportsHistoryEmpty");
 
     const uiToastContainer = document.getElementById("uiToastContainer");
+    const workspaceDefaultsUrl = String(urls.workspaceDefaultsApi || "");
 
     if (
         !body
@@ -199,6 +204,14 @@
         return response
             .json()
             .catch(() => null);
+    };
+
+    const getCookieValue = (cookieName) => {
+        if (shared && typeof shared.getCookieValue === "function") {
+            return shared.getCookieValue(cookieName);
+        }
+
+        return "";
     };
 
     const showToast = (message, variantClass = "") => {
@@ -306,14 +319,76 @@
         };
     };
 
-    const applyDefaultDateRange = () => {
-        const defaults = getDefaultDateRange();
-        if (!String(reportsDateFrom.value || "").trim()) {
-            reportsDateFrom.value = defaults.dateFrom;
+    const getRelativeDateRange = (days) => {
+        const totalDays = Number(days || 0);
+        if (!Number.isFinite(totalDays) || totalDays <= 0) {
+            return { dateFrom: "", dateTo: "" };
         }
-        if (!String(reportsDateTo.value || "").trim()) {
-            reportsDateTo.value = defaults.dateTo;
+
+        const today = new Date();
+        const rangeStart = new Date(today);
+        rangeStart.setDate(today.getDate() - (totalDays - 1));
+
+        return {
+            dateFrom: toDateInputValue(rangeStart),
+            dateTo: toDateInputValue(today),
+        };
+    };
+
+    const getDateRangeFromPreset = (rangeKey) => {
+        const normalized = String(rangeKey || "").trim();
+        if (normalized === "30") {
+            return getRelativeDateRange(30);
         }
+        if (normalized === "90") {
+            return getRelativeDateRange(90);
+        }
+        if (normalized === "ytd") {
+            return getDefaultDateRange();
+        }
+
+        return { dateFrom: "", dateTo: "" };
+    };
+
+    const normalizeReportType = (value) => {
+        const normalized = String(value || "").trim();
+        return REPORT_TYPE_META[normalized] ? normalized : DEFAULT_REPORT_TYPE;
+    };
+
+    const normalizeReportRange = (value) => {
+        const normalized = String(value || "").trim();
+        return VALID_REPORT_RANGES.has(normalized) ? normalized : DEFAULT_REPORT_RANGE;
+    };
+
+    const normalizeClientScope = (value) => {
+        const normalized = String(value || "").trim();
+        return normalized === "last" ? "last" : DEFAULT_CLIENT_SCOPE;
+    };
+
+    const applyDefaultsToFilters = (defaults) => {
+        const safeDefaults = defaults && typeof defaults === "object" ? defaults : {};
+
+        const defaultReportType = normalizeReportType(safeDefaults.default_report_type);
+        const defaultReportRange = normalizeReportRange(safeDefaults.default_report_range);
+        const defaultClientScope = normalizeClientScope(safeDefaults.default_client_scope);
+
+        reportsTypeSelect.value = defaultReportType;
+
+        const dateRange = getDateRangeFromPreset(defaultReportRange);
+        reportsDateFrom.value = dateRange.dateFrom || "";
+        reportsDateTo.value = dateRange.dateTo || "";
+
+        let targetClientValue = "all";
+        if (defaultClientScope === "last") {
+            const lastClientId = safeNumber(safeDefaults.last_client_id);
+            if (Number.isFinite(lastClientId) && lastClientId > 0) {
+                targetClientValue = String(lastClientId);
+            }
+        }
+
+        const optionExists = Array.from(reportsClientSelect.options)
+            .some((optionItem) => optionItem.value === targetClientValue);
+        reportsClientSelect.value = optionExists ? targetClientValue : "all";
     };
 
     const toReportTypeLabel = (reportType) => {
@@ -1144,33 +1219,58 @@
             return;
         }
 
-        const printWindow = window.open("", "_blank", "width=1024,height=860");
-        if (!printWindow || !printWindow.document) {
-            showToast("Allow pop-ups to print the report layout.", "warning");
+        const documentMarkup = buildLedgerPrintDocumentHtml(latestGeneratedReport, sheetMarkup);
+        const existingFrame = document.getElementById("reportsPrintFrame");
+        if (existingFrame) {
+            existingFrame.remove();
+        }
+
+        const printFrame = document.createElement("iframe");
+        printFrame.id = "reportsPrintFrame";
+        printFrame.setAttribute("title", "Reports Print Layout");
+        printFrame.setAttribute("aria-hidden", "true");
+        printFrame.style.position = "fixed";
+        printFrame.style.right = "0";
+        printFrame.style.bottom = "0";
+        printFrame.style.width = "0";
+        printFrame.style.height = "0";
+        printFrame.style.border = "0";
+        printFrame.style.opacity = "0";
+        printFrame.style.pointerEvents = "none";
+        document.body.appendChild(printFrame);
+
+        const frameWindow = printFrame.contentWindow;
+        const frameDocument = frameWindow ? frameWindow.document : null;
+        if (!frameDocument) {
+            showToast("Print preview could not be prepared. Please try again.", "warning");
+            printFrame.remove();
             return;
         }
 
-        const documentMarkup = buildLedgerPrintDocumentHtml(latestGeneratedReport, sheetMarkup);
         try {
-            printWindow.document.open();
-            printWindow.document.write(documentMarkup);
-            printWindow.document.close();
+            frameDocument.open();
+            frameDocument.write(documentMarkup);
+            frameDocument.close();
         } catch (error) {
             showToast("Print preview could not be prepared. Please try again.", "warning");
+            printFrame.remove();
             return;
         }
 
         const triggerPrint = () => {
-            printWindow.focus();
-            printWindow.print();
+            frameWindow.focus();
+            frameWindow.print();
+            window.setTimeout(() => {
+                printFrame.remove();
+            }, 800);
         };
 
-        if (printWindow.document.readyState === "complete") {
+        if (frameDocument.readyState === "complete") {
             window.setTimeout(triggerPrint, 60);
         } else {
-            printWindow.addEventListener("load", () => {
+            printFrame.addEventListener("load", () => {
                 window.setTimeout(triggerPrint, 60);
-            });
+            }, { once: true });
         }
     };
 
@@ -1292,6 +1392,74 @@
         }
 
         return payload;
+    };
+
+    const fetchWorkspaceDefaults = async () => {
+        if (!workspaceDefaultsUrl) {
+            return null;
+        }
+
+        try {
+            const response = await fetch(workspaceDefaultsUrl, {
+                method: "GET",
+                headers: {
+                    Accept: "application/json",
+                },
+                credentials: "same-origin",
+            });
+
+            if (response.status === 401) {
+                redirectToLogin();
+                return null;
+            }
+
+            const payload = await parseJsonSafe(response);
+            if (!response.ok || !payload || !payload.ok) {
+                throw new Error(payload && payload.message ? String(payload.message) : "Unable to load workspace defaults.");
+            }
+
+            return payload.defaults || null;
+        } catch (error) {
+            showToast("Workspace defaults could not be loaded. Using standard defaults.", "warning");
+            return null;
+        }
+    };
+
+    const updateLastUsedClient = async (clientId) => {
+        if (!workspaceDefaultsUrl) {
+            return;
+        }
+
+        const safeClientId = safeNumber(clientId);
+        if (!Number.isFinite(safeClientId) || safeClientId <= 0) {
+            return;
+        }
+
+        if (workspaceDefaults && typeof workspaceDefaults === "object") {
+            workspaceDefaults.last_client_id = safeClientId;
+        }
+
+        try {
+            const csrfToken = getCookieValue("csrftoken");
+            const headers = {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            };
+            if (csrfToken) {
+                headers["X-CSRFToken"] = csrfToken;
+            }
+
+            await fetch(workspaceDefaultsUrl, {
+                method: "POST",
+                headers,
+                credentials: "same-origin",
+                body: JSON.stringify({
+                    last_client_id: safeClientId,
+                }),
+            });
+        } catch (error) {
+            // Keep report flow responsive if defaults sync fails.
+        }
     };
 
     const buildFinancialSummaryReport = (payload, filters) => {
@@ -1600,8 +1768,8 @@
         reportsClientSelect.disabled = false;
     };
 
-    const applyInitialFilterValues = () => {
-        applyDefaultDateRange();
+    const applyInitialFilterValues = (defaults) => {
+        applyDefaultsToFilters(defaults);
 
         const queryParams = new URLSearchParams(window.location.search);
         const initialReportType = String(queryParams.get("report_type") || "").trim();
@@ -1622,7 +1790,8 @@
         }
 
         if (initialClientId) {
-            const optionExists = Array.from(reportsClientSelect.options).some((optionItem) => optionItem.value === initialClientId);
+            const optionExists = Array.from(reportsClientSelect.options)
+                .some((optionItem) => optionItem.value === initialClientId);
             if (optionExists) {
                 reportsClientSelect.value = initialClientId;
             }
@@ -1753,12 +1922,7 @@
     };
 
     const resetReportFiltersAndState = () => {
-        reportsTypeSelect.value = "financial_summary";
-        reportsClientSelect.value = "all";
-
-        const defaults = getDefaultDateRange();
-        reportsDateFrom.value = defaults.dateFrom;
-        reportsDateTo.value = defaults.dateTo;
+        applyDefaultsToFilters(workspaceDefaults);
 
         clearGeneratedPreview();
         setFeedbackState("empty");
@@ -1812,6 +1976,16 @@
             reportsTypeSelect.addEventListener("change", () => {
                 const selectedType = String(reportsTypeSelect.value || "").trim();
                 setFilterStatus(`${toReportTypeLabel(selectedType)} selected. Ready to generate.`);
+            });
+        }
+
+        if (reportsClientSelect) {
+            reportsClientSelect.addEventListener("change", () => {
+                const selectedValue = String(reportsClientSelect.value || "").trim();
+                const clientId = selectedValue === "all" ? null : safeNumber(selectedValue);
+                if (Number.isFinite(clientId) && clientId > 0) {
+                    updateLastUsedClient(clientId);
+                }
             });
         }
 
@@ -1870,6 +2044,7 @@
     };
 
     let availableClients = [];
+    let workspaceDefaults = null;
     let latestGeneratedReport = null;
     let generationRequestToken = 0;
     let generationAbortController = null;
@@ -1884,10 +2059,10 @@
         setActionLoadingState(false);
 
         renderHistoryItems(readHistoryItems());
-        applyDefaultDateRange();
 
         await loadOptionsAndClients();
-        applyInitialFilterValues();
+        workspaceDefaults = await fetchWorkspaceDefaults();
+        applyInitialFilterValues(workspaceDefaults);
 
         bindCoreEvents();
 

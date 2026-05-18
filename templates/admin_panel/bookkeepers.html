@@ -1,4 +1,5 @@
 {% extends 'admin_panel/admin_base.html' %}
+{% load static %}
 
 {% block page_title %}Bookkeepers{% endblock %}
 {% block page_heading %}Bookkeepers{% endblock %}
@@ -14,7 +15,7 @@
                 <span class="stat-icon"><i class="bi bi-people"></i></span>
                 <div>
                     <p class="stat-label">Total bookkeepers</p>
-                    <h3>N/A</h3>
+                    <h3 id="bookkeepersTotalCount">0</h3>
                     <p class="stat-note">Directory data pending</p>
                 </div>
             </article>
@@ -24,18 +25,8 @@
                 <span class="stat-icon"><i class="bi bi-person-check"></i></span>
                 <div>
                     <p class="stat-label">Active accounts</p>
-                    <h3>N/A</h3>
+                    <h3 id="bookkeepersActiveCount">0</h3>
                     <p class="stat-note">Awaiting directory sync</p>
-                </div>
-            </article>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <article class="dashboard-stat-card admin-kpi-card">
-                <span class="stat-icon"><i class="bi bi-hourglass-split"></i></span>
-                <div>
-                    <p class="stat-label">Pending approvals</p>
-                    <h3>N/A</h3>
-                    <p class="stat-note">Approval feed pending</p>
                 </div>
             </article>
         </div>
@@ -43,8 +34,8 @@
             <article class="dashboard-stat-card admin-kpi-card">
                 <span class="stat-icon"><i class="bi bi-person-x"></i></span>
                 <div>
-                    <p class="stat-label">Suspended accounts</p>
-                    <h3>N/A</h3>
+                    <p class="stat-label">Deactivated accounts</p>
+                    <h3 id="bookkeepersDeactivatedCount">0</h3>
                     <p class="stat-note">Status feed pending</p>
                 </div>
             </article>
@@ -56,28 +47,28 @@
             <article class="dashboard-card admin-card h-100">
                 <div class="dashboard-card-head">
                     <h2>Bookkeeper directory</h2>
+                    <span class="dashboard-tag" id="bookkeepersCountTag">0 bookkeepers</span>
                 </div>
               <!--  <p class="dashboard-section-hint">Search and review bookkeeper accounts. Actions remain disabled until wiring is complete.</p> -->
                 <div class="dashboard-table-toolbar" aria-label="Bookkeeper directory controls">
                     <div class="admin-bookkeeper-toolbar-row d-flex align-items-center gap-2 w-100">
                         <label class="dashboard-table-search admin-bookkeeper-search" aria-label="Search bookkeepers by name or email">
                             <i class="bi bi-search"></i>
-                            <input type="search" placeholder="Search by name or email" autocomplete="off">
+                            <input type="search" id="bookkeepersSearchInput" placeholder="Search by name or email" autocomplete="off">
                         </label>
-                        <select class="form-select dashboard-filter-select admin-bookkeeper-sort" aria-label="Sort bookkeepers" disabled>
-                            <option>Sort: Most recent</option>
-                            <option>Sort: Alphabetical</option>
-                            <option>Sort: Most clients</option>
+                        <select class="form-select dashboard-filter-select admin-bookkeeper-sort" id="bookkeepersSortSelect" aria-label="Sort bookkeepers">
+                            <option value="recent">Sort: Most recent</option>
+                            <option value="alpha">Sort: Alphabetical</option>
+                            <option value="clients">Sort: Most clients</option>
                         </select>
                     </div>
                     <div class="dashboard-filter-chips" role="group" aria-label="Filter bookkeepers by status or client load">
-                        <button type="button" class="dashboard-filter-chip is-active" aria-pressed="true" data-planned-feature>All</button>
-                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Pending</button>
-                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Approved</button>
-                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Suspended</button>
-                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>Inactive</button>
-                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>0-15</button>
-                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-planned-feature>16+</button>
+                        <button type="button" class="dashboard-filter-chip is-active" aria-pressed="true" data-bookkeeper-status="all">All</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-status="approved">Approved</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-status="deactivated">Deactivated</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-status="inactive">Inactive</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-clients="0-15">0-15</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-clients="16+">16+</button>
                     </div>
                 </div>
               <!--  <p class="dashboard-filter-summary">Filters and sorting are UI-only in this phase.</p> -->
@@ -93,21 +84,9 @@
                                 <th scope="col">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="bookkeepersTableBody">
                             <tr class="admin-table-empty">
-                                <td>No bookkeepers available yet.</td>
-                                <td>--</td>
-                                <td><span class="admin-status-chip inactive">N/A</span></td>
-                                <td>--</td>
-                                <td>--</td>
-                                <td>
-                                    <div class="admin-table-actions">
-                                        <button type="button" class="admin-action-btn approve" disabled>Approve</button>
-                                        <button type="button" class="admin-action-btn reject" disabled>Reject</button>
-                                        <button type="button" class="admin-action-btn suspend" disabled>Suspend</button>
-                                        <button type="button" class="admin-action-btn reactivate" disabled>Reactivate</button>
-                                    </div>
-                                </td>
+                                <td colspan="6">No bookkeepers available yet.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -121,10 +100,9 @@
                 </div>
                <!-- <p class="dashboard-panel-hint">Account distribution by status.</p> -->
                 <ul class="admin-status-list">
-                    <li class="admin-status-item"><span>Pending</span><span class="admin-status-chip pending">0</span></li>
-                    <li class="admin-status-item"><span>Approved</span><span class="admin-status-chip approved">0</span></li>
-                    <li class="admin-status-item"><span>Suspended</span><span class="admin-status-chip suspended">0</span></li>
-                    <li class="admin-status-item"><span>Inactive</span><span class="admin-status-chip inactive">0</span></li>
+                    <li class="admin-status-item"><span>Approved</span><span class="admin-status-chip approved" id="bookkeepersApprovedCount">0</span></li>
+                    <li class="admin-status-item"><span>Deactivated</span><span class="admin-status-chip suspended" id="bookkeepersDeactivatedSummary">0</span></li>
+                    <li class="admin-status-item"><span>Inactive</span><span class="admin-status-chip inactive" id="bookkeepersInactiveCount">0</span></li>
                 </ul>
             </article>
             <article class="dashboard-card admin-card">
@@ -133,18 +111,10 @@
                 </div>
                <!-- <p class="dashboard-panel-hint">Client counts per bookkeeper (no client details).</p> -->
                 <ul class="admin-status-list">
-                    <li class="admin-status-item"><span>0-5 clients</span><span class="admin-status-chip approved">0</span></li>
-                    <li class="admin-status-item"><span>6-15 clients</span><span class="admin-status-chip pending">0</span></li>
-                    <li class="admin-status-item"><span>16+ clients</span><span class="admin-status-chip suspended">0</span></li>
+                    <li class="admin-status-item"><span>0-5 clients</span><span class="admin-status-chip approved" id="bookkeepersClientsZeroToFive">0</span></li>
+                    <li class="admin-status-item"><span>6-15 clients</span><span class="admin-status-chip pending" id="bookkeepersClientsSixToFifteen">0</span></li>
+                    <li class="admin-status-item"><span>16+ clients</span><span class="admin-status-chip suspended" id="bookkeepersClientsSixteenPlus">0</span></li>
                 </ul>
-            </article>
-            <article class="dashboard-card admin-card">
-                <div class="dashboard-card-head">
-                    <h2>Approval shortcut</h2>
-                    <a href="{% url 'admin_approvals' %}" class="dashboard-link-muted">Open approvals</a>
-                </div>
-               <!-- <p class="dashboard-panel-hint">Pending approvals summary.</p> -->
-                <div class="admin-empty-state">No approval requests yet.</div>
             </article>
         </div>
     </div>
@@ -157,12 +127,43 @@
                 </div>
                <!-- <p class="dashboard-panel-hint">Admin-only actions. Exports remain disabled until data is wired.</p> -->
                 <div class="dashboard-actions admin-actions">
-                    <button type="button" class="dashboard-action-btn primary" data-planned-feature>Refresh list</button>
-                    <a href="{% url 'admin_approvals' %}" class="btn dashboard-action-btn outline">View approvals</a>
+                    <button type="button" class="dashboard-action-btn primary" id="bookkeepersRefreshButton">Refresh list</button>
                     <button type="button" class="dashboard-action-btn outline" disabled>Export list (disabled)</button>
                 </div>
             </article>
         </div>
     </div>
 </section>
+
+<div class="modal fade" id="bookkeeperActionModal" tabindex="-1" aria-labelledby="bookkeeperActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookkeeperActionModalLabel">Bookkeeper action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3" id="bookkeeperActionModalMessage">Confirm this action.</p>
+                <div class="alert alert-warning mb-0" id="bookkeeperActionModalWarning" hidden></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn dashboard-action-btn primary" id="bookkeeperActionConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.SafeBooksAdminBookkeepersConfig = {
+        urls: {
+            bookkeepersApi: "{% url 'api_admin_bookkeepers' %}",
+            bookkeepersBaseApi: "{% url 'api_admin_bookkeepers' %}",
+            loginPage: "{% url 'login' %}",
+        },
+    };
+</script>
+<script src="{% static 'js/admin_bookkeepers_page.js' %}"></script>
 {% endblock %}

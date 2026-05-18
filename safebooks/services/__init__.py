@@ -17,6 +17,18 @@ from .financial_record_service import (
 )
 from .dashboard_service import get_dashboard_summary_for_bookkeeper
 from .analytics_service import get_analytics_summary_for_bookkeeper
+from .admin_approvals_service import (
+	approve_bookkeeper,
+	reject_bookkeeper,
+	list_admin_approvals,
+)
+from .admin_bookkeepers_service import (
+	list_admin_bookkeepers,
+	deactivate_bookkeeper,
+	reactivate_bookkeeper,
+	delete_bookkeeper_account,
+)
+from .admin_dashboard_service import get_admin_dashboard_summary
 
 __all__ = [
 	"login_user",
@@ -34,4 +46,12 @@ __all__ = [
 	"delete_record_for_client",
 	"get_dashboard_summary_for_bookkeeper",
 	"get_analytics_summary_for_bookkeeper",
+	"list_admin_approvals",
+	"approve_bookkeeper",
+	"reject_bookkeeper",
+	"list_admin_bookkeepers",
+	"deactivate_bookkeeper",
+	"reactivate_bookkeeper",
+	"delete_bookkeeper_account",
+	"get_admin_dashboard_summary",
 ]

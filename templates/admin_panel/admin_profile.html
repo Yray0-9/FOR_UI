@@ -32,7 +32,6 @@
                     <div class="profile-hero-actions">
                         <button type="button" class="btn dashboard-action-btn primary" data-scroll-target="#adminIdentity">Edit profile</button>
                         <button type="button" class="btn dashboard-action-btn outline" data-scroll-target="#adminSecurity">Security preferences</button>
-                        <a href="{% url 'admin_audit_log' %}" class="btn dashboard-action-btn outline">View audit log</a>
                         <a href="{% url 'admin_system_settings' %}" class="btn dashboard-action-btn outline">System settings</a>
                     </div>
                 </div>
@@ -95,7 +94,7 @@
             <article class="dashboard-card admin-card profile-card profile-activity-card dashboard-fade-up profile-scroll-target" style="--delay: 0.12s;" id="adminActivity" tabindex="-1">
                 <div class="profile-card-head">
                     <div>
-                        <h2>Activity and audit snapshot</h2>
+                        <h2>Activity snapshot</h2>
                         <!-- <p class="dashboard-section-hint">Latest administrative actions and reviews.</p> -->
                     </div>
                     <span class="admin-card-tag">Latest</span>
@@ -119,22 +118,12 @@
                     <li class="profile-activity-item">
                         <span class="profile-activity-dot" aria-hidden="true"></span>
                         <div>
-                            <p class="profile-activity-title">Reviewed audit log retention</p>
-                            <p class="profile-field-hint">Yesterday, 1:40 PM</p>
-                        </div>
-                    </li>
-                    <li class="profile-activity-item">
-                        <span class="profile-activity-dot" aria-hidden="true"></span>
-                        <div>
                             <p class="profile-activity-title">Suspended inactive account</p>
                             <p class="profile-field-hint">Apr 29, 3:05 PM</p>
                         </div>
                     </li>
                 </ul>
 
-                <div class="profile-section-footer">
-                    <a href="{% url 'admin_audit_log' %}" class="btn dashboard-action-btn outline">View full audit log</a>
-                </div>
             </article>
         </div>
 
@@ -221,7 +210,6 @@
                 <div class="profile-chip-grid">
                     <span class="profile-chip"><i class="bi bi-check2-circle"></i> Approvals</span>
                     <span class="profile-chip"><i class="bi bi-people"></i> Bookkeepers</span>
-                    <span class="profile-chip"><i class="bi bi-clipboard-data"></i> Audit Log</span>
                     <span class="profile-chip"><i class="bi bi-gear"></i> System Settings</span>
                 </div>
             </article>

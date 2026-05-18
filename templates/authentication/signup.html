@@ -272,6 +272,14 @@
 
                     setFeedback(result.message || "Account created successfully.", "success");
 
+                    try {
+                        if (result && result.user && typeof result.user === "object") {
+                            window.localStorage.setItem("safebooks.authUser", JSON.stringify(result.user));
+                        }
+                    } catch (storageError) {
+                        // Ignore storage issues to keep signup flow stable.
+                    }
+
                     window.setTimeout(() => {
                         window.location.assign(result.redirect_url || "{% url 'login' %}");
                     }, 900);

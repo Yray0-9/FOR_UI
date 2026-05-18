@@ -3,7 +3,7 @@
         <span class="dashboard-avatar" id="dashboardUserAvatar">{{ current_user_initials|default:"SB" }}</span>
         <span class="dashboard-user-meta">
             <strong id="dashboardUserName">{{ current_user_name|default:"Bookkeeper User" }}</strong>
-            <small>Profile</small>
+            <small>{{ current_user_role_label|default:"Bookkeeper" }}</small>
         </span>
         <i class="bi bi-chevron-down"></i>
     </button>

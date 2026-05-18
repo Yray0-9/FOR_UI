@@ -3,7 +3,7 @@
 {% block page_title %}System Settings{% endblock %}
 {% block page_heading %}System Settings{% endblock %}
 {% block page_subtitle %}
-<!-- <p class="dashboard-page-subtitle">Control approvals, notifications, and admin security settings.</p> -->
+<p class="dashboard-page-subtitle">Core policies for approvals, bookkeeper access, and admin security. Preview-only controls for now.</p>
 {% endblock %}
 
 {% block content %}
@@ -12,59 +12,67 @@
         <div class="col-lg-6">
             <article class="dashboard-card admin-card h-100">
                 <div class="dashboard-card-head">
-                    <h2>Approval governance</h2>
+                    <h2>Approval workflow &amp; SLA</h2>
                 </div>
-               <!-- <p class="dashboard-panel-hint">Define how bookkeeper approvals are handled.</p> -->
-                <div class="mb-3">
-                    <label class="form-label">Default approval mode</label>
-                    <div class="d-grid gap-2">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="approvalMode" id="approvalModeManual" checked disabled>
-                            <label class="form-check-label" for="approvalModeManual">Manual approvals (recommended)</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="approvalMode" id="approvalModeAuto" disabled>
-                            <label class="form-check-label" for="approvalModeAuto">Auto-approve new bookkeepers (disabled)</label>
+                <p class="dashboard-panel-hint">Controls the Approvals queue and review actions.</p>
+                <div class="d-grid gap-3">
+                    <div>
+                        <label class="form-label">Default approval mode</label>
+                        <div class="d-grid gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="approvalMode" id="approvalModeManual" checked>
+                                <label class="form-check-label" for="approvalModeManual">Manual approvals (recommended)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="approvalMode" id="approvalModeAuto">
+                                <label class="form-check-label" for="approvalModeAuto">Auto-approve low-risk bookkeepers (planned)</label>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div>
-                    <label class="form-label" for="approvalSlaTarget">Approval SLA target</label>
-                    <select class="form-select" id="approvalSlaTarget" disabled>
-                        <option>24 hours</option>
-                        <option>48 hours</option>
-                        <option>72 hours</option>
-                    </select>
+                    <div>
+                        <label class="form-label" for="approvalSlaTarget">Approval SLA target</label>
+                        <select class="form-select" id="approvalSlaTarget">
+                            <option>24 hours</option>
+                            <option>48 hours</option>
+                            <option>72 hours</option>
+                        </select>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="requireRejectionReason" checked>
+                        <label class="form-check-label" for="requireRejectionReason">Require a rejection reason</label>
+                        <div class="form-text">Shows in the approval modal for admins only.</div>
+                    </div>
                 </div>
             </article>
         </div>
         <div class="col-lg-6">
             <article class="dashboard-card admin-card h-100">
                 <div class="dashboard-card-head">
-                    <h2>Notification preferences</h2>
+                    <h2>Bookkeeper access &amp; capacity</h2>
                 </div>
-               <!-- <p class="dashboard-panel-hint">Choose how bookkeepers are notified.</p> -->
+                <p class="dashboard-panel-hint">Aligns with actions on the Bookkeepers page.</p>
                 <div class="d-grid gap-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="notifyApprove" disabled>
-                        <label class="form-check-label" for="notifyApprove">Notify on approval</label>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="notifyReject" disabled>
-                        <label class="form-check-label" for="notifyReject">Notify on rejection</label>
+                    <div>
+                        <label class="form-label" for="inactivityWindow">Inactivity flag window</label>
+                        <select class="form-select" id="inactivityWindow">
+                            <option>30 days</option>
+                            <option>60 days</option>
+                            <option selected>90 days</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="form-label">Notification channels</label>
-                        <div class="d-flex flex-wrap gap-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="channelEmail" disabled>
-                                <label class="form-check-label" for="channelEmail">Email</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="channelInApp" disabled>
-                                <label class="form-check-label" for="channelInApp">In-app</label>
-                            </div>
-                        </div>
+                        <label class="form-label" for="clientLoadThreshold">Client load alert threshold</label>
+                        <select class="form-select" id="clientLoadThreshold">
+                            <option>80 clients</option>
+                            <option>120 clients</option>
+                            <option selected>150 clients</option>
+                            <option>200 clients</option>
+                        </select>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="requireReassignBeforeDeactivate" checked>
+                        <label class="form-check-label" for="requireReassignBeforeDeactivate">Require client reassignment before deactivation</label>
+                        <div class="form-text">Prevents orphaned clients when an account is suspended.</div>
                     </div>
                 </div>
             </article>
@@ -72,58 +80,30 @@
     </div>
 
     <div class="row g-3 mt-1">
-        <div class="col-lg-6">
+        <div class="col-12">
             <article class="dashboard-card admin-card h-100">
                 <div class="dashboard-card-head">
-                    <h2>Bookkeeper account controls</h2>
+                    <h2>Security &amp; access policy</h2>
                 </div>
-               <!-- <p class="dashboard-panel-hint">Configure inactivity and client load thresholds.</p> -->
-                <div class="d-grid gap-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="suspendInactive" disabled>
-                        <label class="form-check-label" for="suspendInactive">Suspend after inactivity</label>
-                    </div>
-                    <div>
-                        <label class="form-label" for="inactivityWindow">Inactivity window</label>
-                        <select class="form-select" id="inactivityWindow" disabled>
-                            <option>30 days</option>
-                            <option>60 days</option>
-                            <option>90 days</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label" for="clientLoadThreshold">Client load warning threshold</label>
-                        <select class="form-select" id="clientLoadThreshold" disabled>
-                            <option>15 clients</option>
-                            <option>25 clients</option>
-                            <option>40 clients</option>
-                        </select>
-                    </div>
-                </div>
-            </article>
-        </div>
-        <div class="col-lg-6">
-            <article class="dashboard-card admin-card h-100">
-                <div class="dashboard-card-head">
-                    <h2>Security &amp; access</h2>
-                </div>
-               <!-- <p class="dashboard-panel-hint">Protect admin sessions and sensitive actions.</p> -->
+                <p class="dashboard-panel-hint">Global admin safeguards. Personal preferences live in Admin Profile.</p>
                 <div class="d-grid gap-3">
                     <div>
                         <label class="form-label" for="sessionTimeout">Admin session timeout</label>
-                        <select class="form-select" id="sessionTimeout" disabled>
+                        <select class="form-select" id="sessionTimeout">
                             <option>30 minutes</option>
-                            <option>60 minutes</option>
+                            <option selected>60 minutes</option>
                             <option>120 minutes</option>
                         </select>
                     </div>
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="reauthRequired" disabled>
-                        <label class="form-check-label" for="reauthRequired">Require re-auth for high-risk actions</label>
+                        <input class="form-check-input" type="checkbox" id="reauthRequired" checked>
+                        <label class="form-check-label" for="reauthRequired">Require re-auth for critical actions</label>
+                        <div class="form-text">Applies to approvals, deactivations, and deletes.</div>
                     </div>
-                    <div>
-                        <label class="form-label" for="ipAllowlist">IP allowlist</label>
-                        <input class="form-control" type="text" id="ipAllowlist" placeholder="e.g., 192.168.1.10" disabled>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="adminLoginAlerts" checked>
+                        <label class="form-check-label" for="adminLoginAlerts">Admin login alerts</label>
+                        <div class="form-text">Send email alerts for every admin sign-in.</div>
                     </div>
                 </div>
             </article>
@@ -131,31 +111,12 @@
     </div>
 
     <div class="row g-3 mt-1">
-        <div class="col-lg-6">
-            <article class="dashboard-card admin-card h-100">
-                <div class="dashboard-card-head">
-                    <h2>Audit log retention</h2>
-                </div>
-               <!-- <p class="dashboard-panel-hint">Retention is controlled by system policy.</p> -->
-                <div class="d-grid gap-3">
-                    <div>
-                        <label class="form-label" for="auditRetention">Retention period</label>
-                        <select class="form-select" id="auditRetention" disabled>
-                            <option>90 days</option>
-                            <option>180 days</option>
-                            <option>365 days</option>
-                        </select>
-                    </div>
-                    <button type="button" class="dashboard-action-btn outline" disabled>Export audit log (disabled)</button>
-                </div>
-            </article>
-        </div>
-        <div class="col-lg-6">
+        <div class="col-12">
             <article class="dashboard-card admin-card h-100">
                 <div class="dashboard-card-head">
                     <h2>Save &amp; reset</h2>
                 </div>
-               <!-- <p class="dashboard-panel-hint">Settings are UI-only in this phase.</p> -->
+                <p class="dashboard-panel-hint">Settings are UI-only in this phase.</p>
                 <div class="dashboard-actions admin-actions">
                     <button type="button" class="dashboard-action-btn primary" data-planned-feature>Save settings</button>
                     <button type="button" class="dashboard-action-btn outline" data-planned-feature>Reset to defaults</button>

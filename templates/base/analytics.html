@@ -229,6 +229,7 @@
         const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
         const DESKTOP_QUERY = "(min-width: 992px)";
         const ANALYTICS_SUMMARY_API_URL = "{% url 'api_analytics_summary' %}";
+        const WORKSPACE_DEFAULTS_API_URL = "{% url 'api_workspace_defaults' %}";
         const LOGIN_WELCOME_KEY = "safebooks.loginWelcome";
         const AUTH_USER_KEY = "safebooks.authUser";
 
@@ -288,6 +289,24 @@
         const initialClientIdParam = initialQueryParams.get("client_id") || "";
         const initialClientIdValue = Number.parseInt(initialClientIdParam, 10);
         const initialTinParam = String(initialQueryParams.get("tin") || "").trim();
+
+        const resolveInitialClientId = (defaults) => {
+            if (Number.isFinite(initialClientIdValue) && initialClientIdValue > 0) {
+                return initialClientIdValue;
+            }
+
+            const safeDefaults = defaults && typeof defaults === "object" ? defaults : {};
+            if (String(safeDefaults.default_client_scope || "") !== "last") {
+                return null;
+            }
+
+            const lastClientId = Number.parseInt(String(safeDefaults.last_client_id || ""), 10);
+            if (!Number.isFinite(lastClientId) || lastClientId <= 0) {
+                return null;
+            }
+
+            return lastClientId;
+        };
 
         window.setTimeout(() => {
             if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
@@ -570,6 +589,67 @@
             }
 
             return shared.parseJsonSafe(response);
+        };
+
+        const fetchWorkspaceDefaults = async () => {
+            if (!WORKSPACE_DEFAULTS_API_URL) {
+                return null;
+            }
+
+            try {
+                const response = await fetch(WORKSPACE_DEFAULTS_API_URL, {
+                    method: "GET",
+                    headers: {
+                        Accept: "application/json",
+                    },
+                    credentials: "same-origin",
+                });
+
+                if (response.status === 401) {
+                    const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                    return null;
+                }
+
+                const payload = await parseJsonSafe(response);
+                if (!response.ok || !payload || !payload.ok) {
+                    throw new Error(payload && payload.message ? String(payload.message) : "Unable to load workspace defaults.");
+                }
+
+                return payload.defaults || null;
+            } catch (error) {
+                showToast("Workspace defaults could not be loaded. Using standard scope.", "warning");
+                return null;
+            }
+        };
+
+        const updateLastUsedClient = async (clientId) => {
+            const parsedClientId = Number.parseInt(String(clientId || ""), 10);
+            if (!Number.isFinite(parsedClientId) || parsedClientId <= 0 || !WORKSPACE_DEFAULTS_API_URL) {
+                return;
+            }
+
+            try {
+                const csrfToken = getCookieValue("csrftoken");
+                const headers = {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                };
+                if (csrfToken) {
+                    headers["X-CSRFToken"] = csrfToken;
+                }
+
+                await fetch(WORKSPACE_DEFAULTS_API_URL, {
+                    method: "POST",
+                    headers,
+                    credentials: "same-origin",
+                    body: JSON.stringify({
+                        last_client_id: parsedClientId,
+                    }),
+                });
+            } catch (error) {
+                // Keep analytics responsive even if defaults sync fails.
+            }
         };
 
         const buildPolylinePoints = (values, width, height, padding) => {
@@ -1008,6 +1088,7 @@
 
                 setAnalyticsLoadingState(false);
                 applyAnalyticsPayload(result);
+                updateLastUsedClient(scopeClientId);
             } catch (requestError) {
                 if (requestError && requestError.name === "AbortError") {
                     return;
@@ -1023,74 +1104,80 @@
             }
         };
 
-        sidebarState.restoreDesktopState();
-        renderTrendGrid();
-        populateClientSelector([], null);
-        applyAnalyticsFallbackState();
-        hydrateHeaderUser();
-        setTinSearchEnabled(false);
-        if (analyticsTinSearchInput && initialTinParam) {
-            analyticsTinSearchInput.value = initialTinParam;
-        }
-
-        loadAnalyticsSummaryFromApi(Number.isFinite(initialClientIdValue) ? initialClientIdValue : null);
-
-        if (analyticsClientSelect) {
-            analyticsClientSelect.addEventListener("change", () => {
-                const selectedClientId = getSelectedClientId();
-                syncTinInputForClientId(selectedClientId);
-                loadAnalyticsSummaryFromApi(selectedClientId);
-            });
-        }
-
-        if (analyticsTinSearchButton) {
-            analyticsTinSearchButton.addEventListener("click", () => {
-                handleTinSearch();
-            });
-        }
-
-        if (analyticsTinSearchInput) {
-            analyticsTinSearchInput.addEventListener("keydown", (event) => {
-                if (event.key === "Enter") {
-                    event.preventDefault();
-                    handleTinSearch();
-                }
-            });
-        }
-
-        if (dashboardProfileAction) {
-            dashboardProfileAction.addEventListener("click", (event) => {
-                event.preventDefault();
-                window.location.assign("{% url 'profile' %}");
-            });
-        }
-
-        if (dashboardLogoutAction) {
-            dashboardLogoutAction.addEventListener("click", async () => {
-                dashboardLogoutAction.disabled = true;
-
-                try {
-                    const redirectUrl = await logoutCurrentUser();
-                    showToast("Logging out...", "success");
-                    window.location.assign(redirectUrl);
-                } finally {
-                    dashboardLogoutAction.disabled = false;
-                }
-            });
-        }
-
-        plannedFeatureButtons.forEach((buttonElement) => {
-            buttonElement.addEventListener("click", (event) => {
-                event.preventDefault();
-                const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
-                showToast(`${featureLabel} is planned and will be available soon.`);
-            });
-        });
-
-        window.addEventListener("resize", () => {
-            sidebarState.closeMobileSidebar();
+        const initializeAnalyticsPage = async () => {
             sidebarState.restoreDesktopState();
-        });
+            renderTrendGrid();
+            populateClientSelector([], null);
+            applyAnalyticsFallbackState();
+            hydrateHeaderUser();
+            setTinSearchEnabled(false);
+            if (analyticsTinSearchInput && initialTinParam) {
+                analyticsTinSearchInput.value = initialTinParam;
+            }
+
+            const defaults = await fetchWorkspaceDefaults();
+            const initialClientId = resolveInitialClientId(defaults);
+            loadAnalyticsSummaryFromApi(initialClientId);
+
+            if (analyticsClientSelect) {
+                analyticsClientSelect.addEventListener("change", () => {
+                    const selectedClientId = getSelectedClientId();
+                    syncTinInputForClientId(selectedClientId);
+                    loadAnalyticsSummaryFromApi(selectedClientId);
+                });
+            }
+
+            if (analyticsTinSearchButton) {
+                analyticsTinSearchButton.addEventListener("click", () => {
+                    handleTinSearch();
+                });
+            }
+
+            if (analyticsTinSearchInput) {
+                analyticsTinSearchInput.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        handleTinSearch();
+                    }
+                });
+            }
+
+            if (dashboardProfileAction) {
+                dashboardProfileAction.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    window.location.assign("{% url 'profile' %}");
+                });
+            }
+
+            if (dashboardLogoutAction) {
+                dashboardLogoutAction.addEventListener("click", async () => {
+                    dashboardLogoutAction.disabled = true;
+
+                    try {
+                        const redirectUrl = await logoutCurrentUser();
+                        showToast("Logging out...", "success");
+                        window.location.assign(redirectUrl);
+                    } finally {
+                        dashboardLogoutAction.disabled = false;
+                    }
+                });
+            }
+
+            plannedFeatureButtons.forEach((buttonElement) => {
+                buttonElement.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    const featureLabel = String(buttonElement.dataset.plannedFeature || "This feature").trim();
+                    showToast(`${featureLabel} is planned and will be available soon.`);
+                });
+            });
+
+            window.addEventListener("resize", () => {
+                sidebarState.closeMobileSidebar();
+                sidebarState.restoreDesktopState();
+            });
+        };
+
+        initializeAnalyticsPage();
     })();
 </script>
 {% endblock %}

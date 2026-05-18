@@ -1,12 +1,220 @@
+from datetime import timedelta
+import secrets
+
+from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
-from django.utils import timezone
+from django.core.cache import cache
+from django.core.mail import send_mail
 from django.db.models import Q
+from django.utils import timezone
 
 from safebooks.models import AdminAccount, BookkeeperAccount
 from safebooks.validators.password_validator import missing_password_requirements
 
 
 AUTH_FAILURE_MESSAGE = "Invalid credentials."
+
+EMAIL_VERIFICATION_CODE_LENGTH = 6
+DEFAULT_VERIFICATION_TTL_MINUTES = 10
+DEFAULT_VERIFICATION_RESEND_COOLDOWN_SECONDS = 60
+CONSOLE_EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+FILE_EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_VERIFICATION_CACHE_PREFIX = "safebooks:email-verification"
+EMAIL_VERIFICATION_CACHE_CODE_SUFFIX = "code"
+EMAIL_VERIFICATION_CACHE_SENT_SUFFIX = "sent"
+
+
+def _get_setting_int(setting_name: str, default_value: int) -> int:
+    raw_value = getattr(settings, setting_name, None)
+    if raw_value is None:
+        return default_value
+    try:
+        return int(raw_value)
+    except (TypeError, ValueError):
+        return default_value
+
+
+def _get_verification_ttl_minutes() -> int:
+    return _get_setting_int(
+        "SAFEBOOKS_EMAIL_VERIFICATION_CODE_TTL_MINUTES",
+        DEFAULT_VERIFICATION_TTL_MINUTES,
+    )
+
+
+def _get_verification_resend_cooldown_seconds() -> int:
+    return _get_setting_int(
+        "SAFEBOOKS_EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS",
+        DEFAULT_VERIFICATION_RESEND_COOLDOWN_SECONDS,
+    )
+
+
+def _should_expose_debug_code() -> bool:
+    if not getattr(settings, "DEBUG", False):
+        return False
+
+    backend = getattr(settings, "EMAIL_BACKEND", "")
+    return backend in {CONSOLE_EMAIL_BACKEND, FILE_EMAIL_BACKEND}
+
+
+def _email_verification_cache_key(account_id: int, suffix: str) -> str:
+    return f"{EMAIL_VERIFICATION_CACHE_PREFIX}:{account_id}:{suffix}"
+
+
+def _generate_verification_code(length: int) -> str:
+    if length <= 0:
+        length = EMAIL_VERIFICATION_CODE_LENGTH
+    max_value = 10 ** length
+    return f"{secrets.randbelow(max_value):0{length}d}"
+
+
+def _build_verification_email(account: BookkeeperAccount, code: str, ttl_minutes: int) -> tuple[str, str]:
+    recipient_name = (account.full_name or "").strip() or "there"
+    subject = "SafeBooks email verification"
+    message = (
+        f"Hi {recipient_name},\n\n"
+        f"Your SafeBooks verification code is {code}.\n"
+        f"This code expires in {ttl_minutes} minutes.\n\n"
+        "If you did not create a SafeBooks account, you can ignore this message.\n\n"
+        "SafeBooks"
+    )
+    return subject, message
+
+
+def send_email_verification_code(account: BookkeeperAccount, force: bool = False) -> dict:
+    if account.email_verified:
+        return {
+            "ok": False,
+            "message": "Email is already verified.",
+        }
+
+    if account.id is None:
+        return {
+            "ok": False,
+            "message": "Unable to send verification email."
+        }
+
+    now = timezone.now()
+    now_ts = int(now.timestamp())
+    cooldown_seconds = _get_verification_resend_cooldown_seconds()
+    sent_key = _email_verification_cache_key(account.id, EMAIL_VERIFICATION_CACHE_SENT_SUFFIX)
+    last_sent_ts = cache.get(sent_key)
+    if last_sent_ts is not None:
+        try:
+            last_sent_ts = int(last_sent_ts)
+        except (TypeError, ValueError):
+            last_sent_ts = None
+
+    if not force and last_sent_ts is not None:
+        elapsed = now_ts - last_sent_ts
+        if elapsed < cooldown_seconds:
+            return {
+                "ok": False,
+                "message": "Please wait before requesting another code.",
+                "retry_after_seconds": int(cooldown_seconds - elapsed),
+            }
+
+    ttl_minutes = _get_verification_ttl_minutes()
+    code = _generate_verification_code(EMAIL_VERIFICATION_CODE_LENGTH)
+    subject, message = _build_verification_email(account, code, ttl_minutes)
+
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [account.email],
+            fail_silently=False,
+        )
+    except Exception:
+        return {
+            "ok": False,
+            "message": "Unable to send verification email. Please try again later.",
+        }
+
+    ttl_seconds = int(timedelta(minutes=ttl_minutes).total_seconds())
+    expires_ts = now_ts + ttl_seconds
+    code_key = _email_verification_cache_key(account.id, EMAIL_VERIFICATION_CACHE_CODE_SUFFIX)
+
+    cache.set(
+        code_key,
+        {"hash": make_password(code), "expires_at": expires_ts},
+        timeout=ttl_seconds,
+    )
+    cache.set(sent_key, now_ts, timeout=cooldown_seconds)
+
+    result = {
+        "ok": True,
+        "message": "Verification code sent.",
+        "retry_after_seconds": cooldown_seconds,
+    }
+
+    if _should_expose_debug_code():
+        result["debug_code"] = code
+
+    return result
+
+
+def verify_email_code(account: BookkeeperAccount, code: str) -> dict:
+    if account.email_verified:
+        return {
+            "ok": True,
+            "message": "Email is already verified.",
+        }
+
+    if account.id is None:
+        return {
+            "ok": False,
+            "message": "Unable to verify email."
+        }
+
+    code_value = str(code or "").strip()
+    if not code_value:
+        return {
+            "ok": False,
+            "message": "Verification code is required.",
+        }
+
+    code_key = _email_verification_cache_key(account.id, EMAIL_VERIFICATION_CACHE_CODE_SUFFIX)
+    sent_key = _email_verification_cache_key(account.id, EMAIL_VERIFICATION_CACHE_SENT_SUFFIX)
+    payload = cache.get(code_key)
+    if not isinstance(payload, dict):
+        return {
+            "ok": False,
+            "message": "No verification code found. Please request a new code.",
+        }
+
+    code_hash = str(payload.get("hash") or "")
+    expires_ts = payload.get("expires_at")
+    if expires_ts is not None:
+        try:
+            expires_ts = int(expires_ts)
+        except (TypeError, ValueError):
+            expires_ts = None
+
+    now_ts = int(timezone.now().timestamp())
+    if expires_ts is not None and now_ts > expires_ts:
+        cache.delete(code_key)
+        return {
+            "ok": False,
+            "message": "Verification code has expired. Request a new one.",
+            "code_expired": True,
+        }
+
+    if not code_hash or not check_password(code_value, code_hash):
+        return {
+            "ok": False,
+            "message": "Invalid verification code.",
+        }
+
+    account.email_verified = True
+    account.save(update_fields=["email_verified"])
+    cache.delete(code_key)
+    cache.delete(sent_key)
+
+    return {
+        "ok": True,
+        "message": "Email verified successfully.",
+    }
 
 
 def _looks_like_supported_hash(password_hash: str) -> bool:
@@ -71,16 +279,28 @@ def register_user(data: dict) -> dict:
         email=email,
         username=username,
         password_hash=make_password(password),
+        status=BookkeeperAccount.STATUS_PENDING,
+        email_verified=False,
     )
+
+    verification_result = send_email_verification_code(account, force=True)
+    verification_sent = verification_result.get("ok", False)
+    if verification_sent:
+        message = "Account created successfully. Verify your email to continue."
+    else:
+        message = "Account created successfully. We could not send a verification email. Please request a new code."
 
     return {
         "ok": True,
-        "message": "Account created successfully.",
+        "message": message,
+        "verification_email_sent": verification_sent,
         "user": {
             "id": account.id,
             "full_name": account.full_name,
             "email": account.email,
             "username": account.username,
+            "status": account.status,
+            "email_verified": account.email_verified,
         },
     }
 
@@ -124,6 +344,57 @@ def login_user(data: dict) -> dict:
             "errors": [AUTH_FAILURE_MESSAGE],
         }
 
+    status = account.status or BookkeeperAccount.STATUS_PENDING
+    if status == BookkeeperAccount.STATUS_REJECTED:
+        message = "Account was not approved. Contact support for help."
+        return {
+            "ok": False,
+            "message": message,
+            "errors": [message],
+            "status": status,
+        }
+
+    if status == BookkeeperAccount.STATUS_SUSPENDED:
+        message = "Account is suspended. Contact support for help."
+        return {
+            "ok": False,
+            "message": message,
+            "errors": [message],
+            "status": status,
+        }
+
+    if not account.email_verified:
+        return {
+            "ok": True,
+            "message": "Email verification required. Check your inbox for a 6-digit code.",
+            "requires_email_verification": True,
+            "user": {
+                "id": account.id,
+                "full_name": account.full_name,
+                "email": account.email,
+                "username": account.username,
+                "status": status,
+                "email_verified": False,
+            },
+        }
+
+    if status == BookkeeperAccount.STATUS_PENDING:
+        return {
+            "ok": True,
+            "message": "Account pending approval. You will get access once approved.",
+            "user": {
+                "id": account.id,
+                "full_name": account.full_name,
+                "email": account.email,
+                "username": account.username,
+                "status": status,
+                "email_verified": True,
+            },
+        }
+
+    account.last_login = timezone.now()
+    account.save(update_fields=["last_login"])
+
     return {
         "ok": True,
         "message": "Login successful.",
@@ -132,6 +403,8 @@ def login_user(data: dict) -> dict:
             "full_name": account.full_name,
             "email": account.email,
             "username": account.username,
+            "status": status,
+            "email_verified": True,
         },
     }
 

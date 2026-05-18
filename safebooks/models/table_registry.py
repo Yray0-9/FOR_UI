@@ -12,6 +12,7 @@ from .client_model import Client
 from .period_model import Period
 from .financial_record_model import FinancialRecord
 from .financial_record_line_model import FinancialRecordLine
+from .workspace_defaults_model import WorkspaceDefaults
 
 ALL_TABLE_MODELS = (
     AdminAccount,
@@ -20,4 +21,5 @@ ALL_TABLE_MODELS = (
     Period,
     FinancialRecord,
     FinancialRecordLine,
+    WorkspaceDefaults,
 )

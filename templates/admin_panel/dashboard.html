@@ -1,4 +1,5 @@
 {% extends 'admin_panel/admin_base.html' %}
+{% load static %}
 
 {% block page_title %}Admin Dashboard{% endblock %}
 {% block page_heading %}Admin Overview{% endblock %}
@@ -14,8 +15,8 @@
                 <span class="stat-icon"><i class="bi bi-people"></i></span>
                 <div>
                     <p class="stat-label">Total bookkeepers</p>
-                    <h3>N/A</h3>
-                    <p class="stat-note">Directory count pending</p>
+                    <h3 id="adminDashboardTotalBookkeepers">0</h3>
+                    <p class="stat-note">Directory count</p>
                 </div>
             </article>
         </div>
@@ -24,8 +25,8 @@
                 <span class="stat-icon"><i class="bi bi-hourglass-split"></i></span>
                 <div>
                     <p class="stat-label">Pending approvals</p>
-                    <h3>N/A</h3>
-                    <p class="stat-note">Approval feed pending</p>
+                    <h3 id="adminDashboardPendingApprovals">0</h3>
+                    <p class="stat-note">Awaiting review</p>
                 </div>
             </article>
         </div>
@@ -34,8 +35,8 @@
                 <span class="stat-icon"><i class="bi bi-person-check"></i></span>
                 <div>
                     <p class="stat-label">Active accounts</p>
-                    <h3>N/A</h3>
-                    <p class="stat-note">Status feed pending</p>
+                    <h3 id="adminDashboardActiveAccounts">0</h3>
+                    <p class="stat-note">Approved bookkeepers</p>
                 </div>
             </article>
         </div>
@@ -44,8 +45,8 @@
                 <span class="stat-icon"><i class="bi bi-bar-chart-line"></i></span>
                 <div>
                     <p class="stat-label">High client load</p>
-                    <h3>N/A</h3>
-                    <p class="stat-note">Threshold not set</p>
+                    <h3 id="adminDashboardHighLoad">0</h3>
+                    <p class="stat-note">150+ clients</p>
                 </div>
             </article>
         </div>
@@ -68,11 +69,9 @@
                                 <th scope="col">Clients</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="adminDashboardLoadTableBody">
                             <tr class="admin-table-empty">
-                                <td>No load data available yet.</td>
-                                <td>--</td>
-                                <td>--</td>
+                                <td colspan="3">No load data available yet.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -86,17 +85,17 @@
                 </div>
                <!-- <p class="dashboard-panel-hint">Account distribution by status.</p> -->
                 <ul class="admin-status-list">
-                    <li class="admin-status-item"><span>Pending</span><span class="admin-status-chip pending">0</span></li>
-                    <li class="admin-status-item"><span>Approved</span><span class="admin-status-chip approved">0</span></li>
-                    <li class="admin-status-item"><span>Suspended</span><span class="admin-status-chip suspended">0</span></li>
-                    <li class="admin-status-item"><span>Inactive</span><span class="admin-status-chip inactive">0</span></li>
+                    <li class="admin-status-item"><span>Pending</span><span class="admin-status-chip pending" id="adminDashboardStatusPending">0</span></li>
+                    <li class="admin-status-item"><span>Approved</span><span class="admin-status-chip approved" id="adminDashboardStatusApproved">0</span></li>
+                    <li class="admin-status-item"><span>Deactivated</span><span class="admin-status-chip suspended" id="adminDashboardStatusDeactivated">0</span></li>
+                    <li class="admin-status-item"><span>Inactive</span><span class="admin-status-chip inactive" id="adminDashboardStatusInactive">0</span></li>
                 </ul>
             </article>
         </div>
     </div>
 
     <div class="row g-3 mt-1">
-        <div class="col-lg-6">
+        <div class="col-lg-7">
             <article class="dashboard-card admin-card h-100">
                 <div class="dashboard-card-head">
                     <h2>Approval readiness</h2>
@@ -109,64 +108,21 @@
                             <p>New requests (&lt; 24 hours)</p>
                             <!--<small>Awaiting first review.</small>-->
                         </div>
-                        <span class="admin-status-chip pending">0</span>
+                        <span class="admin-status-chip pending" id="adminDashboardApprovalNew">0</span>
                     </li>
                     <li>
                         <div>
-                            <p>Waiting 2-7 days</p>
+                            <p>Waiting 1-7 days</p>
                             <!--<small>Follow up required.</small>-->
                         </div>
-                        <span class="admin-status-chip suspended">0</span>
+                        <span class="admin-status-chip suspended" id="adminDashboardApprovalWaiting">0</span>
                     </li>
                     <li>
                         <div>
                             <p>Waiting &gt; 7 days</p>
                             <!--<small>Escalate for review.</small>-->
                         </div>
-                        <span class="admin-status-chip inactive">0</span>
-                    </li>
-                </ul>
-            </article>
-        </div>
-        <div class="col-lg-6">
-            <article class="dashboard-card admin-card h-100">
-                <div class="dashboard-card-head">
-                    <h2>Notifications center</h2>
-                    <button type="button" class="dashboard-link-muted" data-planned-feature>View log</button>
-                </div>
-               <!-- <p class="dashboard-panel-hint">Approval decisions notify bookkeepers automatically.</p> -->
-                <div class="admin-empty-state">No notification activity yet.</div>
-            </article>
-        </div>
-    </div>
-
-    <div class="row g-3 mt-1">
-        <div class="col-lg-7">
-            <article class="dashboard-card admin-card h-100">
-                <div class="dashboard-card-head">
-                    <h2>Admin priorities</h2>
-                </div>
-                <ul class="recent-activity-list">
-                    <li>
-                        <div>
-                            <p>Review pending approvals</p>
-                            <!--<small>Approve or reject new bookkeepers.</small>-->
-                        </div>
-                        <span class="activity-pill warning">Priority</span>
-                    </li>
-                    <li>
-                        <div>
-                            <p>Follow up on suspended accounts</p>
-                            <!--<small>Confirm reactivation readiness.</small>-->
-                        </div>
-                        <span class="activity-pill">Review</span>
-                    </li>
-                    <li>
-                        <div>
-                            <p>Check high client counts</p>
-                            <!--<small>Balance workload across bookkeepers.</small>-->
-                        </div>
-                        <span class="activity-pill warning">Monitor</span>
+                        <span class="admin-status-chip inactive" id="adminDashboardApprovalOverdue">0</span>
                     </li>
                 </ul>
             </article>
@@ -187,4 +143,18 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.SafeBooksAdminDashboardConfig = {
+        urls: {
+            dashboardSummaryApi: "{% url 'api_admin_dashboard_summary' %}",
+            loginPage: "{% url 'login' %}",
+            bookkeepersPage: "{% url 'admin_bookkeepers' %}",
+            approvalsPage: "{% url 'admin_approvals' %}",
+        },
+    };
+</script>
+<script src="{% static 'js/admin_dashboard_page.js' %}"></script>
 {% endblock %}

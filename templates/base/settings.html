@@ -71,7 +71,6 @@
             <a class="settings-nav-link" href="#settingsDefaults">Workspace Defaults</a>
             <a class="settings-nav-link" href="#settingsAppearance">Appearance</a>
             <a class="settings-nav-link" href="#settingsNotifications">Notifications</a>
-            <a class="settings-nav-link" href="#settingsData">Data And Export</a>
             <a class="settings-nav-link" href="#settingsSecurity">Security</a>
             <a class="settings-nav-link" href="#settingsDanger">Danger Zone</a>
         </nav>
@@ -117,18 +116,24 @@
                 </div>
 
                 <div class="settings-section-footer">
-                    <span class="settings-save-status" data-settings-status>Not saved</span>
-                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" data-settings-save disabled>Save Defaults</button>
+                    <span class="settings-save-status" data-settings-status>Saved</span>
+                    <button
+                        type="button"
+                        class="btn dashboard-action-btn primary settings-save-btn"
+                        data-settings-save
+                        data-settings-defaults-save
+                    >
+                        Save Defaults
+                    </button>
                 </div>
             </form>
 
-            <form class="dashboard-card settings-card" id="settingsAppearance" data-settings-section>
+            <article class="dashboard-card settings-card" id="settingsAppearance" data-settings-section>
                 <div class="settings-card-head">
                     <div>
                         <h2>Appearance</h2>
-                        <p class="dashboard-section-hint">Dark mode reduces glare during long sessions.</p>
+                        <p class="dashboard-section-hint">Choose a theme that fits your workspace.</p>
                     </div>
-                    <span class="dashboard-tag">Dark Mode</span>
                 </div>
 
                 <div class="settings-appearance-grid">
@@ -138,37 +143,49 @@
                             <button type="button" class="settings-segment-btn" data-theme-value="light" aria-pressed="false">Light</button>
                             <button type="button" class="settings-segment-btn" data-theme-value="dark" aria-pressed="false">Dark</button>
                         </div>
+                        <p class="settings-field-hint" id="settingsThemeStatus">Theme set to Light.</p>
                     </div>
-                    <div class="settings-toggle-row">
-                        <div>
-                            <p class="settings-field-label">Follow System</p>
-                            <p class="settings-field-hint">Match your device appearance.</p>
+
+                    <div class="settings-toggle-list">
+                        <div class="settings-toggle-row">
+                            <div>
+                                <p class="settings-field-label">Follow system</p>
+                                <p class="settings-field-hint">Match your device appearance automatically.</p>
+                            </div>
+                            <label class="settings-switch">
+                                <input type="checkbox" id="settingsFollowSystemToggle" aria-label="Follow system appearance">
+                                <span class="settings-switch-slider"></span>
+                            </label>
                         </div>
-                        <label class="settings-switch">
-                            <input type="checkbox" id="settingsFollowSystemToggle" aria-label="Follow system appearance">
-                            <span class="settings-switch-slider"></span>
-                        </label>
+                    </div>
+
+                    <div class="settings-theme-preview">
+                        <div class="settings-theme-swatch light">
+                            <span class="settings-theme-title">Light</span>
+                            <span class="settings-theme-chip"></span>
+                        </div>
+                        <div class="settings-theme-swatch dark">
+                            <span class="settings-theme-title">Dark</span>
+                            <span class="settings-theme-chip"></span>
+                        </div>
                     </div>
                 </div>
-
-                <div class="settings-theme-preview">
-                    <div class="settings-theme-swatch light">
-                        <div class="settings-theme-title">Light</div>
-                        <div class="settings-theme-chip"></div>
-                    </div>
-                    <div class="settings-theme-swatch dark">
-                        <div class="settings-theme-title">Dark</div>
-                        <div class="settings-theme-chip"></div>
-                    </div>
-                </div>
-
-                <p class="settings-field-hint" id="settingsThemeStatus">Theme ready</p>
 
                 <div class="settings-section-footer">
-                    <span class="settings-save-status" data-settings-status>Not saved</span>
-                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" id="settingsApplyThemeButton" data-settings-save data-theme-save disabled>Apply Theme</button>
+                    <span class="settings-save-status" data-settings-status>Preview only</span>
+                    <button
+                        type="button"
+                        class="btn dashboard-action-btn primary settings-save-btn"
+                        id="settingsApplyThemeButton"
+                        data-settings-save
+                        data-theme-save
+                        disabled
+                        aria-disabled="true"
+                    >
+                        Apply Theme
+                    </button>
                 </div>
-            </form>
+            </article>
 
             <form class="dashboard-card settings-card" id="settingsNotifications" data-settings-section>
                 <div class="settings-card-head">
@@ -222,43 +239,8 @@
                 </div>
 
                 <div class="settings-section-footer">
-                    <span class="settings-save-status" data-settings-status>Not saved</span>
-                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" data-settings-save disabled>Save Notifications</button>
-                </div>
-            </form>
-
-            <form class="dashboard-card settings-card" id="settingsData" data-settings-section>
-                <div class="settings-card-head">
-                    <div>
-                        <h2>Data And Export</h2>
-                        <p class="dashboard-section-hint">Control how SafeBooks prepares exports.</p>
-                    </div>
-                </div>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="settings-field-label" for="settingsExportFormat">Default Export Format</label>
-                        <select id="settingsExportFormat" class="form-select settings-select">
-                            <option value="csv">CSV</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="settings-field-label" for="settingsHistoryRetention">Report History Retention</label>
-                        <select id="settingsHistoryRetention" class="form-select settings-select">
-                            <option value="session">This session only</option>
-                            <option value="7">7 days</option>
-                            <option value="30">30 days</option>
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <label class="settings-field-label">Download Location</label>
-                        <div class="settings-readonly-pill">Uses your browser default downloads folder.</div>
-                    </div>
-                </div>
-
-                <div class="settings-section-footer">
-                    <span class="settings-save-status" data-settings-status>Not saved</span>
-                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" data-settings-save disabled>Save Data Preferences</button>
+                    <span class="settings-save-status" data-settings-status>Preview only</span>
+                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" data-planned-feature="Save notifications">Save Notifications</button>
                 </div>
             </form>
 
@@ -300,19 +282,20 @@
                 <div class="settings-card-head">
                     <div>
                         <h2>Danger Zone</h2>
-                        <p class="dashboard-section-hint">This action will be available after defense.</p>
+                        <p class="dashboard-section-hint">Account deactivation requests are reviewed by an admin.</p>
                     </div>
-                    <span class="dashboard-tag">Planned</span>
+                    <span class="dashboard-tag">Review Required</span>
                 </div>
 
                 <div class="settings-planned-row">
                     <div>
-                        <p class="settings-field-label">Delete Account</p>
-                        <p class="settings-field-hint">Permanently remove your account.</p>
+                        <p class="settings-field-label">Request account deactivation</p>
+                        <p class="settings-field-hint">Submit a request to disable this account. Admin approval required.</p>
                     </div>
-                    <button type="button" class="btn dashboard-action-btn outline settings-planned-btn" data-planned-feature="Delete account" aria-disabled="true">Delete Account</button>
+                    <button type="button" class="btn dashboard-action-btn outline settings-planned-btn" data-planned-feature="Request account deactivation">Request Deactivation</button>
                 </div>
             </article>
+
         </div>
     </div>
 </section>
@@ -325,7 +308,8 @@
             logoutApi: "{% url 'api_logout' %}",
             loginPage: "{% url 'login' %}",
             settingsPage: "{% url 'settings' %}",
-            profilePage: "{% url 'profile' %}"
+            profilePage: "{% url 'profile' %}",
+            workspaceDefaultsApi: "{% url 'api_workspace_defaults' %}"
         },
         sidebarStateKey: "safebooks.sidebarCollapsed",
         desktopQuery: "(min-width: 992px)",

@@ -1637,7 +1637,7 @@ body.sidebar-collapsed .dashboard-landing-link span {
     background: #ffffff;
     padding: 0.32rem;
     box-shadow: 0 14px 24px rgba(18, 49, 112, 0.14);
-    min-width: 180px;
+    min-width: 150px;
 }
 
 .dashboard-profile-menu .dropdown-item {
@@ -3767,6 +3767,12 @@ body.dashboard-page.admin-console .dashboard-link-muted:focus-visible {
     border-color: #5eead4;
 }
 
+.admin-status-chip.rejected {
+    background: #fff1f3;
+    color: #b91c1c;
+    border-color: #f7b5c1;
+}
+
 .admin-status-chip.suspended {
     background: #fee2e2;
     color: #b91c1c;
@@ -3832,6 +3838,11 @@ body.dashboard-page.admin-console .dashboard-link-muted:focus-visible {
     opacity: 0.85;
 }
 
+.admin-action-btn.is-enabled {
+    cursor: pointer;
+    opacity: 1;
+}
+
 .admin-action-btn.approve {
     background: #eef4ff;
     border-color: #b8cdf5;
@@ -3844,7 +3855,19 @@ body.dashboard-page.admin-console .dashboard-link-muted:focus-visible {
     color: #b23a4d;
 }
 
+.admin-action-btn.delete {
+    background: #ffecef;
+    border-color: #f2a8b5;
+    color: #9c2e42;
+}
+
 .admin-action-btn.suspend {
+    background: #fff0dc;
+    border-color: #f0b456;
+    color: #a46200;
+}
+
+.admin-action-btn.deactivate {
     background: #fff0dc;
     border-color: #f0b456;
     color: #a46200;

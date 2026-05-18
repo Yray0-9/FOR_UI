@@ -17,7 +17,6 @@
         <a href="{% url 'admin_dashboard' %}" class="dashboard-nav-item{% if active_admin_nav == 'dashboard' %} active{% endif %}"{% if active_admin_nav == 'dashboard' %} aria-current="page"{% endif %}><i class="bi bi-speedometer2"></i><span>Admin Home</span></a>
         <a href="{% url 'admin_bookkeepers' %}" class="dashboard-nav-item{% if active_admin_nav == 'bookkeepers' %} active{% endif %}"{% if active_admin_nav == 'bookkeepers' %} aria-current="page"{% endif %}><i class="bi bi-people"></i><span>Bookkeepers</span></a>
         <a href="{% url 'admin_approvals' %}" class="dashboard-nav-item{% if active_admin_nav == 'approvals' %} active{% endif %}"{% if active_admin_nav == 'approvals' %} aria-current="page"{% endif %}><i class="bi bi-check2-circle"></i><span>Approvals</span></a>
-        <a href="{% url 'admin_audit_log' %}" class="dashboard-nav-item{% if active_admin_nav == 'audit_log' %} active{% endif %}"{% if active_admin_nav == 'audit_log' %} aria-current="page"{% endif %}><i class="bi bi-clipboard-data"></i><span>Audit Log</span></a>
         <a href="{% url 'admin_system_settings' %}" class="dashboard-nav-item{% if active_admin_nav == 'system_settings' %} active{% endif %}"{% if active_admin_nav == 'system_settings' %} aria-current="page"{% endif %}><i class="bi bi-gear"></i><span>System Settings</span></a>
     </nav>
 

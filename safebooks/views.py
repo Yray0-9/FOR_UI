@@ -2,6 +2,7 @@ import json
 from functools import wraps
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -10,7 +11,12 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST
 
 from safebooks.models import AdminAccount, BookkeeperAccount
-from safebooks.services.auth_service import login_user_or_admin, register_user
+from safebooks.services.auth_service import (
+    login_user_or_admin,
+    register_user,
+    send_email_verification_code,
+    verify_email_code,
+)
 from safebooks.services.client_service import (
     create_client_for_bookkeeper,
     delete_client_for_bookkeeper,
@@ -27,6 +33,22 @@ from safebooks.services.financial_record_service import (
 )
 from safebooks.services.dashboard_service import get_dashboard_summary_for_bookkeeper
 from safebooks.services.analytics_service import get_analytics_summary_for_bookkeeper
+from safebooks.services.settings_service import (
+    get_workspace_defaults_for_bookkeeper,
+    update_workspace_defaults_for_bookkeeper,
+)
+from safebooks.services.admin_approvals_service import (
+    approve_bookkeeper,
+    reject_bookkeeper,
+    list_admin_approvals,
+)
+from safebooks.services.admin_bookkeepers_service import (
+    list_admin_bookkeepers,
+    deactivate_bookkeeper,
+    reactivate_bookkeeper,
+    delete_bookkeeper_account,
+)
+from safebooks.services.admin_dashboard_service import get_admin_dashboard_summary
 
 
 SESSION_BOOKKEEPER_ID_KEY = "safebooks_bookkeeper_id"
@@ -110,6 +132,20 @@ def _build_user_context(account):
     }
 
 
+def _mask_email_address(email: str) -> str:
+    normalized = str(email or "").strip()
+    if not normalized or "@" not in normalized:
+        return normalized
+
+    local_part, domain = normalized.split("@", 1)
+    if len(local_part) <= 2:
+        masked_local = f"{local_part[:1]}*" if local_part else "*"
+    else:
+        masked_local = f"{local_part[0]}{'*' * (len(local_part) - 2)}{local_part[-1]}"
+
+    return f"{masked_local}@{domain}"
+
+
 def _resolve_post_login_redirect(request, payload):
     default_redirect = reverse("dashboard")
     candidate = str(payload.get("next_url", "")).strip()
@@ -178,6 +214,61 @@ def require_bookkeeper_auth(view_func):
 
             return redirect(login_url)
 
+        status = account.status or BookkeeperAccount.STATUS_PENDING
+        pending_path = reverse("pending_approval")
+
+        if status in {BookkeeperAccount.STATUS_REJECTED, BookkeeperAccount.STATUS_SUSPENDED}:
+            request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
+            request.session.modified = True
+
+            if _is_api_request(request):
+                return JsonResponse(
+                    {"ok": False, "message": "Account not active."},
+                    status=403,
+                )
+
+            return redirect("login")
+
+        verify_email_path = reverse("verify_email")
+        verify_api_path = reverse("api_verify_email")
+        resend_api_path = reverse("api_resend_verification")
+        logout_api_path = reverse("api_logout")
+        allowed_unverified_paths = {
+            verify_email_path,
+            verify_api_path,
+            resend_api_path,
+            logout_api_path,
+        }
+
+        if not getattr(account, "email_verified", True):
+            if request.path in allowed_unverified_paths:
+                request.bookkeeper_account = account
+                return view_func(request, *args, **kwargs)
+
+            if _is_api_request(request):
+                return JsonResponse(
+                    {"ok": False, "message": "Email verification required."},
+                    status=403,
+                )
+
+            return redirect("verify_email")
+
+        if status == BookkeeperAccount.STATUS_PENDING:
+            if request.path == pending_path:
+                request.bookkeeper_account = account
+                return view_func(request, *args, **kwargs)
+
+            if _is_api_request(request):
+                return JsonResponse(
+                    {"ok": False, "message": "Approval required."},
+                    status=403,
+                )
+
+            return redirect("pending_approval")
+
+        if status == BookkeeperAccount.STATUS_APPROVED and request.path == pending_path:
+            return redirect("dashboard")
+
         request.bookkeeper_account = account
         return view_func(request, *args, **kwargs)
 
@@ -243,7 +334,17 @@ def home_page_view(request):
     if _get_session_admin(request):
         return redirect("admin_dashboard")
 
-    if _get_session_bookkeeper(request):
+    bookkeeper_account = _get_session_bookkeeper(request)
+    if bookkeeper_account:
+        if not bookkeeper_account.email_verified:
+            return redirect("verify_email")
+        status = bookkeeper_account.status or BookkeeperAccount.STATUS_PENDING
+        if status == BookkeeperAccount.STATUS_PENDING:
+            return redirect("pending_approval")
+        if status in {BookkeeperAccount.STATUS_REJECTED, BookkeeperAccount.STATUS_SUSPENDED}:
+            request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
+            request.session.modified = True
+            return redirect("login")
         return redirect("dashboard")
 
     return render(request, "authentication/landing.html")
@@ -253,7 +354,17 @@ def login_page_view(request):
     if _get_session_admin(request):
         return redirect("admin_dashboard")
 
-    if _get_session_bookkeeper(request):
+    bookkeeper_account = _get_session_bookkeeper(request)
+    if bookkeeper_account:
+        if not bookkeeper_account.email_verified:
+            return redirect("verify_email")
+        status = bookkeeper_account.status or BookkeeperAccount.STATUS_PENDING
+        if status == BookkeeperAccount.STATUS_PENDING:
+            return redirect("pending_approval")
+        if status in {BookkeeperAccount.STATUS_REJECTED, BookkeeperAccount.STATUS_SUSPENDED}:
+            request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
+            request.session.modified = True
+            return render(request, "authentication/login.html")
         return redirect("dashboard")
 
     return render(request, "authentication/login.html")
@@ -263,7 +374,17 @@ def signup_page_view(request):
     if _get_session_admin(request):
         return redirect("admin_dashboard")
 
-    if _get_session_bookkeeper(request):
+    bookkeeper_account = _get_session_bookkeeper(request)
+    if bookkeeper_account:
+        if not bookkeeper_account.email_verified:
+            return redirect("verify_email")
+        status = bookkeeper_account.status or BookkeeperAccount.STATUS_PENDING
+        if status == BookkeeperAccount.STATUS_PENDING:
+            return redirect("pending_approval")
+        if status in {BookkeeperAccount.STATUS_REJECTED, BookkeeperAccount.STATUS_SUSPENDED}:
+            request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
+            request.session.modified = True
+            return render(request, "authentication/signup.html")
         return redirect("dashboard")
 
     return render(request, "authentication/signup.html")
@@ -319,6 +440,42 @@ def reports_page_view(request):
 
 @require_bookkeeper_auth
 @ensure_csrf_cookie
+def pending_approval_page_view(request):
+    context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = ""
+    return render(request, "authentication/pending_approval.html", context)
+
+
+@require_bookkeeper_auth
+@ensure_csrf_cookie
+def verify_email_page_view(request):
+    account = request.bookkeeper_account
+    if getattr(account, "email_verified", True):
+        status = account.status or BookkeeperAccount.STATUS_PENDING
+        if status == BookkeeperAccount.STATUS_PENDING:
+            return redirect("pending_approval")
+        if status == BookkeeperAccount.STATUS_APPROVED:
+            return redirect("dashboard")
+
+    context = _build_user_context(account)
+    context["active_nav"] = ""
+    context["verification_email"] = account.email
+    context["verification_email_masked"] = _mask_email_address(account.email)
+    context["verification_resend_cooldown_seconds"] = getattr(
+        settings,
+        "SAFEBOOKS_EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS",
+        60,
+    )
+    email_backend = getattr(settings, "EMAIL_BACKEND", "")
+    if settings.DEBUG and email_backend == "django.core.mail.backends.console.EmailBackend":
+        context["verification_delivery_hint"] = (
+            "Dev note: verification emails are printed in the server console."
+        )
+    return render(request, "authentication/email_verification.html", context)
+
+
+@require_bookkeeper_auth
+@ensure_csrf_cookie
 def settings_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
     context["active_nav"] = "settings"
@@ -359,14 +516,6 @@ def admin_approvals_page_view(request):
 
 @require_admin_auth
 @ensure_csrf_cookie
-def admin_audit_log_page_view(request):
-    context = _build_admin_context(request.admin_account)
-    context["active_admin_nav"] = "audit_log"
-    return render(request, "admin_panel/audit_log.html", context)
-
-
-@require_admin_auth
-@ensure_csrf_cookie
 def admin_system_settings_page_view(request):
     context = _build_admin_context(request.admin_account)
     context["active_admin_nav"] = "system_settings"
@@ -402,6 +551,41 @@ def _resolve_analytics_error_status(result):
     if message == "Client not found.":
         return 404
     return 400
+
+
+def _resolve_admin_approval_error_status(result):
+    message = result.get("message", "")
+    if message == "Bookkeeper not found.":
+        return 404
+    return 400
+
+
+def _resolve_admin_bookkeeper_error_status(result):
+    message = result.get("message", "")
+    if message == "Bookkeeper not found.":
+        return 404
+    return 400
+
+
+@require_http_methods(["GET", "POST"])
+@require_bookkeeper_auth
+def workspace_defaults_api_view(request):
+    if request.method == "GET":
+        result = get_workspace_defaults_for_bookkeeper(request.bookkeeper_account)
+        return JsonResponse(result)
+
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = update_workspace_defaults_for_bookkeeper(request.bookkeeper_account, payload)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
 
 
 @require_http_methods(["GET", "POST"])
@@ -484,6 +668,100 @@ def analytics_summary_api_view(request):
         return JsonResponse(result)
 
     return JsonResponse(result, status=_resolve_analytics_error_status(result))
+
+
+@require_http_methods(["GET"])
+@require_admin_auth
+def admin_approvals_api_view(request):
+    status_value = (request.GET.get("status") or "").strip()
+    search_value = (request.GET.get("search") or "").strip()
+    sort_value = (request.GET.get("sort") or "").strip()
+
+    result = list_admin_approvals(
+        request.admin_account,
+        status_value,
+        search_value,
+        sort_value,
+    )
+    return JsonResponse(result)
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_approvals_approve_api_view(request, bookkeeper_id):
+    result = approve_bookkeeper(request.admin_account, bookkeeper_id)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=_resolve_admin_approval_error_status(result))
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_approvals_reject_api_view(request, bookkeeper_id):
+    payload = _decode_request_data(request) or {}
+    rejection_reason = payload.get("rejection_reason") or payload.get("reason")
+
+    result = reject_bookkeeper(request.admin_account, bookkeeper_id, rejection_reason)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=_resolve_admin_approval_error_status(result))
+
+
+@require_http_methods(["GET"])
+@require_admin_auth
+def admin_bookkeepers_api_view(request):
+    status_value = (request.GET.get("status") or "").strip()
+    search_value = (request.GET.get("search") or "").strip()
+    sort_value = (request.GET.get("sort") or "").strip()
+    clients_value = (request.GET.get("clients") or "").strip()
+
+    result = list_admin_bookkeepers(
+        request.admin_account,
+        status_value,
+        search_value,
+        sort_value,
+        clients_value,
+    )
+    return JsonResponse(result)
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_bookkeepers_deactivate_api_view(request, bookkeeper_id):
+    result = deactivate_bookkeeper(request.admin_account, bookkeeper_id)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=_resolve_admin_bookkeeper_error_status(result))
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_bookkeepers_reactivate_api_view(request, bookkeeper_id):
+    result = reactivate_bookkeeper(request.admin_account, bookkeeper_id)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=_resolve_admin_bookkeeper_error_status(result))
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_bookkeepers_delete_api_view(request, bookkeeper_id):
+    result = delete_bookkeeper_account(request.admin_account, bookkeeper_id)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=_resolve_admin_bookkeeper_error_status(result))
+
+
+@require_http_methods(["GET"])
+@require_admin_auth
+def admin_dashboard_summary_api_view(request):
+    result = get_admin_dashboard_summary(request.admin_account)
+    return JsonResponse(result)
 
 
 @require_http_methods(["GET"])
@@ -580,7 +858,14 @@ def register_view(request):
 
     result = register_user(payload)
     if result.get("ok"):
-        result["redirect_url"] = reverse("login")
+        user_payload = result.get("user") or {}
+        account_id = user_payload.get("id")
+        if account_id:
+            request.session[SESSION_BOOKKEEPER_ID_KEY] = account_id
+            request.session.pop(SESSION_ADMIN_ID_KEY, None)
+            request.session.modified = True
+
+        result["redirect_url"] = reverse("verify_email")
         return JsonResponse(result, status=201)
 
     error_message = result.get("message", "Unable to register account.")
@@ -610,11 +895,28 @@ def login_view(request):
             request.session.modified = True
             result["redirect_url"] = reverse("admin_dashboard")
         else:
+            status = user_payload.get("status") or BookkeeperAccount.STATUS_APPROVED
+            email_verified = user_payload.get("email_verified", True)
             if account_id:
                 request.session[SESSION_BOOKKEEPER_ID_KEY] = account_id
                 request.session.pop(SESSION_ADMIN_ID_KEY, None)
                 request.session.modified = True
-            result["redirect_url"] = _resolve_post_login_redirect(request, payload)
+
+            if not email_verified:
+                result["redirect_url"] = reverse("verify_email")
+                if account_id:
+                    account = BookkeeperAccount.objects.filter(id=account_id).first()
+                    if account:
+                        verification_result = send_email_verification_code(account, force=False)
+                        result["verification_email_sent"] = verification_result.get("ok", False)
+                        if "retry_after_seconds" in verification_result:
+                            result["verification_retry_after_seconds"] = verification_result["retry_after_seconds"]
+                return JsonResponse(result)
+
+            if status == BookkeeperAccount.STATUS_PENDING:
+                result["redirect_url"] = reverse("pending_approval")
+            else:
+                result["redirect_url"] = _resolve_post_login_redirect(request, payload)
         return JsonResponse(result)
 
     error_message = result.get("message", "Unable to login.")
@@ -623,6 +925,42 @@ def login_view(request):
 
     # Keep expected auth failures as normal API responses to avoid noisy server warnings.
     return JsonResponse(result)
+
+
+@require_POST
+@require_bookkeeper_auth
+def resend_email_verification_api_view(request):
+    result = send_email_verification_code(request.bookkeeper_account, force=False)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    status_code = 400
+    if "retry_after_seconds" in result:
+        status_code = 429
+    return JsonResponse(result, status=status_code)
+
+
+@require_POST
+@require_bookkeeper_auth
+def verify_email_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    code = payload.get("code") or payload.get("verification_code")
+    result = verify_email_code(request.bookkeeper_account, code)
+    if result.get("ok"):
+        status = request.bookkeeper_account.status or BookkeeperAccount.STATUS_PENDING
+        if status == BookkeeperAccount.STATUS_PENDING:
+            result["redirect_url"] = reverse("pending_approval")
+        else:
+            result["redirect_url"] = reverse("dashboard")
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
 
 
 @require_POST

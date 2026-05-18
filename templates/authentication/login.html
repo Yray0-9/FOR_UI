@@ -160,8 +160,14 @@
                 }
 
                 loginFeedback.textContent = message;
-                loginFeedback.classList.remove("d-none", "alert-success", "alert-danger");
-                loginFeedback.classList.add(level === "success" ? "alert-success" : "alert-danger");
+                loginFeedback.classList.remove("d-none", "alert-success", "alert-danger", "alert-warning");
+                if (level === "success") {
+                    loginFeedback.classList.add("alert-success");
+                } else if (level === "warning") {
+                    loginFeedback.classList.add("alert-warning");
+                } else {
+                    loginFeedback.classList.add("alert-danger");
+                }
             };
 
             const setSubmittingState = (isSubmitting) => {
@@ -215,7 +221,10 @@
                         return;
                     }
 
-                    setFeedback(result.message || "Login successful.", "success");
+                    const isPending = result && result.user && result.user.status === "pending";
+                    const isEmailUnverified = result && result.user && result.user.email_verified === false;
+                    const showWarning = isPending || isEmailUnverified;
+                    setFeedback(result.message || "Login successful.", showWarning ? "warning" : "success");
                     redirecting = true;
 
                     try {
@@ -223,21 +232,23 @@
                             window.localStorage.setItem("safebooks.authUser", JSON.stringify(result.user));
                         }
 
-                        const fullName = result && result.user && typeof result.user.full_name === "string"
-                            ? result.user.full_name.trim()
-                            : "";
-                        const safeFirstName = fullName ? fullName.split(" ")[0] : "";
-                        const welcomeMessage = safeFirstName
-                            ? `Welcome back, ${safeFirstName}. Login successful.`
-                            : "Welcome back. Login successful.";
+                        if (!showWarning) {
+                            const fullName = result && result.user && typeof result.user.full_name === "string"
+                                ? result.user.full_name.trim()
+                                : "";
+                            const safeFirstName = fullName ? fullName.split(" ")[0] : "";
+                            const welcomeMessage = safeFirstName
+                                ? `Welcome back, ${safeFirstName}. Login successful.`
+                                : "Welcome back. Login successful.";
 
-                        window.sessionStorage.setItem(
-                            "safebooks.loginWelcome",
-                            JSON.stringify({
-                                message: welcomeMessage,
-                                created_at: Date.now()
-                            })
-                        );
+                            window.sessionStorage.setItem(
+                                "safebooks.loginWelcome",
+                                JSON.stringify({
+                                    message: welcomeMessage,
+                                    created_at: Date.now()
+                                })
+                            );
+                        }
                     } catch (storageError) {
                         // Keep login flow stable even if session storage is unavailable.
                     }
