@@ -289,9 +289,18 @@
         const initialClientIdParam = initialQueryParams.get("client_id") || "";
         const initialClientIdValue = Number.parseInt(initialClientIdParam, 10);
         const initialTinParam = String(initialQueryParams.get("tin") || "").trim();
+        const FORCE_SCOPE_PARAM = "force_scope";
+        const initialForceScopeParam = String(initialQueryParams.get(FORCE_SCOPE_PARAM) || "")
+            .trim()
+            .toLowerCase();
+        let analyticsScopeForced = initialForceScopeParam === "1"
+            || initialForceScopeParam === "true"
+            || initialForceScopeParam === "yes";
+        const PENDING_LAST_CLIENT_KEY = "safebooks.pendingLastClientId";
+        let workspaceDefaultScope = "all";
 
-        const resolveInitialClientId = (defaults) => {
-            if (Number.isFinite(initialClientIdValue) && initialClientIdValue > 0) {
+        const resolveInitialClientId = (defaults, forceScope) => {
+            if (forceScope && Number.isFinite(initialClientIdValue) && initialClientIdValue > 0) {
                 return initialClientIdValue;
             }
 
@@ -549,6 +558,7 @@
                 nextUrl.searchParams.delete("client");
                 nextUrl.searchParams.delete("tin");
                 nextUrl.searchParams.delete("trade");
+                nextUrl.searchParams.delete(FORCE_SCOPE_PARAM);
             } else {
                 const clientId = Number.parseInt(String(safeScope.client_id || ""), 10);
                 const clientName = String(safeScope.client_name || "").trim();
@@ -578,6 +588,12 @@
                 } else {
                     nextUrl.searchParams.delete("trade");
                 }
+
+                if (analyticsScopeForced) {
+                    nextUrl.searchParams.set(FORCE_SCOPE_PARAM, "1");
+                } else {
+                    nextUrl.searchParams.delete(FORCE_SCOPE_PARAM);
+                }
             }
 
             window.history.replaceState({}, "", `${nextUrl.pathname}${nextUrl.search}`);
@@ -589,6 +605,85 @@
             }
 
             return shared.parseJsonSafe(response);
+        };
+
+        const readPendingLastClientId = () => {
+            try {
+                const rawValue = window.localStorage.getItem(PENDING_LAST_CLIENT_KEY) || "";
+                if (!rawValue) {
+                    return null;
+                }
+
+                const parsedValue = Number.parseInt(rawValue, 10);
+                if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+                    return null;
+                }
+
+                return parsedValue;
+            } catch (error) {
+                return null;
+            }
+        };
+
+        const storePendingLastClientId = (clientId) => {
+            try {
+                window.localStorage.setItem(PENDING_LAST_CLIENT_KEY, String(clientId));
+            } catch (error) {
+                // Ignore storage errors to keep analytics responsive.
+            }
+        };
+
+        const clearPendingLastClientId = () => {
+            try {
+                window.localStorage.removeItem(PENDING_LAST_CLIENT_KEY);
+            } catch (error) {
+                // Ignore storage errors to keep analytics responsive.
+            }
+        };
+
+        const sendLastUsedClient = async (clientId) => {
+            if (!WORKSPACE_DEFAULTS_API_URL) {
+                return false;
+            }
+
+            const csrfToken = getCookieValue("csrftoken");
+            const headers = {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            };
+            if (csrfToken) {
+                headers["X-CSRFToken"] = csrfToken;
+            }
+
+            try {
+                const response = await fetch(WORKSPACE_DEFAULTS_API_URL, {
+                    method: "POST",
+                    headers,
+                    credentials: "same-origin",
+                    keepalive: true,
+                    body: JSON.stringify({
+                        last_client_id: clientId,
+                    }),
+                });
+
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        };
+
+        const syncPendingLastClient = async () => {
+            const pendingId = readPendingLastClientId();
+            if (!pendingId) {
+                return null;
+            }
+
+            const success = await sendLastUsedClient(pendingId);
+            if (success) {
+                clearPendingLastClientId();
+            }
+
+            return pendingId;
         };
 
         const fetchWorkspaceDefaults = async () => {
@@ -625,30 +720,14 @@
 
         const updateLastUsedClient = async (clientId) => {
             const parsedClientId = Number.parseInt(String(clientId || ""), 10);
-            if (!Number.isFinite(parsedClientId) || parsedClientId <= 0 || !WORKSPACE_DEFAULTS_API_URL) {
+            if (!Number.isFinite(parsedClientId) || parsedClientId <= 0) {
                 return;
             }
 
-            try {
-                const csrfToken = getCookieValue("csrftoken");
-                const headers = {
-                    Accept: "application/json",
-                    "Content-Type": "application/json",
-                };
-                if (csrfToken) {
-                    headers["X-CSRFToken"] = csrfToken;
-                }
-
-                await fetch(WORKSPACE_DEFAULTS_API_URL, {
-                    method: "POST",
-                    headers,
-                    credentials: "same-origin",
-                    body: JSON.stringify({
-                        last_client_id: parsedClientId,
-                    }),
-                });
-            } catch (error) {
-                // Keep analytics responsive even if defaults sync fails.
+            storePendingLastClientId(parsedClientId);
+            const success = await sendLastUsedClient(parsedClientId);
+            if (success) {
+                clearPendingLastClientId();
             }
         };
 
@@ -1019,6 +1098,7 @@
                 if (analyticsClientSelect) {
                     analyticsClientSelect.value = "all";
                 }
+                analyticsScopeForced = false;
                 loadAnalyticsSummaryFromApi(null);
                 return;
             }
@@ -1038,6 +1118,7 @@
             if (analyticsClientSelect) {
                 analyticsClientSelect.value = String(matchedClientId);
             }
+            analyticsScopeForced = true;
             syncTinInputForClientId(matchedClientId);
             loadAnalyticsSummaryFromApi(matchedClientId);
         };
@@ -1088,7 +1169,12 @@
 
                 setAnalyticsLoadingState(false);
                 applyAnalyticsPayload(result);
-                updateLastUsedClient(scopeClientId);
+                const shouldUpdateLastUsed = Number.isFinite(scopeClientId)
+                    && scopeClientId > 0
+                    && (analyticsScopeForced || workspaceDefaultScope === "last");
+                if (shouldUpdateLastUsed) {
+                    updateLastUsedClient(scopeClientId);
+                }
             } catch (requestError) {
                 if (requestError && requestError.name === "AbortError") {
                     return;
@@ -1116,12 +1202,21 @@
             }
 
             const defaults = await fetchWorkspaceDefaults();
-            const initialClientId = resolveInitialClientId(defaults);
+            workspaceDefaultScope = String((defaults && defaults.default_client_scope) || "all").toLowerCase();
+            const pendingClientId = await syncPendingLastClient();
+            if (pendingClientId && defaults && typeof defaults === "object") {
+                defaults.last_client_id = pendingClientId;
+            }
+            const initialClientId = resolveInitialClientId(defaults, analyticsScopeForced);
+            if (analyticsScopeForced && (!Number.isFinite(initialClientId) || initialClientId <= 0)) {
+                analyticsScopeForced = false;
+            }
             loadAnalyticsSummaryFromApi(initialClientId);
 
             if (analyticsClientSelect) {
                 analyticsClientSelect.addEventListener("change", () => {
                     const selectedClientId = getSelectedClientId();
+                    analyticsScopeForced = Boolean(selectedClientId);
                     syncTinInputForClientId(selectedClientId);
                     loadAnalyticsSummaryFromApi(selectedClientId);
                 });

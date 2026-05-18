@@ -806,6 +806,7 @@
             params.set("client", clientData.clientName || "");
             params.set("tin", clientData.tin || "");
             params.set("trade", clientData.tradeName || "");
+            params.set("force_scope", "1");
             return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
         };
 

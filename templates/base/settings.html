@@ -109,6 +109,14 @@
                             <option value="custom">Custom</option>
                         </select>
                     </div>
+                    <div class="col-md-6" data-custom-range-field hidden>
+                        <label class="settings-field-label" for="settingsDefaultRangeFrom">Custom Range From</label>
+                        <input type="date" id="settingsDefaultRangeFrom" class="form-control settings-input" placeholder="YYYY-MM-DD">
+                    </div>
+                    <div class="col-md-6" data-custom-range-field hidden>
+                        <label class="settings-field-label" for="settingsDefaultRangeTo">Custom Range To</label>
+                        <input type="date" id="settingsDefaultRangeTo" class="form-control settings-input" placeholder="YYYY-MM-DD">
+                    </div>
                     <div class="col-md-6">
                         <label class="settings-field-label">Currency Display</label>
                         <div class="settings-readonly-pill">PHP</div>
@@ -160,11 +168,11 @@
                     </div>
 
                     <div class="settings-theme-preview">
-                        <div class="settings-theme-swatch light">
+                        <div class="settings-theme-swatch light" data-theme-swatch="light">
                             <span class="settings-theme-title">Light</span>
                             <span class="settings-theme-chip"></span>
                         </div>
-                        <div class="settings-theme-swatch dark">
+                        <div class="settings-theme-swatch dark" data-theme-swatch="dark">
                             <span class="settings-theme-title">Dark</span>
                             <span class="settings-theme-chip"></span>
                         </div>

@@ -52,6 +52,8 @@ class WorkspaceDefaults(models.Model):
         choices=REPORT_RANGE_CHOICES,
         default=REPORT_RANGE_YTD,
     )
+    default_report_range_from = models.DateField(null=True, blank=True)
+    default_report_range_to = models.DateField(null=True, blank=True)
     last_client = models.ForeignKey(
         Client,
         on_delete=models.SET_NULL,

@@ -272,6 +272,11 @@
     background: #f8fbff;
 }
 
+.settings-theme-swatch.is-active {
+    border-color: #1f5ed9;
+    box-shadow: 0 0 0 2px rgba(31, 94, 217, 0.18);
+}
+
 .settings-theme-swatch.light {
     background: linear-gradient(140deg, #ffffff 0%, #f3f7ff 55%, #eef4ff 100%);
 }
@@ -411,6 +416,11 @@ body.theme-dark .settings-switch-slider {
 body.theme-dark .settings-theme-swatch {
     border-color: #25344f;
     background: #101a2c;
+}
+
+body.theme-dark .settings-theme-swatch.is-active {
+    border-color: #5b8cff;
+    box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.22);
 }
 
 body.theme-dark .settings-theme-swatch.light {

@@ -517,6 +517,7 @@
             params.set("client", clientContext.name || "");
             params.set("tin", clientContext.tin || "");
             params.set("trade", clientContext.tradeName || "");
+            params.set("force_scope", "1");
             return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
         };
 

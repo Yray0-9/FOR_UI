@@ -24,6 +24,9 @@
     const profileDisplayName = document.getElementById("profileDisplayName");
     const profileDisplayEmail = document.getElementById("profileDisplayEmail");
     const profileAvatar = document.getElementById("profileAvatar");
+    const profileThemeChip = document.querySelector("[data-profile-theme-chip]");
+    const profileThemeIcon = document.querySelector("[data-profile-theme-icon]");
+    const profileThemeLabel = document.querySelector("[data-profile-theme-label]");
 
     const profileCompletionValue = document.getElementById("profileCompletionValue");
     const profileCompletionTrack = document.getElementById("profileCompletionTrack");
@@ -147,6 +150,35 @@
 
         if (profileAvatar) {
             profileAvatar.textContent = initials;
+        }
+    };
+
+    const updateThemeSnapshot = () => {
+        if (!profileThemeChip) {
+            return;
+        }
+
+        const preference = shared && typeof shared.getThemePreference === "function"
+            ? shared.getThemePreference()
+            : { theme: "light", followSystem: false };
+
+        let label = "Light Theme";
+        let iconClass = "bi-brightness-high";
+
+        if (preference.followSystem) {
+            label = "System Theme";
+            iconClass = "bi-laptop";
+        } else if (preference.theme === "dark") {
+            label = "Dark Theme";
+            iconClass = "bi-moon-stars";
+        }
+
+        if (profileThemeLabel) {
+            profileThemeLabel.textContent = label;
+        }
+
+        if (profileThemeIcon) {
+            profileThemeIcon.className = `bi ${iconClass}`;
         }
     };
 
@@ -299,6 +331,7 @@
         }
 
         hydrateProfileIdentity();
+        updateThemeSnapshot();
         bindSectionInputs();
         bindScrollTargets();
         bindPlannedFeatures();

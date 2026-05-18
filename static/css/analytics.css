@@ -316,3 +316,96 @@
         height: 190px;
     }
 }
+
+body.theme-dark .analytics-control-label {
+    color: #9eb0d3;
+}
+
+body.theme-dark .analytics-client-select,
+body.theme-dark .analytics-tin-search-input {
+    background-color: #0f1c33;
+    border-color: #25344f;
+    color: #e6edf7;
+}
+
+body.theme-dark .analytics-client-select:focus,
+body.theme-dark .analytics-tin-search-input:focus {
+    border-color: #3a5490;
+    box-shadow: 0 0 0 0.2rem rgba(61, 120, 230, 0.2);
+}
+
+body.theme-dark .analytics-guidance-chip {
+    background: #0f1c33;
+    border-color: #25344f;
+}
+
+body.theme-dark .analytics-guidance-chip p {
+    color: #aecdff;
+}
+
+body.theme-dark .analytics-legend-item {
+    color: #aecdff;
+}
+
+body.theme-dark .analytics-month-labels span {
+    color: #8ea5c9;
+}
+
+body.theme-dark .analytics-timeframe-caption,
+body.theme-dark .analytics-comparison-note {
+    color: #9eb0d3;
+}
+
+body.theme-dark .analytics-trend-chart {
+    border-color: #23324d;
+    background: linear-gradient(180deg, #101a2c 0%, #0f1c33 100%);
+}
+
+body.theme-dark .analytics-trend-grid-line {
+    stroke: #22314c;
+}
+
+body.theme-dark .analytics-risk-shell {
+    border-color: #25344f;
+    background: #0f1c33;
+}
+
+body.theme-dark .analytics-risk-title {
+    color: #e6edf7;
+}
+
+body.theme-dark .analytics-risk-description {
+    color: #9eb0d3;
+}
+
+body.theme-dark .analytics-risk-badge.low {
+    background: rgba(47, 102, 209, 0.18);
+    color: #aecdff;
+}
+
+body.theme-dark .analytics-risk-badge.medium {
+    background: rgba(228, 138, 45, 0.18);
+    color: #f1c38b;
+}
+
+body.theme-dark .analytics-risk-badge.high {
+    background: rgba(220, 90, 90, 0.22);
+    color: #ffb2b2;
+}
+
+body.theme-dark .analytics-forecast-value {
+    color: #e6edf7;
+}
+
+body.theme-dark .analytics-forecast-note {
+    color: #9eb0d3;
+}
+
+body.theme-dark .analytics-sparkline-wrap {
+    border-color: #25344f;
+    background: #0f1c33;
+}
+
+body.theme-dark .analytics-sparkline-line {
+    stroke: #6aa0ff;
+}

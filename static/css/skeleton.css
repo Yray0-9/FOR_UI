@@ -5,6 +5,13 @@
     --skeleton-border: #d7e1f4;
 }
 
+body.theme-dark {
+    --skeleton-base: #1a253a;
+    --skeleton-highlight: #25344f;
+    --skeleton-surface: #121c2f;
+    --skeleton-border: #25344f;
+}
+
 .skeleton-overlay {
     position: fixed;
     inset: 0;
@@ -15,6 +22,10 @@
     pointer-events: auto;
     overflow-y: auto;
     transition: opacity 0.34s ease, visibility 0.34s ease;
+}
+
+body.theme-dark .skeleton-overlay {
+    background: linear-gradient(180deg, #0b1324 0%, #101b2f 60%, #0b1426 100%);
 }
 
 body.skeleton-loaded .skeleton-overlay {
@@ -43,6 +54,10 @@ body.skeleton-loaded .skeleton-overlay {
     transform: translateX(-100%);
     background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.78) 50%, transparent 100%);
     animation: skeletonShimmer 1.8s ease-in-out infinite;
+}
+
+body.theme-dark .skeleton-shimmer::after {
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
 }
 
 @keyframes skeletonShimmer {
@@ -424,6 +439,23 @@ body.skeleton-loaded .skeleton-overlay {
     border: 1px solid var(--skeleton-border);
     border-radius: 18px;
     background: #f8fbff;
+}
+
+body.theme-dark .sk-navbar,
+body.theme-dark .sk-table-card,
+body.theme-dark .sk-table,
+body.theme-dark .sk-feature-card,
+body.theme-dark .auth-sk-side,
+body.theme-dark .auth-sk-form,
+body.theme-dark .dash-sk-sidebar,
+body.theme-dark .dash-sk-main,
+body.theme-dark .dash-sk-card {
+    background: var(--skeleton-surface);
+    border-color: var(--skeleton-border);
+}
+
+body.theme-dark .sk-row {
+    border-top-color: #25344f;
 }
 
 .dash-sk-sidebar {

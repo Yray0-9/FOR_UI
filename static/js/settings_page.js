@@ -22,14 +22,19 @@
     const uiToastContainer = document.getElementById("uiToastContainer");
 
     const themeButtons = Array.from(document.querySelectorAll("[data-theme-value]"));
+    const themeSwatches = Array.from(document.querySelectorAll("[data-theme-swatch]"));
     const followSystemToggle = document.getElementById("settingsFollowSystemToggle");
     const themeStatus = document.getElementById("settingsThemeStatus");
     const applyThemeButton = document.getElementById("settingsApplyThemeButton");
+    const appearanceSection = document.getElementById("settingsAppearance");
 
     const defaultsSection = document.getElementById("settingsDefaults");
     const defaultScopeSelect = document.getElementById("settingsDefaultScope");
     const defaultReportSelect = document.getElementById("settingsDefaultReport");
     const defaultRangeSelect = document.getElementById("settingsDefaultRange");
+    const defaultRangeFromInput = document.getElementById("settingsDefaultRangeFrom");
+    const defaultRangeToInput = document.getElementById("settingsDefaultRangeTo");
+    const customRangeFields = Array.from(document.querySelectorAll("[data-custom-range-field]"));
     const defaultsSaveButton = defaultsSection
         ? defaultsSection.querySelector("[data-settings-defaults-save]")
         : null;
@@ -122,6 +127,17 @@
         });
     };
 
+    const setSaveButtonState = (saveButton, isEnabled) => {
+        if (!saveButton) {
+            return;
+        }
+
+        saveButton.disabled = !isEnabled;
+        if (saveButton.hasAttribute("aria-disabled")) {
+            saveButton.setAttribute("aria-disabled", String(!isEnabled));
+        }
+    };
+
     const markSectionDirty = (section) => {
         if (!section) {
             return;
@@ -130,7 +146,7 @@
         const saveButton = section.querySelector("[data-settings-save]");
         const status = section.querySelector("[data-settings-status]");
         if (saveButton) {
-            saveButton.disabled = false;
+            setSaveButtonState(saveButton, true);
         }
         if (status) {
             status.textContent = "Unsaved changes";
@@ -145,7 +161,7 @@
         const saveButton = section.querySelector("[data-settings-save]");
         const status = section.querySelector("[data-settings-status]");
         if (saveButton) {
-            saveButton.disabled = true;
+            setSaveButtonState(saveButton, false);
         }
         if (status) {
             status.textContent = "Saved";
@@ -184,6 +200,8 @@
 
     let pendingTheme = "light";
     let pendingFollowSystem = false;
+    let storedTheme = "light";
+    let storedFollowSystem = false;
 
     const getStoredThemeState = () => {
         if (shared && typeof shared.getThemePreference === "function") {
@@ -204,6 +222,11 @@
             button.setAttribute("aria-pressed", String(isActive));
         });
 
+        themeSwatches.forEach((swatch) => {
+            const value = String(swatch.dataset.themeSwatch || "").trim();
+            swatch.classList.toggle("is-active", value === themeValue);
+        });
+
         if (followSystemToggle) {
             followSystemToggle.checked = Boolean(followSystemValue);
         }
@@ -217,11 +240,26 @@
         }
     };
 
+    const updateAppearanceDirtyState = () => {
+        if (!appearanceSection) {
+            return;
+        }
+
+        if (pendingTheme === storedTheme && pendingFollowSystem === storedFollowSystem) {
+            resetSectionDirty(appearanceSection);
+        } else {
+            markSectionDirty(appearanceSection);
+        }
+    };
+
     const syncThemeState = () => {
         const storedState = getStoredThemeState();
-        pendingTheme = storedState.theme || "light";
-        pendingFollowSystem = Boolean(storedState.followSystem);
+        storedTheme = storedState.theme || "light";
+        storedFollowSystem = Boolean(storedState.followSystem);
+        pendingTheme = storedTheme;
+        pendingFollowSystem = storedFollowSystem;
         applyThemeStateToUI(pendingTheme, pendingFollowSystem);
+        updateAppearanceDirtyState();
     };
 
     const handleThemeSave = () => {
@@ -229,8 +267,7 @@
             shared.setThemePreference(pendingTheme, pendingFollowSystem);
         }
         showToast("Theme updated.", "success");
-        const appearanceSection = document.getElementById("settingsAppearance");
-        resetSectionDirty(appearanceSection);
+        syncThemeState();
     };
 
     const bindThemeControls = () => {
@@ -239,8 +276,7 @@
                 const value = String(button.dataset.themeValue || "light");
                 pendingTheme = value === "dark" ? "dark" : "light";
                 applyThemeStateToUI(pendingTheme, pendingFollowSystem);
-                const appearanceSection = document.getElementById("settingsAppearance");
-                markSectionDirty(appearanceSection);
+                updateAppearanceDirtyState();
             });
         });
 
@@ -248,8 +284,7 @@
             followSystemToggle.addEventListener("change", () => {
                 pendingFollowSystem = Boolean(followSystemToggle.checked);
                 applyThemeStateToUI(pendingTheme, pendingFollowSystem);
-                const appearanceSection = document.getElementById("settingsAppearance");
-                markSectionDirty(appearanceSection);
+                updateAppearanceDirtyState();
             });
         }
 
@@ -277,6 +312,39 @@
         }
     };
 
+    const setCustomRangeVisibility = (isCustomRange) => {
+        customRangeFields.forEach((field) => {
+            field.hidden = !isCustomRange;
+        });
+    };
+
+    const setDateValue = (inputElement, nextValue) => {
+        if (!inputElement) {
+            return;
+        }
+
+        inputElement.value = String(nextValue || "").trim();
+    };
+
+    const validateCustomRange = () => {
+        if (!defaultRangeSelect || defaultRangeSelect.value !== "custom") {
+            return "";
+        }
+
+        const fromValue = defaultRangeFromInput ? defaultRangeFromInput.value : "";
+        const toValue = defaultRangeToInput ? defaultRangeToInput.value : "";
+
+        if (!fromValue || !toValue) {
+            return "Custom range requires both start and end dates.";
+        }
+
+        if (fromValue > toValue) {
+            return "Custom range start must be on or before the end date.";
+        }
+
+        return "";
+    };
+
     const applyWorkspaceDefaults = (defaults) => {
         if (!defaults || typeof defaults !== "object") {
             return;
@@ -285,6 +353,9 @@
         setSelectValue(defaultScopeSelect, defaults.default_client_scope);
         setSelectValue(defaultReportSelect, defaults.default_report_type);
         setSelectValue(defaultRangeSelect, defaults.default_report_range);
+        setDateValue(defaultRangeFromInput, defaults.default_report_range_from);
+        setDateValue(defaultRangeToInput, defaults.default_report_range_to);
+        setCustomRangeVisibility(defaultRangeSelect && defaultRangeSelect.value === "custom");
     };
 
     const loadWorkspaceDefaults = async () => {
@@ -329,6 +400,8 @@
             if (defaultsSaveButton) {
                 defaultsSaveButton.disabled = false;
             }
+        } finally {
+            setCustomRangeVisibility(defaultRangeSelect && defaultRangeSelect.value === "custom");
         }
     };
 
@@ -338,10 +411,18 @@
             return;
         }
 
+        const customRangeError = validateCustomRange();
+        if (customRangeError) {
+            showToast(customRangeError, "warning");
+            return;
+        }
+
         const payload = {
             default_client_scope: defaultScopeSelect ? defaultScopeSelect.value : "",
             default_report_type: defaultReportSelect ? defaultReportSelect.value : "",
             default_report_range: defaultRangeSelect ? defaultRangeSelect.value : "",
+            default_report_range_from: defaultRangeFromInput ? defaultRangeFromInput.value : "",
+            default_report_range_to: defaultRangeToInput ? defaultRangeToInput.value : "",
         };
 
         const status = defaultsSection.querySelector("[data-settings-status]");
@@ -404,6 +485,12 @@
         defaultsSaveButton.addEventListener("click", () => {
             saveWorkspaceDefaults();
         });
+
+        if (defaultRangeSelect) {
+            defaultRangeSelect.addEventListener("change", () => {
+                setCustomRangeVisibility(defaultRangeSelect.value === "custom");
+            });
+        }
     };
 
     const bindPlannedFeatures = () => {

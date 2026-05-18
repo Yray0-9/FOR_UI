@@ -40,6 +40,8 @@
     const DESKTOP_QUERY = String(config.desktopQuery || "(min-width: 992px)");
     const HISTORY_STORAGE_KEY = "safebooks.reportsHistory";
     const MAX_HISTORY_ITEMS = 8;
+    const FORCE_SCOPE_PARAM = "force_scope";
+    const PENDING_LAST_CLIENT_KEY = "safebooks.pendingLastClientId";
     const DEFAULT_REPORT_TYPE = "financial_summary";
     const DEFAULT_REPORT_RANGE = "ytd";
     const DEFAULT_CLIENT_SCOPE = "all";
@@ -374,9 +376,16 @@
 
         reportsTypeSelect.value = defaultReportType;
 
-        const dateRange = getDateRangeFromPreset(defaultReportRange);
-        reportsDateFrom.value = dateRange.dateFrom || "";
-        reportsDateTo.value = dateRange.dateTo || "";
+        if (defaultReportRange === "custom") {
+            const customFrom = String(safeDefaults.default_report_range_from || "").trim();
+            const customTo = String(safeDefaults.default_report_range_to || "").trim();
+            reportsDateFrom.value = parseDateInput(customFrom) ? customFrom : "";
+            reportsDateTo.value = parseDateInput(customTo) ? customTo : "";
+        } else {
+            const dateRange = getDateRangeFromPreset(defaultReportRange);
+            reportsDateFrom.value = dateRange.dateFrom || "";
+            reportsDateTo.value = dateRange.dateTo || "";
+        }
 
         let targetClientValue = "all";
         if (defaultClientScope === "last") {
@@ -1311,11 +1320,12 @@
         reportsPrintButton.disabled = true;
     };
 
-    const syncUrlFromFilters = (filters) => {
+    const syncUrlFromFilters = (filters, options = {}) => {
         if (!window.history || typeof window.history.replaceState !== "function") {
             return;
         }
 
+        const forceScope = Boolean(options.forceScope);
         const nextUrl = new URL(window.location.href);
         nextUrl.searchParams.set("report_type", filters.reportType);
         nextUrl.searchParams.set("date_from", filters.dateFrom);
@@ -1325,6 +1335,12 @@
             nextUrl.searchParams.set("client_id", String(filters.clientId));
         } else {
             nextUrl.searchParams.delete("client_id");
+        }
+
+        if (forceScope) {
+            nextUrl.searchParams.set(FORCE_SCOPE_PARAM, "1");
+        } else {
+            nextUrl.searchParams.delete(FORCE_SCOPE_PARAM);
         }
 
         window.history.replaceState({}, "", `${nextUrl.pathname}${nextUrl.search}`);
@@ -1394,6 +1410,85 @@
         return payload;
     };
 
+    const readPendingLastClientId = () => {
+        try {
+            const rawValue = window.localStorage.getItem(PENDING_LAST_CLIENT_KEY) || "";
+            if (!rawValue) {
+                return null;
+            }
+
+            const parsedValue = Number.parseInt(rawValue, 10);
+            if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+                return null;
+            }
+
+            return parsedValue;
+        } catch (error) {
+            return null;
+        }
+    };
+
+    const storePendingLastClientId = (clientId) => {
+        try {
+            window.localStorage.setItem(PENDING_LAST_CLIENT_KEY, String(clientId));
+        } catch (error) {
+            // Ignore storage errors to keep reports responsive.
+        }
+    };
+
+    const clearPendingLastClientId = () => {
+        try {
+            window.localStorage.removeItem(PENDING_LAST_CLIENT_KEY);
+        } catch (error) {
+            // Ignore storage errors to keep reports responsive.
+        }
+    };
+
+    const sendLastUsedClient = async (clientId) => {
+        if (!workspaceDefaultsUrl) {
+            return false;
+        }
+
+        const csrfToken = getCookieValue("csrftoken");
+        const headers = {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        };
+        if (csrfToken) {
+            headers["X-CSRFToken"] = csrfToken;
+        }
+
+        try {
+            const response = await fetch(workspaceDefaultsUrl, {
+                method: "POST",
+                headers,
+                credentials: "same-origin",
+                keepalive: true,
+                body: JSON.stringify({
+                    last_client_id: clientId,
+                }),
+            });
+
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    };
+
+    const syncPendingLastClient = async () => {
+        const pendingId = readPendingLastClientId();
+        if (!pendingId) {
+            return null;
+        }
+
+        const success = await sendLastUsedClient(pendingId);
+        if (success) {
+            clearPendingLastClientId();
+        }
+
+        return pendingId;
+    };
+
     const fetchWorkspaceDefaults = async () => {
         if (!workspaceDefaultsUrl) {
             return null;
@@ -1426,10 +1521,6 @@
     };
 
     const updateLastUsedClient = async (clientId) => {
-        if (!workspaceDefaultsUrl) {
-            return;
-        }
-
         const safeClientId = safeNumber(clientId);
         if (!Number.isFinite(safeClientId) || safeClientId <= 0) {
             return;
@@ -1439,26 +1530,10 @@
             workspaceDefaults.last_client_id = safeClientId;
         }
 
-        try {
-            const csrfToken = getCookieValue("csrftoken");
-            const headers = {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            };
-            if (csrfToken) {
-                headers["X-CSRFToken"] = csrfToken;
-            }
-
-            await fetch(workspaceDefaultsUrl, {
-                method: "POST",
-                headers,
-                credentials: "same-origin",
-                body: JSON.stringify({
-                    last_client_id: safeClientId,
-                }),
-            });
-        } catch (error) {
-            // Keep report flow responsive if defaults sync fails.
+        storePendingLastClientId(safeClientId);
+        const success = await sendLastUsedClient(safeClientId);
+        if (success) {
+            clearPendingLastClientId();
         }
     };
 
@@ -1772,6 +1847,17 @@
         applyDefaultsToFilters(defaults);
 
         const queryParams = new URLSearchParams(window.location.search);
+        const forceScopeValue = String(queryParams.get(FORCE_SCOPE_PARAM) || "")
+            .trim()
+            .toLowerCase();
+        const shouldRespectUrl = forceScopeValue === "1"
+            || forceScopeValue === "true"
+            || forceScopeValue === "yes";
+        if (!shouldRespectUrl) {
+            const defaultsFilters = collectFilters();
+            syncUrlFromFilters(defaultsFilters, { forceScope: false });
+            return;
+        }
         const initialReportType = String(queryParams.get("report_type") || "").trim();
         const initialClientId = String(queryParams.get("client_id") || "").trim();
         const initialDateFrom = String(queryParams.get("date_from") || "").trim();
@@ -1876,7 +1962,7 @@
 
             renderGeneratedReport(generatedReport);
             appendHistoryItem(generatedReport);
-            syncUrlFromFilters(filters);
+            syncUrlFromFilters(filters, { forceScope: false });
 
             if (generatedReport.rows.length === 0) {
                 setFilterStatus("Report generated, but no rows matched this date range.");
@@ -1929,7 +2015,7 @@
         setFilterStatus("Filters reset. Select Generate to build a new report.");
 
         const filters = collectFilters();
-        syncUrlFromFilters(filters);
+        syncUrlFromFilters(filters, { forceScope: false });
     };
 
     const bindCoreEvents = () => {
@@ -2062,7 +2148,16 @@
 
         await loadOptionsAndClients();
         workspaceDefaults = await fetchWorkspaceDefaults();
+        const pendingClientId = await syncPendingLastClient();
+        if (pendingClientId && workspaceDefaults && typeof workspaceDefaults === "object") {
+            workspaceDefaults.last_client_id = pendingClientId;
+        }
         applyInitialFilterValues(workspaceDefaults);
+
+        const initialFilters = collectFilters();
+        if (Number.isFinite(initialFilters.clientId) && initialFilters.clientId > 0) {
+            updateLastUsedClient(initialFilters.clientId);
+        }
 
         bindCoreEvents();
 
