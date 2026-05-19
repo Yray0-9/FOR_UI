@@ -5156,6 +5156,7 @@ body.theme-dark .financial-line-amount-input {
     background: #0f1c33;
     border-color: #25344f;
     color: #e6edf7;
+    color-scheme: dark;
 }
 
 body.theme-dark .financial-line-code-input:focus,
@@ -5169,6 +5170,23 @@ body.theme-dark .financial-line-code-input::placeholder,
 body.theme-dark .financial-line-description-input::placeholder,
 body.theme-dark .financial-line-amount-input::placeholder {
     color: #7f98c0;
+}
+
+body.theme-dark .financial-line-amount-input::-webkit-inner-spin-button,
+body.theme-dark .financial-line-amount-input::-webkit-outer-spin-button {
+    background: #0f1c33;
+    filter: invert(1) brightness(0.75);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+body.theme-dark .financial-line-amount-input:focus::-webkit-inner-spin-button,
+body.theme-dark .financial-line-amount-input:focus::-webkit-outer-spin-button,
+body.theme-dark .financial-line-amount-input:focus-visible::-webkit-inner-spin-button,
+body.theme-dark .financial-line-amount-input:focus-visible::-webkit-outer-spin-button,
+body.theme-dark .financial-line-amount-input:hover::-webkit-inner-spin-button,
+body.theme-dark .financial-line-amount-input:hover::-webkit-outer-spin-button {
+    opacity: 0.9;
 }
 
 body.theme-dark .financial-line-amount-original {
