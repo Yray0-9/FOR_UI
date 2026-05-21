@@ -358,7 +358,11 @@ body.theme-dark .analytics-comparison-note {
 
 body.theme-dark .analytics-trend-chart {
     border-color: #23324d;
-    background: linear-gradient(180deg, #101a2c 0%, #0f1c33 100%);
+    background: #0f1c33;
+}
+
+body.theme-dark .analytics-line-svg {
+    background: #0f1c33;
 }
 
 body.theme-dark .analytics-trend-grid-line {
@@ -403,6 +407,10 @@ body.theme-dark .analytics-forecast-note {
 
 body.theme-dark .analytics-sparkline-wrap {
     border-color: #25344f;
+    background: #0f1c33;
+}
+
+body.theme-dark .analytics-sparkline {
     background: #0f1c33;
 }
 

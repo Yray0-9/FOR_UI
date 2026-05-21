@@ -23,7 +23,6 @@
 
     const themeButtons = Array.from(document.querySelectorAll("[data-theme-value]"));
     const themeSwatches = Array.from(document.querySelectorAll("[data-theme-swatch]"));
-    const followSystemToggle = document.getElementById("settingsFollowSystemToggle");
     const themeStatus = document.getElementById("settingsThemeStatus");
     const applyThemeButton = document.getElementById("settingsApplyThemeButton");
     const appearanceSection = document.getElementById("settingsAppearance");
@@ -45,6 +44,21 @@
     const settingsNavLinks = Array.from(document.querySelectorAll(".settings-nav-link"));
 
     const workspaceDefaultsUrl = String(urls.workspaceDefaultsApi || "");
+    const securityChangePasswordUrl = String(urls.securityChangePasswordApi || "");
+    const securityLoginAlertsUrl = String(urls.securityLoginAlertsApi || "");
+
+    const changePasswordForm = document.getElementById("settingsChangePasswordForm");
+    const changePasswordStatus = document.getElementById("settingsChangePasswordStatus");
+    const changePasswordButton = document.getElementById("settingsChangePasswordButton");
+    const changePasswordModalElement = document.getElementById("settingsChangePasswordModal");
+    const currentPasswordInput = document.getElementById("settingsCurrentPassword");
+    const newPasswordInput = document.getElementById("settingsNewPassword");
+    const confirmPasswordInput = document.getElementById("settingsConfirmPassword");
+    const passwordRulesContainer = document.getElementById("settingsPasswordRules");
+    const loginAlertsPanel = document.getElementById("settingsLoginAlertsPanel");
+    const loginAlertsToggle = document.getElementById("settingsLoginAlertsToggle");
+    const loginAlertsStatus = document.getElementById("settingsLoginAlertsStatus");
+    const loginAlertsFeedback = document.getElementById("settingsLoginAlertsFeedback");
 
     if (!body || !uiToastContainer || !settingsSections.length) {
         return;
@@ -168,6 +182,151 @@
         }
     };
 
+    const setInlineStatus = (element, message, variant) => {
+        if (!element) {
+            return;
+        }
+
+        element.textContent = message;
+        element.classList.remove("is-success", "is-warning", "is-danger");
+        if (variant) {
+            element.classList.add(`is-${variant}`);
+        }
+    };
+
+    const clearInlineStatus = (element) => {
+        if (!element) {
+            return;
+        }
+
+        element.textContent = "";
+        element.classList.remove("is-success", "is-warning", "is-danger");
+    };
+
+    const setButtonLoading = (button, isLoading, loadingLabel) => {
+        if (!button) {
+            return;
+        }
+
+        if (!button.dataset.defaultLabel) {
+            button.dataset.defaultLabel = button.textContent || "";
+        }
+
+        if (isLoading) {
+            button.dataset.wasDisabled = button.disabled ? "true" : "false";
+            if (button.hasAttribute("aria-disabled")) {
+                button.dataset.wasAriaDisabled = button.getAttribute("aria-disabled") || "false";
+                button.setAttribute("aria-disabled", "true");
+            }
+            button.disabled = true;
+        } else {
+            const wasDisabled = button.dataset.wasDisabled === "true";
+            if (button.hasAttribute("aria-disabled") && button.dataset.wasAriaDisabled) {
+                button.setAttribute("aria-disabled", button.dataset.wasAriaDisabled);
+            }
+            button.disabled = wasDisabled;
+            delete button.dataset.wasDisabled;
+            delete button.dataset.wasAriaDisabled;
+        }
+
+        button.textContent = isLoading
+            ? String(loadingLabel || "Working...")
+            : button.dataset.defaultLabel;
+    };
+
+    const postJson = async (url, payload) => {
+        const csrfToken = getCookieValue("csrftoken");
+        const headers = {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        };
+        if (csrfToken) {
+            headers["X-CSRFToken"] = csrfToken;
+        }
+
+        return fetch(url, {
+            method: "POST",
+            headers,
+            credentials: "same-origin",
+            body: JSON.stringify(payload || {}),
+        });
+    };
+
+    const getModalInstance = (element) => {
+        if (!element || !window.bootstrap || !window.bootstrap.Modal) {
+            return null;
+        }
+
+        if (typeof window.bootstrap.Modal.getOrCreateInstance === "function") {
+            return window.bootstrap.Modal.getOrCreateInstance(element);
+        }
+
+        return new window.bootstrap.Modal(element);
+    };
+
+    let changePasswordModal = null;
+
+    const getPasswordRequirementState = () => {
+        const currentValue = currentPasswordInput ? currentPasswordInput.value : "";
+        const newValue = newPasswordInput ? newPasswordInput.value : "";
+        const confirmValue = confirmPasswordInput ? confirmPasswordInput.value : "";
+
+        const state = {
+            length: newValue.length >= 8,
+            uppercase: /[A-Z]/.test(newValue),
+            lowercase: /[a-z]/.test(newValue),
+            number: /\d/.test(newValue),
+            symbol: /[^A-Za-z0-9]/.test(newValue),
+            match: Boolean(newValue) && newValue === confirmValue,
+            hasCurrent: Boolean(currentValue),
+            hasConfirm: Boolean(confirmValue),
+        };
+
+        state.isDifferent = !currentValue || !newValue || currentValue !== newValue;
+        state.isValid = state.length && state.uppercase && state.lowercase
+            && state.number && state.symbol && state.match;
+
+        return state;
+    };
+
+    const updatePasswordRequirementsUi = () => {
+        const state = getPasswordRequirementState();
+
+        if (passwordRulesContainer) {
+            const ruleElements = passwordRulesContainer.querySelectorAll("[data-rule]");
+            ruleElements.forEach((ruleElement) => {
+                const ruleName = ruleElement.getAttribute("data-rule");
+                const isValid = Boolean(ruleName && state[ruleName]);
+                ruleElement.classList.toggle("is-valid", isValid);
+            });
+        }
+
+        return state;
+    };
+
+    const bindPasswordToggles = () => {
+        document.querySelectorAll("[data-password-toggle-target]").forEach((toggleButton) => {
+            toggleButton.addEventListener("click", () => {
+                const targetId = toggleButton.getAttribute("data-password-toggle-target");
+                const inputElement = targetId ? document.getElementById(targetId) : null;
+                if (!(inputElement instanceof HTMLInputElement)) {
+                    return;
+                }
+
+                const shouldShow = inputElement.type === "password";
+                inputElement.type = shouldShow ? "text" : "password";
+
+                const iconElement = toggleButton.querySelector("i");
+                if (iconElement) {
+                    iconElement.classList.toggle("bi-eye", !shouldShow);
+                    iconElement.classList.toggle("bi-eye-slash", shouldShow);
+                }
+
+                toggleButton.setAttribute("aria-label", shouldShow ? "Hide password" : "Show password");
+            });
+        });
+    };
+
     const bindSectionInputs = () => {
         settingsSections.forEach((section) => {
             const inputs = Array.from(section.querySelectorAll("input, select, textarea"));
@@ -199,13 +358,15 @@
     };
 
     let pendingTheme = "light";
-    let pendingFollowSystem = false;
     let storedTheme = "light";
-    let storedFollowSystem = false;
 
     const getStoredThemeState = () => {
         if (shared && typeof shared.getThemePreference === "function") {
-            return shared.getThemePreference();
+            const preference = shared.getThemePreference();
+            return {
+                theme: preference.theme || "light",
+                followSystem: Boolean(preference.followSystem),
+            };
         }
 
         return {
@@ -214,7 +375,15 @@
         };
     };
 
-    const applyThemeStateToUI = (themeValue, followSystemValue) => {
+    const resolveThemeFromBody = () => {
+        if (!body) {
+            return "light";
+        }
+
+        return body.classList.contains("theme-dark") ? "dark" : "light";
+    };
+
+    const applyThemeStateToUI = (themeValue) => {
         themeButtons.forEach((button) => {
             const value = String(button.dataset.themeValue || "light");
             const isActive = value === themeValue;
@@ -227,16 +396,8 @@
             swatch.classList.toggle("is-active", value === themeValue);
         });
 
-        if (followSystemToggle) {
-            followSystemToggle.checked = Boolean(followSystemValue);
-        }
-
         if (themeStatus) {
-            if (followSystemValue) {
-                themeStatus.textContent = "Following system appearance.";
-            } else {
-                themeStatus.textContent = `Theme set to ${themeValue === "dark" ? "Dark" : "Light"}.`;
-            }
+            themeStatus.textContent = `Theme set to ${themeValue === "dark" ? "Dark" : "Light"}.`;
         }
     };
 
@@ -245,7 +406,7 @@
             return;
         }
 
-        if (pendingTheme === storedTheme && pendingFollowSystem === storedFollowSystem) {
+        if (pendingTheme === storedTheme) {
             resetSectionDirty(appearanceSection);
         } else {
             markSectionDirty(appearanceSection);
@@ -255,38 +416,47 @@
     const syncThemeState = () => {
         const storedState = getStoredThemeState();
         storedTheme = storedState.theme || "light";
-        storedFollowSystem = Boolean(storedState.followSystem);
+
+        if (storedState.followSystem) {
+            const resolvedTheme = resolveThemeFromBody();
+            storedTheme = resolvedTheme;
+            if (shared && typeof shared.setThemePreference === "function") {
+                shared.setThemePreference(resolvedTheme, false);
+            }
+        }
+
         pendingTheme = storedTheme;
-        pendingFollowSystem = storedFollowSystem;
-        applyThemeStateToUI(pendingTheme, pendingFollowSystem);
+        applyThemeStateToUI(pendingTheme);
         updateAppearanceDirtyState();
     };
 
     const handleThemeSave = () => {
         if (shared && typeof shared.setThemePreference === "function") {
-            shared.setThemePreference(pendingTheme, pendingFollowSystem);
+            shared.setThemePreference(pendingTheme, false);
         }
         showToast("Theme updated.", "success");
         syncThemeState();
     };
 
     const bindThemeControls = () => {
+        const setPendingTheme = (nextValue) => {
+            const value = String(nextValue || "light");
+            pendingTheme = value === "dark" ? "dark" : "light";
+            applyThemeStateToUI(pendingTheme);
+            updateAppearanceDirtyState();
+        };
+
         themeButtons.forEach((button) => {
             button.addEventListener("click", () => {
-                const value = String(button.dataset.themeValue || "light");
-                pendingTheme = value === "dark" ? "dark" : "light";
-                applyThemeStateToUI(pendingTheme, pendingFollowSystem);
-                updateAppearanceDirtyState();
+                setPendingTheme(button.dataset.themeValue || "light");
             });
         });
 
-        if (followSystemToggle) {
-            followSystemToggle.addEventListener("change", () => {
-                pendingFollowSystem = Boolean(followSystemToggle.checked);
-                applyThemeStateToUI(pendingTheme, pendingFollowSystem);
-                updateAppearanceDirtyState();
+        themeSwatches.forEach((swatch) => {
+            swatch.addEventListener("click", () => {
+                setPendingTheme(swatch.dataset.themeSwatch || "light");
             });
-        }
+        });
 
         if (applyThemeButton) {
             applyThemeButton.addEventListener("click", () => {
@@ -493,6 +663,216 @@
         }
     };
 
+    const isLoginAlertsEnabled = () => {
+        if (!loginAlertsPanel) {
+            return false;
+        }
+
+        return String(loginAlertsPanel.dataset.loginAlertsEnabled || "false") === "true";
+    };
+
+    const updateLoginAlertsUiState = (isEnabled) => {
+        if (loginAlertsPanel) {
+            loginAlertsPanel.dataset.loginAlertsEnabled = isEnabled ? "true" : "false";
+        }
+
+        if (loginAlertsStatus) {
+            loginAlertsStatus.textContent = isEnabled ? "On" : "Off";
+            loginAlertsStatus.classList.toggle("is-enabled", isEnabled);
+        }
+
+        if (loginAlertsToggle) {
+            loginAlertsToggle.checked = isEnabled;
+        }
+    };
+
+    const setLoginAlertsLoading = (isLoading) => {
+        if (loginAlertsToggle) {
+            loginAlertsToggle.disabled = isLoading;
+        }
+    };
+
+    const handleLoginAlertsToggle = async (nextValue) => {
+        if (!securityLoginAlertsUrl) {
+            showToast("Login alerts are unavailable.", "warning");
+            updateLoginAlertsUiState(isLoginAlertsEnabled());
+            return;
+        }
+
+        const previousValue = isLoginAlertsEnabled();
+        setLoginAlertsLoading(true);
+        setInlineStatus(loginAlertsFeedback, "Saving...", "warning");
+
+        try {
+            const response = await postJson(securityLoginAlertsUrl, {
+                enabled: Boolean(nextValue),
+            });
+
+            if (response.status === 401) {
+                window.location.assign(String(urls.loginPage || "/login/"));
+                return;
+            }
+
+            const result = await parseJsonSafe(response);
+            if (!response.ok || !result || !result.ok) {
+                const message = result && result.message
+                    ? String(result.message)
+                    : "Unable to update login alerts.";
+                throw new Error(message);
+            }
+
+            updateLoginAlertsUiState(Boolean(result.login_alerts_enabled));
+            setInlineStatus(loginAlertsFeedback, "Updated", "success");
+            showToast("Login alerts updated.", "success");
+        } catch (error) {
+            updateLoginAlertsUiState(previousValue);
+            setInlineStatus(loginAlertsFeedback, "Update failed", "danger");
+            showToast(error && error.message ? String(error.message) : "Unable to update login alerts.", "danger");
+        } finally {
+            setLoginAlertsLoading(false);
+        }
+    };
+
+    const resetChangePasswordInputs = () => {
+        if (currentPasswordInput) {
+            currentPasswordInput.value = "";
+        }
+        if (newPasswordInput) {
+            newPasswordInput.value = "";
+        }
+        if (confirmPasswordInput) {
+            confirmPasswordInput.value = "";
+        }
+        updatePasswordRequirementsUi();
+    };
+
+    const handleChangePassword = async () => {
+        if (!securityChangePasswordUrl || !changePasswordForm) {
+            showToast("Password updates are unavailable.", "warning");
+            return;
+        }
+
+        const requirementState = updatePasswordRequirementsUi();
+        if (!requirementState.hasCurrent) {
+            setInlineStatus(changePasswordStatus, "Current password is required.", "danger");
+            showToast("Current password is required.", "warning");
+            return;
+        }
+
+        if (!requirementState.hasConfirm) {
+            setInlineStatus(changePasswordStatus, "Confirm your new password.", "danger");
+            showToast("Confirm your new password.", "warning");
+            return;
+        }
+
+        if (!requirementState.match) {
+            setInlineStatus(changePasswordStatus, "Passwords do not match.", "danger");
+            showToast("Passwords do not match.", "warning");
+            return;
+        }
+
+        if (!requirementState.isDifferent) {
+            setInlineStatus(changePasswordStatus, "New password must be different.", "danger");
+            showToast("New password must be different from the current password.", "warning");
+            return;
+        }
+
+        if (!requirementState.isValid) {
+            setInlineStatus(changePasswordStatus, "Password requirements not met.", "danger");
+            showToast("Password requirements not met.", "warning");
+            return;
+        }
+
+        if (!changePasswordForm.checkValidity()) {
+            changePasswordForm.reportValidity();
+            return;
+        }
+
+        const payload = {
+            current_password: currentPasswordInput ? currentPasswordInput.value : "",
+            new_password: newPasswordInput ? newPasswordInput.value : "",
+            confirm_password: confirmPasswordInput ? confirmPasswordInput.value : "",
+        };
+
+        setButtonLoading(changePasswordButton, true, "Updating...");
+        setInlineStatus(changePasswordStatus, "Saving...", "warning");
+
+        try {
+            const response = await postJson(securityChangePasswordUrl, payload);
+            if (response.status === 401) {
+                window.location.assign(String(urls.loginPage || "/login/"));
+                return;
+            }
+
+            const result = await parseJsonSafe(response);
+            if (!response.ok || !result || !result.ok) {
+                const message = result && result.message
+                    ? String(result.message)
+                    : "Unable to update password.";
+                throw new Error(message);
+            }
+
+            resetChangePasswordInputs();
+            setInlineStatus(changePasswordStatus, "Updated", "success");
+            showToast("Password updated successfully.", "success");
+            if (changePasswordModal) {
+                changePasswordModal.hide();
+            }
+        } catch (error) {
+            setInlineStatus(changePasswordStatus, "Update failed", "danger");
+            showToast(error && error.message ? String(error.message) : "Unable to update password.", "danger");
+        } finally {
+            setButtonLoading(changePasswordButton, false);
+        }
+    };
+
+    const bindSecurityActions = () => {
+        bindPasswordToggles();
+
+        if (changePasswordModalElement) {
+            changePasswordModal = getModalInstance(changePasswordModalElement);
+            changePasswordModalElement.addEventListener("shown.bs.modal", () => {
+                if (currentPasswordInput) {
+                    currentPasswordInput.focus();
+                }
+                clearInlineStatus(changePasswordStatus);
+                updatePasswordRequirementsUi();
+            });
+            changePasswordModalElement.addEventListener("hidden.bs.modal", () => {
+                resetChangePasswordInputs();
+                clearInlineStatus(changePasswordStatus);
+            });
+        }
+
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                handleChangePassword();
+            });
+        }
+
+        [currentPasswordInput, newPasswordInput, confirmPasswordInput].forEach((input) => {
+            if (!input) {
+                return;
+            }
+            input.addEventListener("input", () => {
+                updatePasswordRequirementsUi();
+                clearInlineStatus(changePasswordStatus);
+            });
+        });
+
+        if (loginAlertsToggle) {
+            loginAlertsToggle.addEventListener("change", () => {
+                handleLoginAlertsToggle(loginAlertsToggle.checked);
+            });
+        }
+
+        updateLoginAlertsUiState(isLoginAlertsEnabled());
+        clearInlineStatus(changePasswordStatus);
+        clearInlineStatus(loginAlertsFeedback);
+        updatePasswordRequirementsUi();
+    };
+
     const bindPlannedFeatures = () => {
         plannedFeatureButtons.forEach((button) => {
             button.addEventListener("click", (event) => {
@@ -619,6 +999,7 @@
         bindSectionInputs();
         bindThemeControls();
         bindWorkspaceDefaults();
+        bindSecurityActions();
         bindPlannedFeatures();
         bindSettingsScrollSpy();
         bindHeaderActions();

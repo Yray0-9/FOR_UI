@@ -154,19 +154,6 @@
                         <p class="settings-field-hint" id="settingsThemeStatus">Theme set to Light.</p>
                     </div>
 
-                    <div class="settings-toggle-list">
-                        <div class="settings-toggle-row">
-                            <div>
-                                <p class="settings-field-label">Follow system</p>
-                                <p class="settings-field-hint">Match your device appearance automatically.</p>
-                            </div>
-                            <label class="settings-switch">
-                                <input type="checkbox" id="settingsFollowSystemToggle" aria-label="Follow system appearance">
-                                <span class="settings-switch-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
                     <div class="settings-theme-preview">
                         <div class="settings-theme-swatch light" data-theme-swatch="light">
                             <span class="settings-theme-title">Light</span>
@@ -224,26 +211,6 @@
                             <span class="settings-switch-slider"></span>
                         </label>
                     </div>
-                    <div class="settings-toggle-row">
-                        <div>
-                            <p class="settings-field-label">High Risk Client Alerts</p>
-                            <p class="settings-field-hint">Alert when risk level is high.</p>
-                        </div>
-                        <label class="settings-switch">
-                            <input type="checkbox" id="settingsNotifyRisk" aria-label="Enable high risk alerts">
-                            <span class="settings-switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="settings-toggle-row">
-                        <div>
-                            <p class="settings-field-label">Report Ready Notifications</p>
-                            <p class="settings-field-hint">Be notified when reports are ready.</p>
-                        </div>
-                        <label class="settings-switch">
-                            <input type="checkbox" id="settingsNotifyReports" aria-label="Enable report ready alerts">
-                            <span class="settings-switch-slider"></span>
-                        </label>
-                    </div>
                 </div>
 
                 <div class="settings-section-footer">
@@ -256,35 +223,123 @@
                 <div class="settings-card-head">
                     <div>
                         <h2>Security</h2>
-                        <p class="dashboard-section-hint">Security settings will be available soon.</p>
+                        <p class="dashboard-section-hint">Protect your account with a strong password and login alerts.</p>
                     </div>
-                    <span class="dashboard-tag">Planned</span>
                 </div>
 
-                <div class="settings-planned-list">
-                    <div class="settings-planned-row">
-                        <div>
-                            <p class="settings-field-label">Change Password</p>
-                            <p class="settings-field-hint">Update your account password.</p>
+                <div class="settings-security-grid">
+                    <div class="settings-security-panel" id="settingsPasswordPanel">
+                        <div class="settings-security-header">
+                            <div>
+                                <p class="settings-field-label">Change Password</p>
+                                <p class="settings-field-hint">Use a unique password to keep your account secure.</p>
+                            </div>
                         </div>
-                        <button type="button" class="btn dashboard-action-btn outline settings-planned-btn" data-planned-feature="Change password" aria-disabled="true">Change Password</button>
+
+                        <div class="settings-security-footer">
+                            <button
+                                type="button"
+                                class="btn dashboard-action-btn primary"
+                                id="settingsOpenChangePasswordModal"
+                                data-bs-toggle="modal"
+                                data-bs-target="#settingsChangePasswordModal"
+                            >
+                                Change Password
+                            </button>
+                        </div>
                     </div>
-                    <div class="settings-planned-row">
-                        <div>
-                            <p class="settings-field-label">Active Sessions</p>
-                            <p class="settings-field-hint">Review recent logins and devices.</p>
+
+                    <div class="settings-security-panel" id="settingsLoginAlertsPanel" data-login-alerts-enabled="{{ login_alerts_enabled|yesno:'true,false' }}">
+                        <div class="settings-security-header">
+                            <div>
+                                <p class="settings-field-label">Login Alerts</p>
+                                <p class="settings-field-hint">Receive an email each time your account signs in.</p>
+                            </div>
+                            <span class="settings-status-pill" id="settingsLoginAlertsStatus">Off</span>
                         </div>
-                        <button type="button" class="btn dashboard-action-btn outline settings-planned-btn" data-planned-feature="Active sessions" aria-disabled="true">View Sessions</button>
-                    </div>
-                    <div class="settings-planned-row">
-                        <div>
-                            <p class="settings-field-label">Two-factor Authentication</p>
-                            <p class="settings-field-hint">Extra protection for sensitive data.</p>
+
+                        <div class="settings-toggle-row settings-login-alerts-row">
+                            <div>
+                                <p class="settings-field-label">Email alerts</p>
+                                <p class="settings-field-hint">Alerts go to {{ login_alerts_destination|default:"your email" }}.</p>
+                            </div>
+                            <label class="settings-switch">
+                                <input type="checkbox" id="settingsLoginAlertsToggle" aria-label="Enable login alert emails">
+                                <span class="settings-switch-slider"></span>
+                            </label>
                         </div>
-                        <button type="button" class="btn dashboard-action-btn outline settings-planned-btn" data-planned-feature="Two-factor authentication" aria-disabled="true">Enable 2FA</button>
+
+                        <div class="settings-security-footer">
+                            <span class="settings-inline-status" id="settingsLoginAlertsFeedback" aria-live="polite"></span>
+                        </div>
                     </div>
                 </div>
             </article>
+
+            <div class="modal fade settings-manage-modal" id="settingsChangePasswordModal" tabindex="-1" aria-labelledby="settingsChangePasswordModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content" id="settingsChangePasswordForm" novalidate>
+                        <div class="modal-header">
+                            <h2 class="modal-title h5" id="settingsChangePasswordModalLabel">Change Password</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="settings-field-label" for="settingsCurrentPassword">Current Password</label>
+                                    <div class="auth-password-field">
+                                        <div class="auth-password-wrap">
+                                            <input type="password" id="settingsCurrentPassword" class="form-control auth-input" autocomplete="current-password" placeholder="Enter current password" required>
+                                            <button type="button" class="auth-password-toggle" data-password-toggle-target="settingsCurrentPassword" aria-label="Show password">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="settings-field-label" for="settingsNewPassword">New Password</label>
+                                    <div class="auth-password-field has-requirements">
+                                        <div class="auth-password-wrap">
+                                            <input type="password" id="settingsNewPassword" class="form-control auth-input" autocomplete="new-password" placeholder="Enter new password" required>
+                                            <button type="button" class="auth-password-toggle" data-password-toggle-target="settingsNewPassword" aria-label="Show password">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                        <div class="auth-password-requirements" id="settingsPasswordRules" aria-live="polite">
+                                            <p class="auth-password-requirements-title">Password should include:</p>
+                                            <div class="auth-requirement-chips">
+                                                <span data-rule="length" class="auth-requirement-chip"><span class="auth-requirement-icon" aria-hidden="true"></span><span>8+ chars</span></span>
+                                                <span data-rule="uppercase" class="auth-requirement-chip"><span class="auth-requirement-icon" aria-hidden="true"></span><span>Uppercase</span></span>
+                                                <span data-rule="lowercase" class="auth-requirement-chip"><span class="auth-requirement-icon" aria-hidden="true"></span><span>Lowercase</span></span>
+                                                <span data-rule="number" class="auth-requirement-chip"><span class="auth-requirement-icon" aria-hidden="true"></span><span>Number</span></span>
+                                                <span data-rule="symbol" class="auth-requirement-chip"><span class="auth-requirement-icon" aria-hidden="true"></span><span>Symbol</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="settings-field-label" for="settingsConfirmPassword">Confirm New Password</label>
+                                    <div class="auth-password-field">
+                                        <div class="auth-password-wrap">
+                                            <input type="password" id="settingsConfirmPassword" class="form-control auth-input" autocomplete="new-password" placeholder="Confirm new password" required>
+                                            <button type="button" class="auth-password-toggle" data-password-toggle-target="settingsConfirmPassword" aria-label="Show password">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <span class="settings-inline-status" id="settingsChangePasswordStatus" aria-live="polite"></span>
+                            <div class="settings-security-buttons">
+                                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn dashboard-action-btn primary" id="settingsChangePasswordButton">Update Password</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <article class="dashboard-card settings-card settings-danger-card" id="settingsDanger" data-settings-section>
                 <div class="settings-card-head">
@@ -317,7 +372,9 @@
             loginPage: "{% url 'login' %}",
             settingsPage: "{% url 'settings' %}",
             profilePage: "{% url 'profile' %}",
-            workspaceDefaultsApi: "{% url 'api_workspace_defaults' %}"
+            workspaceDefaultsApi: "{% url 'api_workspace_defaults' %}",
+            securityChangePasswordApi: "{% url 'api_security_change_password' %}",
+            securityLoginAlertsApi: "{% url 'api_security_login_alerts' %}"
         },
         sidebarStateKey: "safebooks.sidebarCollapsed",
         desktopQuery: "(min-width: 992px)",

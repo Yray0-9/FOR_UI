@@ -86,6 +86,8 @@
     color: #2f4f83;
 }
 
+
+
 .settings-input:focus,
 .settings-select:focus {
     border-color: #aac2ee;
@@ -211,6 +213,103 @@
     border-bottom: none;
 }
 
+.settings-security-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.settings-security-panel {
+    border-radius: 16px;
+    border: 1px solid #d7e4fb;
+    background: #f8fbff;
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.settings-security-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.8rem;
+}
+
+.settings-security-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.settings-security-buttons {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.settings-inline-status {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #7a91b8;
+}
+
+.settings-inline-status.is-success {
+    color: #1f7a45;
+}
+
+.settings-inline-status.is-warning {
+    color: #b0701a;
+}
+
+.settings-inline-status.is-danger {
+    color: #b54848;
+}
+
+.settings-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: #e9f2ff;
+    color: #2d5ec5;
+    border: 1px solid #cfe0ff;
+}
+
+.settings-status-pill.is-enabled {
+    background: #e7f7ee;
+    color: #1f7a45;
+    border-color: #c8ead6;
+}
+
+.settings-login-alerts-row {
+    border-top: 1px dashed #e1e9fb;
+    padding-top: 0.6rem;
+}
+
+.settings-manage-modal .modal-content {
+    border-radius: 18px;
+    border: 1px solid #d7e4fb;
+    background: #f8fbff;
+}
+
+.settings-manage-modal .modal-header {
+    border-bottom: 1px dashed #d7e4fb;
+}
+
+.settings-manage-modal .modal-footer {
+    border-top: 1px dashed #d7e4fb;
+    gap: 0.75rem;
+}
+
+.settings-manage-modal .modal-title {
+    font-weight: 700;
+    color: #2f4f83;
+}
+
 .settings-switch {
     position: relative;
     width: 44px;
@@ -270,6 +369,7 @@
     flex-direction: column;
     justify-content: space-between;
     background: #f8fbff;
+    cursor: pointer;
 }
 
 .settings-theme-swatch.is-active {
@@ -341,6 +441,19 @@
         align-items: flex-start;
     }
 
+    .settings-security-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .settings-security-buttons {
+        width: 100%;
+    }
+
+    .settings-security-buttons .dashboard-action-btn {
+        width: 100%;
+    }
+
     .settings-planned-row .dashboard-action-btn {
         width: 100%;
     }
@@ -378,6 +491,8 @@ body.theme-dark .settings-select {
     color: #e6edf7;
 }
 
+
+
 body.theme-dark .settings-profile-preview,
 body.theme-dark .settings-planned-row {
     background: #0f1c33;
@@ -393,6 +508,57 @@ body.theme-dark .settings-readonly-pill {
     background: #1a2c4f;
     border-color: #2a3c5a;
     color: #aecdff;
+}
+
+body.theme-dark .settings-security-panel {
+    background: #0f1c33;
+    border-color: #2a3c5a;
+}
+
+body.theme-dark .settings-inline-status {
+    color: #94aacd;
+}
+
+body.theme-dark .settings-inline-status.is-success {
+    color: #8fe3b5;
+}
+
+body.theme-dark .settings-inline-status.is-warning {
+    color: #f0b36a;
+}
+
+body.theme-dark .settings-inline-status.is-danger {
+    color: #f0a4a4;
+}
+
+body.theme-dark .settings-status-pill {
+    background: #1a2c4f;
+    border-color: #2a3c5a;
+    color: #aecdff;
+}
+
+body.theme-dark .settings-status-pill.is-enabled {
+    background: #1e3a2b;
+    border-color: #2f5a3f;
+    color: #bce8c8;
+}
+
+body.theme-dark .settings-login-alerts-row {
+    border-top-color: #2a3c5a;
+}
+
+body.theme-dark .settings-manage-modal .modal-content {
+    background: #0f1c33;
+    border-color: #2a3c5a;
+}
+
+body.theme-dark .settings-manage-modal .modal-header,
+body.theme-dark .settings-manage-modal .modal-footer {
+    border-color: #2a3c5a;
+}
+
+body.theme-dark .settings-manage-modal .modal-title {
+    color: #d7e6ff;
 }
 
 body.theme-dark .settings-segmented {
@@ -424,7 +590,9 @@ body.theme-dark .settings-theme-swatch.is-active {
 }
 
 body.theme-dark .settings-theme-swatch.light {
-    background: #0f1c33;
+    background: linear-gradient(140deg, #ffffff 0%, #f3f7ff 55%, #eef4ff 100%);
+    border-color: #dbe6fb;
+    color: #1b2a44;
 }
 
 body.theme-dark .settings-danger-card {

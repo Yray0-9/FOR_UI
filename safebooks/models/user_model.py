@@ -20,7 +20,11 @@ class BookkeeperAccount(models.Model):
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(unique=True)
     email_verified = models.BooleanField(default=True)
+    login_alerts_enabled = models.BooleanField(default=False)
     password_hash = models.CharField(max_length=255)
+    two_factor_enabled = models.BooleanField(default=False)
+    two_factor_secret = models.CharField(max_length=64, blank=True, default="")
+    two_factor_confirmed_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(
         max_length=12,
         choices=STATUS_CHOICES,

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST
@@ -36,6 +37,10 @@ from safebooks.services.analytics_service import get_analytics_summary_for_bookk
 from safebooks.services.settings_service import (
     get_workspace_defaults_for_bookkeeper,
     update_workspace_defaults_for_bookkeeper,
+)
+from safebooks.services.security_service import (
+    change_bookkeeper_password,
+    update_login_alerts_preference,
 )
 from safebooks.services.admin_approvals_service import (
     approve_bookkeeper,
@@ -108,6 +113,7 @@ def _get_session_admin(request):
         request.session.pop(SESSION_ADMIN_ID_KEY, None)
 
     return account
+
 
 
 def _build_user_context(account):
@@ -479,6 +485,8 @@ def verify_email_page_view(request):
 def settings_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
     context["active_nav"] = "settings"
+    context["login_alerts_enabled"] = bool(getattr(request.bookkeeper_account, "login_alerts_enabled", False))
+    context["login_alerts_destination"] = _mask_email_address(request.bookkeeper_account.email)
     return render(request, "base/settings.html", context)
 
 
@@ -586,6 +594,41 @@ def workspace_defaults_api_view(request):
         return JsonResponse(result)
 
     return JsonResponse(result, status=400)
+
+
+@require_POST
+@require_bookkeeper_auth
+def security_change_password_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = change_bookkeeper_password(request.bookkeeper_account, payload)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
+
+
+@require_POST
+@require_bookkeeper_auth
+def security_login_alerts_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = update_login_alerts_preference(request.bookkeeper_account, payload)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
+
 
 
 @require_http_methods(["GET", "POST"])

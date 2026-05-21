@@ -80,6 +80,40 @@ def _build_verification_email(account: BookkeeperAccount, code: str, ttl_minutes
     return subject, message
 
 
+def _build_login_alert_email(account: BookkeeperAccount, login_time: timezone.datetime) -> tuple[str, str]:
+    recipient_name = (account.full_name or "").strip() or "there"
+    formatted_time = timezone.localtime(login_time).strftime("%Y-%m-%d %H:%M")
+    subject = "SafeBooks login alert"
+    message = (
+        f"Hi {recipient_name},\n\n"
+        "We detected a new sign-in to your SafeBooks account.\n"
+        f"Time: {formatted_time}\n\n"
+        "If this was you, no action is needed. If not, please reset your password.\n\n"
+        "SafeBooks"
+    )
+    return subject, message
+
+
+def _maybe_send_login_alert(account: BookkeeperAccount) -> None:
+    if not getattr(account, "login_alerts_enabled", False):
+        return
+    if not getattr(account, "email", ""):
+        return
+
+    try:
+        subject, message = _build_login_alert_email(account, timezone.now())
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [account.email],
+            fail_silently=False,
+        )
+    except Exception:
+        # Avoid blocking logins if email delivery fails.
+        return
+
+
 def send_email_verification_code(account: BookkeeperAccount, force: bool = False) -> dict:
     if account.email_verified:
         return {
@@ -363,6 +397,8 @@ def login_user(data: dict) -> dict:
             "status": status,
         }
 
+    login_alerts_enabled = bool(getattr(account, "login_alerts_enabled", False))
+
     if not account.email_verified:
         return {
             "ok": True,
@@ -375,6 +411,7 @@ def login_user(data: dict) -> dict:
                 "username": account.username,
                 "status": status,
                 "email_verified": False,
+                "login_alerts_enabled": login_alerts_enabled,
             },
         }
 
@@ -389,11 +426,13 @@ def login_user(data: dict) -> dict:
                 "username": account.username,
                 "status": status,
                 "email_verified": True,
+                "login_alerts_enabled": login_alerts_enabled,
             },
         }
 
     account.last_login = timezone.now()
     account.save(update_fields=["last_login"])
+    _maybe_send_login_alert(account)
 
     return {
         "ok": True,
@@ -405,6 +444,7 @@ def login_user(data: dict) -> dict:
             "username": account.username,
             "status": status,
             "email_verified": True,
+            "login_alerts_enabled": login_alerts_enabled,
         },
     }
 
