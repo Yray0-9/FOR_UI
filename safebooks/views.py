@@ -27,6 +27,7 @@ from safebooks.services.client_service import (
 from safebooks.services.financial_record_service import (
     create_record_for_client_period,
     delete_record_for_client,
+    get_last_record_for_client_period,
     list_financial_clients_for_bookkeeper,
     list_records_for_client_period,
     list_transactions_for_client_range,
@@ -41,6 +42,10 @@ from safebooks.services.settings_service import (
 from safebooks.services.security_service import (
     change_bookkeeper_password,
     update_login_alerts_preference,
+)
+from safebooks.services.profile_service import (
+    get_profile_for_bookkeeper,
+    update_profile_for_bookkeeper,
 )
 from safebooks.services.admin_approvals_service import (
     approve_bookkeeper,
@@ -495,6 +500,12 @@ def settings_page_view(request):
 def profile_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
     context["active_nav"] = "profile"
+    context["profile_data"] = {
+        "full_name": request.bookkeeper_account.full_name or "",
+        "username": request.bookkeeper_account.username or "",
+        "email": request.bookkeeper_account.email or "",
+        "location": getattr(request.bookkeeper_account, "location", "") or "",
+    }
     return render(request, "base/profile.html", context)
 
 
@@ -624,6 +635,27 @@ def security_login_alerts_api_view(request):
         )
 
     result = update_login_alerts_preference(request.bookkeeper_account, payload)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
+
+
+@require_http_methods(["GET", "POST"])
+@require_bookkeeper_auth
+def profile_api_view(request):
+    if request.method == "GET":
+        result = get_profile_for_bookkeeper(request.bookkeeper_account)
+        return JsonResponse(result)
+
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = update_profile_for_bookkeeper(request.bookkeeper_account, payload)
     if result.get("ok"):
         return JsonResponse(result)
 
@@ -858,6 +890,25 @@ def financial_records_api_view(request, client_id):
     result = create_record_for_client_period(request.bookkeeper_account, client_id, payload)
     if result.get("ok"):
         return JsonResponse(result, status=201)
+
+    return JsonResponse(result, status=_resolve_financial_record_error_status(result))
+
+
+@require_http_methods(["GET"])
+@require_bookkeeper_auth
+def financial_records_last_entry_api_view(request, client_id):
+    result = get_last_record_for_client_period(
+        request.bookkeeper_account,
+        client_id,
+        request.GET.get("month"),
+        request.GET.get("year"),
+        request.GET.get("frequency"),
+    )
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    if result.get("no_record"):
+        return JsonResponse(result)
 
     return JsonResponse(result, status=_resolve_financial_record_error_status(result))
 

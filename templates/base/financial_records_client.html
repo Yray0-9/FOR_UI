@@ -206,6 +206,20 @@
                         </select>
                     </div>
                 </div>
+                <div class="financial-reuse-panel" role="note" aria-label="Reuse last period entry">
+                    <div>
+                        <h3 class="financial-reuse-title">Reuse last period entry</h3>
+                        <p class="financial-reuse-copy">Load the most recent period and edit line items instead of starting over.</p>
+                        <div class="financial-reuse-meta">
+                            <span><i class="bi bi-calendar2-week" aria-hidden="true"></i>Matches monthly, quarterly, or annual cadence</span>
+                            <span><i class="bi bi-layers" aria-hidden="true"></i>Copies line items and calculator tags</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn dashboard-action-btn outline financial-reuse-btn" id="useLastPeriodBtn">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Use Last Period</span>
+                    </button>
+                </div>
 
                 <section class="financial-line-items-section" aria-label="Dynamic line items">
                     <div class="financial-line-items-head">
@@ -432,6 +446,8 @@
         const editAddLineItemBtn = document.getElementById("editAddLineItemBtn");
         const confirmDeleteEntryBtn = document.getElementById("confirmDeleteEntryBtn");
         const deleteEntryPeriodLabel = document.getElementById("deleteEntryPeriodLabel");
+        const useLastPeriodBtn = document.getElementById("useLastPeriodBtn");
+        const reuseLastPeriodPanel = document.querySelector(".financial-reuse-panel");
 
         const addEntryModalElement = document.getElementById("addEntryModal");
         const editEntryModalElement = document.getElementById("editEntryModal");
@@ -444,6 +460,7 @@
         const CLIENTS_API_URL = "{% url 'api_clients' %}";
         const FINANCIAL_RECORDS_CLIENT_TEMPLATE_URL = "{% url 'api_financial_records' client_id=999999 %}";
         const FINANCIAL_RECORDS_DETAIL_TEMPLATE_URL = "{% url 'api_financial_record_detail' client_id=999999 record_id=888888 %}";
+        const FINANCIAL_RECORDS_LAST_TEMPLATE_URL = "{% url 'api_financial_records_last_entry' client_id=999999 %}";
         const ANALYTICS_PAGE_URL = "{% url 'analytics' %}";
 
         const currencyFormatter = new Intl.NumberFormat("en-PH", {
@@ -482,7 +499,9 @@
         let lineItemCounter = 20;
         let isAddSubmitting = false;
         let isEditSubmitting = false;
+        let isReuseLoading = false;
         let recordsLoadRequestToken = 0;
+        let activePriorFrequencies = new Set();
         let recordsLoadAbortController = null;
         let isRecordsLoading = false;
         const expandedEntryIds = new Set();
@@ -505,6 +524,10 @@
             return FINANCIAL_RECORDS_DETAIL_TEMPLATE_URL
                 .replace("999999", String(clientId))
                 .replace("888888", String(recordId));
+        };
+
+        const buildLastRecordApiUrl = (clientId) => {
+            return FINANCIAL_RECORDS_LAST_TEMPLATE_URL.replace("999999", String(clientId));
         };
 
         const buildClientAnalyticsUrl = () => {
@@ -531,6 +554,8 @@
             if (financialAddEntryButton) {
                 financialAddEntryButton.disabled = isRecordsLoading || !hasValidClientId();
             }
+
+            setReuseButtonState(isReuseLoading);
         };
 
         const goToClientAnalytics = () => {
@@ -1516,6 +1541,141 @@
             return true;
         };
 
+        const setReuseButtonState = (isLoading) => {
+            if (!useLastPeriodBtn) {
+                return;
+            }
+
+            const labelSpan = useLastPeriodBtn.querySelector("span");
+            if (!useLastPeriodBtn.dataset.defaultLabel && labelSpan) {
+                useLastPeriodBtn.dataset.defaultLabel = labelSpan.textContent || "Use Last Period";
+            }
+
+            if (labelSpan) {
+                labelSpan.textContent = isLoading ? "Loading..." : (useLastPeriodBtn.dataset.defaultLabel || "Use Last Period");
+            }
+
+            useLastPeriodBtn.disabled = Boolean(isLoading) || isRecordsLoading || !hasValidClientId() || (reuseLastPeriodPanel && reuseLastPeriodPanel.hidden);
+        };
+
+        const setReusePanelVisibility = (hasAnyRecords) => {
+            if (!reuseLastPeriodPanel) {
+                return;
+            }
+
+            reuseLastPeriodPanel.hidden = !Boolean(hasAnyRecords);
+            setReuseButtonState(isReuseLoading);
+        };
+
+        const normalizeFrequencyValue = (value) => {
+            const cleanedValue = String(value || "").trim().toLowerCase();
+            if (!cleanedValue) {
+                return "monthly";
+            }
+
+            if (cleanedValue === "monthly" || cleanedValue === "quarterly" || cleanedValue === "annually") {
+                return cleanedValue;
+            }
+
+            return "monthly";
+        };
+
+        const updateReusePanelForFrequency = (frequencyValue) => {
+            const normalized = normalizeFrequencyValue(frequencyValue);
+            const hasPrior = activePriorFrequencies.has(normalized);
+            setReusePanelVisibility(hasPrior);
+        };
+
+        const buildDateForActivePeriod = (sourceDateValue) => {
+            const parsedDate = parseIsoDateParts(sourceDateValue);
+            const day = parsedDate ? parsedDate.day : 1;
+            const daysInMonth = new Date(activeYear, activeMonth, 0).getDate();
+            const safeDay = Math.min(day, daysInMonth);
+            const monthPart = String(activeMonth).padStart(2, "0");
+            const dayPart = String(safeDay).padStart(2, "0");
+            return `${activeYear}-${monthPart}-${dayPart}`;
+        };
+
+        const getSourcePeriodLabel = (sourceDateValue) => {
+            const parsedDate = parseIsoDateParts(sourceDateValue);
+            if (!parsedDate) {
+                return "last period";
+            }
+
+            const monthLabel = MONTH_NAMES[parsedDate.month] || "Selected Period";
+            return `${monthLabel} ${parsedDate.year}`;
+        };
+
+        const handleReuseLastPeriod = async () => {
+            if (isReuseLoading || isAddSubmitting || isRecordsLoading) {
+                return;
+            }
+
+            if (!hasValidClientId()) {
+                showToast("Select a valid client before reusing entries.");
+                return;
+            }
+
+            const addEntryNotes = document.getElementById("addEntryNotes");
+            const addEntryDate = document.getElementById("addEntryDate");
+            const addEntryFrequency = document.getElementById("addEntryFrequency");
+            const frequencyValue = addEntryFrequency ? String(addEntryFrequency.value || "monthly") : "monthly";
+
+            isReuseLoading = true;
+            setReuseButtonState(true);
+
+            const params = new URLSearchParams();
+            params.set("month", String(activeMonth));
+            params.set("year", String(activeYear));
+            params.set("frequency", frequencyValue);
+
+            try {
+                const response = await fetch(`${buildLastRecordApiUrl(activeClientId)}?${params.toString()}`, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                    },
+                    credentials: "same-origin",
+                });
+
+                if (response.status === 401) {
+                    redirectToLogin();
+                    return;
+                }
+
+                const result = await parseJsonSafe(response);
+                if (!response.ok || !result || !result.ok) {
+                    const message = result && result.message ? result.message : "Unable to load last period entry.";
+                    showToast(message);
+                    return;
+                }
+
+                const record = result.record || null;
+                if (!record) {
+                    showToast("No previous entry found.");
+                    return;
+                }
+
+                if (addEntryNotes) {
+                    addEntryNotes.value = record.notes || "";
+                }
+                if (addEntryFrequency) {
+                    addEntryFrequency.value = String(record.frequency || frequencyValue || "monthly");
+                }
+                if (addEntryDate) {
+                    addEntryDate.value = buildDateForActivePeriod(record.date);
+                }
+
+                resetLineItemsBody(addLineItemsBody, Array.isArray(record.line_items) ? record.line_items : []);
+                showToast(`Loaded last period entry from ${getSourcePeriodLabel(record.date)}.`);
+            } catch (error) {
+                showToast("Unable to load last period entry.");
+            } finally {
+                isReuseLoading = false;
+                setReuseButtonState(false);
+            }
+        };
+
         const validateEntryPayload = (payload) => {
             const dateValue = String(payload && payload.date ? payload.date : "").trim();
             if (!dateValue) {
@@ -1639,6 +1799,8 @@
                 setRecordsLoadingState(false);
                 activeRecords = [];
                 activeSummary = null;
+                activePriorFrequencies = new Set();
+                setReusePanelVisibility(false);
                 renderEntriesTable();
                 return;
             }
@@ -1681,6 +1843,8 @@
                     showToast(message);
                     activeRecords = [];
                     activeSummary = null;
+                    activePriorFrequencies = new Set();
+                    setReusePanelVisibility(false);
                     renderEntriesTable();
                     return;
                 }
@@ -1712,6 +1876,14 @@
 
                 activeRecords = Array.isArray(result.records) ? result.records : [];
                 activeSummary = result.summary || null;
+                const priorFrequencies = Array.isArray(result.prior_frequencies) ? result.prior_frequencies : [];
+                activePriorFrequencies = new Set(
+                    priorFrequencies
+                        .map((value) => String(value || "").trim().toLowerCase())
+                        .filter((value) => value)
+                );
+                const addEntryFrequency = document.getElementById("addEntryFrequency");
+                updateReusePanelForFrequency(addEntryFrequency ? addEntryFrequency.value : "monthly");
 
                 expandedEntryIds.clear();
                 setRecordsLoadingState(false);
@@ -1729,6 +1901,8 @@
                 showToast("Unable to load financial records.");
                 activeRecords = [];
                 activeSummary = null;
+                activePriorFrequencies = new Set();
+                setReusePanelVisibility(false);
                 renderEntriesTable();
             }
         };
@@ -1864,6 +2038,13 @@
             });
         }
 
+        const addEntryFrequencySelect = document.getElementById("addEntryFrequency");
+        if (addEntryFrequencySelect) {
+            addEntryFrequencySelect.addEventListener("change", (event) => {
+                updateReusePanelForFrequency(event.target.value);
+            });
+        }
+
         if (editLineItemsBody) {
             editLineItemsBody.addEventListener("click", (event) => {
                 handleLineItemClick(editLineItemsBody, event);
@@ -1876,6 +2057,10 @@
             });
         }
 
+        if (useLastPeriodBtn) {
+            useLastPeriodBtn.addEventListener("click", handleReuseLastPeriod);
+        }
+
         if (addEntryModalElement) {
             addEntryModalElement.addEventListener("show.bs.modal", () => {
                 syncAddEntryDateToActivePeriod();
@@ -1883,6 +2068,7 @@
                 if (addEntryFrequency && !String(addEntryFrequency.value || "").trim()) {
                     addEntryFrequency.value = "monthly";
                 }
+                updateReusePanelForFrequency(addEntryFrequency ? addEntryFrequency.value : "monthly");
             });
 
             addEntryModalElement.addEventListener("hidden.bs.modal", () => {
@@ -1894,6 +2080,7 @@
                 if (addEntryFrequency) {
                     addEntryFrequency.value = "monthly";
                 }
+                updateReusePanelForFrequency(addEntryFrequency ? addEntryFrequency.value : "monthly");
             });
         }
 

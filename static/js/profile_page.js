@@ -34,6 +34,16 @@
 
     const profileSections = Array.from(document.querySelectorAll("[data-profile-section]"));
     const profileTrackInputs = Array.from(document.querySelectorAll("[data-profile-track]"));
+    const profileForm = document.getElementById("profilePersonalDetails");
+    const profileFullNameInput = document.getElementById("profileFullName");
+    const profileUsernameInput = document.getElementById("profileUsername");
+    const profileEmailInput = document.getElementById("profileEmail");
+    const profileLocationInput = document.getElementById("profileLocation");
+    const profileSaveButton = profileForm ? profileForm.querySelector("[data-profile-save]") : null;
+    const profileStatus = profileForm ? profileForm.querySelector("[data-profile-status]") : null;
+    const profileData = config.profile || {};
+    const profileApiUrl = String(urls.profileApi || "");
+    const verifyEmailPage = String(urls.verifyEmailPage || "");
 
     const scrollTargets = Array.from(document.querySelectorAll("[data-scroll-target]"));
     const plannedFeatureButtons = Array.from(document.querySelectorAll("[data-planned-feature]"));
@@ -136,8 +146,14 @@
 
     const hydrateProfileIdentity = () => {
         const authUser = getAuthUser();
-        const displayName = authUser && authUser.full_name ? String(authUser.full_name).trim() : String(config.defaultName || "Bookkeeper User");
-        const displayEmail = authUser && authUser.email ? String(authUser.email).trim() : "name@company.com";
+        const profileName = profileData && profileData.full_name ? String(profileData.full_name).trim() : "";
+        const profileEmail = profileData && profileData.email ? String(profileData.email).trim() : "";
+        const displayName = profileName
+            || (authUser && authUser.full_name ? String(authUser.full_name).trim() : "")
+            || String(config.defaultName || "Bookkeeper User");
+        const displayEmail = profileEmail
+            || (authUser && authUser.email ? String(authUser.email).trim() : "")
+            || "name@company.com";
         const initials = resolveInitials(displayName, String(config.defaultInitials || "SB"));
 
         if (profileDisplayName) {
@@ -212,6 +228,90 @@
         }
     };
 
+    const setProfileStatus = (message) => {
+        if (!profileStatus) {
+            return;
+        }
+
+        profileStatus.textContent = message;
+    };
+
+    const setSaveButtonLoading = (isLoading) => {
+        if (!profileSaveButton) {
+            return;
+        }
+
+        if (!profileSaveButton.dataset.defaultLabel) {
+            profileSaveButton.dataset.defaultLabel = profileSaveButton.textContent || "";
+        }
+
+        profileSaveButton.disabled = isLoading;
+        profileSaveButton.textContent = isLoading
+            ? "Saving..."
+            : profileSaveButton.dataset.defaultLabel;
+    };
+
+    const setInputValue = (inputElement, value) => {
+        if (!inputElement) {
+            return;
+        }
+
+        inputElement.value = String(value || "").trim();
+    };
+
+    const updateStoredAuthUser = (nextUser) => {
+        if (!AUTH_USER_KEY) {
+            return;
+        }
+
+        try {
+            const currentUser = getAuthUser() || {};
+            const mergedUser = {
+                ...currentUser,
+                ...nextUser,
+            };
+            window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mergedUser));
+        } catch (error) {
+            // Ignore storage failures to keep UI responsive.
+        }
+    };
+
+    const parseJsonSafe = (response) => {
+        if (shared && typeof shared.parseJsonSafe === "function") {
+            return shared.parseJsonSafe(response);
+        }
+
+        return response
+            .json()
+            .catch(() => null);
+    };
+
+    const getCookieValue = (cookieName) => {
+        if (shared && typeof shared.getCookieValue === "function") {
+            return shared.getCookieValue(cookieName);
+        }
+
+        return "";
+    };
+
+    const postJson = async (url, payload) => {
+        const csrfToken = getCookieValue("csrftoken");
+        const headers = {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        };
+        if (csrfToken) {
+            headers["X-CSRFToken"] = csrfToken;
+        }
+
+        return fetch(url, {
+            method: "POST",
+            headers,
+            credentials: "same-origin",
+            body: JSON.stringify(payload || {}),
+        });
+    };
+
     const isInputFilled = (input) => {
         if (!input) {
             return false;
@@ -236,6 +336,84 @@
         profileCompletionValue.textContent = `${safeCompletion}%`;
         profileCompletionBar.style.width = `${safeCompletion}%`;
         profileCompletionTrack.setAttribute("aria-valuenow", String(safeCompletion));
+    };
+
+    const hydrateProfileForm = () => {
+        const authUser = getAuthUser() || {};
+        const resolveValue = (value, fallback) => {
+            const primaryValue = String(value || "").trim();
+            if (primaryValue) {
+                return primaryValue;
+            }
+            return String(fallback || "").trim();
+        };
+
+        setInputValue(profileFullNameInput, resolveValue(profileData.full_name, authUser.full_name));
+        setInputValue(profileUsernameInput, resolveValue(profileData.username, authUser.username));
+        setInputValue(profileEmailInput, resolveValue(profileData.email, authUser.email));
+        setInputValue(profileLocationInput, resolveValue(profileData.location, authUser.location));
+
+        updateCompletion();
+    };
+
+    const handleProfileSave = async (section) => {
+        if (!profileApiUrl || !profileForm) {
+            showToast("Profile updates are unavailable.", "warning");
+            return;
+        }
+
+        const payload = {
+            full_name: profileFullNameInput ? profileFullNameInput.value.trim() : "",
+            username: profileUsernameInput ? profileUsernameInput.value.trim() : "",
+            email: profileEmailInput ? profileEmailInput.value.trim() : "",
+            location: profileLocationInput ? profileLocationInput.value.trim() : "",
+        };
+
+        setSaveButtonLoading(true);
+        setProfileStatus("Saving...");
+
+        try {
+            const response = await postJson(profileApiUrl, payload);
+            if (response.status === 401) {
+                window.location.assign(String(urls.loginPage || "/login/"));
+                return;
+            }
+
+            const result = await parseJsonSafe(response);
+            if (!response.ok || !result || !result.ok) {
+                const message = result && result.message
+                    ? String(result.message)
+                    : "Unable to update profile.";
+                throw new Error(message);
+            }
+
+            if (result.user && typeof result.user === "object") {
+                updateStoredAuthUser(result.user);
+                profileData.full_name = result.user.full_name || "";
+                profileData.username = result.user.username || "";
+                profileData.email = result.user.email || "";
+                profileData.location = result.user.location || "";
+            }
+
+            resetSectionDirty(section);
+            setProfileStatus("Saved");
+            hydrateProfileIdentity();
+            hydrateHeaderUser();
+            updateCompletion();
+            showToast(result.message || "Profile updated.", "success");
+
+            if (result.requires_email_verification && verifyEmailPage) {
+                showToast("Verify your new email to continue.", "warning");
+                window.setTimeout(() => {
+                    window.location.assign(verifyEmailPage);
+                }, 800);
+            }
+        } catch (error) {
+            setProfileStatus("Update failed");
+            showToast(error && error.message ? String(error.message) : "Unable to update profile.", "danger");
+        } finally {
+            setSaveButtonLoading(false);
+        }
     };
 
     const bindSectionInputs = () => {
@@ -263,8 +441,7 @@
                     return;
                 }
 
-                resetSectionDirty(section);
-                showToast("Profile updated.", "success");
+                handleProfileSave(section);
             });
         });
     };
@@ -331,12 +508,12 @@
         }
 
         hydrateProfileIdentity();
+        hydrateProfileForm();
         updateThemeSnapshot();
         bindSectionInputs();
         bindScrollTargets();
         bindPlannedFeatures();
         bindHeaderActions();
-        updateCompletion();
 
         window.addEventListener("resize", () => {
             sidebarState.closeMobileSidebar();

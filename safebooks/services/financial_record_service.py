@@ -415,6 +415,22 @@ def list_records_for_client_period(bookkeeper, client_id: int, month_value=None,
             .order_by("-entry_date", "-id")
         )
 
+    has_any_records = FinancialRecord.objects.filter(
+        bookkeeper=bookkeeper,
+        client=client,
+    ).exists()
+
+    period_start = date(year, month, 1)
+    prior_frequencies = list(
+        FinancialRecord.objects.filter(
+            bookkeeper=bookkeeper,
+            client=client,
+            entry_date__lt=period_start,
+        )
+        .values_list("frequency", flat=True)
+        .distinct()
+    )
+
     return {
         "ok": True,
         "client": _serialize_client(client),
@@ -425,6 +441,79 @@ def list_records_for_client_period(bookkeeper, client_id: int, month_value=None,
         },
         "records": [_serialize_record(record) for record in records],
         "summary": _build_summary(records),
+        "has_any_records": has_any_records,
+        "prior_frequencies": prior_frequencies,
+    }
+
+
+def get_last_record_for_client_period(
+    bookkeeper,
+    client_id: int,
+    month_value=None,
+    year_value=None,
+    frequency_value=None,
+) -> dict:
+    client, error_response = _resolve_client_for_bookkeeper(bookkeeper, client_id)
+    if error_response:
+        return error_response
+
+    month, month_error = _normalize_month(month_value)
+    if month_error:
+        return {
+            "ok": False,
+            "message": month_error,
+            "errors": [month_error],
+        }
+
+    year, year_error = _normalize_year(year_value)
+    if year_error:
+        return {
+            "ok": False,
+            "message": year_error,
+            "errors": [year_error],
+        }
+
+    frequency, frequency_error = _normalize_frequency(frequency_value)
+    if frequency_error:
+        return {
+            "ok": False,
+            "message": frequency_error,
+            "errors": [frequency_error],
+        }
+
+    period_start = date(year, month, 1)
+    record = (
+        FinancialRecord.objects.filter(
+            bookkeeper=bookkeeper,
+            client=client,
+            entry_date__lt=period_start,
+            frequency=frequency,
+        )
+        .prefetch_related("line_items")
+        .order_by("-entry_date", "-id")
+        .first()
+    )
+
+    if record is None or record.entry_date is None:
+        message = "No previous entry found for this frequency."
+        return {
+            "ok": False,
+            "message": message,
+            "errors": [message],
+            "no_record": True,
+        }
+
+    source_month = record.entry_date.month
+    source_year = record.entry_date.year
+    return {
+        "ok": True,
+        "client": _serialize_client(client),
+        "source_period": {
+            "month": source_month,
+            "month_label": MONTH_NUMBER_TO_NAME.get(source_month, str(source_month)),
+            "year": source_year,
+        },
+        "record": _serialize_record(record),
     }
 
 

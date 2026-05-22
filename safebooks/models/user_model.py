@@ -19,6 +19,7 @@ class BookkeeperAccount(models.Model):
     full_name = models.CharField(max_length=120)
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(unique=True)
+    location = models.CharField(max_length=180, blank=True, default="")
     email_verified = models.BooleanField(default=True)
     login_alerts_enabled = models.BooleanField(default=False)
     password_hash = models.CharField(max_length=255)

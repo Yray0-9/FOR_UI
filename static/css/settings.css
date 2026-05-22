@@ -254,6 +254,13 @@
     color: #7a91b8;
 }
 
+.settings-password-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1rem;
+    margin-top: -0.35rem;
+}
+
 .settings-inline-status.is-success {
     color: #1f7a45;
 }

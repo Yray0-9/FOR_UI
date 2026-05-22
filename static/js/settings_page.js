@@ -795,7 +795,7 @@
         };
 
         setButtonLoading(changePasswordButton, true, "Updating...");
-        setInlineStatus(changePasswordStatus, "Saving...", "warning");
+        setInlineStatus(changePasswordStatus, "Saving...", "success");
 
         try {
             const response = await postJson(securityChangePasswordUrl, payload);

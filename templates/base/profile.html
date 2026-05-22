@@ -123,21 +123,8 @@
                         <input type="email" id="profileEmail" class="form-control profile-input" placeholder="name@company.com" required data-profile-track>
                     </div>
                     <div class="col-md-6">
-                        <label class="profile-field-label" for="profilePhone">Phone Number</label>
-                        <input type="tel" id="profilePhone" class="form-control profile-input" placeholder="+63 900 000 0000" data-profile-track>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="profile-field-label" for="profileTimeZone">Time Zone</label>
-                        <select id="profileTimeZone" class="form-select profile-select" data-profile-track>
-                            <option value="asia-manila">(GMT+8) Asia/Manila</option>
-                            <option value="asia-singapore">(GMT+8) Asia/Singapore</option>
-                            <option value="asia-kuala-lumpur">(GMT+8) Asia/Kuala Lumpur</option>
-                            <option value="asia-jakarta">(GMT+7) Asia/Jakarta</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="profile-field-label" for="profileLocation">Location</label>
-                        <input type="text" id="profileLocation" class="form-control profile-input" placeholder="City, Country" data-profile-track>
+                        <label class="profile-field-label" for="profileLocation">Location (Optional)</label>
+                        <input type="text" id="profileLocation" class="form-control profile-input" placeholder="City, Country">
                     </div>
                 </div>
 
@@ -245,7 +232,15 @@
             logoutApi: "{% url 'api_logout' %}",
             loginPage: "{% url 'login' %}",
             profilePage: "{% url 'profile' %}",
-            settingsPage: "{% url 'settings' %}"
+            settingsPage: "{% url 'settings' %}",
+            profileApi: "{% url 'api_profile' %}",
+            verifyEmailPage: "{% url 'verify_email' %}"
+        },
+        profile: {
+            full_name: "{{ profile_data.full_name|default:''|escapejs }}",
+            username: "{{ profile_data.username|default:''|escapejs }}",
+            email: "{{ profile_data.email|default:''|escapejs }}",
+            location: "{{ profile_data.location|default:''|escapejs }}"
         },
         sidebarStateKey: "safebooks.sidebarCollapsed",
         desktopQuery: "(min-width: 992px)",
