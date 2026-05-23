@@ -60,23 +60,6 @@
                         <input type="email" id="adminEmail" class="form-control profile-input" value="{{ current_admin_email|default:'admin@safebooks.com' }}" placeholder="admin@safebooks.com" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="profile-field-label" for="adminPhone">Phone number</label>
-                        <input type="tel" id="adminPhone" class="form-control profile-input" placeholder="+63 900 000 0000">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="profile-field-label" for="adminTimeZone">Time zone</label>
-                        <select id="adminTimeZone" class="form-select profile-select">
-                            <option value="asia-manila">(GMT+8) Asia/Manila</option>
-                            <option value="asia-singapore">(GMT+8) Asia/Singapore</option>
-                            <option value="asia-kuala-lumpur">(GMT+8) Asia/Kuala Lumpur</option>
-                            <option value="asia-jakarta">(GMT+7) Asia/Jakarta</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="profile-field-label" for="adminLocation">Location</label>
-                        <input type="text" id="adminLocation" class="form-control profile-input" placeholder="City, Country">
-                    </div>
-                    <div class="col-md-6">
                         <label class="profile-field-label">Role label</label>
                         <div class="profile-readonly-pill">{{ current_admin_role_label|default:"System Manager" }}</div>
                     </div>

@@ -6,6 +6,10 @@
     align-items: start;
 }
 
+.admin-settings-layout {
+    --settings-sticky-offset: 9.5rem;
+}
+
 .settings-nav {
     position: sticky;
     top: var(--settings-sticky-offset);
@@ -297,6 +301,7 @@
     padding-top: 0.6rem;
 }
 
+
 .settings-manage-modal .modal-content {
     border-radius: 18px;
     border: 1px solid #d7e4fb;
@@ -461,6 +466,7 @@
         width: 100%;
     }
 
+
     .settings-planned-row .dashboard-action-btn {
         width: 100%;
     }
@@ -505,6 +511,7 @@ body.theme-dark .settings-planned-row {
     background: #0f1c33;
     border-color: #2a3c5a;
 }
+
 
 body.theme-dark .settings-avatar {
     background: #1a2c4f;

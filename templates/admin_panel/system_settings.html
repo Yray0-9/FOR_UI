@@ -1,23 +1,40 @@
 {% extends 'admin_panel/admin_base.html' %}
+{% load static %}
 
 {% block page_title %}System Settings{% endblock %}
 {% block page_heading %}System Settings{% endblock %}
 {% block page_subtitle %}
-<p class="dashboard-page-subtitle">Core policies for approvals, bookkeeper access, and admin security. Preview-only controls for now.</p>
+<p class="dashboard-page-subtitle">System-wide policies for approvals, access, and security. Preview-only controls for now.</p>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/settings.css' %}">
 {% endblock %}
 
 {% block content %}
 <section class="dashboard-content admin-dashboard">
-    <div class="row g-3 mt-1">
-        <div class="col-lg-6">
-            <article class="dashboard-card admin-card h-100">
-                <div class="dashboard-card-head">
-                    <h2>Approval workflow &amp; SLA</h2>
-                </div>
-                <p class="dashboard-panel-hint">Controls the Approvals queue and review actions.</p>
-                <div class="d-grid gap-3">
+    <div class="settings-layout admin-settings-layout">
+        <nav class="settings-nav admin-settings-nav" aria-label="System settings sections">
+            <a class="settings-nav-link" href="#adminSettingsApprovals"><i class="bi bi-check2-circle"></i><span>Approvals</span></a>
+            <a class="settings-nav-link" href="#adminSettingsAccess"><i class="bi bi-people"></i><span>Bookkeeper Access</span></a>
+            <a class="settings-nav-link" href="#adminSettingsSecurity"><i class="bi bi-shield-check"></i><span>Security</span></a>
+            <a class="settings-nav-link" href="#adminSettingsAudit"><i class="bi bi-bell"></i><span>Audit &amp; Alerts</span></a>
+            <a class="settings-nav-link" href="#adminSettingsSave"><i class="bi bi-save2"></i><span>Save &amp; Reset</span></a>
+        </nav>
+
+        <div class="settings-panels admin-settings-panels">
+            <article class="dashboard-card admin-card settings-card" id="adminSettingsApprovals" data-settings-section>
+                <div class="settings-card-head">
                     <div>
-                        <label class="form-label">Default approval mode</label>
+                        <h2>Approval workflow &amp; SLA</h2>
+                        <p class="dashboard-section-hint">Controls the approvals queue and review expectations.</p>
+                    </div>
+                    <span class="admin-card-tag">System policy</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="settings-field-label">Default approval mode</label>
                         <div class="d-grid gap-2">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="approvalMode" id="approvalModeManual" checked>
@@ -29,100 +46,207 @@
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <label class="form-label" for="approvalSlaTarget">Approval SLA target</label>
-                        <select class="form-select" id="approvalSlaTarget">
+                    <div class="col-md-6">
+                        <label class="settings-field-label" for="approvalSlaTarget">Approval SLA target</label>
+                        <select class="form-select settings-select" id="approvalSlaTarget">
                             <option>24 hours</option>
                             <option>48 hours</option>
                             <option>72 hours</option>
                         </select>
                     </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="requireRejectionReason" checked>
-                        <label class="form-check-label" for="requireRejectionReason">Require a rejection reason</label>
-                        <div class="form-text">Shows in the approval modal for admins only.</div>
+                    <div class="col-md-6">
+                        <label class="settings-field-label" for="approvalEscalationWindow">Escalation reminder</label>
+                        <select class="form-select settings-select" id="approvalEscalationWindow">
+                            <option>After 2 days</option>
+                            <option selected>After 4 days</option>
+                            <option>After 7 days</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="requireRejectionReason" checked>
+                            <label class="form-check-label" for="requireRejectionReason">Require a rejection reason</label>
+                            <div class="form-text">Shows in the approval modal for admins only.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="settings-field-label">Policy scope</label>
+                        <div class="settings-readonly-pill">All admins</div>
                     </div>
                 </div>
-            </article>
-        </div>
-        <div class="col-lg-6">
-            <article class="dashboard-card admin-card h-100">
-                <div class="dashboard-card-head">
-                    <h2>Bookkeeper access &amp; capacity</h2>
+
+                <div class="settings-section-footer">
+                    <span class="settings-save-status">Preview only</span>
+                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" data-planned-feature>Save approval policy</button>
                 </div>
-                <p class="dashboard-panel-hint">Aligns with actions on the Bookkeepers page.</p>
-                <div class="d-grid gap-3">
+            </article>
+
+            <article class="dashboard-card admin-card settings-card" id="adminSettingsAccess" data-settings-section>
+                <div class="settings-card-head">
                     <div>
-                        <label class="form-label" for="inactivityWindow">Inactivity flag window</label>
-                        <select class="form-select" id="inactivityWindow">
+                        <h2>Bookkeeper access &amp; capacity</h2>
+                        <p class="dashboard-section-hint">Aligns with actions on the Bookkeepers page.</p>
+                    </div>
+                    <span class="admin-card-tag">System policy</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="settings-field-label" for="inactivityWindow">Inactivity flag window</label>
+                        <select class="form-select settings-select" id="inactivityWindow">
                             <option>30 days</option>
                             <option>60 days</option>
                             <option selected>90 days</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="form-label" for="clientLoadThreshold">Client load alert threshold</label>
-                        <select class="form-select" id="clientLoadThreshold">
+                    <div class="col-md-6">
+                        <label class="settings-field-label" for="clientLoadThreshold">Client load alert threshold</label>
+                        <select class="form-select settings-select" id="clientLoadThreshold">
                             <option>80 clients</option>
                             <option>120 clients</option>
                             <option selected>150 clients</option>
                             <option>200 clients</option>
                         </select>
                     </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="requireReassignBeforeDeactivate" checked>
-                        <label class="form-check-label" for="requireReassignBeforeDeactivate">Require client reassignment before deactivation</label>
-                        <div class="form-text">Prevents orphaned clients when an account is suspended.</div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoFlagInactive" checked>
+                            <label class="form-check-label" for="autoFlagInactive">Auto-flag inactive accounts</label>
+                            <div class="form-text">Adds an inactive tag after the inactivity window.</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="requireReassignBeforeDeactivate" checked>
+                            <label class="form-check-label" for="requireReassignBeforeDeactivate">Require client reassignment before deactivation</label>
+                            <div class="form-text">Prevents orphaned clients when an account is suspended.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="settings-field-label">Policy scope</label>
+                        <div class="settings-readonly-pill">All bookkeepers</div>
                     </div>
                 </div>
-            </article>
-        </div>
-    </div>
 
-    <div class="row g-3 mt-1">
-        <div class="col-12">
-            <article class="dashboard-card admin-card h-100">
-                <div class="dashboard-card-head">
-                    <h2>Security &amp; access policy</h2>
+                <div class="settings-section-footer">
+                    <span class="settings-save-status">Preview only</span>
+                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" data-planned-feature>Save access policy</button>
                 </div>
-                <p class="dashboard-panel-hint">Global admin safeguards. Personal preferences live in Admin Profile.</p>
-                <div class="d-grid gap-3">
+            </article>
+
+            <article class="dashboard-card admin-card settings-card" id="adminSettingsSecurity" data-settings-section>
+                <div class="settings-card-head">
                     <div>
-                        <label class="form-label" for="sessionTimeout">Admin session timeout</label>
-                        <select class="form-select" id="sessionTimeout">
+                        <h2>Security &amp; access policy</h2>
+                        <p class="dashboard-section-hint">Global safeguards for admin actions and sign-in.</p>
+                    </div>
+                    <span class="admin-card-tag">System policy</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="settings-field-label" for="sessionTimeout">Admin session timeout</label>
+                        <select class="form-select settings-select" id="sessionTimeout">
                             <option>30 minutes</option>
                             <option selected>60 minutes</option>
                             <option>120 minutes</option>
                         </select>
                     </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="reauthRequired" checked>
-                        <label class="form-check-label" for="reauthRequired">Require re-auth for critical actions</label>
-                        <div class="form-text">Applies to approvals, deactivations, and deletes.</div>
+                    <div class="col-md-6">
+                        <label class="settings-field-label" for="adminMfaRequired">Enforce MFA for admins</label>
+                        <select class="form-select settings-select" id="adminMfaRequired">
+                            <option selected>Recommended only</option>
+                            <option>Required for all admins</option>
+                        </select>
                     </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="adminLoginAlerts" checked>
-                        <label class="form-check-label" for="adminLoginAlerts">Admin login alerts</label>
-                        <div class="form-text">Send email alerts for every admin sign-in.</div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="reauthRequired" checked>
+                            <label class="form-check-label" for="reauthRequired">Require re-auth for critical actions</label>
+                            <div class="form-text">Applies to approvals, deactivations, and deletes.</div>
+                        </div>
                     </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="adminLoginAlerts" checked>
+                            <label class="form-check-label" for="adminLoginAlerts">Admin login alerts</label>
+                            <div class="form-text">Send email alerts for every admin sign-in.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="settings-field-label">Policy scope</label>
+                        <div class="settings-readonly-pill">All admins</div>
+                    </div>
+                </div>
+
+                <div class="settings-section-footer">
+                    <span class="settings-save-status">Preview only</span>
+                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" data-planned-feature>Save security policy</button>
                 </div>
             </article>
-        </div>
-    </div>
 
-    <div class="row g-3 mt-1">
-        <div class="col-12">
-            <article class="dashboard-card admin-card h-100">
-                <div class="dashboard-card-head">
-                    <h2>Save &amp; reset</h2>
+            <article class="dashboard-card admin-card settings-card" id="adminSettingsAudit" data-settings-section>
+                <div class="settings-card-head">
+                    <div>
+                        <h2>Audit &amp; alerts</h2>
+                        <p class="dashboard-section-hint">Controls audit history and admin notification rules.</p>
+                    </div>
+                    <span class="admin-card-tag">System policy</span>
                 </div>
-                <p class="dashboard-panel-hint">Settings are UI-only in this phase.</p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="settings-field-label" for="auditRetentionWindow">Audit log retention</label>
+                        <select class="form-select settings-select" id="auditRetentionWindow">
+                            <option>90 days</option>
+                            <option selected>180 days</option>
+                            <option>365 days</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="settings-field-label" for="adminDigestCadence">Admin digest cadence</label>
+                        <select class="form-select settings-select" id="adminDigestCadence">
+                            <option selected>Weekly summary</option>
+                            <option>Monthly summary</option>
+                            <option>Disabled</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="incidentAlerts" checked>
+                            <label class="form-check-label" for="incidentAlerts">Critical incident alerts</label>
+                            <div class="form-text">Notify admins about failed logins and suspicious activity.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="settings-field-label">Policy scope</label>
+                        <div class="settings-readonly-pill">All admin activity</div>
+                    </div>
+                </div>
+
+                <div class="settings-section-footer">
+                    <span class="settings-save-status">Preview only</span>
+                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" data-planned-feature>Save audit policy</button>
+                </div>
+            </article>
+
+            <article class="dashboard-card admin-card settings-card" id="adminSettingsSave" data-settings-section>
+                <div class="settings-card-head">
+                    <div>
+                        <h2>Save &amp; reset</h2>
+                        <p class="dashboard-section-hint">These controls are preview-only in this phase.</p>
+                    </div>
+                </div>
                 <div class="dashboard-actions admin-actions">
-                    <button type="button" class="dashboard-action-btn primary" data-planned-feature>Save settings</button>
+                    <button type="button" class="dashboard-action-btn primary" data-planned-feature>Save all settings</button>
                     <button type="button" class="dashboard-action-btn outline" data-planned-feature>Reset to defaults</button>
                 </div>
             </article>
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin_settings_page.js' %}"></script>
 {% endblock %}

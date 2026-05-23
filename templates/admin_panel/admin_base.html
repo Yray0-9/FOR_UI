@@ -33,11 +33,13 @@
                         <p class="admin-eyebrow">{% block admin_eyebrow %}System Manager Console{% endblock %}</p>
                         <h1 class="dashboard-page-title">{% block page_heading %}Admin{% endblock %}</h1>
                         {% block page_subtitle %}{% endblock %}
+                        {% block admin_utility_strip %}
                         <div class="dashboard-utility-strip admin-utility-strip">
                             <span class="dashboard-utility-item admin-utility-chip"><i class="bi bi-person-badge"></i>{{ current_admin_role_label|default:"System Manager" }}</span>
                             <span class="dashboard-utility-item admin-utility-chip"><i class="bi bi-clock"></i>Last login: {% if current_admin_last_login %}{{ current_admin_last_login|date:"M d, Y H:i" }}{% else %}Never{% endif %}</span>
                             <span class="dashboard-utility-item admin-utility-chip"><i class="bi bi-shield-check"></i>Access verified</span>
                         </div>
+                        {% endblock %}
                     </div>
                 </div>
                 <div class="dashboard-topbar-right">
