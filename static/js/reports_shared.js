@@ -84,6 +84,9 @@
         const permitNumber = toDisplayText(client.permitNumber || client.permit_number);
         const birthday = toDisplayText(client.birthday);
         const email = toDisplayText(client.email);
+        const emailPassword = toDisplayText(client.emailPassword || client.email_password);
+        const orusAccount = toDisplayText(client.orusAccount || client.orus_account);
+        const orusPassword = toDisplayText(client.orusPassword || client.orus_password);
 
         const rawCustomFields = Array.isArray(client.custom_fields)
             ? client.custom_fields
@@ -240,6 +243,16 @@
                     <tr>
                         <th>Email</th>
                         <td colspan="3">${escapeHtml(email)}</td>
+                    </tr>
+                    <tr>
+                        <th>Email Password</th>
+                        <td>${escapeHtml(emailPassword)}</td>
+                        <th>ORUS Account</th>
+                        <td>${escapeHtml(orusAccount)}</td>
+                    </tr>
+                    <tr>
+                        <th>ORUS Password</th>
+                        <td colspan="3">${escapeHtml(orusPassword)}</td>
                     </tr>
                     ${customRowsMarkup}
                 </tbody>

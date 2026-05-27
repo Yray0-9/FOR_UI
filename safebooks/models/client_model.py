@@ -26,6 +26,9 @@ class Client(models.Model):
     permit_number = models.CharField(max_length=80, blank=True, default="")
     birthday = models.DateField(null=True, blank=True)
     email = models.EmailField(blank=True, default="")
+    email_password = models.CharField(max_length=255, blank=True, default="")
+    orus_account = models.CharField(max_length=255, blank=True, default="")
+    orus_password = models.CharField(max_length=255, blank=True, default="")
     custom_fields = models.JSONField(blank=True, default=list)
     risk_level = models.CharField(
         max_length=10,

@@ -22,11 +22,19 @@ class ReportsPrintLayoutApiTests(TestCase):
         session[SESSION_BOOKKEEPER_ID_KEY] = account.id
         session.save()
 
+    def _build_tin(self, token: str) -> str:
+        digits = "".join(char for char in str(token or "") if char.isdigit())
+        if digits:
+            seed = int(digits)
+        else:
+            seed = sum(ord(char) for char in str(token or ""))
+        return f"{seed:012d}"
+
     def _create_client(self, *, bookkeeper: BookkeeperAccount, suffix: str) -> Client:
         return Client.objects.create(
             bookkeeper=bookkeeper,
             client_name=f"Client {suffix}",
-            tin_number=f"TIN-PR-{suffix}",
+            tin_number=self._build_tin(f"pr-{suffix}"),
             trade_name=f"Trade {suffix}",
             location="Davao City",
             permit_number=f"PERMIT-PR-{suffix}",

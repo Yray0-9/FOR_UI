@@ -276,6 +276,14 @@ def _serialize_client(client: Client) -> dict:
         "client_name": client.client_name,
         "tin_number": client.tin_number,
         "trade_name": client.trade_name,
+        "location": client.location,
+        "permit_number": client.permit_number,
+        "birthday": client.birthday.isoformat() if client.birthday else "",
+        "email": client.email,
+        "email_password": client.email_password,
+        "orus_account": client.orus_account,
+        "orus_password": client.orus_password,
+        "custom_fields": client.custom_fields or [],
     }
 
 
@@ -356,7 +364,7 @@ def list_financial_clients_for_bookkeeper(bookkeeper) -> dict:
             last_activity=Max("financial_records__entry_date"),
             financial_record_count=Count("financial_records", distinct=True),
         )
-        .order_by("client_name", "id")
+        .order_by("-created_at", "-id")
     )
 
     payload = []

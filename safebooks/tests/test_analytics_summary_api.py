@@ -23,11 +23,19 @@ class AnalyticsSummaryApiTests(TestCase):
         session[SESSION_BOOKKEEPER_ID_KEY] = account.id
         session.save()
 
+    def _build_tin(self, token: str) -> str:
+        digits = "".join(char for char in str(token or "") if char.isdigit())
+        if digits:
+            seed = int(digits)
+        else:
+            seed = sum(ord(char) for char in str(token or ""))
+        return f"{seed:012d}"
+
     def _create_client(self, *, bookkeeper: BookkeeperAccount, suffix: str, risk: str) -> Client:
         return Client.objects.create(
             bookkeeper=bookkeeper,
             client_name=f"Client {suffix}",
-            tin_number=f"TIN-AN-{suffix}",
+            tin_number=self._build_tin(f"an-{suffix}"),
             trade_name=f"Trade {suffix}",
             location="Panabo",
             permit_number=f"PERMIT-AN-{suffix}",
@@ -279,10 +287,13 @@ class AnalyticsSummaryApiTests(TestCase):
         owner = self._create_bookkeeper("owner-tin")
         self._login_as(owner)
 
+        same_tin_a = self._build_tin("same-001")
+        same_tin_b = self._build_tin("same-002")
+
         client_a = Client.objects.create(
             bookkeeper=owner,
             client_name="Same Name Client",
-            tin_number="TIN-SAME-001",
+            tin_number=same_tin_a,
             trade_name="Trade A",
             location="Panabo",
             permit_number="PERMIT-SAME-001",
@@ -292,7 +303,7 @@ class AnalyticsSummaryApiTests(TestCase):
         client_b = Client.objects.create(
             bookkeeper=owner,
             client_name="Same Name Client",
-            tin_number="TIN-SAME-002",
+            tin_number=same_tin_b,
             trade_name="Trade B",
             location="Panabo",
             permit_number="PERMIT-SAME-002",
@@ -326,7 +337,7 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(len(same_name_rows), 2)
         self.assertEqual(
             {row.get("tin_number") for row in same_name_rows},
-            {"TIN-SAME-001", "TIN-SAME-002"},
+            {same_tin_a, same_tin_b},
         )
 
         scoped_response = self.client.get(
@@ -338,4 +349,4 @@ class AnalyticsSummaryApiTests(TestCase):
         scoped_payload = scoped_response.json()
 
         self.assertEqual(scoped_payload["scope"]["client_id"], client_b.id)
-        self.assertEqual(scoped_payload["scope"]["client_tin"], "TIN-SAME-002")
+        self.assertEqual(scoped_payload["scope"]["client_tin"], same_tin_b)

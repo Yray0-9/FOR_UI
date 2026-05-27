@@ -262,8 +262,19 @@
     box-shadow: 0 20px 34px rgba(17, 52, 123, 0.16);
 }
 
+@keyframes shakeError {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+    animation: shakeError 0.4s ease-in-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .animate-fade-in,
+    .animate-shake,
     .scroll-reveal,
     .floating-element,
     .btn-safe-nav,

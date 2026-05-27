@@ -131,7 +131,7 @@ def get_dashboard_summary_for_bookkeeper(bookkeeper) -> dict:
             last_period_year=Subquery(latest_record_for_client.values("period__year")[:1]),
             last_frequency=Subquery(latest_record_for_client.values("frequency")[:1]),
         )
-        .order_by("-last_entry_date", "client_name", "id")
+        .order_by("-created_at", "-id")
     )
 
     recent_client_activity = [

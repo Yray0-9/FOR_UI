@@ -958,6 +958,9 @@
         const permitNumber = toDisplayText(client && client.permit_number);
         const birthday = client && client.birthday ? formatClientBirthday(client.birthday) : "-";
         const email = toDisplayText(client && client.email);
+        const emailPassword = toDisplayText(client && client.email_password);
+        const orusAccount = toDisplayText(client && client.orus_account);
+        const orusPassword = toDisplayText(client && client.orus_password);
         const customFields = client && Array.isArray(client.custom_fields) ? client.custom_fields : [];
 
         const reportTypeLabel = toDisplayText(report.reportLabel, "Client Report");
@@ -1016,6 +1019,9 @@
                 permitNumber,
                 birthday,
                 email,
+                emailPassword,
+                orusAccount,
+                orusPassword,
                 customFields,
             },
             table: {
@@ -1815,6 +1821,9 @@
                     permit_number: String(client.permit_number || ""),
                     birthday: String(client.birthday || ""),
                     email: String(client.email || ""),
+                    email_password: String(client.email_password || ""),
+                    orus_account: String(client.orus_account || ""),
+                    orus_password: String(client.orus_password || ""),
                     custom_fields: Array.isArray(client.custom_fields) ? client.custom_fields : [],
                 }))
                 : [];

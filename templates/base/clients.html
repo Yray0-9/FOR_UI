@@ -130,15 +130,22 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label client-form-label" for="addClientTin">TIN</label>
-                        <input class="form-control client-form-input" id="addClientTin" name="tin" type="text" required>
+                        <input class="form-control client-form-input" id="addClientTin" name="tin" type="text" inputmode="numeric" pattern="[0-9-]*" maxlength="15" autocomplete="off" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label client-form-label" for="addClientTradeName">Trade Name (optional)</label>
                         <input class="form-control client-form-input" id="addClientTradeName" name="trade_name" type="text">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label client-form-label" for="addClientLocation">Location</label>
-                        <input class="form-control client-form-input" id="addClientLocation" name="location" type="text" required>
+                        <label class="form-label client-form-label" for="addClientLocationSelect">Location</label>
+                        <input id="addClientLocation" name="location" type="hidden">
+                        <div class="client-select-wrap">
+                            <select class="form-select client-form-input client-select-input" id="addClientLocationSelect" aria-label="Select province" required>
+                                <option value="">Select province</option>
+                            </select>
+                            <i class="bi bi-chevron-down client-select-icon" aria-hidden="true"></i>
+                        </div>
+                        <div class="form-text text-muted" id="addClientLocationSummary" hidden></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label client-form-label" for="addClientPermitNumber">Permit Number (optional)</label>
@@ -151,6 +158,28 @@
                     <div class="col-12">
                         <label class="form-label client-form-label" for="addClientEmail">Email Address (optional)</label>
                         <input class="form-control client-form-input" id="addClientEmail" name="email" type="email" placeholder="example@company.com">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label client-form-label" for="addClientEmailPassword">Email Password (optional)</label>
+                        <div class="client-password-field">
+                            <input class="form-control client-form-input client-password-input" id="addClientEmailPassword" name="email_password" type="password" autocomplete="new-password">
+                            <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label client-form-label" for="addClientOrusAccount">ORUS Account (optional)</label>
+                        <input class="form-control client-form-input" id="addClientOrusAccount" name="orus_account" type="text" autocomplete="off">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label client-form-label" for="addClientOrusPassword">ORUS Password (optional)</label>
+                        <div class="client-password-field">
+                            <input class="form-control client-form-input client-password-input" id="addClientOrusPassword" name="orus_password" type="password" autocomplete="new-password">
+                            <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="col-12 client-custom-fields-block">
                         <div class="client-custom-fields-head">
@@ -188,6 +217,9 @@
                     <div class="client-details-row"><span class="client-details-key">Permit Number</span><strong id="viewClientPermitNumber">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">Birthday</span><strong id="viewClientBirthday">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">Email</span><strong id="viewClientEmail">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">Email Password</span><strong id="viewClientEmailPassword">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">ORUS Account</span><strong id="viewClientOrusAccount">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">ORUS Password</span><strong id="viewClientOrusPassword">-</strong></div>
                 </div>
                 <div class="client-details-custom" id="viewClientCustomFields" hidden>
                     <p class="client-details-custom-title">Custom Fields</p>
@@ -196,11 +228,10 @@
                 <p class="client-details-note">Manage this client's financial transactions.</p>
             </div>
             <div class="modal-footer client-details-actions">
-                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn dashboard-action-btn outline" id="viewClientAnalyticsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Analytics for this client">View Analytics</button>
-                <button type="button" class="btn dashboard-action-btn outline" id="viewClientReportBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Generate a report for this client">Generate Report</button>
                 <button type="button" class="btn dashboard-action-btn outline" id="viewFinancialRecordsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">View Financial Records</button>
-                <button type="button" class="btn dashboard-action-btn primary" id="viewAddFinancialRecordBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">Add Financial Entry</button>
+                <button type="button" class="btn dashboard-action-btn outline" id="viewAddFinancialRecordBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">Add Financial Entry</button>
+                <button type="button" class="btn dashboard-action-btn primary" id="viewClientReportBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Generate a report for this client">Generate Report</button>
             </div>
         </div>
     </div>
@@ -246,15 +277,22 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label client-form-label" for="editClientTin">TIN</label>
-                        <input class="form-control client-form-input" id="editClientTin" name="tin" type="text" required>
+                        <input class="form-control client-form-input" id="editClientTin" name="tin" type="text" inputmode="numeric" pattern="[0-9-]*" maxlength="15" autocomplete="off" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label client-form-label" for="editClientTradeName">Trade Name (optional)</label>
                         <input class="form-control client-form-input" id="editClientTradeName" name="trade_name" type="text">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label client-form-label" for="editClientLocation">Location</label>
-                        <input class="form-control client-form-input" id="editClientLocation" name="location" type="text" required>
+                        <label class="form-label client-form-label" for="editClientLocationSelect">Location</label>
+                        <input id="editClientLocation" name="location" type="hidden">
+                        <div class="client-select-wrap">
+                            <select class="form-select client-form-input client-select-input" id="editClientLocationSelect" aria-label="Select province" required>
+                                <option value="">Select province</option>
+                            </select>
+                            <i class="bi bi-chevron-down client-select-icon" aria-hidden="true"></i>
+                        </div>
+                        <div class="form-text text-muted" id="editClientLocationSummary" hidden></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label client-form-label" for="editClientPermitNumber">Permit Number (optional)</label>
@@ -267,6 +305,28 @@
                     <div class="col-12">
                         <label class="form-label client-form-label" for="editClientEmail">Email Address (optional)</label>
                         <input class="form-control client-form-input" id="editClientEmail" name="email" type="email" placeholder="example@company.com">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label client-form-label" for="editClientEmailPassword">Email Password (optional)</label>
+                        <div class="client-password-field">
+                            <input class="form-control client-form-input client-password-input" id="editClientEmailPassword" name="email_password" type="password" autocomplete="new-password">
+                            <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label client-form-label" for="editClientOrusAccount">ORUS Account (optional)</label>
+                        <input class="form-control client-form-input" id="editClientOrusAccount" name="orus_account" type="text" autocomplete="off">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label client-form-label" for="editClientOrusPassword">ORUS Password (optional)</label>
+                        <div class="client-password-field">
+                            <input class="form-control client-form-input client-password-input" id="editClientOrusPassword" name="orus_password" type="password" autocomplete="new-password">
+                            <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="col-12 client-custom-fields-block">
                         <div class="client-custom-fields-head">
@@ -369,6 +429,14 @@
 
         const addClientForm = document.getElementById("addClientForm");
         const editClientForm = document.getElementById("editClientForm");
+        const addClientTinInput = document.getElementById("addClientTin");
+        const editClientTinInput = document.getElementById("editClientTin");
+        const addClientLocationInput = document.getElementById("addClientLocation");
+        const addClientLocationSelect = document.getElementById("addClientLocationSelect");
+        const addClientLocationSummary = document.getElementById("addClientLocationSummary");
+        const editClientLocationInput = document.getElementById("editClientLocation");
+        const editClientLocationSelect = document.getElementById("editClientLocationSelect");
+        const editClientLocationSummary = document.getElementById("editClientLocationSummary");
         const deleteClientName = document.getElementById("deleteClientName");
         const confirmDeleteClientBtn = document.getElementById("confirmDeleteClientBtn");
 
@@ -384,6 +452,9 @@
         const viewClientPermitNumber = document.getElementById("viewClientPermitNumber");
         const viewClientBirthday = document.getElementById("viewClientBirthday");
         const viewClientEmail = document.getElementById("viewClientEmail");
+        const viewClientEmailPassword = document.getElementById("viewClientEmailPassword");
+        const viewClientOrusAccount = document.getElementById("viewClientOrusAccount");
+        const viewClientOrusPassword = document.getElementById("viewClientOrusPassword");
         const viewClientCustomFields = document.getElementById("viewClientCustomFields");
         const viewClientCustomFieldsList = document.getElementById("viewClientCustomFieldsList");
 
@@ -421,6 +492,648 @@
         let isClientsLoading = false;
 
         const normalize = (value) => String(value || "").trim().toLowerCase();
+        const normalizeDigits = (value) => String(value || "").replace(/\D+/g, "");
+        const TIN_MAX_DIGITS = 12;
+        const formatTin = (value) => {
+            const digits = normalizeDigits(value).slice(0, TIN_MAX_DIGITS);
+            if (!digits) {
+                return "";
+            }
+
+            const groups = digits.match(/.{1,3}/g) || [];
+            return groups.join("-");
+        };
+
+        const formatTinForInput = (value) => {
+            const digits = normalizeDigits(value).slice(0, TIN_MAX_DIGITS);
+            if (!digits) {
+                return "";
+            }
+
+            const groups = digits.match(/.{1,3}/g) || [];
+            let formatted = groups.join("-");
+            if (digits.length % 3 === 0 && digits.length < TIN_MAX_DIGITS) {
+                formatted += "-";
+            }
+            return formatted;
+        };
+
+        const DAVAO_REGION_PROVINCES = [
+            "Davao De Oro",
+            "Davao Del Norte",
+            "Davao Del Sur",
+            "Davao Occidental",
+            "Davao Oriental",
+        ];
+
+        const DAVAO_DEL_NORTE_PROVINCE = "Davao Del Norte";
+        const DAVAO_DEL_NORTE_LOCATIONS = {
+            "Asuncion": [
+                "Binancian",
+                "Buan",
+                "Buclad",
+                "Cabaywa",
+                "Camansa",
+                "Cambanogoy (Pob.)",
+                "Camoning",
+                "Canatan",
+                "Concepcion",
+                "Dona Andrea",
+                "Magatos",
+                "Napungas",
+                "New Bantayan",
+                "New Loon",
+                "New Santiago",
+                "Pamacaun",
+                "Sagayen",
+                "San Vicente",
+                "Santa Filomena",
+                "Sonlon",
+            ],
+            "Carmen": [
+                "Alejal",
+                "Anibongan",
+                "Asuncion",
+                "Cebulano",
+                "Guadalupe",
+                "Ising (Pob.)",
+                "La Paz",
+                "Mabaus",
+                "Mabuhay",
+                "Magsaysay",
+                "Mangalcal",
+                "Minda",
+                "New Camiling",
+                "Salvacion",
+                "San Isidro",
+                "Santo Nino",
+                "Taba",
+                "Tibulao",
+                "Tubod",
+                "Tuganay",
+            ],
+            "Kapalong": [
+                "Capungagan",
+                "Florida",
+                "Gabuyan",
+                "Gupitan",
+                "Katipunan",
+                "Luna",
+                "Mabantao",
+                "Mamacao",
+                "Maniki",
+                "Pag-asa",
+                "Sampao",
+                "Semong",
+                "Sua-on",
+                "Tiburcia",
+            ],
+            "New Corella": [
+                "Cabidianan",
+                "Carcor",
+                "Del Monte",
+                "Del Pilar",
+                "El Salvador",
+                "Limba-an",
+                "Macgum",
+                "Mambing",
+                "Mesaoy",
+                "New Bohol",
+                "New Cortez",
+                "New Sambog",
+                "Patrocenio",
+                "Poblacion",
+                "San Jose",
+                "San Roque",
+                "Santa Cruz",
+                "Santa Fe",
+                "Santo Nino",
+                "Suawon",
+            ],
+            "City of Panabo": [
+                "A. O. Floirendo",
+                "Buenavista",
+                "Cacao",
+                "Cagangohan",
+                "Consolacion",
+                "Dapco",
+                "Datu Abdul Dadia",
+                "Gredu (Pob.)",
+                "J.P. Laurel",
+                "Kasilak",
+                "Katipunan",
+                "Katualan",
+                "Kauswagan",
+                "Kiotoy",
+                "Little Panay",
+                "Lower Panaga",
+                "Mabunao",
+                "Maduao",
+                "Malativas",
+                "Manay",
+                "Nanyo",
+                "New Malaga",
+                "New Malitbog",
+                "New Pandan (Pob.)",
+                "New Visayas",
+                "Quezon",
+                "Salvacion",
+                "San Francisco (Pob.)",
+                "San Nicolas",
+                "San Pedro",
+                "San Roque",
+                "San Vicente",
+                "Santa Cruz",
+                "Santo Nino (Pob.)",
+                "Sindaton",
+                "Southern Davao",
+                "Tagpore",
+                "Tibungol",
+                "Upper Licanan",
+                "Waterfall",
+            ],
+            "Island Garden City of Samal": [
+                "Adecor",
+                "Anonang",
+                "Aumbay",
+                "Aundanao",
+                "Balet",
+                "Bandera",
+                "Caliclic",
+                "Camudmud",
+                "Catagman",
+                "Cawag",
+                "Cogon",
+                "Dadatan",
+                "Del Monte",
+                "Guilon",
+                "Kanaan",
+                "Kinawitnon",
+                "Libertad",
+                "Libuak",
+                "Licup",
+                "Limao",
+                "Linosutan",
+                "Mambago-A",
+                "Mambago-B",
+                "Miranda (Pob.)",
+                "Moncado (Pob.)",
+                "Pangubatan",
+                "Penaplata (Pob.)",
+                "Poblacion",
+                "San Agustin",
+                "San Antonio",
+                "San Isidro",
+                "San Jose",
+                "San Miguel",
+                "San Remigio",
+                "Santa Cruz",
+                "Santo Nino",
+                "Sion",
+                "Tagbaobo",
+                "Tagbay",
+                "Tagbitan-ag",
+                "Tagdaliao",
+                "Tagpopongan",
+                "Tambo",
+                "Toril",
+            ],
+            "Santo Tomas": [
+                "Balagunan",
+                "Bobongon",
+                "Casig-Ang",
+                "Esperanza",
+                "Kimamon",
+                "Kinamayan",
+                "La Libertad",
+                "Lungaog",
+                "Magwawa",
+                "New Katipunan",
+                "New Visayas",
+                "Pantaron",
+                "Salvacion",
+                "San Jose",
+                "San Miguel",
+                "San Vicente",
+                "Talomo",
+                "Tibal-og (Pob.)",
+                "Tulalian",
+            ],
+            "City of Tagum": [
+                "Apokon",
+                "Bincungan",
+                "Busaon",
+                "Canocotan",
+                "Cuambogan",
+                "La Filipina",
+                "Liboganon",
+                "Madaum",
+                "Magdum",
+                "Magugpo East",
+                "Magugpo North",
+                "Magugpo Poblacion",
+                "Magugpo South",
+                "Magugpo West",
+                "Mankilam",
+                "New Balamban",
+                "Nueva Fuerza",
+                "Pagsabangan",
+                "Pandapan",
+                "San Agustin",
+                "San Isidro",
+                "San Miguel",
+                "Visayan Village",
+            ],
+            "Talaingod": [
+                "Dagohoy",
+                "Palma Gil",
+                "Santo Nino",
+            ],
+            "Braulio E. Dujali": [
+                "Cabayangan",
+                "Dujali",
+                "Magupising",
+                "New Casay",
+                "Tanglaw",
+            ],
+            "San Isidro": [
+                "Dacudao",
+                "Datu Balong",
+                "Igangon",
+                "Kipalili",
+                "Libuton",
+                "Linao",
+                "Mamangan",
+                "Monte Dujali",
+                "Pinamuno",
+                "Sabangan",
+                "San Miguel",
+                "Santo Nino",
+                "Sawata",
+            ],
+        };
+
+        const LOCATION_STAGE = {
+            province: "province",
+            city: "city",
+            barangay: "barangay",
+        };
+
+        const LOCATION_ACTIONS = {
+            backProvince: "__back_province",
+            backCity: "__back_city",
+        };
+
+        const resetSelectOptions = (selectElement, placeholder) => {
+            if (!selectElement) {
+                return;
+            }
+
+            selectElement.innerHTML = "";
+            const option = document.createElement("option");
+            option.value = "";
+            option.textContent = placeholder;
+            option.disabled = true;
+            option.selected = true;
+            selectElement.appendChild(option);
+        };
+
+        const appendSelectOption = (selectElement, value, label) => {
+            if (!selectElement) {
+                return;
+            }
+
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            selectElement.appendChild(option);
+        };
+
+        const populateSelectOptions = (selectElement, options, placeholder, selectedValue = "") => {
+            if (!selectElement) {
+                return;
+            }
+
+            resetSelectOptions(selectElement, placeholder);
+            options.forEach((optionValue) => {
+                appendSelectOption(selectElement, optionValue, optionValue);
+            });
+
+            if (selectedValue) {
+                selectElement.value = selectedValue;
+            }
+        };
+
+        const createLocationState = ({ hiddenInput, select, summary }) => {
+            return {
+                hiddenInput,
+                select,
+                summary,
+                stage: LOCATION_STAGE.province,
+                selectedProvince: "",
+                selectedCity: "",
+                selectedBarangay: "",
+            };
+        };
+
+        const renderLocationSummary = (state) => {
+            if (!state || !state.summary) {
+                return;
+            }
+
+            const parts = [state.selectedProvince, state.selectedCity, state.selectedBarangay].filter(Boolean);
+            if (!parts.length) {
+                state.summary.textContent = "";
+                state.summary.hidden = true;
+                return;
+            }
+
+            state.summary.textContent = parts.join(", ");
+            state.summary.hidden = false;
+        };
+
+        const updateLocationHiddenValue = (state) => {
+            if (!state || !state.hiddenInput) {
+                return;
+            }
+
+            const province = state.selectedProvince;
+            if (!province) {
+                state.hiddenInput.value = "";
+                return;
+            }
+
+            if (province !== DAVAO_DEL_NORTE_PROVINCE) {
+                state.hiddenInput.value = province;
+                return;
+            }
+
+            if (!state.selectedCity || !state.selectedBarangay) {
+                state.hiddenInput.value = "";
+                return;
+            }
+
+            state.hiddenInput.value = `${province}, ${state.selectedCity}, ${state.selectedBarangay}`;
+        };
+
+        const renderLocationSelect = (state) => {
+            if (!state || !state.select) {
+                return;
+            }
+
+            if (state.stage === LOCATION_STAGE.province) {
+                populateSelectOptions(state.select, DAVAO_REGION_PROVINCES, "Select province", state.selectedProvince);
+                state.select.setAttribute("aria-label", "Select province");
+                return;
+            }
+
+            if (state.stage === LOCATION_STAGE.city) {
+                resetSelectOptions(state.select, "Select city/municipality");
+                appendSelectOption(state.select, LOCATION_ACTIONS.backProvince, "Change province");
+
+                const cities = Object.keys(DAVAO_DEL_NORTE_LOCATIONS).sort();
+                cities.forEach((city) => {
+                    appendSelectOption(state.select, city, city);
+                });
+
+                if (state.selectedCity) {
+                    state.select.value = state.selectedCity;
+                }
+                state.select.setAttribute("aria-label", "Select city or municipality");
+                return;
+            }
+
+            resetSelectOptions(state.select, "Select barangay");
+            appendSelectOption(state.select, LOCATION_ACTIONS.backCity, "Change city/municipality");
+
+            const barangays = state.selectedCity ? (DAVAO_DEL_NORTE_LOCATIONS[state.selectedCity] || []) : [];
+            barangays.forEach((barangay) => {
+                appendSelectOption(state.select, barangay, barangay);
+            });
+
+            if (state.selectedBarangay) {
+                state.select.value = state.selectedBarangay;
+            }
+            state.select.setAttribute("aria-label", "Select barangay");
+        };
+
+        const handleLocationSelectChange = (state) => {
+            if (!state || !state.select) {
+                return;
+            }
+
+            const value = state.select.value;
+            if (state.stage === LOCATION_STAGE.province) {
+                state.selectedProvince = value;
+                state.selectedCity = "";
+                state.selectedBarangay = "";
+
+                if (!value) {
+                    renderLocationSelect(state);
+                    updateLocationHiddenValue(state);
+                    renderLocationSummary(state);
+                    return;
+                }
+
+                if (value === DAVAO_DEL_NORTE_PROVINCE) {
+                    state.stage = LOCATION_STAGE.city;
+                } else {
+                    state.stage = LOCATION_STAGE.province;
+                }
+            } else if (state.stage === LOCATION_STAGE.city) {
+                if (value === LOCATION_ACTIONS.backProvince) {
+                    state.stage = LOCATION_STAGE.province;
+                    state.selectedProvince = "";
+                    state.selectedCity = "";
+                    state.selectedBarangay = "";
+                } else if (value) {
+                    state.selectedCity = value;
+                    state.selectedBarangay = "";
+                    state.stage = LOCATION_STAGE.barangay;
+                }
+            } else if (state.stage === LOCATION_STAGE.barangay) {
+                if (value === LOCATION_ACTIONS.backCity) {
+                    state.stage = LOCATION_STAGE.city;
+                    state.selectedBarangay = "";
+                } else if (value) {
+                    state.selectedBarangay = value;
+                }
+            }
+
+            renderLocationSelect(state);
+            updateLocationHiddenValue(state);
+            renderLocationSummary(state);
+        };
+
+        const bindLocationControls = (state) => {
+            if (!state || !state.select || !state.hiddenInput) {
+                return;
+            }
+
+            state.select.required = true;
+            state.select.addEventListener("change", () => {
+                handleLocationSelectChange(state);
+            });
+
+            resetLocationState(state);
+        };
+
+        const resolveLocationParts = (locationValue) => {
+            const parts = String(locationValue || "")
+                .split(",")
+                .map((part) => part.trim())
+                .filter(Boolean);
+
+            if (!parts.length) {
+                return { province: "", city: "", barangay: "" };
+            }
+
+            const provinceIndex = parts.findIndex((part) => DAVAO_REGION_PROVINCES.includes(part));
+            if (provinceIndex === -1) {
+                return {
+                    province: parts[0] || "",
+                    city: parts[1] || "",
+                    barangay: parts[2] || "",
+                };
+            }
+
+            const province = parts[provinceIndex];
+            const remaining = parts.filter((_, index) => index !== provinceIndex);
+            if (provinceIndex === 2 && remaining.length === 2) {
+                return {
+                    province,
+                    city: remaining[1] || "",
+                    barangay: remaining[0] || "",
+                };
+            }
+
+            return {
+                province,
+                city: remaining[0] || "",
+                barangay: remaining[1] || "",
+            };
+        };
+
+        const resetLocationState = (state) => {
+            if (!state) {
+                return;
+            }
+
+            state.stage = LOCATION_STAGE.province;
+            state.selectedProvince = "";
+            state.selectedCity = "";
+            state.selectedBarangay = "";
+            renderLocationSelect(state);
+            updateLocationHiddenValue(state);
+            renderLocationSummary(state);
+        };
+
+        const applyLocationSelection = (state, locationValue) => {
+            if (!state) {
+                return;
+            }
+
+            const resolved = resolveLocationParts(locationValue);
+            state.selectedProvince = resolved.province;
+            state.selectedCity = resolved.city;
+            state.selectedBarangay = resolved.barangay;
+
+            if (!state.selectedProvince) {
+                state.stage = LOCATION_STAGE.province;
+            } else if (state.selectedProvince !== DAVAO_DEL_NORTE_PROVINCE) {
+                state.stage = LOCATION_STAGE.province;
+            } else if (state.selectedCity && state.selectedBarangay) {
+                state.stage = LOCATION_STAGE.barangay;
+            } else if (state.selectedCity) {
+                state.stage = LOCATION_STAGE.city;
+            } else {
+                state.stage = LOCATION_STAGE.province;
+            }
+
+            renderLocationSelect(state);
+            updateLocationHiddenValue(state);
+            renderLocationSummary(state);
+        };
+
+        const syncLocationState = (state) => {
+            if (!state) {
+                return;
+            }
+            updateLocationHiddenValue(state);
+            renderLocationSummary(state);
+        };
+
+        const getCursorIndexForDigitCount = (formattedValue, digitCount) => {
+            if (digitCount <= 0) {
+                return 0;
+            }
+
+            let digitsSeen = 0;
+            for (let index = 0; index < formattedValue.length; index += 1) {
+                if (/\d/.test(formattedValue[index])) {
+                    digitsSeen += 1;
+                    if (digitsSeen === digitCount) {
+                        return index + 1;
+                    }
+                }
+            }
+
+            return formattedValue.length;
+        };
+
+        const bindTinInput = (inputElement) => {
+            if (!inputElement) {
+                return;
+            }
+
+            inputElement.addEventListener("input", () => {
+                const rawValue = inputElement.value;
+                const selectionStart = typeof inputElement.selectionStart === "number"
+                    ? inputElement.selectionStart
+                    : rawValue.length;
+                const digitsBeforeCursor = normalizeDigits(rawValue.slice(0, selectionStart)).length;
+                const formattedValue = formatTinForInput(rawValue);
+
+                if (rawValue !== formattedValue) {
+                    inputElement.value = formattedValue;
+                    if (document.activeElement === inputElement && typeof inputElement.setSelectionRange === "function") {
+                        const totalDigits = normalizeDigits(formattedValue).length;
+                        const cursorIndex = formattedValue.endsWith("-") && digitsBeforeCursor === totalDigits
+                            ? formattedValue.length
+                            : getCursorIndexForDigitCount(formattedValue, digitsBeforeCursor);
+                        inputElement.setSelectionRange(cursorIndex, cursorIndex);
+                    }
+                }
+            });
+
+            inputElement.addEventListener("blur", () => {
+                inputElement.value = formatTin(inputElement.value);
+            });
+        };
+
+        const bindPasswordToggles = () => {
+            document.querySelectorAll(".client-password-field").forEach((field) => {
+                const input = field.querySelector("input");
+                const toggle = field.querySelector(".client-password-toggle");
+                const icon = toggle ? toggle.querySelector("i") : null;
+
+                if (!input || !toggle) {
+                    return;
+                }
+
+                toggle.addEventListener("click", () => {
+                    const isHidden = input.type === "password";
+                    input.type = isHidden ? "text" : "password";
+                    toggle.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+                    toggle.setAttribute("aria-pressed", String(isHidden));
+
+                    if (icon) {
+                        icon.classList.toggle("bi-eye", !isHidden);
+                        icon.classList.toggle("bi-eye-slash", isHidden);
+                    }
+                });
+            });
+        };
 
         const currencyFormatter = new Intl.NumberFormat("en-PH", {
             style: "currency",
@@ -477,6 +1190,141 @@
             container.innerHTML = "";
         };
 
+        const CUSTOM_FIELD_TYPES = {
+            text: {
+                label: "Text",
+                inputType: "text",
+                placeholder: "Enter text for custom field...",
+            },
+            email: {
+                label: "Email",
+                inputType: "email",
+                placeholder: "name@company.com",
+                inputMode: "email",
+            },
+            password: {
+                label: "Password",
+                inputType: "password",
+                placeholder: "Enter password...",
+            },
+            number: {
+                label: "Number",
+                inputType: "number",
+                placeholder: "0.00",
+                inputMode: "decimal",
+                step: "any",
+            },
+            date: {
+                label: "Calendar (Date)",
+                inputType: "date",
+                placeholder: "",
+            },
+            tin: {
+                label: "TIN Number",
+                inputType: "text",
+                placeholder: "000-000-000-000",
+                inputMode: "numeric",
+                pattern: "[0-9-]*",
+                maxLength: 15,
+            },
+        };
+
+        const resolveCustomFieldType = (value) => {
+            const normalized = String(value || "").trim().toLowerCase();
+            return CUSTOM_FIELD_TYPES[normalized] ? normalized : "text";
+        };
+
+        const applyCustomFieldTypeConfig = (valueInput, toggleButton, typeValue) => {
+            if (!valueInput) {
+                return;
+            }
+
+            const typeKey = resolveCustomFieldType(typeValue);
+            const config = CUSTOM_FIELD_TYPES[typeKey];
+
+            valueInput.type = config.inputType;
+            valueInput.placeholder = config.placeholder || "";
+            valueInput.inputMode = config.inputMode || "";
+
+            if (config.pattern) {
+                valueInput.setAttribute("pattern", config.pattern);
+            } else {
+                valueInput.removeAttribute("pattern");
+            }
+
+            if (config.step) {
+                valueInput.setAttribute("step", config.step);
+            } else {
+                valueInput.removeAttribute("step");
+            }
+
+            if (config.maxLength) {
+                valueInput.setAttribute("maxlength", String(config.maxLength));
+            } else {
+                valueInput.removeAttribute("maxlength");
+            }
+
+            if (typeKey === "password") {
+                valueInput.classList.add("client-password-input");
+                if (toggleButton) {
+                    toggleButton.hidden = false;
+                    toggleButton.setAttribute("aria-label", "Show password");
+                    toggleButton.setAttribute("aria-pressed", "false");
+                    const icon = toggleButton.querySelector("i");
+                    if (icon) {
+                        icon.classList.remove("bi-eye-slash");
+                        icon.classList.add("bi-eye");
+                    }
+                }
+            } else {
+                valueInput.classList.remove("client-password-input");
+                if (toggleButton) {
+                    toggleButton.hidden = true;
+                    toggleButton.setAttribute("aria-pressed", "false");
+                }
+            }
+
+            if (typeKey === "tin") {
+                valueInput.value = formatTin(valueInput.value);
+            }
+        };
+
+        const bindCustomFieldTinInput = (valueInput, typeSelect) => {
+            if (!valueInput || !typeSelect) {
+                return;
+            }
+
+            valueInput.addEventListener("input", () => {
+                if (typeSelect.value !== "tin") {
+                    return;
+                }
+
+                const rawValue = valueInput.value;
+                const selectionStart = typeof valueInput.selectionStart === "number"
+                    ? valueInput.selectionStart
+                    : rawValue.length;
+                const digitsBeforeCursor = normalizeDigits(rawValue.slice(0, selectionStart)).length;
+                const formattedValue = formatTinForInput(rawValue);
+
+                if (rawValue !== formattedValue) {
+                    valueInput.value = formattedValue;
+                    if (document.activeElement === valueInput && typeof valueInput.setSelectionRange === "function") {
+                        const totalDigits = normalizeDigits(formattedValue).length;
+                        const cursorIndex = formattedValue.endsWith("-") && digitsBeforeCursor === totalDigits
+                            ? formattedValue.length
+                            : getCursorIndexForDigitCount(formattedValue, digitsBeforeCursor);
+                        valueInput.setSelectionRange(cursorIndex, cursorIndex);
+                    }
+                }
+            });
+
+            valueInput.addEventListener("blur", () => {
+                if (typeSelect.value === "tin") {
+                    valueInput.value = formatTin(valueInput.value);
+                }
+            });
+        };
+
         const buildCustomFieldElement = (index, scope, field = {}) => {
             const wrapper = document.createElement("div");
             wrapper.className = "col-md-6 client-custom-field";
@@ -484,25 +1332,83 @@
 
             const fieldLabel = typeof field.label === "string" ? field.label.trim() : "";
             const fieldValue = typeof field.value === "string" ? field.value.trim() : "";
+            const fieldType = resolveCustomFieldType(field.type);
 
             const labelInput = document.createElement("input");
             labelInput.type = "text";
             labelInput.className = "client-custom-label-input";
-            labelInput.value = fieldLabel || `New Custom Label ${index} (editable)`;
+            labelInput.placeholder = `New Custom Label ${index} (editable)`;
+            if (fieldLabel) {
+                labelInput.value = fieldLabel;
+            }
             labelInput.id = `${scope}CustomFieldLabel${index}`;
             labelInput.name = `${scope}_custom_label_${index}`;
             labelInput.setAttribute("aria-label", `Custom field label ${index}`);
 
+            const typeSelect = document.createElement("select");
+            typeSelect.className = "form-select client-form-input client-select-input client-custom-type-select";
+            typeSelect.id = `${scope}CustomFieldType${index}`;
+            typeSelect.name = `${scope}_custom_type_${index}`;
+            typeSelect.setAttribute("aria-label", `Custom field type ${index}`);
+
+            Object.entries(CUSTOM_FIELD_TYPES).forEach(([key, meta]) => {
+                const option = document.createElement("option");
+                option.value = key;
+                option.textContent = meta.label;
+                typeSelect.appendChild(option);
+            });
+            typeSelect.value = fieldType;
+
+            const typeWrap = document.createElement("div");
+            typeWrap.className = "client-select-wrap client-custom-type-wrap";
+            const typeIcon = document.createElement("i");
+            typeIcon.className = "bi bi-chevron-down client-select-icon";
+            typeIcon.setAttribute("aria-hidden", "true");
+            typeWrap.append(typeSelect, typeIcon);
+
+            const valueWrap = document.createElement("div");
+            valueWrap.className = "client-custom-value-wrap";
+
             const valueInput = document.createElement("input");
             valueInput.type = "text";
-            valueInput.className = "form-control client-form-input";
-            valueInput.placeholder = "Enter text for custom field...";
+            valueInput.className = "form-control client-form-input client-custom-value-input";
             valueInput.value = fieldValue;
             valueInput.id = `${scope}CustomFieldValue${index}`;
             valueInput.name = `${scope}_custom_value_${index}`;
             valueInput.setAttribute("aria-label", `Custom field value ${index}`);
 
-            wrapper.append(labelInput, valueInput);
+            const toggleButton = document.createElement("button");
+            toggleButton.type = "button";
+            toggleButton.className = "client-password-toggle client-custom-password-toggle";
+            toggleButton.setAttribute("aria-label", "Show password");
+            toggleButton.setAttribute("aria-pressed", "false");
+            toggleButton.hidden = true;
+            toggleButton.innerHTML = "<i class=\"bi bi-eye\" aria-hidden=\"true\"></i>";
+
+            toggleButton.addEventListener("click", () => {
+                const isHidden = valueInput.type === "password";
+                valueInput.type = isHidden ? "text" : "password";
+                toggleButton.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+                toggleButton.setAttribute("aria-pressed", String(isHidden));
+
+                const icon = toggleButton.querySelector("i");
+                if (icon) {
+                    icon.classList.toggle("bi-eye", !isHidden);
+                    icon.classList.toggle("bi-eye-slash", isHidden);
+                }
+            });
+
+            typeSelect.addEventListener("change", () => {
+                applyCustomFieldTypeConfig(valueInput, toggleButton, typeSelect.value);
+            });
+
+            bindCustomFieldTinInput(valueInput, typeSelect);
+
+            applyCustomFieldTypeConfig(valueInput, toggleButton, fieldType);
+
+            valueWrap.append(valueInput, toggleButton);
+
+            wrapper.append(labelInput, typeWrap, valueWrap);
             return wrapper;
         };
 
@@ -533,15 +1439,18 @@
             return Array.from(container.querySelectorAll(".client-custom-field"))
                 .map((fieldRow) => {
                     const labelInput = fieldRow.querySelector(".client-custom-label-input");
-                    const valueInput = fieldRow.querySelector(".client-form-input");
+                    const valueInput = fieldRow.querySelector(".client-custom-value-input");
+                    const typeSelect = fieldRow.querySelector(".client-custom-type-select");
                     const label = labelInput ? labelInput.value.trim() : "";
                     const value = valueInput ? valueInput.value.trim() : "";
+                    const typeValue = typeSelect ? typeSelect.value : "text";
                     if (!label && !value) {
                         return null;
                     }
                     return {
-                        label: label || "Custom Field",
+                        label: label || (labelInput ? labelInput.placeholder : "Custom Field"),
                         value,
+                        type: typeValue,
                     };
                 })
                 .filter(Boolean);
@@ -610,18 +1519,44 @@
         };
 
         const mapClientFromApi = (client) => {
+            const rawTin = normalizeDigits(client.tin_number || "");
             return {
                 clientId: client.id,
                 clientName: client.client_name || "",
-                tin: client.tin_number || "",
+                tin: formatTin(rawTin),
+                tinRaw: rawTin,
                 tradeName: client.trade_name || "",
                 location: client.location || "",
                 permitNumber: client.permit_number || "",
                 birthday: client.birthday || "",
                 email: client.email || "",
+                emailPassword: client.email_password || "",
+                orusAccount: client.orus_account || "",
+                orusPassword: client.orus_password || "",
                 customFields: Array.isArray(client.custom_fields) ? client.custom_fields : [],
                 risk: client.risk_level || "medium"
             };
+        };
+
+        const toTimestamp = (value) => {
+            const parsed = Date.parse(String(value || ""));
+            return Number.isFinite(parsed) ? parsed : 0;
+        };
+
+        const sortClientsByRecent = (clients) => {
+            const safeClients = Array.isArray(clients) ? [...clients] : [];
+            safeClients.sort((a, b) => {
+                const aTime = toTimestamp(a && a.created_at);
+                const bTime = toTimestamp(b && b.created_at);
+                if (bTime !== aTime) {
+                    return bTime - aTime;
+                }
+
+                const aId = Number(a && a.id ? a.id : 0);
+                const bId = Number(b && b.id ? b.id : 0);
+                return bId - aId;
+            });
+            return safeClients;
         };
 
         const getClientRows = () => {
@@ -668,11 +1603,15 @@
                 clientId: Number.parseInt(row.dataset.clientId || "", 10) || null,
                 clientName: row.dataset.clientName || "",
                 tin: row.dataset.tin || "",
+                tinRaw: row.dataset.tinRaw || normalizeDigits(row.dataset.tin || ""),
                 tradeName: row.dataset.tradeName || "",
                 location: row.dataset.location || "",
                 permitNumber: row.dataset.permitNumber || "",
                 birthday: row.dataset.birthday || "",
                 email: row.dataset.email || "",
+                emailPassword: row.dataset.emailPassword || "",
+                orusAccount: row.dataset.orusAccount || "",
+                orusPassword: row.dataset.orusPassword || "",
                 customFields,
                 risk: row.dataset.risk || "medium"
             };
@@ -683,11 +1622,15 @@
             row.dataset.rowId = String(data.clientId || "");
             row.dataset.clientName = data.clientName;
             row.dataset.tin = data.tin;
+            row.dataset.tinRaw = data.tinRaw || normalizeDigits(data.tin);
             row.dataset.tradeName = data.tradeName;
             row.dataset.location = data.location;
             row.dataset.permitNumber = data.permitNumber;
             row.dataset.birthday = data.birthday;
             row.dataset.email = data.email;
+            row.dataset.emailPassword = data.emailPassword || "";
+            row.dataset.orusAccount = data.orusAccount || "";
+            row.dataset.orusPassword = data.orusPassword || "";
             row.dataset.customFields = JSON.stringify(data.customFields || []);
             row.dataset.risk = data.risk || "medium";
             row.setAttribute("aria-label", `View details for ${data.clientName}`);
@@ -714,13 +1657,43 @@
                 <td>${escapeHtml(data.tradeName)}</td>
                 <td>${escapeHtml(data.location)}</td>
                 <td class="clients-actions-cell">
-                    <div class="clients-actions">
-                        <button type="button" class="btn client-action-btn view" data-client-action="view"><i class="bi bi-eye"></i><span>View</span></button>
-                        <button type="button" class="btn client-action-btn analytics" data-client-action="analytics" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Analytics for this client"><i class="bi bi-bar-chart-line"></i><span>Analytics</span></button>
-                        <button type="button" class="btn client-action-btn report" data-client-action="report" data-bs-toggle="tooltip" data-bs-placement="top" title="Generate report for this client"><i class="bi bi-file-earmark-text"></i><span>Report</span></button>
-                        <button type="button" class="btn client-action-btn edit" data-client-action="edit"><i class="bi bi-pencil-square"></i><span>Edit Client</span></button>
-                        <button type="button" class="btn client-action-btn delete" data-client-action="delete"><i class="bi bi-trash3"></i><span>Delete Client</span></button>
-                        <button type="button" class="btn client-action-btn add-record" data-client-action="add-record" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client"><i class="bi bi-journal-plus"></i><span>View Financial Records</span></button>
+                    <div class="dropdown">
+                        <button type="button" class="btn client-menu-toggle-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Client actions menu">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end clients-actions-menu">
+                            <li>
+                                <button type="button" class="dropdown-item client-action-btn view" data-client-action="view">
+                                    <i class="bi bi-eye"></i><span>View Details</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item client-action-btn analytics" data-client-action="analytics">
+                                    <i class="bi bi-bar-chart-line"></i><span>Analytics</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item client-action-btn report" data-client-action="report">
+                                    <i class="bi bi-file-earmark-text"></i><span>Generate Report</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item client-action-btn add-record" data-client-action="add-record">
+                                    <i class="bi bi-journal-plus"></i><span>Financial Records</span>
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button type="button" class="dropdown-item client-action-btn edit" data-client-action="edit">
+                                    <i class="bi bi-pencil-square"></i><span>Edit Client</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item client-action-btn delete text-danger" data-client-action="delete">
+                                    <i class="bi bi-trash3"></i><span>Delete Client</span>
+                                </button>
+                            </li>
+                        </ul>
                     </div>
                 </td>
             `;
@@ -742,7 +1715,8 @@
             }
 
             clientsTableBody.innerHTML = "";
-            clients.forEach((client) => {
+            const sortedClients = sortClientsByRecent(clients);
+            sortedClients.forEach((client) => {
                 const row = createClientRowElement(mapClientFromApi(client));
                 clientsTableBody.appendChild(row);
                 initializeTooltips(row);
@@ -795,7 +1769,7 @@
             const params = new URLSearchParams();
             params.set("client_id", String(clientData.clientId || ""));
             params.set("client", clientData.clientName || "");
-            params.set("tin", clientData.tin || "");
+            params.set("tin", normalizeDigits(clientData.tinRaw || clientData.tin));
             params.set("trade", clientData.tradeName || "");
             return `${FINANCIAL_RECORDS_BASE_URL}?${params.toString()}`;
         };
@@ -804,7 +1778,7 @@
             const params = new URLSearchParams();
             params.set("client_id", String(clientData.clientId || ""));
             params.set("client", clientData.clientName || "");
-            params.set("tin", clientData.tin || "");
+            params.set("tin", normalizeDigits(clientData.tinRaw || clientData.tin));
             params.set("trade", clientData.tradeName || "");
             params.set("force_scope", "1");
             return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
@@ -922,6 +1896,9 @@
             const permitNumber = toReportValue(clientData.permitNumber);
             const birthday = toReportValue(clientData.birthday);
             const email = toReportValue(clientData.email);
+            const emailPassword = toReportValue(clientData.emailPassword);
+            const orusAccount = toReportValue(clientData.orusAccount);
+            const orusPassword = toReportValue(clientData.orusPassword);
             const customFields = Array.isArray(clientData.customFields) ? clientData.customFields : [];
 
             const reportTypeLabel = "Financial Summary Report";
@@ -955,6 +1932,9 @@
                     permitNumber,
                     birthday,
                     email,
+                    emailPassword,
+                    orusAccount,
+                    orusPassword,
                     customFields,
                 },
                 table: {
@@ -1100,6 +2080,15 @@
             if (viewClientEmail) {
                 viewClientEmail.textContent = toDisplayValue(data.email);
             }
+            if (viewClientEmailPassword) {
+                viewClientEmailPassword.textContent = toDisplayValue(data.emailPassword);
+            }
+            if (viewClientOrusAccount) {
+                viewClientOrusAccount.textContent = toDisplayValue(data.orusAccount);
+            }
+            if (viewClientOrusPassword) {
+                viewClientOrusPassword.textContent = toDisplayValue(data.orusPassword);
+            }
             renderClientCustomFields(data.customFields);
         };
 
@@ -1108,10 +2097,12 @@
             const editClientName = document.getElementById("editClientName");
             const editClientTin = document.getElementById("editClientTin");
             const editClientTradeName = document.getElementById("editClientTradeName");
-            const editClientLocation = document.getElementById("editClientLocation");
             const editClientPermitNumber = document.getElementById("editClientPermitNumber");
             const editClientBirthday = document.getElementById("editClientBirthday");
             const editClientEmail = document.getElementById("editClientEmail");
+            const editClientEmailPassword = document.getElementById("editClientEmailPassword");
+            const editClientOrusAccount = document.getElementById("editClientOrusAccount");
+            const editClientOrusPassword = document.getElementById("editClientOrusPassword");
 
             if (editRowId) {
                 editRowId.value = row.dataset.clientId || "";
@@ -1120,14 +2111,12 @@
                 editClientName.value = data.clientName;
             }
             if (editClientTin) {
-                editClientTin.value = data.tin;
+                editClientTin.value = formatTin(data.tinRaw || normalizeDigits(data.tin));
             }
             if (editClientTradeName) {
                 editClientTradeName.value = data.tradeName;
             }
-            if (editClientLocation) {
-                editClientLocation.value = data.location;
-            }
+            applyLocationSelection(editLocationState, data.location);
             if (editClientPermitNumber) {
                 editClientPermitNumber.value = data.permitNumber;
             }
@@ -1136,6 +2125,15 @@
             }
             if (editClientEmail) {
                 editClientEmail.value = data.email;
+            }
+            if (editClientEmailPassword) {
+                editClientEmailPassword.value = data.emailPassword || "";
+            }
+            if (editClientOrusAccount) {
+                editClientOrusAccount.value = data.orusAccount || "";
+            }
+            if (editClientOrusPassword) {
+                editClientOrusPassword.value = data.orusPassword || "";
             }
         };
 
@@ -1192,10 +2190,13 @@
 
             const rows = getClientRows();
             const query = normalize(clientsSearchInput ? clientsSearchInput.value : "");
+            const queryDigits = normalizeDigits(query);
             let visibleCount = 0;
 
             rows.forEach((row) => {
-                const matchesQuery = !query || normalize(row.dataset.clientName).includes(query) || normalize(row.dataset.tin).includes(query);
+                const tinDigits = normalizeDigits(row.dataset.tinRaw || row.dataset.tin || "");
+                const matchesTin = queryDigits ? tinDigits.includes(queryDigits) : false;
+                const matchesQuery = !query || normalize(row.dataset.clientName).includes(query) || matchesTin;
                 const matchesRisk = activeRiskFilter === "all" || normalize(row.dataset.risk || "") === activeRiskFilter;
                 const isVisible = matchesQuery && matchesRisk;
                 row.hidden = !isVisible;
@@ -1306,26 +2307,30 @@
                     }
                     return;
                 }
-
-                openViewModal(row);
-            });
-
-            clientsTableBody.addEventListener("keydown", (event) => {
-                const row = event.target.closest(".clients-row");
-                if (!row) {
-                    return;
-                }
-
-                if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    openViewModal(row);
-                }
             });
         }
 
         if (clientsSearchInput) {
             clientsSearchInput.addEventListener("input", debounce(applyClientsSearch));
         }
+
+        bindTinInput(addClientTinInput);
+        bindTinInput(editClientTinInput);
+        bindPasswordToggles();
+
+        const addLocationState = createLocationState({
+            hiddenInput: addClientLocationInput,
+            select: addClientLocationSelect,
+            summary: addClientLocationSummary,
+        });
+        const editLocationState = createLocationState({
+            hiddenInput: editClientLocationInput,
+            select: editClientLocationSelect,
+            summary: editClientLocationSummary,
+        });
+
+        bindLocationControls(addLocationState);
+        bindLocationControls(editLocationState);
 
         if (addClientCustomFieldBtn) {
             addClientCustomFieldBtn.addEventListener("click", () => {
@@ -1343,6 +2348,8 @@
             addClientForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
 
+                syncLocationState(addLocationState);
+
                 if (!addClientForm.checkValidity()) {
                     addClientForm.reportValidity();
                     return;
@@ -1350,12 +2357,15 @@
 
                 const payload = {
                     client_name: document.getElementById("addClientName") ? document.getElementById("addClientName").value.trim() : "",
-                    tin_number: document.getElementById("addClientTin") ? document.getElementById("addClientTin").value.trim() : "",
+                    tin_number: addClientTinInput ? normalizeDigits(addClientTinInput.value) : "",
                     trade_name: document.getElementById("addClientTradeName") ? document.getElementById("addClientTradeName").value.trim() : "",
-                    location: document.getElementById("addClientLocation") ? document.getElementById("addClientLocation").value.trim() : "",
+                    location: addClientLocationInput ? addClientLocationInput.value.trim() : "",
                     permit_number: document.getElementById("addClientPermitNumber") ? document.getElementById("addClientPermitNumber").value.trim() : "",
                     birthday: document.getElementById("addClientBirthday") ? document.getElementById("addClientBirthday").value.trim() : "",
                     email: document.getElementById("addClientEmail") ? document.getElementById("addClientEmail").value.trim() : "",
+                    email_password: document.getElementById("addClientEmailPassword") ? document.getElementById("addClientEmailPassword").value.trim() : "",
+                    orus_account: document.getElementById("addClientOrusAccount") ? document.getElementById("addClientOrusAccount").value.trim() : "",
+                    orus_password: document.getElementById("addClientOrusPassword") ? document.getElementById("addClientOrusPassword").value.trim() : "",
                     custom_fields: collectCustomFields(addClientCustomFields),
                     risk_level: "medium"
                 };
@@ -1393,6 +2403,8 @@
             editClientForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
 
+                syncLocationState(editLocationState);
+
                 if (!editingRow) {
                     return;
                 }
@@ -1410,12 +2422,15 @@
 
                 const payload = {
                     client_name: document.getElementById("editClientName") ? document.getElementById("editClientName").value.trim() : "",
-                    tin_number: document.getElementById("editClientTin") ? document.getElementById("editClientTin").value.trim() : "",
+                    tin_number: editClientTinInput ? normalizeDigits(editClientTinInput.value) : "",
                     trade_name: document.getElementById("editClientTradeName") ? document.getElementById("editClientTradeName").value.trim() : "",
-                    location: document.getElementById("editClientLocation") ? document.getElementById("editClientLocation").value.trim() : "",
+                    location: editClientLocationInput ? editClientLocationInput.value.trim() : "",
                     permit_number: document.getElementById("editClientPermitNumber") ? document.getElementById("editClientPermitNumber").value.trim() : "",
                     birthday: document.getElementById("editClientBirthday") ? document.getElementById("editClientBirthday").value.trim() : "",
                     email: document.getElementById("editClientEmail") ? document.getElementById("editClientEmail").value.trim() : "",
+                    email_password: document.getElementById("editClientEmailPassword") ? document.getElementById("editClientEmailPassword").value.trim() : "",
+                    orus_account: document.getElementById("editClientOrusAccount") ? document.getElementById("editClientOrusAccount").value.trim() : "",
+                    orus_password: document.getElementById("editClientOrusPassword") ? document.getElementById("editClientOrusPassword").value.trim() : "",
                     custom_fields: collectCustomFields(editClientCustomFields),
                     risk_level: editingRow.dataset.risk || "medium"
                 };
@@ -1490,12 +2505,14 @@
             editClientModalElement.addEventListener("hidden.bs.modal", () => {
                 editingRow = null;
                 clearCustomFields(editClientCustomFields);
+                resetLocationState(editLocationState);
             });
         }
 
         if (addClientModalElement) {
             addClientModalElement.addEventListener("hidden.bs.modal", () => {
                 clearCustomFields(addClientCustomFields);
+                resetLocationState(addLocationState);
             });
         }
 

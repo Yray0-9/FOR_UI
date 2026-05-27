@@ -21,10 +21,18 @@ class ClientsApiTests(TestCase):
         session[SESSION_BOOKKEEPER_ID_KEY] = account.id
         session.save()
 
+    def _build_tin(self, token: str) -> str:
+        digits = "".join(char for char in str(token or "") if char.isdigit())
+        if digits:
+            seed = int(digits)
+        else:
+            seed = sum(ord(char) for char in str(token or ""))
+        return f"{seed:012d}"
+
     def _client_payload(self, suffix: str, tin: str | None = None) -> dict:
         return {
             "client_name": f"Client {suffix}",
-            "tin_number": tin or f"TIN-{suffix}",
+            "tin_number": tin or self._build_tin(suffix),
             "trade_name": f"Trade {suffix}",
             "location": "Panabo City",
             "permit_number": f"PERMIT-{suffix}",
@@ -68,7 +76,7 @@ class ClientsApiTests(TestCase):
         self.assertEqual(len(list_payload.get("clients", [])), 1)
         self.assertEqual(list_payload["clients"][0]["id"], client_id)
 
-        update_data = self._client_payload("crud-updated", tin="TIN-CRUD-UPDATED")
+        update_data = self._client_payload("crud-updated", tin=self._build_tin("crud-updated"))
         update_data["risk_level"] = Client.RISK_HIGH
         update_response = self.client.put(
             reverse("api_client_detail", kwargs={"client_id": client_id}),
@@ -102,7 +110,7 @@ class ClientsApiTests(TestCase):
         owner_client = Client.objects.create(
             bookkeeper=owner,
             client_name="Owner Visible",
-            tin_number="TIN-OWNER-001",
+            tin_number=self._build_tin("owner-001"),
             trade_name="Owner Trade",
             location="Panabo",
             permit_number="PERMIT-OWNER-001",
@@ -112,7 +120,7 @@ class ClientsApiTests(TestCase):
         other_client = Client.objects.create(
             bookkeeper=other,
             client_name="Other Hidden",
-            tin_number="TIN-OTHER-001",
+            tin_number=self._build_tin("other-001"),
             trade_name="Other Trade",
             location="Panabo",
             permit_number="PERMIT-OTHER-001",
@@ -129,7 +137,7 @@ class ClientsApiTests(TestCase):
 
         update_response = self.client.put(
             reverse("api_client_detail", kwargs={"client_id": other_client.id}),
-            data=json.dumps(self._client_payload("forbidden-update", tin="TIN-FORBIDDEN-UPDATE")),
+            data=json.dumps(self._client_payload("forbidden-update", tin=self._build_tin("forbidden-update"))),
             content_type="application/json",
         )
         self.assertEqual(update_response.status_code, 404)
@@ -146,16 +154,18 @@ class ClientsApiTests(TestCase):
         owner = self._create_bookkeeper("owner-dup")
         self._login_as(owner)
 
+        duplicate_tin = self._build_tin("dup-001")
+
         first_create = self.client.post(
             reverse("api_clients"),
-            data=json.dumps(self._client_payload("dup-first", tin="TIN-DUP-001")),
+            data=json.dumps(self._client_payload("dup-first", tin=duplicate_tin)),
             content_type="application/json",
         )
         self.assertEqual(first_create.status_code, 201)
 
         duplicate_create = self.client.post(
             reverse("api_clients"),
-            data=json.dumps(self._client_payload("dup-second", tin="tin-dup-001")),
+            data=json.dumps(self._client_payload("dup-second", tin=duplicate_tin)),
             content_type="application/json",
         )
         self.assertEqual(duplicate_create.status_code, 409)

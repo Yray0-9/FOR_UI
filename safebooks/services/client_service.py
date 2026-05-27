@@ -13,6 +13,10 @@ def _normalize_text(value) -> str:
     return str(value or "").strip()
 
 
+def _normalize_digits(value) -> str:
+    return "".join(char for char in str(value or "") if char.isdigit())
+
+
 def _normalize_optional_date(value):
     cleaned_value = _normalize_text(value)
     if not cleaned_value:
@@ -38,6 +42,7 @@ def _normalize_custom_fields(value):
     if not isinstance(value, list):
         return None, "Custom fields must be a list."
 
+    allowed_types = {"text", "email", "password", "number", "date", "tin"}
     cleaned_fields = []
     for item in value:
         if not isinstance(item, dict):
@@ -45,13 +50,22 @@ def _normalize_custom_fields(value):
 
         label = _normalize_text(item.get("label"))
         field_value = _normalize_text(item.get("value"))
+        field_type = _normalize_text(item.get("type")).lower()
+        if field_type not in allowed_types:
+            field_type = "text"
 
         if not label and not field_value:
             continue
 
+        if field_type == "tin" and field_value:
+            tin_digits = _normalize_digits(field_value)
+            if len(tin_digits) != 12:
+                return None, "Custom field TIN must be 12 digits."
+
         cleaned_fields.append({
             "label": label or "Custom Field",
             "value": field_value,
+            "type": field_type,
         })
 
     return cleaned_fields, None
@@ -67,6 +81,9 @@ def _serialize_client(client: Client) -> dict:
         "permit_number": client.permit_number,
         "birthday": client.birthday.isoformat() if client.birthday else "",
         "email": client.email,
+        "email_password": client.email_password,
+        "orus_account": client.orus_account,
+        "orus_password": client.orus_password,
         "custom_fields": client.custom_fields or [],
         "risk_level": client.risk_level,
         "date_registered": client.date_registered.isoformat() if client.date_registered else "",
@@ -78,10 +95,16 @@ def _serialize_client(client: Client) -> dict:
 def _build_clean_payload(data: dict):
     client_name = _normalize_text(data.get("client_name"))
     tin_number = _normalize_text(data.get("tin_number") or data.get("tin"))
+    tin_digits = _normalize_digits(tin_number)
+    if tin_digits:
+        tin_number = tin_digits
     trade_name = _normalize_text(data.get("trade_name"))
     location = _normalize_text(data.get("location"))
     permit_number = _normalize_text(data.get("permit_number"))
     email = _normalize_text(data.get("email"))
+    email_password = _normalize_text(data.get("email_password"))
+    orus_account = _normalize_text(data.get("orus_account"))
+    orus_password = _normalize_text(data.get("orus_password"))
     risk_level = _normalize_risk_level(data.get("risk_level") or data.get("risk"))
 
     custom_fields, custom_fields_error = _normalize_custom_fields(data.get("custom_fields"))
@@ -94,6 +117,8 @@ def _build_clean_payload(data: dict):
         errors.append("Client name is required.")
     if not tin_number:
         errors.append("TIN is required.")
+    elif len(tin_digits) != 12:
+        errors.append("TIN must be 12 digits.")
     if not location:
         errors.append("Location is required.")
     if birthday_error:
@@ -116,6 +141,9 @@ def _build_clean_payload(data: dict):
         "permit_number": permit_number,
         "birthday": birthday_value,
         "email": email,
+        "email_password": email_password,
+        "orus_account": orus_account,
+        "orus_password": orus_password,
         "custom_fields": custom_fields,
         "risk_level": risk_level,
     }, errors
@@ -155,6 +183,9 @@ def create_client_for_bookkeeper(bookkeeper, data: dict) -> dict:
         permit_number=payload["permit_number"],
         birthday=payload["birthday"],
         email=payload["email"],
+        email_password=payload["email_password"],
+        orus_account=payload["orus_account"],
+        orus_password=payload["orus_password"],
         custom_fields=payload["custom_fields"] or [],
         risk_level=payload["risk_level"],
     )
@@ -198,6 +229,9 @@ def update_client_for_bookkeeper(bookkeeper, client_id: int, data: dict) -> dict
     client.permit_number = payload["permit_number"]
     client.birthday = payload["birthday"]
     client.email = payload["email"]
+    client.email_password = payload["email_password"]
+    client.orus_account = payload["orus_account"]
+    client.orus_password = payload["orus_password"]
     client.risk_level = payload["risk_level"]
     update_fields = [
         "client_name",
@@ -207,6 +241,9 @@ def update_client_for_bookkeeper(bookkeeper, client_id: int, data: dict) -> dict
         "permit_number",
         "birthday",
         "email",
+        "email_password",
+        "orus_account",
+        "orus_password",
         "risk_level",
         "updated_at",
     ]

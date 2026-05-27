@@ -159,13 +159,17 @@
                 }
 
                 loginFeedback.textContent = message;
-                loginFeedback.classList.remove("d-none", "alert-success", "alert-danger", "alert-warning");
+                loginFeedback.classList.remove("d-none", "alert-success", "alert-danger", "alert-warning", "animate-shake", "animate-fade-in");
+                
+                // Trigger a reflow to restart animations
+                void loginFeedback.offsetWidth;
+
                 if (level === "success") {
-                    loginFeedback.classList.add("alert-success");
+                    loginFeedback.classList.add("alert-success", "animate-fade-in");
                 } else if (level === "warning") {
-                    loginFeedback.classList.add("alert-warning");
+                    loginFeedback.classList.add("alert-warning", "animate-fade-in");
                 } else {
-                    loginFeedback.classList.add("alert-danger");
+                    loginFeedback.classList.add("alert-danger", "animate-shake");
                 }
             };
 
@@ -182,6 +186,11 @@
                 event.preventDefault();
                 redirecting = false;
                 clearSkeletonState();
+
+                if (loginFeedback) {
+                    loginFeedback.classList.add("d-none");
+                    loginFeedback.classList.remove("animate-shake", "animate-fade-in");
+                }
 
                 if (!loginForm.checkValidity()) {
                     loginForm.reportValidity();

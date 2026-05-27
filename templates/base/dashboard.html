@@ -341,6 +341,9 @@
                     <div class="client-details-row"><span class="client-details-key">Permit Number</span><strong id="viewClientPermitNumber">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">Birthday</span><strong id="viewClientBirthday">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">Email</span><strong id="viewClientEmail">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">Email Password</span><strong id="viewClientEmailPassword">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">ORUS Account</span><strong id="viewClientOrusAccount">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">ORUS Password</span><strong id="viewClientOrusPassword">-</strong></div>
                 </div>
                 <div class="client-details-custom" id="viewClientCustomFields" hidden>
                     <p class="client-details-custom-title">Custom Fields</p>
@@ -349,11 +352,10 @@
                 <p class="client-details-note">Manage this client's financial transactions.</p>
             </div>
             <div class="modal-footer client-details-actions">
-                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn dashboard-action-btn outline" id="viewClientAnalyticsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Analytics for this client">View Analytics</button>
-                <button type="button" class="btn dashboard-action-btn outline" id="viewClientReportBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Generate a report for this client">Generate Report</button>
                 <button type="button" class="btn dashboard-action-btn outline" id="viewFinancialRecordsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">View Financial Records</button>
-                <button type="button" class="btn dashboard-action-btn primary" id="viewAddFinancialRecordBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">Add Financial Entry</button>
+                <button type="button" class="btn dashboard-action-btn outline" id="viewAddFinancialRecordBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">Add Financial Entry</button>
+                <button type="button" class="btn dashboard-action-btn primary" id="viewClientReportBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Generate a report for this client">Generate Report</button>
             </div>
         </div>
     </div>
@@ -448,6 +450,9 @@
         const viewClientPermitNumber = document.getElementById("viewClientPermitNumber");
         const viewClientBirthday = document.getElementById("viewClientBirthday");
         const viewClientEmail = document.getElementById("viewClientEmail");
+        const viewClientEmailPassword = document.getElementById("viewClientEmailPassword");
+        const viewClientOrusAccount = document.getElementById("viewClientOrusAccount");
+        const viewClientOrusPassword = document.getElementById("viewClientOrusPassword");
         const viewClientCustomFields = document.getElementById("viewClientCustomFields");
         const viewClientCustomFieldsList = document.getElementById("viewClientCustomFieldsList");
 
@@ -541,6 +546,16 @@
         };
 
         const normalize = (value) => String(value || "").trim().toLowerCase();
+        const normalizeDigits = (value) => String(value || "").replace(/\D+/g, "");
+        const formatTin = (value) => {
+            const digits = normalizeDigits(value);
+            if (!digits) {
+                return "";
+            }
+
+            const groups = digits.match(/.{1,3}/g) || [];
+            return groups.join("-");
+        };
 
         const toDisplayValue = (value) => {
             const trimmedValue = String(value || "").trim();
@@ -669,7 +684,7 @@
             const params = new URLSearchParams();
             params.set("client_id", String(clientData.clientId || ""));
             params.set("client", clientData.clientName || "");
-            params.set("tin", clientData.tin || "");
+            params.set("tin", normalizeDigits(clientData.tinRaw || clientData.tin));
             params.set("trade", clientData.tradeName || "");
             return `${FINANCIAL_RECORDS_BASE_URL}?${params.toString()}`;
         };
@@ -678,7 +693,7 @@
             const params = new URLSearchParams();
             params.set("client_id", String(clientData.clientId || ""));
             params.set("client", clientData.clientName || "");
-            params.set("tin", clientData.tin || "");
+            params.set("tin", normalizeDigits(clientData.tinRaw || clientData.tin));
             params.set("trade", clientData.tradeName || "");
             params.set("force_scope", "1");
             return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
@@ -790,12 +805,15 @@
             const generatedAt = new Date().toISOString();
 
             const clientName = toReportValue(clientData.clientName, "Selected client");
-            const clientTin = toReportValue(clientData.tin);
+            const clientTin = toReportValue(formatTin(clientData.tinRaw || clientData.tin));
             const tradeName = toReportValue(clientData.tradeName);
             const location = toReportValue(clientData.location);
             const permitNumber = toReportValue(clientData.permitNumber);
             const birthday = toReportValue(clientData.birthday);
             const email = toReportValue(clientData.email);
+            const emailPassword = toReportValue(clientData.emailPassword);
+            const orusAccount = toReportValue(clientData.orusAccount);
+            const orusPassword = toReportValue(clientData.orusPassword);
             const customFields = Array.isArray(clientData.customFields) ? clientData.customFields : [];
 
             const reportTypeLabel = "Financial Summary Report";
@@ -829,6 +847,9 @@
                     permitNumber,
                     birthday,
                     email,
+                    emailPassword,
+                    orusAccount,
+                    orusPassword,
                     customFields,
                 },
                 table: {
@@ -960,29 +981,40 @@
         };
 
         const getClientDataFromRow = (row) => {
+            const tinRaw = row.dataset.tinRaw || normalizeDigits(row.dataset.tin || "");
+            const tinDisplay = formatTin(tinRaw) || row.dataset.tin || "";
             return {
                 clientId: Number.parseInt(row.dataset.clientId || "", 10) || null,
                 clientName: row.dataset.clientName || "",
-                tin: row.dataset.tin || "",
+                tin: tinDisplay,
+                tinRaw,
                 tradeName: row.dataset.trade || "",
                 location: row.dataset.location || "",
                 permitNumber: row.dataset.permitNumber || "",
                 birthday: row.dataset.birthday || "",
                 email: row.dataset.email || "",
+                emailPassword: row.dataset.emailPassword || "",
+                orusAccount: row.dataset.orusAccount || "",
+                orusPassword: row.dataset.orusPassword || "",
                 customFields: [],
             };
         };
 
         const mapClientDetailsFromApi = (client) => {
+            const tinRaw = normalizeDigits(client.tin_number || "");
             return {
                 clientId: Number.parseInt(client.id || "", 10) || null,
                 clientName: client.client_name || "",
-                tin: client.tin_number || "",
+                tin: formatTin(tinRaw) || client.tin_number || "",
+                tinRaw,
                 tradeName: client.trade_name || "",
                 location: client.location || "",
                 permitNumber: client.permit_number || "",
                 birthday: client.birthday || "",
                 email: client.email || "",
+                emailPassword: client.email_password || "",
+                orusAccount: client.orus_account || "",
+                orusPassword: client.orus_password || "",
                 customFields: Array.isArray(client.custom_fields) ? client.custom_fields : [],
             };
         };
@@ -1039,12 +1071,16 @@
             return {
                 clientId: baseData.clientId || detailData.clientId,
                 clientName: detailData.clientName || baseData.clientName,
-                tin: detailData.tin || baseData.tin,
+                tin: detailData.tin || baseData.tin || formatTin(detailData.tinRaw || baseData.tinRaw),
+                tinRaw: detailData.tinRaw || baseData.tinRaw,
                 tradeName: detailData.tradeName || baseData.tradeName,
                 location: detailData.location || baseData.location,
                 permitNumber: detailData.permitNumber || baseData.permitNumber,
                 birthday: detailData.birthday || baseData.birthday,
                 email: detailData.email || baseData.email,
+                emailPassword: detailData.emailPassword || baseData.emailPassword,
+                orusAccount: detailData.orusAccount || baseData.orusAccount,
+                orusPassword: detailData.orusPassword || baseData.orusPassword,
                 customFields: detailData.customFields && detailData.customFields.length
                     ? detailData.customFields
                     : baseData.customFields,
@@ -1056,7 +1092,8 @@
                 viewClientName.textContent = toDisplayValue(clientData.clientName);
             }
             if (viewClientTin) {
-                viewClientTin.textContent = toDisplayValue(clientData.tin);
+                const tinDisplay = formatTin(clientData.tinRaw || clientData.tin) || clientData.tin;
+                viewClientTin.textContent = toDisplayValue(tinDisplay);
             }
             if (viewClientTradeName) {
                 viewClientTradeName.textContent = toDisplayValue(clientData.tradeName);
@@ -1072,6 +1109,15 @@
             }
             if (viewClientEmail) {
                 viewClientEmail.textContent = toDisplayValue(clientData.email);
+            }
+            if (viewClientEmailPassword) {
+                viewClientEmailPassword.textContent = toDisplayValue(clientData.emailPassword);
+            }
+            if (viewClientOrusAccount) {
+                viewClientOrusAccount.textContent = toDisplayValue(clientData.orusAccount);
+            }
+            if (viewClientOrusPassword) {
+                viewClientOrusPassword.textContent = toDisplayValue(clientData.orusPassword);
             }
             renderClientCustomFields(clientData.customFields);
         };
@@ -1107,11 +1153,13 @@
                 .map((row) => {
                     const statusMeta = STATUS_META[row.status] || STATUS_META["needs-attention"];
                     const rowClientId = Number.isFinite(row.clientId) ? row.clientId : "";
+                    const tinRaw = row.tinRaw || normalizeDigits(row.tin);
+                    const tinDisplay = formatTin(tinRaw) || row.tin;
 
                     return `
-                        <tr class="dashboard-client-row" data-client-id="${escapeHtml(String(rowClientId))}" data-client-name="${escapeHtml(row.clientName)}" data-tin="${escapeHtml(row.tin)}" data-trade="${escapeHtml(row.tradeName)}" tabindex="0" role="button" aria-label="View details for ${escapeHtml(row.clientName)}">
+                        <tr class="dashboard-client-row" data-client-id="${escapeHtml(String(rowClientId))}" data-client-name="${escapeHtml(row.clientName)}" data-tin="${escapeHtml(tinDisplay)}" data-tin-raw="${escapeHtml(tinRaw)}" data-trade="${escapeHtml(row.tradeName)}" tabindex="0" role="button" aria-label="View details for ${escapeHtml(row.clientName)}">
                             <td>${escapeHtml(row.clientName)}</td>
-                            <td>${escapeHtml(row.tin)}</td>
+                            <td>${escapeHtml(tinDisplay)}</td>
                             <td>${escapeHtml(formatEntryDate(row.lastEntryDate))}</td>
                             <td>${escapeHtml(row.currentPeriod)}</td>
                             <td><span class="status-badge ${statusMeta.badgeClass}">${statusMeta.label}</span></td>
@@ -1139,10 +1187,13 @@
 
         const applyClientFilters = () => {
             const query = normalize(clientTableSearch ? clientTableSearch.value : "");
+            const queryDigits = normalizeDigits(query);
             const statusFilter = normalize(getActiveClientFilter());
 
             const filteredRows = CLIENT_ACTIVITY_DATA.filter((row) => {
-                const matchesQuery = !query || normalize(row.clientName).includes(query) || normalize(row.tin).includes(query);
+                const tinDigits = normalizeDigits(row.tinRaw || row.tin);
+                const matchesTin = queryDigits ? tinDigits.includes(queryDigits) : false;
+                const matchesQuery = !query || normalize(row.clientName).includes(query) || matchesTin;
                 const matchesStatus = statusFilter === "all" || normalize(row.status) === statusFilter;
                 return matchesQuery && matchesStatus;
             });
@@ -1279,10 +1330,12 @@
         };
 
         const mapActivityRowFromApi = (row) => {
+            const tinRaw = normalizeDigits(row.tin_number || "");
             return {
                 clientId: Number.parseInt(row.client_id || "", 10) || null,
                 clientName: row.client_name || "",
-                tin: row.tin_number || "",
+                tin: formatTin(tinRaw) || row.tin_number || "",
+                tinRaw,
                 tradeName: row.trade_name || "",
                 lastEntryDate: row.last_entry_date || "",
                 currentPeriod: row.current_period || CURRENT_PERIOD_LABEL || "",

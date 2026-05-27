@@ -180,4 +180,4 @@ The forecasting feature should visually present:
 This transforms the analytics dashboard from a simple reporting system into a predictive financial monitoring system.
 
 The main goal of forecasting analytics is:
-"To use historical transaction data to estimate future financial outcomes and support financial planning and decision-making."
+"To use historical transaction data to estimate future financial outcomes and support financial planning and decision-making."  

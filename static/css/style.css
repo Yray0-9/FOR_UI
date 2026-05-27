@@ -1441,6 +1441,22 @@ body.sidebar-collapsed .dashboard-landing-link span {
     z-index: 40;
 }
 
+.dashboard-topbar::before {
+    content: "";
+    position: absolute;
+    top: -1.2rem;
+    left: -30px;
+    right: -30px;
+    height: 1.25rem;
+    background: #f5f8ff;
+    pointer-events: none;
+    z-index: -1;
+}
+
+body.theme-dark .dashboard-topbar::before {
+    background: #0b1324;
+}
+
 .dashboard-topbar-left {
     display: flex;
     align-items: center;
@@ -2217,6 +2233,145 @@ body.sidebar-collapsed .dashboard-landing-link span {
     background: #ffecec;
 }
 
+.client-menu-toggle-btn {
+    border: 1px solid #d4e3fb;
+    border-radius: 9px;
+    background: #f9fbff;
+    color: #2f4f83;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.client-menu-toggle-btn:hover,
+.client-menu-toggle-btn:focus-visible {
+    color: #1f4fa8;
+    border-color: #b9cdf6;
+    background: #f2f7ff;
+}
+
+body.theme-dark .client-menu-toggle-btn {
+    background: #0f1c33;
+    border-color: #25344f;
+    color: #9eb0d3;
+}
+
+body.theme-dark .client-menu-toggle-btn:hover,
+body.theme-dark .client-menu-toggle-btn:focus-visible {
+    color: #8bb3ff;
+    border-color: #3a5490;
+    background: #142442;
+}
+
+.clients-actions-menu {
+    border: 1px solid #dce7fc;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 0.35rem;
+    box-shadow: 0 14px 28px rgba(18, 49, 112, 0.12);
+    min-width: 220px;
+}
+
+.clients-actions-menu .dropdown-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-radius: 8px;
+    color: #2f4f84;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.52rem 0.64rem;
+    transition: background-color 0.18s ease, color 0.18s ease;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+}
+
+.clients-actions-menu .dropdown-item i {
+    font-size: 0.94rem;
+    color: #4a6fa5;
+    transition: color 0.18s ease;
+}
+
+.clients-actions-menu .dropdown-item:hover,
+.clients-actions-menu .dropdown-item:focus-visible {
+    color: #1845a5;
+    background: #eef4ff;
+}
+
+.clients-actions-menu .dropdown-item:hover i,
+.clients-actions-menu .dropdown-item:focus-visible i {
+    color: #1845a5;
+}
+
+.clients-actions-menu .dropdown-item.text-danger {
+    color: #a93a3a;
+}
+
+.clients-actions-menu .dropdown-item.text-danger i {
+    color: #c45b5b;
+}
+
+.clients-actions-menu .dropdown-item.text-danger:hover,
+.clients-actions-menu .dropdown-item.text-danger:focus-visible {
+    color: #912b2b;
+    background: #fff1f3;
+}
+
+.clients-actions-menu .dropdown-item.text-danger:hover i,
+.clients-actions-menu .dropdown-item.text-danger:focus-visible i {
+    color: #912b2b;
+}
+
+body.theme-dark .clients-actions-menu {
+    border-color: #25344f;
+    background: #101a2c;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.theme-dark .clients-actions-menu .dropdown-item {
+    color: #d0def3;
+}
+
+body.theme-dark .clients-actions-menu .dropdown-item i {
+    color: #8fa0bd;
+}
+
+body.theme-dark .clients-actions-menu .dropdown-item:hover,
+body.theme-dark .clients-actions-menu .dropdown-item:focus-visible {
+    color: #8bb3ff;
+    background: #192a4a;
+}
+
+body.theme-dark .clients-actions-menu .dropdown-item:hover i,
+body.theme-dark .clients-actions-menu .dropdown-item:focus-visible i {
+    color: #8bb3ff;
+}
+
+body.theme-dark .clients-actions-menu .dropdown-item.text-danger {
+    color: #ff8d8d;
+}
+
+body.theme-dark .clients-actions-menu .dropdown-item.text-danger i {
+    color: #ff8d8d;
+}
+
+body.theme-dark .clients-actions-menu .dropdown-item.text-danger:hover,
+body.theme-dark .clients-actions-menu .dropdown-item.text-danger:focus-visible {
+    color: #ffb3b3;
+    background: #2a151b;
+}
+
+body.theme-dark .clients-actions-menu .dropdown-item.text-danger:hover i,
+body.theme-dark .clients-actions-menu .dropdown-item.text-danger:focus-visible i {
+    color: #ffb3b3;
+}
+
 .client-action-btn.add-record {
     color: #ffffff;
     border-color: transparent;
@@ -2292,6 +2447,62 @@ body.dashboard-page .modal {
     padding: 0.66rem 0.82rem;
 }
 
+.client-select-wrap {
+    position: relative;
+}
+
+.client-select-input {
+    appearance: none;
+    padding-right: 2.4rem;
+    background-image: none;
+}
+
+.client-select-icon {
+    position: absolute;
+    top: 50%;
+    right: 0.85rem;
+    transform: translateY(-50%);
+    color: #6f86b6;
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.client-password-field {
+    position: relative;
+}
+
+.client-password-input {
+    padding-right: 2.6rem;
+}
+
+.client-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.55rem;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #6b82af;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.client-password-toggle:hover,
+.client-password-toggle:focus-visible {
+    background: #eaf1ff;
+    color: #2b56ad;
+}
+
+.client-password-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(39, 103, 225, 0.14);
+}
+
 .client-form-input:focus {
     border-color: #2c68e1;
     box-shadow: 0 0 0 0.2rem rgba(39, 103, 225, 0.16);
@@ -2351,6 +2562,14 @@ body.dashboard-page .modal {
     font-weight: 700;
     padding: 0.32rem 0.55rem;
     margin-bottom: 0.4rem;
+}
+
+.client-custom-type-wrap {
+    margin-bottom: 0.4rem;
+}
+
+.client-custom-value-wrap {
+    position: relative;
 }
 
 .client-custom-label-input:focus {
@@ -3174,13 +3393,24 @@ body.dashboard-page .modal {
 }
 
 .financial-form-input {
-    background: #fbfdff;
+    background-color: #fbfdff;
     border: 1px solid #c6d8fd;
     border-radius: 11px;
     color: #15315f;
     font-size: 0.88rem;
     font-weight: 600;
     padding: 0.66rem 0.82rem;
+}
+
+select.financial-form-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23304b7b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.25rem !important;
 }
 
 .financial-form-input:focus {
@@ -5033,9 +5263,13 @@ body.theme-dark .financial-form-label {
 }
 
 body.theme-dark .financial-form-input {
-    background: #0f1c33;
+    background-color: #0f1c33;
     border-color: #25344f;
     color: #e6edf7;
+}
+
+body.theme-dark select.financial-form-input {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%239eb0d3' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
 }
 
 body.theme-dark .financial-form-input:focus {
