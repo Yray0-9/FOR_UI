@@ -258,6 +258,84 @@
     display: block;
 }
 
+.analytics-predictive-card .dashboard-panel-hint {
+    margin-bottom: 0.5rem;
+}
+
+.analytics-predictive-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.56rem;
+}
+
+.analytics-predictive-item {
+    border: 1px solid #e2ebfc;
+    border-radius: 12px;
+    background: #fbfdff;
+    padding: 0.56rem 0.6rem;
+    min-width: 0;
+}
+
+.analytics-predictive-label {
+    display: block;
+    color: #607aa8;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.analytics-predictive-value {
+    display: block;
+    margin-top: 0.24rem;
+    color: #1f3d71;
+    font-size: 0.92rem;
+    font-weight: 800;
+}
+
+.analytics-predictive-subtext {
+    display: block;
+    margin-top: 0.2rem;
+    color: #6c85b0;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.analytics-predictive-chart {
+    margin-top: 0.62rem;
+}
+
+.analytics-predictive-chart-shell {
+    border: 1px dashed #d8e5fb;
+    border-radius: 12px;
+    background: #f8fbff;
+    padding: 0.48rem 0.55rem;
+    text-align: center;
+}
+
+.analytics-predictive-spark {
+    width: 100%;
+    height: 84px;
+    display: block;
+    margin-bottom: 0.32rem;
+}
+
+.analytics-predictive-line {
+    fill: none;
+    stroke: #a9bfe8;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 4 6;
+}
+
+.analytics-predictive-placeholder {
+    margin: 0;
+    color: #6c85b0;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
 .analytics-sparkline-line {
     fill: none;
     stroke: #356bd6;
@@ -292,6 +370,10 @@
     .analytics-line-svg {
         height: 206px;
     }
+
+    .analytics-predictive-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 767.98px) {
@@ -314,6 +396,10 @@
 
     .analytics-line-svg {
         height: 190px;
+    }
+
+    .analytics-predictive-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -416,4 +502,34 @@ body.theme-dark .analytics-sparkline {
 
 body.theme-dark .analytics-sparkline-line {
     stroke: #6aa0ff;
+}
+
+body.theme-dark .analytics-predictive-item {
+    border-color: #25344f;
+    background: #0f1c33;
+}
+
+body.theme-dark .analytics-predictive-label {
+    color: #9eb0d3;
+}
+
+body.theme-dark .analytics-predictive-value {
+    color: #e6edf7;
+}
+
+body.theme-dark .analytics-predictive-subtext {
+    color: #9eb0d3;
+}
+
+body.theme-dark .analytics-predictive-chart-shell {
+    border-color: #25344f;
+    background: #0f1c33;
+}
+
+body.theme-dark .analytics-predictive-line {
+    stroke: #6aa0ff;
+}
+
+body.theme-dark .analytics-predictive-placeholder {
+    color: #9eb0d3;
 }
