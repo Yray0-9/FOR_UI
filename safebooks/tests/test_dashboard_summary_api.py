@@ -16,6 +16,7 @@ class DashboardSummaryApiTests(TestCase):
             username=f"bookkeeper_{suffix}",
             email=f"bookkeeper_{suffix}@example.com",
             password_hash="not-used-in-test",
+            status=BookkeeperAccount.STATUS_APPROVED,
         )
 
     def _login_as(self, account: BookkeeperAccount) -> None:
@@ -31,7 +32,7 @@ class DashboardSummaryApiTests(TestCase):
             seed = sum(ord(char) for char in str(token or ""))
         return f"{seed:012d}"
 
-    def _create_client(self, *, bookkeeper: BookkeeperAccount, tin_suffix: str, risk: str) -> Client:
+    def _create_client(self, *, bookkeeper: BookkeeperAccount, tin_suffix: str, remarks: str) -> Client:
         return Client.objects.create(
             bookkeeper=bookkeeper,
             client_name=f"Client {tin_suffix}",
@@ -40,7 +41,7 @@ class DashboardSummaryApiTests(TestCase):
             location="Panabo City",
             permit_number=f"PERMIT-{tin_suffix}",
             email=f"client-{tin_suffix}@example.com",
-            risk_level=risk,
+            remarks=remarks,
         )
 
     def _create_record(
@@ -95,17 +96,17 @@ class DashboardSummaryApiTests(TestCase):
         client_updated = self._create_client(
             bookkeeper=owner,
             tin_suffix="updated",
-            risk=Client.RISK_LOW,
+            remarks=Client.REMARK_NEW,
         )
         client_pending = self._create_client(
             bookkeeper=owner,
             tin_suffix="pending",
-            risk=Client.RISK_MEDIUM,
+            remarks=Client.REMARK_SEPARATED,
         )
         client_late = self._create_client(
             bookkeeper=owner,
             tin_suffix="late",
-            risk=Client.RISK_HIGH,
+            remarks=Client.REMARK_CLOSED,
         )
 
         self._create_record(
@@ -129,19 +130,20 @@ class DashboardSummaryApiTests(TestCase):
 
         self.assertEqual(payload["metrics"]["total_clients"], 3)
         self.assertEqual(payload["metrics"]["total_entries_this_month"], 1)
-        self.assertEqual(payload["metrics"]["pending_compliance"], 2)
-        self.assertEqual(payload["metrics"]["high_risk_clients"], 1)
+        self.assertEqual(payload["metrics"]["pending_compliance"], 1)
+        self.assertEqual(payload["metrics"]["new_clients"], 1)
 
-        self.assertEqual(payload["risk_summary"]["low"], 1)
-        self.assertEqual(payload["risk_summary"]["medium"], 1)
-        self.assertEqual(payload["risk_summary"]["high"], 1)
+        self.assertEqual(payload["remarks_summary"]["new"], 1)
+        self.assertEqual(payload["remarks_summary"]["active"], 0)
+        self.assertEqual(payload["remarks_summary"]["separated"], 1)
+        self.assertEqual(payload["remarks_summary"]["closed"], 1)
 
         self.assertEqual(payload["compliance_summary"]["filed"]["count"], 1)
         self.assertEqual(payload["compliance_summary"]["pending"]["count"], 1)
-        self.assertEqual(payload["compliance_summary"]["late"]["count"], 1)
-        self.assertEqual(payload["compliance_summary"]["filed"]["percentage"], 33)
-        self.assertEqual(payload["compliance_summary"]["pending"]["percentage"], 33)
-        self.assertEqual(payload["compliance_summary"]["late"]["percentage"], 33)
+        self.assertEqual(payload["compliance_summary"]["late"]["count"], 0)
+        self.assertEqual(payload["compliance_summary"]["filed"]["percentage"], 50)
+        self.assertEqual(payload["compliance_summary"]["pending"]["percentage"], 50)
+        self.assertEqual(payload["compliance_summary"]["late"]["percentage"], 0)
 
         activity_by_client_id = {
             row["client_id"]: row
@@ -151,8 +153,7 @@ class DashboardSummaryApiTests(TestCase):
         self.assertEqual(activity_by_client_id[client_updated.id]["compliance"], "filed")
         self.assertEqual(activity_by_client_id[client_pending.id]["status"], "needs-attention")
         self.assertEqual(activity_by_client_id[client_pending.id]["compliance"], "pending")
-        self.assertEqual(activity_by_client_id[client_late.id]["status"], "no-entries")
-        self.assertEqual(activity_by_client_id[client_late.id]["compliance"], "late")
+        self.assertNotIn(client_late.id, activity_by_client_id)
 
     def test_dashboard_summary_is_scoped_to_logged_in_bookkeeper(self):
         today = timezone.localdate()
@@ -163,12 +164,12 @@ class DashboardSummaryApiTests(TestCase):
         owner_client = self._create_client(
             bookkeeper=owner,
             tin_suffix="owner-visible",
-            risk=Client.RISK_LOW,
+            remarks=Client.REMARK_NEW,
         )
         other_client = self._create_client(
             bookkeeper=other,
             tin_suffix="other-hidden",
-            risk=Client.RISK_HIGH,
+            remarks=Client.REMARK_CLOSED,
         )
 
         self._create_record(
@@ -191,7 +192,7 @@ class DashboardSummaryApiTests(TestCase):
 
         self.assertEqual(payload["metrics"]["total_clients"], 1)
         self.assertEqual(payload["metrics"]["total_entries_this_month"], 1)
-        self.assertEqual(payload["metrics"]["high_risk_clients"], 0)
+        self.assertEqual(payload["metrics"]["new_clients"], 1)
 
         activity_client_ids = {row["client_id"] for row in payload.get("recent_client_activity", [])}
         self.assertEqual(activity_client_ids, {owner_client.id})
@@ -207,7 +208,7 @@ class DashboardSummaryApiTests(TestCase):
         client = self._create_client(
             bookkeeper=owner,
             tin_suffix="recent-client",
-            risk=Client.RISK_MEDIUM,
+            remarks=Client.REMARK_ACTIVE,
         )
 
         for day in range(1, 8):
@@ -231,3 +232,75 @@ class DashboardSummaryApiTests(TestCase):
             for day in range(7, 2, -1)
         ]
         self.assertEqual(recent_dates, expected_dates)
+
+    def test_dashboard_summary_includes_deadline_metrics_and_days_remaining(self):
+        today = timezone.localdate()
+        owner = self._create_bookkeeper("owner-deadline-dash")
+        self._login_as(owner)
+        client = self._create_client(
+            bookkeeper=owner,
+            tin_suffix="deadline-client",
+            remarks=Client.REMARK_ACTIVE,
+        )
+
+        record = self._create_record(
+            bookkeeper=owner,
+            client=client,
+            entry_date=today,
+            amount=Decimal("150.00"),
+        )
+        # Set deadline date to next month -> not completed yet
+        next_month_date = date(today.year, today.month + 1, 5) if today.month < 12 else date(today.year + 1, 1, 5)
+        record.deadline_date = next_month_date
+        record.save()
+
+        # Before making next month's entry -> deadline_completed is False
+        response = self.client.get(reverse("api_dashboard_summary"), HTTP_ACCEPT="application/json")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload.get("ok"))
+        activity = payload.get("recent_client_activity", [])
+        self.assertEqual(len(activity), 1)
+        self.assertEqual(activity[0]["deadline_date"], record.deadline_date.isoformat())
+        self.assertFalse(activity[0]["deadline_completed"])
+
+        # Set deadline date to current month -> should be completed immediately because of the current month record!
+        record.deadline_date = today
+        record.save()
+
+        response2 = self.client.get(reverse("api_dashboard_summary"), HTTP_ACCEPT="application/json")
+        self.assertEqual(response2.status_code, 200)
+        payload2 = response2.json()
+        activity2 = payload2.get("recent_client_activity", [])
+        self.assertTrue(activity2[0]["deadline_completed"])
+
+    def test_dashboard_summary_keeps_quarterly_clients_out_of_attention_until_next_cycle(self):
+        today = timezone.localdate()
+        owner = self._create_bookkeeper("owner-quarterly")
+        self._login_as(owner)
+        client = self._create_client(
+            bookkeeper=owner,
+            tin_suffix="quarterly-client",
+            remarks=Client.REMARK_ACTIVE,
+        )
+
+        record = self._create_record(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(today.year, 3, 1),
+            amount=Decimal("500.00"),
+        )
+        record.frequency = FinancialRecord.FREQUENCY_QUARTERLY
+        record.deadline_date = None
+        record.save(update_fields=["frequency", "deadline_date"])
+
+        response = self.client.get(reverse("api_dashboard_summary"), HTTP_ACCEPT="application/json")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+
+        activity = payload.get("recent_client_activity", [])
+        self.assertEqual(len(activity), 1)
+        self.assertEqual(activity[0]["client_id"], client.id)
+        self.assertEqual(activity[0]["status"], "updated")
+        self.assertEqual(activity[0]["compliance"], "filed")
+        self.assertEqual(payload["metrics"]["pending_compliance"], 0)

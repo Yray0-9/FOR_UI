@@ -138,12 +138,12 @@
             </article>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.2s;" data-nav-target="{% url 'clients' %}?risk=high" tabindex="0" role="button" aria-label="Open Clients page with high-risk filter preview">
-                <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.2s;" data-nav-target="{% url 'clients' %}?remark=new" tabindex="0" role="button" aria-label="Open Clients page with new remarks filter preview">
+                <div class="stat-icon"><i class="bi bi-person-plus"></i></div>
                 <div>
-                    <p class="stat-label">High Risk Clients</p>
-                    <h3 id="highRiskClientsValue">0</h3>
-                    <p class="stat-note">Needs review</p>
+                    <p class="stat-label">New Clients</p>
+                    <h3 id="newClientsValue">0</h3>
+                    <p class="stat-note">Onboarding phase</p>
                     <span class="stat-trend-chip">vs last month</span>
                 </div>
             </article>
@@ -161,10 +161,18 @@
                 </div>
                 <p class="dashboard-section-hint">Latest updates from your clients.</p>
                 <div class="dashboard-table-toolbar" aria-label="Recent client activity controls">
-                    <label class="dashboard-table-search" aria-label="Search clients by name or TIN">
-                        <i class="bi bi-search"></i>
-                        <input type="search" id="clientTableSearch" placeholder="Search by client name or TIN" autocomplete="off">
-                    </label>
+                    <div class="dashboard-table-left-controls">
+                        <label class="dashboard-table-search" aria-label="Search clients by name or TIN">
+                            <i class="bi bi-search"></i>
+                            <input type="search" id="clientTableSearch" placeholder="Search by client name or TIN" autocomplete="off">
+                        </label>
+                        <select id="clientSortSelect" class="form-select dashboard-filter-select" aria-label="Sort recent client activity">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="name-asc">Alphabetical (A-Z)</option>
+                            <option value="name-desc">Alphabetical (Z-A)</option>
+                        </select>
+                    </div>
                     <div class="dashboard-table-filters">
                         <div class="dashboard-filter-chips" role="group" aria-label="Filter recent client activity">
                             <button type="button" class="dashboard-filter-chip is-active" data-filter="all" aria-pressed="true">All</button>
@@ -233,33 +241,41 @@
         <div class="col-12 col-xl-4 d-grid gap-3">
             <article class="dashboard-card dashboard-fade-up" style="--delay: 0.35s;">
                 <div class="dashboard-card-head">
-                    <h2>Risk Classification Summary</h2>
+                    <h2>Client Remarks Summary</h2>
                 </div>
-                <p class="dashboard-panel-hint">Based on completeness of financial records.</p>
+                <p class="dashboard-panel-hint">Based on client behavior and filing status.</p>
                 <ul class="insight-list">
-                    <li class="insight-item risk-low-item">
+                    <li class="insight-item remark-new-item">
                         <span class="insight-dot"></span>
                         <div>
-                            <strong>Low Risk</strong>
-                            <small>Has consistent entries</small>
+                            <strong>New</strong>
+                            <small>Newly registered clients</small>
                         </div>
-                        <span class="insight-value" id="riskLowCount">0</span>
+                        <span class="insight-value" id="remarkNewCount">0</span>
                     </li>
-                    <li class="insight-item risk-medium-item">
+                    <li class="insight-item remark-active-item">
                         <span class="insight-dot"></span>
                         <div>
-                            <strong>Medium Risk</strong>
-                            <small>Missing some entries</small>
+                            <strong>Active</strong>
+                            <small>Filing entries regularly</small>
                         </div>
-                        <span class="insight-value" id="riskMediumCount">0</span>
+                        <span class="insight-value" id="remarkActiveCount">0</span>
                     </li>
-                    <li class="insight-item risk-high-item">
+                    <li class="insight-item remark-separated-item">
                         <span class="insight-dot"></span>
                         <div>
-                            <strong>High Risk</strong>
-                            <small>No entries or incomplete</small>
+                            <strong>Separated</strong>
+                            <small>Inactive for one year</small>
                         </div>
-                        <span class="insight-value" id="riskHighCount">0</span>
+                        <span class="insight-value" id="remarkSeparatedCount">0</span>
+                    </li>
+                    <li class="insight-item remark-closed-item">
+                        <span class="insight-dot"></span>
+                        <div>
+                            <strong>Closed</strong>
+                            <small>Business closed</small>
+                        </div>
+                        <span class="insight-value" id="remarkClosedCount">0</span>
                     </li>
                 </ul>
                 <div class="dashboard-card-footer">
@@ -309,6 +325,17 @@
                 </div>
             </article>
 
+            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.4s;" id="upcomingDeadlinesCard" hidden>
+                <div class="dashboard-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Upcoming Deadlines</h2>
+                    <span class="badge bg-warning text-dark" id="upcomingDeadlinesCount" style="font-size: 0.8rem; font-weight: 600; border-radius: 20px; padding: 0.25rem 0.5rem;">0</span>
+                </div>
+                <p class="dashboard-panel-hint">Alerts for clients with compliance deadlines within 5 days.</p>
+                <div class="dashboard-recent-list" id="upcomingDeadlinesList" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <!-- Dynamically populated -->
+                </div>
+            </article>
+
             <article class="dashboard-card dashboard-fade-up" style="--delay: 0.45s;">
                 <div class="dashboard-card-head">
                     <h2>Quick Actions</h2>
@@ -344,6 +371,7 @@
                     <div class="client-details-row"><span class="client-details-key">Email Password</span><strong id="viewClientEmailPassword">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">ORUS Account</span><strong id="viewClientOrusAccount">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">ORUS Password</span><strong id="viewClientOrusPassword">-</strong></div>
+                    <div class="client-details-row"><span class="client-details-key">Remarks</span><strong id="viewClientRemarks">-</strong></div>
                 </div>
                 <div class="client-details-custom" id="viewClientCustomFields" hidden>
                     <p class="client-details-custom-title">Custom Fields</p>
@@ -386,7 +414,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/reports_shared.js' %}"></script>
+<script src="{% static 'js/reports_shared.js' %}?v=1.0.5"></script>
 <script>
     (() => {
         const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
@@ -441,6 +469,7 @@
         const clientFilterChips = Array.from(document.querySelectorAll(".dashboard-filter-chip"));
         const clientFilterSummary = document.getElementById("clientFilterSummary");
         const clientFiltersReset = document.getElementById("clientFiltersReset");
+        const clientSortSelect = document.getElementById("clientSortSelect");
         const clientActivityEmpty = document.getElementById("clientActivityEmpty");
 
         const viewClientName = document.getElementById("viewClientName");
@@ -479,11 +508,13 @@
         const totalClientsValue = document.getElementById("totalClientsValue");
         const totalEntriesMonthValue = document.getElementById("totalEntriesMonthValue");
         const pendingComplianceValue = document.getElementById("pendingComplianceValue");
-        const highRiskClientsValue = document.getElementById("highRiskClientsValue");
+        const newClientsValue = document.getElementById("newClientsValue");
 
-        const riskLowCount = document.getElementById("riskLowCount");
-        const riskMediumCount = document.getElementById("riskMediumCount");
-        const riskHighCount = document.getElementById("riskHighCount");
+        const remarkNewCount = document.getElementById("remarkNewCount");
+        const remarkActiveCount = document.getElementById("remarkActiveCount");
+        const remarkSeparatedCount = document.getElementById("remarkSeparatedCount");
+        const remarkClosedCount = document.getElementById("remarkClosedCount");
+        const viewClientRemarks = document.getElementById("viewClientRemarks");
 
         const complianceFiledPct = document.getElementById("complianceFiledPct");
         const compliancePendingPct = document.getElementById("compliancePendingPct");
@@ -510,11 +541,12 @@
             totalClients: 0,
             totalEntriesThisMonth: 0,
             pendingCompliance: 0,
-            highRiskClients: 0,
-            risk: {
-                low: 0,
-                medium: 0,
-                high: 0,
+            newClients: 0,
+            remarks: {
+                new: 0,
+                active: 0,
+                separated: 0,
+                closed: 0,
             },
             compliancePct: {
                 filed: 0,
@@ -548,13 +580,109 @@
         const normalize = (value) => String(value || "").trim().toLowerCase();
         const normalizeDigits = (value) => String(value || "").replace(/\D+/g, "");
         const formatTin = (value) => {
-            const digits = normalizeDigits(value);
+            const digits = normalizeDigits(value).slice(0, 12);
             if (!digits) {
                 return "";
             }
 
             const groups = digits.match(/.{1,3}/g) || [];
             return groups.join("-");
+        };
+
+        const formatTinForInput = (value, isDeleting = false) => {
+            const digits = normalizeDigits(value).slice(0, 12);
+            if (!digits) {
+                return "";
+            }
+
+            const groups = digits.match(/.{1,3}/g) || [];
+            let formatted = groups.join("-");
+            if (digits.length % 3 === 0 && digits.length < 12 && !isDeleting) {
+                formatted += "-";
+            }
+            return formatted;
+        };
+
+        const getCursorIndexForDigitCount = (formattedValue, digitCount) => {
+            if (digitCount <= 0) {
+                return 0;
+            }
+
+            let digitsSeen = 0;
+            for (let index = 0; index < formattedValue.length; index += 1) {
+                if (/\d/.test(formattedValue[index])) {
+                    digitsSeen += 1;
+                    if (digitsSeen === digitCount) {
+                        return index + 1;
+                    }
+                }
+            }
+
+            return formattedValue.length;
+        };
+
+        const bindTinInput = (inputElement, allowLetters = false) => {
+            if (!inputElement) {
+                return;
+            }
+
+            let isDeleting = false;
+            inputElement.addEventListener("keydown", (event) => {
+                isDeleting = event.key === "Backspace" || event.key === "Delete";
+            });
+
+            inputElement.addEventListener("input", () => {
+                let rawValue = inputElement.value;
+                
+                if (allowLetters) {
+                    const startsWithDigit = /^\s*\d/.test(rawValue);
+                    if (startsWithDigit) {
+                        const cleaned = rawValue.replace(/[^\d-]/g, "");
+                        if (rawValue !== cleaned) {
+                            rawValue = cleaned;
+                            inputElement.value = cleaned;
+                        }
+                    } else if (/[a-zA-Z]/.test(rawValue)) {
+                        return;
+                    }
+                } else {
+                    const cleaned = rawValue.replace(/[^\d-]/g, "");
+                    if (rawValue !== cleaned) {
+                        rawValue = cleaned;
+                        inputElement.value = cleaned;
+                    }
+                }
+
+                const selectionStart = typeof inputElement.selectionStart === "number"
+                    ? inputElement.selectionStart
+                    : rawValue.length;
+                const digitsBeforeCursor = normalizeDigits(rawValue.slice(0, selectionStart)).length;
+                const formattedValue = formatTinForInput(rawValue, isDeleting);
+
+                if (rawValue !== formattedValue) {
+                    inputElement.value = formattedValue;
+                    if (document.activeElement === inputElement && typeof inputElement.setSelectionRange === "function") {
+                        const totalDigits = normalizeDigits(formattedValue).length;
+                        const cursorIndex = formattedValue.endsWith("-") && digitsBeforeCursor === totalDigits
+                            ? formattedValue.length
+                            : getCursorIndexForDigitCount(formattedValue, digitsBeforeCursor);
+                        inputElement.setSelectionRange(cursorIndex, cursorIndex);
+                    }
+                }
+            });
+
+            inputElement.addEventListener("blur", () => {
+                const value = inputElement.value;
+                if (value) {
+                    if (allowLetters && !/^\s*\d/.test(value)) {
+                        return;
+                    }
+                    const digits = normalizeDigits(value);
+                    if (digits) {
+                        inputElement.value = formatTin(value);
+                    }
+                }
+            });
         };
 
         const toDisplayValue = (value) => {
@@ -765,29 +893,35 @@
             const cleanedTypeColumns = Array.isArray(typeColumns)
                 ? typeColumns.filter((value) => String(value || "").trim())
                 : [];
-            const useTypeColumns = cleanedTypeColumns.length > 0;
+            const orderedTypeColumns = reportsShared && typeof reportsShared.normalizeFinancialSummaryColumns === "function"
+                ? reportsShared.normalizeFinancialSummaryColumns(cleanedTypeColumns)
+                : cleanedTypeColumns;
+            const useTypeColumns = orderedTypeColumns.length > 0;
 
             const reportColumns = useTypeColumns
-                ? ["Period", ...cleanedTypeColumns, "Net Value"]
+                ? ["Period", ...orderedTypeColumns, "Net Value"]
                 : ["Period", "Sales", "Expenses", "Tax", "Net Value"];
 
             const reportRows = rows
                 .filter((row) => isTrendMonthWithinRange(row.year, row.month, filters))
                 .map((row) => {
                     const periodLabel = `${row.month_label || row.month || "-"} ${row.year || ""}`.trim();
+                    const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
+                    const salesValue = Number(row.sales || 0);
+                    const expensesValue = Number(row.expenses || 0);
+                    const netValue = salesValue - expensesValue;
                     if (!useTypeColumns) {
                         return [
                             periodLabel,
-                            formatCurrency(row.sales),
-                            formatCurrency(row.expenses),
+                            formatCurrency(salesValue),
+                            formatCurrency(expensesValue),
                             formatCurrency(row.tax),
-                            formatCurrency(row.net_value),
+                            formatCurrency(netValue),
                         ];
                     }
 
-                    const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
-                    const typeValues = cleanedTypeColumns.map((label) => formatCurrency(typeBreakdown[label]));
-                    return [periodLabel, ...typeValues, formatCurrency(row.net_value)];
+                    const typeValues = orderedTypeColumns.map((label) => formatCurrency(typeBreakdown[label]));
+                    return [periodLabel, ...typeValues, formatCurrency(netValue)];
                 });
 
             return {
@@ -996,6 +1130,7 @@
                 emailPassword: row.dataset.emailPassword || "",
                 orusAccount: row.dataset.orusAccount || "",
                 orusPassword: row.dataset.orusPassword || "",
+                remarks: row.dataset.remarks || "new",
                 customFields: [],
             };
         };
@@ -1015,6 +1150,7 @@
                 emailPassword: client.email_password || "",
                 orusAccount: client.orus_account || "",
                 orusPassword: client.orus_password || "",
+                remarks: client.remarks || "new",
                 customFields: Array.isArray(client.custom_fields) ? client.custom_fields : [],
             };
         };
@@ -1081,6 +1217,7 @@
                 emailPassword: detailData.emailPassword || baseData.emailPassword,
                 orusAccount: detailData.orusAccount || baseData.orusAccount,
                 orusPassword: detailData.orusPassword || baseData.orusPassword,
+                remarks: detailData.remarks || baseData.remarks,
                 customFields: detailData.customFields && detailData.customFields.length
                     ? detailData.customFields
                     : baseData.customFields,
@@ -1119,6 +1256,10 @@
             if (viewClientOrusPassword) {
                 viewClientOrusPassword.textContent = toDisplayValue(clientData.orusPassword);
             }
+            if (viewClientRemarks) {
+                const remarksMap = { new: "New", active: "Active", separated: "Separated", closed: "Closed" };
+                viewClientRemarks.textContent = remarksMap[clientData.remarks] || toDisplayValue(clientData.remarks);
+            }
             renderClientCustomFields(clientData.customFields);
         };
 
@@ -1144,6 +1285,60 @@
             }
         };
 
+        const renderUpcomingDeadlines = () => {
+            const listContainer = document.getElementById("upcomingDeadlinesList");
+            const cardContainer = document.getElementById("upcomingDeadlinesCard");
+            const countBadge = document.getElementById("upcomingDeadlinesCount");
+
+            if (!listContainer || !cardContainer) {
+                return;
+            }
+
+            const urgentClients = CLIENT_ACTIVITY_DATA.filter((row) => {
+                return row.daysRemaining !== null && row.daysRemaining <= 5 && !row.deadlineCompleted;
+            });
+
+            urgentClients.sort((a, b) => a.daysRemaining - b.daysRemaining);
+
+            if (urgentClients.length > 0) {
+                cardContainer.hidden = false;
+                if (countBadge) {
+                    countBadge.textContent = String(urgentClients.length);
+                }
+
+                listContainer.innerHTML = urgentClients.map((client) => {
+                    const diffDays = client.daysRemaining;
+                    let badgeClass = "bg-warning text-dark";
+                    let badgeText = `Deadline in ${diffDays} day${diffDays === 1 ? "" : "s"}`;
+                    let iconClass = "bi-clock-fill";
+
+                    if (diffDays < 0) {
+                        badgeClass = "bg-danger text-white";
+                        badgeText = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? "" : "s"}`;
+                        iconClass = "bi-exclamation-octagon-fill";
+                    } else if (diffDays === 0) {
+                        badgeClass = "bg-danger text-white";
+                        badgeText = `Deadline is TODAY`;
+                        iconClass = "bi-exclamation-octagon-fill";
+                    }
+
+                    return `
+                        <div class="dashboard-recent-row" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(0, 0, 0, 0.05);">
+                            <div>
+                                <strong style="font-size: 0.9rem; display: block; color: var(--text-color);">${escapeHtml(client.clientName)}</strong>
+                                <small style="font-size: 0.75rem; color: var(--text-color-muted);">${escapeHtml(client.tradeName || client.tin)}</small>
+                            </div>
+                            <span class="badge ${badgeClass}" style="font-size: 0.75rem; padding: 0.35rem 0.5rem; font-weight: 500;">
+                                <i class="bi ${iconClass} me-1"></i>${badgeText}
+                            </span>
+                        </div>
+                    `;
+                }).join("");
+            } else {
+                cardContainer.hidden = true;
+            }
+        };
+
         const renderClientTableRows = (rows) => {
             if (!clientTableBody) {
                 return;
@@ -1156,13 +1351,32 @@
                     const tinRaw = row.tinRaw || normalizeDigits(row.tin);
                     const tinDisplay = formatTin(tinRaw) || row.tin;
 
+                    let deadlineBadge = "";
+                    if (row.daysRemaining !== null) {
+                        if (row.deadlineCompleted) {
+                            deadlineBadge = `<span class="badge bg-success ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>`;
+                        } else {
+                            const diffDays = row.daysRemaining;
+                            if (diffDays < 0) {
+                                deadlineBadge = `<span class="badge bg-danger ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-exclamation-octagon-fill me-1"></i>Overdue (${Math.abs(diffDays)}d)</span>`;
+                            } else if (diffDays <= 5) {
+                                deadlineBadge = `<span class="badge bg-warning text-dark ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-clock-fill me-1"></i>${diffDays}d left</span>`;
+                            } else {
+                                deadlineBadge = `<span class="badge bg-secondary ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-calendar-event me-1"></i>Deadline: ${row.deadlineDate}</span>`;
+                            }
+                        }
+                    }
+
                     return `
-                        <tr class="dashboard-client-row" data-client-id="${escapeHtml(String(rowClientId))}" data-client-name="${escapeHtml(row.clientName)}" data-tin="${escapeHtml(tinDisplay)}" data-tin-raw="${escapeHtml(tinRaw)}" data-trade="${escapeHtml(row.tradeName)}" tabindex="0" role="button" aria-label="View details for ${escapeHtml(row.clientName)}">
+                        <tr class="dashboard-client-row" data-client-id="${escapeHtml(String(rowClientId))}" data-client-name="${escapeHtml(row.clientName)}" data-tin="${escapeHtml(tinDisplay)}" data-tin-raw="${escapeHtml(tinRaw)}" data-trade="${escapeHtml(row.tradeName)}" data-remarks="${escapeHtml(row.remarks)}" tabindex="0" role="button" aria-label="View details for ${escapeHtml(row.clientName)}">
                             <td>${escapeHtml(row.clientName)}</td>
                             <td>${escapeHtml(tinDisplay)}</td>
                             <td>${escapeHtml(formatEntryDate(row.lastEntryDate))}</td>
                             <td>${escapeHtml(row.currentPeriod)}</td>
-                            <td><span class="status-badge ${statusMeta.badgeClass}">${statusMeta.label}</span></td>
+                            <td>
+                                <span class="status-badge ${statusMeta.badgeClass}">${statusMeta.label}</span>
+                                ${deadlineBadge}
+                            </td>
                         </tr>
                     `;
                 })
@@ -1185,18 +1399,44 @@
             }
         };
 
+        const sortClientActivity = (rows, sortBy) => {
+            const safeRows = Array.isArray(rows) ? [...rows] : [];
+            if (sortBy === "name-asc") {
+                safeRows.sort((a, b) => normalize(a.clientName).localeCompare(normalize(b.clientName)));
+            } else if (sortBy === "name-desc") {
+                safeRows.sort((a, b) => normalize(b.clientName).localeCompare(normalize(a.clientName)));
+            } else if (sortBy === "oldest") {
+                safeRows.sort((a, b) => {
+                    const aId = Number(a.clientId || 0);
+                    const bId = Number(b.clientId || 0);
+                    return aId - bId;
+                });
+            } else {
+                // "newest"
+                safeRows.sort((a, b) => {
+                    const aId = Number(a.clientId || 0);
+                    const bId = Number(b.clientId || 0);
+                    return bId - aId;
+                });
+            }
+            return safeRows;
+        };
+
         const applyClientFilters = () => {
             const query = normalize(clientTableSearch ? clientTableSearch.value : "");
             const queryDigits = normalizeDigits(query);
             const statusFilter = normalize(getActiveClientFilter());
+            const sortBy = clientSortSelect ? clientSortSelect.value : "newest";
 
-            const filteredRows = CLIENT_ACTIVITY_DATA.filter((row) => {
+            let filteredRows = CLIENT_ACTIVITY_DATA.filter((row) => {
                 const tinDigits = normalizeDigits(row.tinRaw || row.tin);
                 const matchesTin = queryDigits ? tinDigits.includes(queryDigits) : false;
                 const matchesQuery = !query || normalize(row.clientName).includes(query) || matchesTin;
                 const matchesStatus = statusFilter === "all" || normalize(row.status) === statusFilter;
                 return matchesQuery && matchesStatus;
             });
+
+            filteredRows = sortClientActivity(filteredRows, sortBy);
 
             renderClientTableRows(filteredRows);
             updateClientFilterSummary(statusFilter, filteredRows.length);
@@ -1240,7 +1480,7 @@
             const totalClients = DASHBOARD_METRICS.totalClients || 0;
             const totalEntriesThisMonth = DASHBOARD_METRICS.totalEntriesThisMonth || 0;
             const pendingCompliance = DASHBOARD_METRICS.pendingCompliance || 0;
-            const highRiskClients = DASHBOARD_METRICS.highRiskClients || 0;
+            const newClients = DASHBOARD_METRICS.newClients || 0;
 
             if (totalClientsValue) {
                 totalClientsValue.textContent = String(totalClients);
@@ -1251,24 +1491,28 @@
             if (pendingComplianceValue) {
                 pendingComplianceValue.textContent = String(pendingCompliance);
             }
-            if (highRiskClientsValue) {
-                highRiskClientsValue.textContent = String(highRiskClients);
+            if (newClientsValue) {
+                newClientsValue.textContent = String(newClients);
             }
         };
 
-        const updateRiskSummary = () => {
-            const lowRisk = DASHBOARD_METRICS.risk.low || 0;
-            const mediumRisk = DASHBOARD_METRICS.risk.medium || 0;
-            const highRisk = DASHBOARD_METRICS.risk.high || 0;
+        const updateRemarksSummary = () => {
+            const newRemarks = DASHBOARD_METRICS.remarks.new || 0;
+            const activeRemarks = DASHBOARD_METRICS.remarks.active || 0;
+            const separatedRemarks = DASHBOARD_METRICS.remarks.separated || 0;
+            const closedRemarks = DASHBOARD_METRICS.remarks.closed || 0;
 
-            if (riskLowCount) {
-                riskLowCount.textContent = String(lowRisk);
+            if (remarkNewCount) {
+                remarkNewCount.textContent = String(newRemarks);
             }
-            if (riskMediumCount) {
-                riskMediumCount.textContent = String(mediumRisk);
+            if (remarkActiveCount) {
+                remarkActiveCount.textContent = String(activeRemarks);
             }
-            if (riskHighCount) {
-                riskHighCount.textContent = String(highRisk);
+            if (remarkSeparatedCount) {
+                remarkSeparatedCount.textContent = String(separatedRemarks);
+            }
+            if (remarkClosedCount) {
+                remarkClosedCount.textContent = String(closedRemarks);
             }
         };
 
@@ -1340,8 +1584,10 @@
                 lastEntryDate: row.last_entry_date || "",
                 currentPeriod: row.current_period || CURRENT_PERIOD_LABEL || "",
                 status: row.status || "needs-attention",
-                risk: row.risk || "medium",
+                remarks: row.remarks || "new",
                 compliance: row.compliance || "pending",
+                deadlineDate: row.deadline_date || "",
+                daysRemaining: row.days_remaining !== undefined && row.days_remaining !== null ? Number.parseInt(row.days_remaining, 10) : null,
             };
         };
 
@@ -1367,11 +1613,12 @@
                 totalClients: 0,
                 totalEntriesThisMonth: 0,
                 pendingCompliance: 0,
-                highRiskClients: 0,
-                risk: {
-                    low: 0,
-                    medium: 0,
-                    high: 0,
+                newClients: 0,
+                remarks: {
+                    new: 0,
+                    active: 0,
+                    separated: 0,
+                    closed: 0,
                 },
                 compliancePct: {
                     filed: 0,
@@ -1402,7 +1649,7 @@
                     const message = result && result.message ? result.message : "Unable to load dashboard data.";
                     setDashboardFallbackState();
                     updateSummaryCards();
-                    updateRiskSummary();
+                    updateRemarksSummary();
                     updateComplianceSummary();
                     renderRecentEntries();
                     applyClientFilters();
@@ -1413,18 +1660,19 @@
                 CURRENT_PERIOD_LABEL = result.current_period_label || "";
 
                 const metrics = result.metrics || {};
-                const riskSummary = result.risk_summary || {};
+                const remarksSummary = result.remarks_summary || {};
                 const complianceSummary = result.compliance_summary || {};
 
                 DASHBOARD_METRICS = {
                     totalClients: Number.parseInt(metrics.total_clients || 0, 10) || 0,
                     totalEntriesThisMonth: Number.parseInt(metrics.total_entries_this_month || 0, 10) || 0,
                     pendingCompliance: Number.parseInt(metrics.pending_compliance || 0, 10) || 0,
-                    highRiskClients: Number.parseInt(metrics.high_risk_clients || 0, 10) || 0,
-                    risk: {
-                        low: Number.parseInt(riskSummary.low || 0, 10) || 0,
-                        medium: Number.parseInt(riskSummary.medium || 0, 10) || 0,
-                        high: Number.parseInt(riskSummary.high || 0, 10) || 0,
+                    newClients: Number.parseInt(metrics.new_clients || 0, 10) || 0,
+                    remarks: {
+                        new: Number.parseInt(remarksSummary.new || 0, 10) || 0,
+                        active: Number.parseInt(remarksSummary.active || 0, 10) || 0,
+                        separated: Number.parseInt(remarksSummary.separated || 0, 10) || 0,
+                        closed: Number.parseInt(remarksSummary.closed || 0, 10) || 0,
                     },
                     compliancePct: {
                         filed: Number.parseInt((complianceSummary.filed || {}).percentage || 0, 10) || 0,
@@ -1442,14 +1690,15 @@
                     : [];
 
                 updateSummaryCards();
-                updateRiskSummary();
+                updateRemarksSummary();
                 updateComplianceSummary();
                 renderRecentEntries();
                 applyClientFilters();
+                renderUpcomingDeadlines();
             } catch (requestError) {
                 setDashboardFallbackState();
                 updateSummaryCards();
-                updateRiskSummary();
+                updateRemarksSummary();
                 updateComplianceSummary();
                 renderRecentEntries();
                 applyClientFilters();
@@ -1567,6 +1816,7 @@
         }
 
         if (clientTableSearch) {
+            bindTinInput(clientTableSearch, true);
             clientTableSearch.addEventListener("input", applyClientFilters);
         }
 
@@ -1582,9 +1832,16 @@
                 if (clientTableSearch) {
                     clientTableSearch.value = "";
                 }
+                if (clientSortSelect) {
+                    clientSortSelect.value = "newest";
+                }
                 setActiveClientFilter("all");
                 applyClientFilters();
             });
+        }
+
+        if (clientSortSelect) {
+            clientSortSelect.addEventListener("change", applyClientFilters);
         }
 
         if (viewClientAnalyticsBtn) {
@@ -1671,7 +1928,7 @@
         hydrateHeaderUser();
         setDashboardFallbackState();
         updateSummaryCards();
-        updateRiskSummary();
+        updateRemarksSummary();
         updateComplianceSummary();
         renderRecentEntries();
         applyClientFilters();

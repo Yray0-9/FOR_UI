@@ -14,6 +14,7 @@ class ClientsApiTests(TestCase):
             username=f"clients_{suffix}",
             email=f"clients_{suffix}@example.com",
             password_hash="not-used-in-test",
+            status=BookkeeperAccount.STATUS_APPROVED,
         )
 
     def _login_as(self, account: BookkeeperAccount) -> None:
@@ -38,7 +39,7 @@ class ClientsApiTests(TestCase):
             "permit_number": f"PERMIT-{suffix}",
             "birthday": "1995-07-12",
             "email": f"client-{suffix}@example.com",
-            "risk_level": Client.RISK_MEDIUM,
+            "remarks": Client.REMARK_ACTIVE,
         }
 
     def test_clients_api_requires_authentication(self):
@@ -77,7 +78,7 @@ class ClientsApiTests(TestCase):
         self.assertEqual(list_payload["clients"][0]["id"], client_id)
 
         update_data = self._client_payload("crud-updated", tin=self._build_tin("crud-updated"))
-        update_data["risk_level"] = Client.RISK_HIGH
+        update_data["remarks"] = Client.REMARK_CLOSED
         update_response = self.client.put(
             reverse("api_client_detail", kwargs={"client_id": client_id}),
             data=json.dumps(update_data),
@@ -87,7 +88,7 @@ class ClientsApiTests(TestCase):
         update_payload = update_response.json()
         self.assertTrue(update_payload.get("ok"))
         self.assertEqual(update_payload.get("message"), "Client updated successfully.")
-        self.assertEqual(update_payload["client"]["risk_level"], Client.RISK_HIGH)
+        self.assertEqual(update_payload["client"]["remarks"], Client.REMARK_CLOSED)
 
         delete_response = self.client.delete(
             reverse("api_client_detail", kwargs={"client_id": client_id}),
@@ -96,12 +97,14 @@ class ClientsApiTests(TestCase):
         self.assertEqual(delete_response.status_code, 200)
         delete_payload = delete_response.json()
         self.assertTrue(delete_payload.get("ok"))
-        self.assertEqual(delete_payload.get("message"), "Client deleted successfully.")
+        self.assertEqual(delete_payload.get("message"), "Client closed successfully.")
+        self.assertEqual(delete_payload["client"]["remarks"], Client.REMARK_CLOSED)
 
         final_list_response = self.client.get(reverse("api_clients"), HTTP_ACCEPT="application/json")
         self.assertEqual(final_list_response.status_code, 200)
-        self.assertEqual(final_list_response.json().get("clients"), [])
-        self.assertEqual(Client.objects.filter(bookkeeper=owner).count(), 0)
+        self.assertEqual(len(final_list_response.json().get("clients", [])), 1)
+        self.assertEqual(final_list_response.json()["clients"][0]["remarks"], Client.REMARK_CLOSED)
+        self.assertEqual(Client.objects.filter(bookkeeper=owner).count(), 1)
 
     def test_clients_api_enforces_ownership_isolation(self):
         owner = self._create_bookkeeper("owner-isolation")
@@ -115,17 +118,17 @@ class ClientsApiTests(TestCase):
             location="Panabo",
             permit_number="PERMIT-OWNER-001",
             email="owner-visible@example.com",
-            risk_level=Client.RISK_LOW,
+            remarks=Client.REMARK_NEW,
         )
         other_client = Client.objects.create(
             bookkeeper=other,
             client_name="Other Hidden",
-            tin_number=self._build_tin("other-001"),
+            tin_number=self._build_tin("other-002"),
             trade_name="Other Trade",
             location="Panabo",
             permit_number="PERMIT-OTHER-001",
             email="other-hidden@example.com",
-            risk_level=Client.RISK_HIGH,
+            remarks=Client.REMARK_CLOSED,
         )
 
         self._login_as(owner)

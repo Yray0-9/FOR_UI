@@ -15,10 +15,10 @@
             hint: "Compliance distribution and client filing posture for the selected scope.",
             icon: "bi-patch-check",
         },
-        client_risk_overview: {
-            label: "Client Risk Overview",
-            hint: "Risk-level distribution and compliance risk visibility for the selected scope.",
-            icon: "bi-shield-exclamation",
+        client_remarks_overview: {
+            label: "Client Remarks Overview",
+            hint: "Status-remarks distribution and client behavior visibility for the selected scope.",
+            icon: "bi-shield-check",
         },
     };
 
@@ -28,10 +28,11 @@
         late: "Late",
     };
 
-    const RISK_LABELS = {
-        low: "Low",
-        medium: "Medium",
-        high: "High",
+    const REMARK_LABELS = {
+        new: "New",
+        active: "Active",
+        separated: "Separated",
+        closed: "Closed",
     };
 
     const AUTH_USER_KEY = String(config.authUserKey || "safebooks.authUser");
@@ -62,6 +63,7 @@
     const reportsFilterForm = document.getElementById("reportsFilterForm");
     const reportsTypeSelect = document.getElementById("reportsTypeSelect");
     const reportsClientSelect = document.getElementById("reportsClientSelect");
+    const reportsClientSearchInput = document.getElementById("reportsClientSearchInput");
     const reportsDateFrom = document.getElementById("reportsDateFrom");
     const reportsDateTo = document.getElementById("reportsDateTo");
 
@@ -118,7 +120,6 @@
         || !reportsDateTo
         || !reportsGenerateButton
         || !reportsPreviewButton
-        || !reportsDownloadButton
         || !reportsPrintButton
         || !reportsResetButton
         || !reportsFeedbackCard
@@ -251,6 +252,15 @@
             authUserKey: AUTH_USER_KEY,
             loginWelcomeKey: LOGIN_WELCOME_KEY,
         });
+    };
+
+    const formatTin = (value) => {
+        const digits = String(value || "").replace(/\D+/g, "").slice(0, 12);
+        if (!digits) {
+            return "";
+        }
+        const groups = digits.match(/.{1,3}/g) || [];
+        return groups.join("-");
     };
 
     const escapeHtml = (value) => {
@@ -410,9 +420,9 @@
         return REPORT_TYPE_META[normalized] ? REPORT_TYPE_META[normalized].hint : "Generated report preview.";
     };
 
-    const toRiskLabel = (riskValue) => {
-        const key = String(riskValue || "").toLowerCase();
-        return RISK_LABELS[key] || "Medium";
+    const toRemarkLabel = (remarksValue) => {
+        const key = String(remarksValue || "").toLowerCase();
+        return REMARK_LABELS[key] || "New";
     };
 
     const toComplianceLabel = (complianceValue) => {
@@ -571,6 +581,9 @@
     };
 
     const buildPrintLayoutDefinition = (report) => {
+        if (!report || report.reportType !== "financial_summary") {
+            return null;
+        }
         const reportColumns = Array.isArray(report && report.columns) ? report.columns : [];
         const columnMeta = reportColumns
             .map((column) => {
@@ -600,8 +613,12 @@
             ? "Prepared from generated report values."
             : "No rows matched the selected date range. Blank lines are available for manual notes.";
 
+        const orderedColumns = window.SafeBooksReportsShared && typeof window.SafeBooksReportsShared.normalizeFinancialSummaryColumns === "function"
+            ? window.SafeBooksReportsShared.normalizeFinancialSummaryColumns(columns)
+            : columns;
+
         return {
-            columns,
+            columns: orderedColumns,
             rows: formattedRows,
             rowCount,
             rowHint,
@@ -644,11 +661,16 @@
         reportsResetButton.disabled = loading;
 
         if (!latestGeneratedReport) {
-            reportsDownloadButton.disabled = true;
+            if (reportsDownloadButton) {
+                reportsDownloadButton.disabled = true;
+            }
             reportsPrintButton.disabled = true;
         } else {
-            reportsDownloadButton.disabled = loading || !latestGeneratedReport.rows.length;
+            if (reportsDownloadButton) {
+                reportsDownloadButton.disabled = loading || !latestGeneratedReport.rows.length;
+            }
             reportsPrintButton.disabled = loading
+                || latestGeneratedReport.reportType !== "financial_summary"
                 || !isClientScopedReport(latestGeneratedReport)
                 || !latestGeneratedReport.printLayout;
         }
@@ -952,7 +974,7 @@
 
         const client = getClientForReport(report);
         const clientName = toDisplayText(client && client.client_name ? client.client_name : report.scopeLabel, "Selected client");
-        const clientTin = toDisplayText(client && client.tin_number);
+        const clientTin = toDisplayText(client && formatTin(client.tin_number));
         const tradeName = toDisplayText(client && client.trade_name);
         const location = toDisplayText(client && client.location);
         const permitNumber = toDisplayText(client && client.permit_number);
@@ -1035,6 +1057,12 @@
 
     const renderLedgerPreview = (report) => {
         if (!report) {
+            return;
+        }
+
+        if (report.reportType !== "financial_summary") {
+            reportsLedgerCard.hidden = true;
+            reportsPrintButton.disabled = true;
             return;
         }
 
@@ -1218,6 +1246,11 @@
             return;
         }
 
+        if (latestGeneratedReport.reportType !== "financial_summary") {
+            showToast("Print layout is only available for Financial Summary reports.", "warning");
+            return;
+        }
+
         if (!isClientScopedReport(latestGeneratedReport)) {
             showToast("Select one client to use this print-friendly format.", "warning");
             return;
@@ -1303,8 +1336,10 @@
 
         setGenerationTag(`Generated ${formatGeneratedDateTime(report.generatedAt)}`);
         setFilterStatus(`${report.reportLabel} generated successfully.`);
-        reportsDownloadButton.disabled = report.rows.length === 0;
-        reportsPrintButton.disabled = !isClientScopedReport(report) || !report.printLayout;
+        if (reportsDownloadButton) {
+            reportsDownloadButton.disabled = report.rows.length === 0;
+        }
+        reportsPrintButton.disabled = report.reportType !== "financial_summary" || !isClientScopedReport(report) || !report.printLayout;
 
         if (report.printLayoutError) {
             showToast(report.printLayoutError, "warning");
@@ -1322,7 +1357,9 @@
         reportsPreviewMeta.innerHTML = "";
         clearLedgerPreview();
         setGenerationTag("Not generated");
-        reportsDownloadButton.disabled = true;
+        if (reportsDownloadButton) {
+            reportsDownloadButton.disabled = true;
+        }
         reportsPrintButton.disabled = true;
     };
 
@@ -1549,14 +1586,34 @@
             ? payload.monthly_trend.filter((row) => isTrendMonthWithinRange(row.year, row.month, filters))
             : [];
 
-        const typeColumns = Array.isArray(payload && payload.type_columns)
+        const rawTypeColumns = Array.isArray(payload && payload.type_columns)
             ? payload.type_columns.filter((value) => String(value || "").trim())
             : [];
+        const typeColumns = window.SafeBooksReportsShared && typeof window.SafeBooksReportsShared.normalizeFinancialSummaryColumns === "function"
+            ? window.SafeBooksReportsShared.normalizeFinancialSummaryColumns(rawTypeColumns)
+            : rawTypeColumns;
         const typeColumnMeta = typeColumns.map((label, index) => ({
             key: `type_${index}`,
             label: String(label),
         }));
         const useTypeColumns = typeColumnMeta.length > 0;
+
+        const getTypeAmount = (typeBreakdown, label) => {
+            const normalizedLabel = String(label || "").trim().toLowerCase();
+            if (!normalizedLabel) {
+                return 0;
+            }
+
+            const directMatch = typeBreakdown && Object.prototype.hasOwnProperty.call(typeBreakdown, label)
+                ? Number(typeBreakdown[label] || 0)
+                : null;
+            if (Number.isFinite(directMatch)) {
+                return directMatch;
+            }
+
+            const fallbackKey = Object.keys(typeBreakdown || {}).find((key) => String(key || "").trim().toLowerCase() === normalizedLabel);
+            return Number(typeBreakdown && fallbackKey ? typeBreakdown[fallbackKey] : 0);
+        };
 
         const scope = payload && payload.scope ? payload.scope : {};
         const scopeLabel = Number.isFinite(filters.clientId) && filters.clientId > 0
@@ -1565,17 +1622,24 @@
 
         const rows = trendRows.map((row) => {
             const periodLabel = `${row.month_label || row.month || "-"} ${row.year || ""}`.trim();
+            const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
+            const salesValue = useTypeColumns
+                ? getTypeAmount(typeBreakdown, "Sales")
+                : Number(row.sales || 0);
+            const expensesValue = useTypeColumns
+                ? getTypeAmount(typeBreakdown, "Expenses")
+                : Number(row.expenses || 0);
+            const netValue = salesValue - expensesValue;
             if (!useTypeColumns) {
                 return {
                     period: periodLabel,
-                    sales: formatCurrency(row.sales),
-                    expenses: formatCurrency(row.expenses),
+                    sales: formatCurrency(salesValue),
+                    expenses: formatCurrency(expensesValue),
                     tax: formatCurrency(row.tax),
-                    net_value: formatCurrency(row.net_value),
+                    net_value: formatCurrency(netValue),
                 };
             }
 
-            const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
             const typeValues = {};
             typeColumnMeta.forEach((column) => {
                 typeValues[column.key] = formatCurrency(typeBreakdown[column.label]);
@@ -1584,7 +1648,7 @@
             return {
                 period: periodLabel,
                 ...typeValues,
-                net_value: formatCurrency(row.net_value),
+                net_value: formatCurrency(netValue),
             };
         });
 
@@ -1619,7 +1683,7 @@
                 {
                     label: "Net Value",
                     value: formatCurrency(summary.net_value),
-                    note: "From applied calculations",
+                    note: "Sales minus expenses",
                     icon: "bi-graph-up-arrow",
                 },
             ],
@@ -1654,11 +1718,11 @@
         const rows = activityRows.map((row) => {
             return {
                 client_name: String(row.client_name || "Client"),
-                tin_number: String(row.tin_number || "-"),
+                tin_number: row.tin_number ? formatTin(row.tin_number) : "-",
                 compliance: toComplianceLabel(row.compliance),
                 last_entry_date: formatIsoDateForDisplay(row.last_entry_date),
                 current_period: String(row.current_period || "-"),
-                risk_level: toRiskLabel(row.risk),
+                remarks: toRemarkLabel(row.remarks),
             };
         });
 
@@ -1703,21 +1767,21 @@
                 { key: "compliance", label: "Compliance" },
                 { key: "last_entry_date", label: "Last Entry Date" },
                 { key: "current_period", label: "Current Period" },
-                { key: "risk_level", label: "Risk Level" },
+                { key: "remarks", label: "Remarks" },
             ],
             rows,
         };
     };
 
-    const buildClientRiskOverviewReport = (payload, filters) => {
+    const buildClientRemarksOverviewReport = (payload, filters) => {
         const activityRows = filterActivityRows(payload && payload.recent_client_activity, filters);
 
-        const lowCount = activityRows.filter((row) => String(row.risk || "").toLowerCase() === "low").length;
-        const mediumCount = activityRows.filter((row) => String(row.risk || "").toLowerCase() === "medium").length;
-        const highCount = activityRows.filter((row) => String(row.risk || "").toLowerCase() === "high").length;
+        const newCount = activityRows.filter((row) => String(row.remarks || "").toLowerCase() === "new").length;
+        const activeCount = activityRows.filter((row) => String(row.remarks || "").toLowerCase() === "active").length;
+        const separatedCount = activityRows.filter((row) => String(row.remarks || "").toLowerCase() === "separated").length;
+        const closedCount = activityRows.filter((row) => String(row.remarks || "").toLowerCase() === "closed").length;
 
         const totalRows = activityRows.length;
-        const highRiskRatio = totalRows > 0 ? Math.round((highCount / totalRows) * 100) : 0;
 
         const scopeLabel = Number.isFinite(filters.clientId) && filters.clientId > 0
             ? buildScopeLabel(filters.clientId, "Selected client")
@@ -1726,15 +1790,16 @@
         const rows = activityRows
             .slice()
             .sort((a, b) => {
-                const riskOrder = {
-                    high: 0,
-                    medium: 1,
-                    low: 2,
+                const remarksOrder = {
+                    new: 0,
+                    active: 1,
+                    separated: 2,
+                    closed: 3,
                 };
-                const aRisk = String(a.risk || "medium").toLowerCase();
-                const bRisk = String(b.risk || "medium").toLowerCase();
-                const aOrder = Object.prototype.hasOwnProperty.call(riskOrder, aRisk) ? riskOrder[aRisk] : 1;
-                const bOrder = Object.prototype.hasOwnProperty.call(riskOrder, bRisk) ? riskOrder[bRisk] : 1;
+                const aRemarks = String(a.remarks || "new").toLowerCase();
+                const bRemarks = String(b.remarks || "new").toLowerCase();
+                const aOrder = Object.prototype.hasOwnProperty.call(remarksOrder, aRemarks) ? remarksOrder[aRemarks] : 1;
+                const bOrder = Object.prototype.hasOwnProperty.call(remarksOrder, bRemarks) ? remarksOrder[bRemarks] : 1;
                 if (aOrder !== bOrder) {
                     return aOrder - bOrder;
                 }
@@ -1746,8 +1811,8 @@
             .map((row) => {
                 return {
                     client_name: String(row.client_name || "Client"),
-                    tin_number: String(row.tin_number || "-"),
-                    risk_level: toRiskLabel(row.risk),
+                    tin_number: row.tin_number ? formatTin(row.tin_number) : "-",
+                    remarks: toRemarkLabel(row.remarks),
                     compliance: toComplianceLabel(row.compliance),
                     last_entry_date: formatIsoDateForDisplay(row.last_entry_date),
                     current_period: String(row.current_period || "-"),
@@ -1765,40 +1830,159 @@
             scopeLabel,
             summaryCards: [
                 {
-                    label: "Low Risk",
-                    value: formatCount(lowCount),
-                    note: "Consistent entry activity",
+                    label: "New",
+                    value: formatCount(newCount),
+                    note: "Newly onboarded clients",
+                    icon: "bi-star",
+                },
+                {
+                    label: "Active",
+                    value: formatCount(activeCount),
+                    note: "Regular filing activity",
                     icon: "bi-shield-check",
                 },
                 {
-                    label: "Medium Risk",
-                    value: formatCount(mediumCount),
-                    note: "Needs regular follow-up",
+                    label: "Separated",
+                    value: formatCount(separatedCount),
+                    note: "No current year activity",
                     icon: "bi-shield",
                 },
                 {
-                    label: "High Risk",
-                    value: formatCount(highCount),
-                    note: "Requires immediate review",
-                    icon: "bi-shield-exclamation",
-                },
-                {
-                    label: "High Risk Ratio",
-                    value: `${highRiskRatio}%`,
-                    note: "High-risk share in scope",
-                    icon: "bi-graph-up",
+                    label: "Closed",
+                    value: formatCount(closedCount),
+                    note: "Business closed",
+                    icon: "bi-shield-slash",
                 },
             ],
             columns: [
                 { key: "client_name", label: "Client Name" },
                 { key: "tin_number", label: "TIN" },
-                { key: "risk_level", label: "Risk Level" },
+                { key: "remarks", label: "Remarks" },
                 { key: "compliance", label: "Compliance" },
                 { key: "last_entry_date", label: "Last Entry Date" },
                 { key: "current_period", label: "Current Period" },
             ],
             rows,
         };
+    };
+
+    let activeDropdownFocusIndex = -1;
+
+    const renderCustomDropdown = (query) => {
+        const dropdown = document.getElementById("reportsCustomDropdown");
+        if (!dropdown) return;
+
+        dropdown.innerHTML = "";
+        activeDropdownFocusIndex = -1;
+
+        const cleanQuery = String(query || "").trim().toLowerCase();
+        let filtered = [];
+
+        if (!cleanQuery) {
+            filtered = availableClients;
+        } else {
+            const cleanDigits = cleanQuery.replace(/\D+/g, "");
+            filtered = availableClients.filter((client) => {
+                const nameMatch = String(client.client_name || "").toLowerCase().includes(cleanQuery);
+                const tinMatch = cleanDigits && String(client.tin_number || "").replace(/\D+/g, "").includes(cleanDigits);
+                return nameMatch || tinMatch;
+            });
+        }
+
+        const currentSelectedValue = reportsClientSelect ? reportsClientSelect.value : "all";
+
+        // "All Clients" Option
+        const allItem = document.createElement("div");
+        allItem.className = "reports-custom-dropdown-item";
+        allItem.dataset.id = "all";
+        if (currentSelectedValue === "all") {
+            allItem.classList.add("is-active");
+        }
+        allItem.innerHTML = `<span>All Clients</span><span class="item-tin">Reset filter</span>`;
+        dropdown.appendChild(allItem);
+
+        filtered.forEach((client) => {
+            if (client.remarks === "closed") {
+                return;
+            }
+            const item = document.createElement("div");
+            item.className = "reports-custom-dropdown-item";
+            item.dataset.id = String(client.id);
+            if (String(client.id) === currentSelectedValue) {
+                item.classList.add("is-active");
+            }
+            const clientName = String(client.client_name || "Client");
+            const clientTin = String(client.tin_number || "").trim();
+            item.innerHTML = `<span>${escapeHtml(clientName)}</span>${clientTin ? `<span class="item-tin">TIN: ${formatTin(clientTin)}</span>` : ""}`;
+            dropdown.appendChild(item);
+        });
+
+        if (filtered.length === 0 && cleanQuery) {
+            const emptyItem = document.createElement("div");
+            emptyItem.className = "reports-custom-dropdown-empty";
+            emptyItem.textContent = "No matching clients found";
+            dropdown.appendChild(emptyItem);
+        }
+
+        // Click Events
+        const items = dropdown.querySelectorAll(".reports-custom-dropdown-item");
+        items.forEach((item) => {
+            item.addEventListener("click", () => {
+                const selectedVal = item.dataset.id;
+                if (reportsClientSelect) {
+                    reportsClientSelect.value = selectedVal;
+                    reportsClientSelect.dispatchEvent(new Event("change"));
+                }
+                hideCustomDropdown();
+            });
+        });
+    };
+
+    const showCustomDropdown = () => {
+        const dropdown = document.getElementById("reportsCustomDropdown");
+        const toggleIcon = document.getElementById("reportsDropdownToggleIcon");
+        if (!dropdown) return;
+
+        renderCustomDropdown(reportsClientSearchInput ? reportsClientSearchInput.value : "");
+        dropdown.style.display = "block";
+        
+        if (toggleIcon) {
+            toggleIcon.style.transform = "translateY(-50%) rotate(180deg)";
+        }
+    };
+
+    const hideCustomDropdown = () => {
+        const dropdown = document.getElementById("reportsCustomDropdown");
+        const toggleIcon = document.getElementById("reportsDropdownToggleIcon");
+        if (dropdown) {
+            dropdown.style.display = "none";
+        }
+        if (toggleIcon) {
+            toggleIcon.style.transform = "translateY(-50%)";
+        }
+        activeDropdownFocusIndex = -1;
+    };
+
+    const updateDropdownFocus = (items) => {
+        items.forEach((item, idx) => {
+            if (idx === activeDropdownFocusIndex) {
+                item.classList.add("is-focused");
+                item.scrollIntoView({ block: "nearest" });
+            } else {
+                item.classList.remove("is-focused");
+            }
+        });
+    };
+
+    const syncSearchInputForClientId = (clientId) => {
+        if (!reportsClientSearchInput) {
+            return;
+        }
+
+        const matchedClient = availableClients.find((c) => String(c.id) === String(clientId));
+        reportsClientSearchInput.value = matchedClient && matchedClient.tin_number
+            ? formatTin(matchedClient.tin_number)
+            : "";
     };
 
     const loadOptionsAndClients = async () => {
@@ -1825,6 +2009,7 @@
                     orus_account: String(client.orus_account || ""),
                     orus_password: String(client.orus_password || ""),
                     custom_fields: Array.isArray(client.custom_fields) ? client.custom_fields : [],
+                    remarks: String(client.remarks || "new"),
                 }))
                 : [];
         } catch (error) {
@@ -1840,16 +2025,20 @@
         reportsClientSelect.appendChild(allOption);
 
         availableClients.forEach((client) => {
+            if (client.remarks === "closed") {
+                return; // EXCLUDE closed clients from reports page scope select!
+            }
             const optionElement = document.createElement("option");
             optionElement.value = String(client.id);
             const tin = String(client.tin_number || "").trim();
             optionElement.textContent = tin
-                ? `${client.client_name} (TIN: ${tin})`
+                ? `${client.client_name} (TIN: ${formatTin(tin)})`
                 : client.client_name;
             reportsClientSelect.appendChild(optionElement);
         });
 
         reportsClientSelect.disabled = false;
+        renderCustomDropdown("");
     };
 
     const applyInitialFilterValues = (defaults) => {
@@ -1891,6 +2080,7 @@
                 reportsClientSelect.value = initialClientId;
             }
         }
+        syncSearchInputForClientId(reportsClientSelect.value);
     };
 
     const shouldAutoGenerate = () => {
@@ -1944,16 +2134,16 @@
                     return;
                 }
                 generatedReport = buildComplianceSnapshotReport(dashboardPayload, filters);
-            } else if (filters.reportType === "client_risk_overview") {
+            } else if (filters.reportType === "client_remarks_overview") {
                 const dashboardPayload = await fetchJsonOrThrow(
                     String(urls.dashboardSummaryApi || ""),
                     generationAbortController.signal,
-                    "Unable to load risk overview data."
+                    "Unable to load remarks overview data."
                 );
                 if (requestToken !== generationRequestToken) {
                     return;
                 }
-                generatedReport = buildClientRiskOverviewReport(dashboardPayload, filters);
+                generatedReport = buildClientRemarksOverviewReport(dashboardPayload, filters);
             } else {
                 throw new Error("Unsupported report type selected.");
             }
@@ -2037,14 +2227,16 @@
             previewLatestReport();
         });
 
-        reportsDownloadButton.addEventListener("click", () => {
-            if (!latestGeneratedReport) {
-                showToast("Generate a report before downloading.", "warning");
-                return;
-            }
-            downloadCsv(latestGeneratedReport);
-            showToast("CSV download started.", "success");
-        });
+        if (reportsDownloadButton) {
+            reportsDownloadButton.addEventListener("click", () => {
+                if (!latestGeneratedReport) {
+                    showToast("Generate a report before downloading.", "warning");
+                    return;
+                }
+                downloadCsv(latestGeneratedReport);
+                showToast("CSV download started.", "success");
+            });
+        }
 
         reportsPrintButton.addEventListener("click", () => {
             printLedgerLayout();
@@ -2081,8 +2273,75 @@
                 if (Number.isFinite(clientId) && clientId > 0) {
                     updateLastUsedClient(clientId);
                 }
+                syncSearchInputForClientId(selectedValue);
             });
         }
+
+        if (reportsClientSearchInput) {
+            reportsClientSearchInput.addEventListener("focus", () => {
+                showCustomDropdown();
+            });
+
+            reportsClientSearchInput.addEventListener("input", () => {
+                showCustomDropdown();
+            });
+
+            reportsClientSearchInput.addEventListener("keydown", (event) => {
+                const dropdown = document.getElementById("reportsCustomDropdown");
+                if (dropdown && dropdown.style.display === "block") {
+                    const items = Array.from(dropdown.querySelectorAll(".reports-custom-dropdown-item"));
+                    if (items.length > 0) {
+                        if (event.key === "ArrowDown") {
+                            event.preventDefault();
+                            activeDropdownFocusIndex = (activeDropdownFocusIndex + 1) % items.length;
+                            updateDropdownFocus(items);
+                            return;
+                        }
+                        if (event.key === "ArrowUp") {
+                            event.preventDefault();
+                            activeDropdownFocusIndex = (activeDropdownFocusIndex - 1 + items.length) % items.length;
+                            updateDropdownFocus(items);
+                            return;
+                        }
+                        if (event.key === "Enter") {
+                            if (activeDropdownFocusIndex >= 0 && activeDropdownFocusIndex < items.length) {
+                                event.preventDefault();
+                                items[activeDropdownFocusIndex].click();
+                                return;
+                            }
+                        }
+                        if (event.key === "Escape") {
+                            event.preventDefault();
+                            hideCustomDropdown();
+                            return;
+                        }
+                    }
+                }
+            });
+        }
+
+        const toggleIcon = document.getElementById("reportsDropdownToggleIcon");
+        if (toggleIcon) {
+            toggleIcon.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const dropdown = document.getElementById("reportsCustomDropdown");
+                if (dropdown && dropdown.style.display === "block") {
+                    hideCustomDropdown();
+                } else {
+                    if (reportsClientSearchInput) {
+                        reportsClientSearchInput.focus();
+                    }
+                    showCustomDropdown();
+                }
+            });
+        }
+
+        document.addEventListener("click", (event) => {
+            const searchWrap = document.querySelector(".reports-tin-search-input-wrap");
+            if (searchWrap && !searchWrap.contains(event.target)) {
+                hideCustomDropdown();
+            }
+        });
 
         reportsHistoryList.addEventListener("click", (event) => {
             const trigger = event.target.closest("button[data-history-id]");

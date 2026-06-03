@@ -12,6 +12,7 @@ class ReportsPageTests(TestCase):
             username=f"reports_user_{suffix}",
             email=f"reports_user_{suffix}@example.com",
             password_hash="not-used-in-test",
+            status=BookkeeperAccount.STATUS_APPROVED,
         )
 
     def _login_as(self, account: BookkeeperAccount) -> None:

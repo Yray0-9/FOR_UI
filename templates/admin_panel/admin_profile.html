@@ -13,7 +13,7 @@
 
 {% block content %}
 <section class="dashboard-content admin-dashboard">
-    <div class="profile-layout">
+    <div class="profile-layout profile-layout--no-side">
         <div class="profile-main">
             <article class="dashboard-card admin-card profile-hero-card dashboard-fade-up" style="--delay: 0.05s;">
                 <div class="profile-hero-top">
@@ -31,8 +31,8 @@
                     </div>
                     <div class="profile-hero-actions">
                         <button type="button" class="btn dashboard-action-btn primary" data-scroll-target="#adminIdentity">Edit profile</button>
-                        <button type="button" class="btn dashboard-action-btn outline" data-scroll-target="#adminSecurity">Security preferences</button>
-                        <a href="{% url 'admin_system_settings' %}" class="btn dashboard-action-btn outline">System settings</a>
+                        <button type="button" class="btn dashboard-action-btn outline" id="adminChangePasswordBtn">Change password</button>
+                        <a href="{% url 'admin_system_settings' %}" class="btn dashboard-action-btn outline hidden-admin-settings" style="display:none !important;" aria-hidden="true" tabindex="-1">System settings</a>
                     </div>
                 </div>
             </article>
@@ -110,93 +110,7 @@
             </article>
         </div>
 
-        <aside class="profile-side">
-            <article class="dashboard-card admin-card profile-card dashboard-fade-up profile-scroll-target" style="--delay: 0.1s;" id="adminSecurity" tabindex="-1">
-                <div class="profile-card-head">
-                    <div>
-                        <h2>Security preferences</h2>
-                        <!-- <p class="dashboard-section-hint">Protect access to the admin console.</p> -->
-                    </div>
-                </div>
-
-                <div class="profile-security-list">
-                    <div class="profile-security-row">
-                        <div>
-                            <p class="profile-field-label">Multi-factor authentication</p>
-                            <!-- <p class="profile-field-hint">Require a second step for login.</p> -->
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="adminMfaToggle" disabled>
-                        </div>
-                    </div>
-                    <div class="profile-security-row">
-                        <div>
-                            <p class="profile-field-label">Session timeout</p>
-                            <!-- <p class="profile-field-hint">Auto sign-out after inactivity.</p> -->
-                        </div>
-                        <select class="form-select profile-select" aria-label="Admin session timeout" disabled>
-                            <option>30 minutes</option>
-                            <option>60 minutes</option>
-                            <option>120 minutes</option>
-                        </select>
-                    </div>
-                    <div class="profile-security-row">
-                        <div>
-                            <p class="profile-field-label">Re-auth for high-risk actions</p>
-                            <!-- <p class="profile-field-hint">Require password before approvals.</p> -->
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="adminReauthToggle" disabled>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-actions admin-actions">
-                    <button type="button" class="dashboard-action-btn outline" data-planned-feature>Sign out all sessions</button>
-                </div>
-            </article>
-
-            <article class="dashboard-card admin-card profile-card dashboard-fade-up" style="--delay: 0.14s;">
-                <div class="profile-card-head">
-                    <div>
-                        <h2>Trusted devices</h2>
-                        <!-- <p class="dashboard-section-hint">Devices recently used by this admin.</p> -->
-                    </div>
-                </div>
-
-                <div class="profile-device-list" aria-label="Trusted devices">
-                    <div class="profile-device-row">
-                        <div class="profile-device-meta">
-                            <span>Chrome on Windows</span>
-                            <small>Last active: Today, 10:12 AM · Quezon City</small>
-                        </div>
-                        <button type="button" class="btn dashboard-action-btn outline" data-planned-feature>Revoke</button>
-                    </div>
-                    <div class="profile-device-row">
-                        <div class="profile-device-meta">
-                            <span>Edge on Windows</span>
-                            <small>Last active: Apr 30, 2:45 PM · Makati</small>
-                        </div>
-                        <button type="button" class="btn dashboard-action-btn outline" data-planned-feature>Revoke</button>
-                    </div>
-                </div>
-            </article>
-
-            <article class="dashboard-card admin-card profile-card dashboard-fade-up" style="--delay: 0.18s;">
-                <div class="profile-card-head">
-                    <div>
-                        <h2>Access scope summary</h2>
-                        <!-- <p class="dashboard-section-hint">Scope controlled by system policy.</p> -->
-                    </div>
-                </div>
-
-                <div class="profile-chip-grid">
-                    <span class="profile-chip"><i class="bi bi-check2-circle"></i> Approvals</span>
-                    <span class="profile-chip"><i class="bi bi-people"></i> Bookkeepers</span>
-                    <span class="profile-chip"><i class="bi bi-gear"></i> System Settings</span>
-                </div>
-            </article>
-        </aside>
+        {# Removed Security preferences, Trusted devices, and Access scope summary cards per request #}
     </div>
 </section>
 {% endblock %}
@@ -205,29 +119,34 @@
 <script>
     (() => {
         const scrollTargets = Array.from(document.querySelectorAll("[data-scroll-target]"));
-        if (!scrollTargets.length) {
-            return;
+        if (scrollTargets.length) {
+            scrollTargets.forEach((button) => {
+                button.addEventListener("click", (event) => {
+                    const selector = String(button.dataset.scrollTarget || "").trim();
+                    if (!selector) {
+                        return;
+                    }
+
+                    const target = document.querySelector(selector);
+                    if (!target) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    target.scrollIntoView({ behavior: "smooth", block: "start" });
+                    if (target.hasAttribute("tabindex")) {
+                        target.focus({ preventScroll: true });
+                    }
+                });
+            });
         }
 
-        scrollTargets.forEach((button) => {
-            button.addEventListener("click", (event) => {
-                const selector = String(button.dataset.scrollTarget || "").trim();
-                if (!selector) {
-                    return;
-                }
-
-                const target = document.querySelector(selector);
-                if (!target) {
-                    return;
-                }
-
-                event.preventDefault();
-                target.scrollIntoView({ behavior: "smooth", block: "start" });
-                if (target.hasAttribute("tabindex")) {
-                    target.focus({ preventScroll: true });
-                }
+        const changePasswordBtn = document.getElementById("adminChangePasswordBtn");
+        if (changePasswordBtn) {
+            changePasswordBtn.addEventListener("click", () => {
+                alert("The change password utility is planned for after the system defense.");
             });
-        });
+        }
     })();
 </script>
 {% endblock %}

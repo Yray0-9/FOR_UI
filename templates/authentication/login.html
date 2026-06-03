@@ -73,36 +73,112 @@
                 <section class="col-lg-6 auth-panel">
                     <div class="auth-form-wrap">
                         <article class="auth-card slide-in-card">
-                            <a href="{% url 'home' %}" class="auth-back-link"><i class="bi bi-arrow-left-short"></i>Back to Landing</a>
-                            <h2 class="auth-card-title">Welcome Back</h2>
-                            <p class="auth-card-subtitle">Login to manage your financial records</p>
+                            <div id="loginFormSection">
+                                <a href="{% url 'home' %}" class="auth-back-link"><i class="bi bi-arrow-left-short"></i>Back to Landing</a>
+                                <h2 class="auth-card-title">Welcome Back</h2>
+                                <p class="auth-card-subtitle">Login to manage your financial records</p>
 
-                            <div class="alert d-none mt-3" id="loginFeedback" role="alert"></div>
+                                <div class="alert d-none mt-3" id="loginFeedback" role="alert"></div>
 
-                            <form method="post" action="{% url 'api_login' %}" novalidate data-auth-login-form data-no-skeleton-submit>
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="login_identifier" class="form-label auth-form-label">Email or Username</label>
-                                    <input type="text" class="form-control auth-input" id="login_identifier" name="identifier" placeholder="Enter your email or username" autocomplete="username" required>
-                                </div>
-                                <div class="mb-2">
-                                    <label for="login_password" class="form-label auth-form-label">Password</label>
-                                    <div class="auth-password-field">
-                                        <div class="auth-password-wrap">
-                                            <input type="password" class="form-control auth-input" id="login_password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
-                                            <button type="button" class="auth-password-toggle" data-password-toggle-target="login_password" aria-label="Show password">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
+                                <form method="post" action="{% url 'api_login' %}" novalidate data-auth-login-form data-no-skeleton-submit>
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label for="login_identifier" class="form-label auth-form-label">Email or Username</label>
+                                        <input type="text" class="form-control auth-input" id="login_identifier" name="identifier" placeholder="Enter your email or username" autocomplete="username" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="login_password" class="form-label auth-form-label">Password</label>
+                                        <div class="auth-password-field">
+                                            <div class="auth-password-wrap">
+                                                <input type="password" class="form-control auth-input" id="login_password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                                                <button type="button" class="auth-password-toggle" data-password-toggle-target="login_password" aria-label="Show password">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="auth-inline-row">
-                                    <a href="#" class="auth-inline-link">Forgot Password?</a>
-                                </div>
-                                <button type="submit" class="btn auth-submit-btn">Login</button>
-                            </form>
+                                    <div class="auth-inline-row">
+                                        <a href="#" class="auth-inline-link" id="forgotPasswordLink">Forgot Password?</a>
+                                    </div>
+                                    <button type="submit" class="btn auth-submit-btn">Login</button>
+                                </form>
 
-                            <p class="auth-switch-text">Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
+                                <p class="auth-switch-text">Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
+                            </div>
+
+                            <div id="forgotPasswordSection" class="d-none">
+                                <div class="alert d-none mt-3" id="forgotFeedback" role="alert"></div>
+
+                                <!-- Step 1: Email Request -->
+                                <div id="forgotStep1">
+                                    <a href="#" class="auth-back-link" id="backToLoginFromForgot"><i class="bi bi-arrow-left-short"></i>Back to Login</a>
+                                    <h2 class="auth-card-title">Forgot Password?</h2>
+                                    <p class="auth-card-subtitle">Enter your account email to receive a 6-digit verification code.</p>
+                                    <form id="forgotStep1Form" novalidate>
+                                        <div class="mb-3">
+                                            <label for="forgot_email" class="form-label auth-form-label">Email Address</label>
+                                            <input type="email" class="form-control auth-input" id="forgot_email" placeholder="Enter your registered email" required>
+                                        </div>
+                                        <button type="submit" class="btn auth-submit-btn">Send Code</button>
+                                    </form>
+                                </div>
+
+                                <!-- Step 2: Code Verification -->
+                                <div id="forgotStep2" class="d-none">
+                                    <a href="#" class="auth-back-link" id="backToStep1"><i class="bi bi-arrow-left-short"></i>Back</a>
+                                    <h2 class="auth-card-title">Verify Code</h2>
+                                    <p class="auth-card-subtitle">Enter the 6-digit verification code sent to <strong id="forgotEmailPlaceholder"></strong></p>
+                                    <form id="forgotStep2Form" novalidate>
+                                        <div class="mb-3">
+                                            <label for="forgot_code" class="form-label auth-form-label">Verification Code</label>
+                                            <input type="text" class="form-control auth-input text-center fs-4 letter-spacing-lg" id="forgot_code" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]*" required>
+                                        </div>
+                                        <button type="submit" class="btn auth-submit-btn">Verify Code</button>
+                                    </form>
+                                </div>
+
+                                <!-- Step 3: Password Reset -->
+                                <div id="forgotStep3" class="d-none">
+                                    <a href="#" class="auth-back-link" id="backToStep2"><i class="bi bi-arrow-left-short"></i>Back</a>
+                                    <h2 class="auth-card-title">Create New Password</h2>
+                                    <p class="auth-card-subtitle">Create a secure new password for your account.</p>
+                                    <form id="forgotStep3Form" novalidate>
+                                        <div class="mb-3">
+                                            <label for="new_password" class="form-label auth-form-label">New Password</label>
+                                            <div class="auth-password-field">
+                                                <div class="auth-password-wrap">
+                                                    <input type="password" class="form-control auth-input" id="new_password" placeholder="Enter new password" required>
+                                                    <button type="button" class="auth-password-toggle" data-password-toggle-target="new_password" aria-label="Show password">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="confirm_password" class="form-label auth-form-label">Confirm Password</label>
+                                            <div class="auth-password-field">
+                                                <div class="auth-password-wrap">
+                                                    <input type="password" class="form-control auth-input" id="confirm_password" placeholder="Confirm new password" required>
+                                                    <button type="button" class="auth-password-toggle" data-password-toggle-target="confirm_password" aria-label="Show password">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn auth-submit-btn">Reset Password</button>
+                                    </form>
+                                </div>
+
+                                <!-- Step 4: Success Screen -->
+                                <div id="forgotStep4" class="d-none text-center py-3">
+                                    <div class="mb-3 text-success" style="font-size: 3.5rem;">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </div>
+                                    <h2 class="auth-card-title">Password Reset</h2>
+                                    <p class="auth-card-subtitle mb-4">Your password has been successfully reset. You can now log in with your new password.</p>
+                                    <button type="button" class="btn auth-submit-btn" id="finishForgotPasswordBtn">Back to Login</button>
+                                </div>
+                            </div>
                         </article>
                     </div>
                 </section>
@@ -277,6 +353,200 @@
                     }
                 }
             });
+
+            // Forgot Password Interactive Mock Flow
+            const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+            const loginFormSection = document.getElementById("loginFormSection");
+            const forgotPasswordSection = document.getElementById("forgotPasswordSection");
+            
+            const forgotFeedback = document.getElementById("forgotFeedback");
+            
+            const forgotStep1 = document.getElementById("forgotStep1");
+            const forgotStep2 = document.getElementById("forgotStep2");
+            const forgotStep3 = document.getElementById("forgotStep3");
+            const forgotStep4 = document.getElementById("forgotStep4");
+
+            const backToLoginFromForgot = document.getElementById("backToLoginFromForgot");
+            const backToStep1 = document.getElementById("backToStep1");
+            const backToStep2 = document.getElementById("backToStep2");
+            const finishForgotPasswordBtn = document.getElementById("finishForgotPasswordBtn");
+
+            const forgotStep1Form = document.getElementById("forgotStep1Form");
+            const forgotStep2Form = document.getElementById("forgotStep2Form");
+            const forgotStep3Form = document.getElementById("forgotStep3Form");
+
+            const forgotEmailInput = document.getElementById("forgot_email");
+            const forgotCodeInput = document.getElementById("forgot_code");
+            const newPasswordInput = document.getElementById("new_password");
+            const confirmPasswordInput = document.getElementById("confirm_password");
+            const forgotEmailPlaceholder = document.getElementById("forgotEmailPlaceholder");
+
+            const showForgotFeedback = (message, level) => {
+                if (!forgotFeedback) return;
+                forgotFeedback.textContent = message;
+                forgotFeedback.classList.remove("d-none", "alert-success", "alert-danger");
+                if (level === "success") {
+                    forgotFeedback.classList.add("alert-success");
+                } else {
+                    forgotFeedback.classList.add("alert-danger");
+                }
+            };
+
+            const hideForgotFeedback = () => {
+                if (forgotFeedback) {
+                    forgotFeedback.classList.add("d-none");
+                }
+            };
+
+            if (forgotPasswordLink && loginFormSection && forgotPasswordSection) {
+                forgotPasswordLink.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    loginFormSection.classList.add("d-none");
+                    forgotPasswordSection.classList.remove("d-none");
+                    
+                    // Reset steps
+                    forgotStep1.classList.remove("d-none");
+                    forgotStep2.classList.add("d-none");
+                    forgotStep3.classList.add("d-none");
+                    forgotStep4.classList.add("d-none");
+                    hideForgotFeedback();
+                    if (forgotStep1Form) forgotStep1Form.reset();
+                });
+            }
+
+            if (backToLoginFromForgot) {
+                backToLoginFromForgot.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    forgotPasswordSection.classList.add("d-none");
+                    loginFormSection.classList.remove("d-none");
+                });
+            }
+
+            if (backToStep1) {
+                backToStep1.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    forgotStep2.classList.add("d-none");
+                    forgotStep1.classList.remove("d-none");
+                    hideForgotFeedback();
+                });
+            }
+
+            if (backToStep2) {
+                backToStep2.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    forgotStep3.classList.add("d-none");
+                    forgotStep2.classList.remove("d-none");
+                    hideForgotFeedback();
+                });
+            }
+
+            if (finishForgotPasswordBtn) {
+                finishForgotPasswordBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    forgotPasswordSection.classList.add("d-none");
+                    loginFormSection.classList.remove("d-none");
+                });
+            }
+
+            if (forgotStep1Form) {
+                forgotStep1Form.addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    if (!forgotStep1Form.checkValidity()) {
+                        forgotStep1Form.reportValidity();
+                        return;
+                    }
+
+                    const email = forgotEmailInput ? forgotEmailInput.value.trim() : "";
+                    if (forgotEmailPlaceholder) {
+                        forgotEmailPlaceholder.textContent = email;
+                    }
+
+                    // Simulate sending code
+                    const btn = forgotStep1Form.querySelector("button[type='submit']");
+                    btn.disabled = true;
+                    btn.textContent = "Sending Code...";
+                    showForgotFeedback("Sending verification code to your email...", "success");
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = "Send Code";
+                        forgotStep1.classList.add("d-none");
+                        forgotStep2.classList.remove("d-none");
+                        showForgotFeedback("Verification code sent successfully!", "success");
+                        if (forgotStep2Form) forgotStep2Form.reset();
+                    }, 1200);
+                });
+            }
+
+            if (forgotStep2Form) {
+                forgotStep2Form.addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    if (!forgotStep2Form.checkValidity()) {
+                        forgotStep2Form.reportValidity();
+                        return;
+                    }
+
+                    const code = forgotCodeInput ? forgotCodeInput.value.trim() : "";
+                    
+                    // Simulate verifying code
+                    const btn = forgotStep2Form.querySelector("button[type='submit']");
+                    btn.disabled = true;
+                    btn.textContent = "Verifying...";
+                    showForgotFeedback("Verifying code...", "success");
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = "Verify Code";
+                        
+                        // Accept any 6 digit code for the demo
+                        if (code.length === 6 && /^\d+$/.test(code)) {
+                            forgotStep2.classList.add("d-none");
+                            forgotStep3.classList.remove("d-none");
+                            showForgotFeedback("Code verified successfully! Create your new password.", "success");
+                            if (forgotStep3Form) forgotStep3Form.reset();
+                        } else {
+                            showForgotFeedback("Invalid verification code. Please enter a 6-digit number.", "error");
+                        }
+                    }, 1000);
+                });
+            }
+
+            if (forgotStep3Form) {
+                forgotStep3Form.addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    if (!forgotStep3Form.checkValidity()) {
+                        forgotStep3Form.reportValidity();
+                        return;
+                    }
+
+                    const newPassword = newPasswordInput ? newPasswordInput.value : "";
+                    const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value : "";
+
+                    if (newPassword !== confirmPassword) {
+                        showForgotFeedback("Passwords do not match.", "error");
+                        return;
+                    }
+
+                    if (newPassword.length < 8) {
+                        showForgotFeedback("Password must be at least 8 characters long.", "error");
+                        return;
+                    }
+
+                    // Simulate password reset
+                    const btn = forgotStep3Form.querySelector("button[type='submit']");
+                    btn.disabled = true;
+                    btn.textContent = "Resetting...";
+                    showForgotFeedback("Resetting password...", "success");
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = "Reset Password";
+                        forgotStep3.classList.add("d-none");
+                        forgotStep4.classList.remove("d-none");
+                        hideForgotFeedback();
+                    }, 1200);
+                });
+            }
 
         })();
     </script>

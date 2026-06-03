@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -6,7 +7,7 @@ from django.core.validators import validate_email
 from safebooks.models import Client
 
 
-RISK_LEVELS = {Client.RISK_LOW, Client.RISK_MEDIUM, Client.RISK_HIGH}
+REMARKS_SET = {Client.REMARK_NEW, Client.REMARK_ACTIVE, Client.REMARK_SEPARATED, Client.REMARK_CLOSED}
 
 
 def _normalize_text(value) -> str:
@@ -28,11 +29,29 @@ def _normalize_optional_date(value):
         return None, "Birthday must use YYYY-MM-DD format."
 
 
-def _normalize_risk_level(value) -> str:
+def _normalize_forecast_growth_percent(value):
+    cleaned_value = _normalize_text(value)
+    if not cleaned_value:
+        return Decimal("0.00"), None
+
+    try:
+        percent = Decimal(cleaned_value)
+    except (InvalidOperation, TypeError):
+        return None, "Forecast growth percent must be a valid number."
+
+    if percent < 0:
+        return None, "Forecast growth percent cannot be negative."
+    if percent > Decimal("100.00"):
+        return None, "Forecast growth percent must be 100 or less."
+
+    return percent.quantize(Decimal("0.01")), None
+
+
+def _normalize_remarks(value) -> str:
     cleaned_value = _normalize_text(value).lower()
-    if cleaned_value in RISK_LEVELS:
+    if cleaned_value in REMARKS_SET:
         return cleaned_value
-    return Client.RISK_MEDIUM
+    return Client.REMARK_NEW
 
 
 def _normalize_custom_fields(value):
@@ -85,7 +104,8 @@ def _serialize_client(client: Client) -> dict:
         "orus_account": client.orus_account,
         "orus_password": client.orus_password,
         "custom_fields": client.custom_fields or [],
-        "risk_level": client.risk_level,
+        "forecast_growth_percent": float((client.forecast_growth_percent or Decimal("0.00")).quantize(Decimal("0.01"))),
+        "remarks": client.remarks,
         "date_registered": client.date_registered.isoformat() if client.date_registered else "",
         "created_at": client.created_at.isoformat() if client.created_at else "",
         "updated_at": client.updated_at.isoformat() if client.updated_at else "",
@@ -105,9 +125,14 @@ def _build_clean_payload(data: dict):
     email_password = _normalize_text(data.get("email_password"))
     orus_account = _normalize_text(data.get("orus_account"))
     orus_password = _normalize_text(data.get("orus_password"))
-    risk_level = _normalize_risk_level(data.get("risk_level") or data.get("risk"))
+    
+    has_remarks = "remarks" in data
+    remarks = _normalize_remarks(data.get("remarks")) if has_remarks else None
 
     custom_fields, custom_fields_error = _normalize_custom_fields(data.get("custom_fields"))
+    forecast_growth_percent, forecast_growth_error = _normalize_forecast_growth_percent(
+        data.get("forecast_growth_percent")
+    )
 
     birthday_value, birthday_error = _normalize_optional_date(data.get("birthday"))
 
@@ -132,6 +157,8 @@ def _build_clean_payload(data: dict):
 
     if custom_fields_error:
         errors.append(custom_fields_error)
+    if forecast_growth_error:
+        errors.append(forecast_growth_error)
 
     return {
         "client_name": client_name,
@@ -145,12 +172,61 @@ def _build_clean_payload(data: dict):
         "orus_account": orus_account,
         "orus_password": orus_password,
         "custom_fields": custom_fields,
-        "risk_level": risk_level,
+        "forecast_growth_percent": forecast_growth_percent,
+        "remarks": remarks,
+        "has_remarks": has_remarks,
     }, errors
+
+
+def check_and_promote_new_client(client) -> bool:
+    """
+    Dynamically evaluate and update the client's remarks based on their filing history:
+    1. If the client is 'closed', we preserve their closed state.
+    2. A client becomes 'active' if they have filed in at least two consecutive months
+       OR they have filing periods in 3 or more total months.
+    3. A client becomes 'separated' if they have not filed any compliance in one whole year (12 months).
+    4. Otherwise, they retain their remarks or default to 'new'.
+    """
+    if client.remarks == Client.REMARK_CLOSED:
+        return False
+
+    periods = list(client.periods.all().order_by("year", "month"))
+    
+    # Check for Active promotion conditions: at least two distinct periods of filing
+    should_be_active = len(periods) >= 2
+
+    # Check for Separated condition (no filings in 12 months)
+    today = date.today()
+    if periods:
+        last_period = periods[-1]
+        months_since_last = (today.year - last_period.year) * 12 + (today.month - last_period.month)
+    else:
+        reg_date = client.date_registered or today
+        months_since_last = (today.year - reg_date.year) * 12 + (today.month - reg_date.month)
+
+    should_be_separated = months_since_last >= 12
+
+    original_remarks = client.remarks
+
+    if should_be_active:
+        client.remarks = Client.REMARK_ACTIVE
+    elif should_be_separated:
+        client.remarks = Client.REMARK_SEPARATED
+    else:
+        if client.remarks not in {Client.REMARK_NEW, Client.REMARK_ACTIVE, Client.REMARK_SEPARATED}:
+            client.remarks = Client.REMARK_NEW
+
+    if client.remarks != original_remarks:
+        client.save(update_fields=["remarks"])
+        return True
+
+    return False
 
 
 def list_clients_for_bookkeeper(bookkeeper) -> dict:
     clients = Client.objects.filter(bookkeeper=bookkeeper).order_by("client_name", "id")
+    for client in clients:
+        check_and_promote_new_client(client)
     return {
         "ok": True,
         "clients": [_serialize_client(client) for client in clients],
@@ -187,7 +263,8 @@ def create_client_for_bookkeeper(bookkeeper, data: dict) -> dict:
         orus_account=payload["orus_account"],
         orus_password=payload["orus_password"],
         custom_fields=payload["custom_fields"] or [],
-        risk_level=payload["risk_level"],
+        forecast_growth_percent=payload["forecast_growth_percent"],
+        remarks=payload["remarks"] if payload["has_remarks"] else Client.REMARK_NEW,
     )
 
     return {
@@ -232,7 +309,8 @@ def update_client_for_bookkeeper(bookkeeper, client_id: int, data: dict) -> dict
     client.email_password = payload["email_password"]
     client.orus_account = payload["orus_account"]
     client.orus_password = payload["orus_password"]
-    client.risk_level = payload["risk_level"]
+    client.forecast_growth_percent = payload["forecast_growth_percent"]
+    
     update_fields = [
         "client_name",
         "tin_number",
@@ -244,9 +322,17 @@ def update_client_for_bookkeeper(bookkeeper, client_id: int, data: dict) -> dict
         "email_password",
         "orus_account",
         "orus_password",
-        "risk_level",
+        "forecast_growth_percent",
         "updated_at",
     ]
+
+    if payload["has_remarks"]:
+        if client.remarks == Client.REMARK_CLOSED and payload["remarks"] != Client.REMARK_CLOSED:
+            client.remarks = Client.REMARK_NEW
+            check_and_promote_new_client(client)
+        else:
+            client.remarks = payload["remarks"]
+        update_fields.append("remarks")
 
     if payload["custom_fields"] is not None:
         client.custom_fields = payload["custom_fields"]
@@ -270,14 +356,11 @@ def delete_client_for_bookkeeper(bookkeeper, client_id: int) -> dict:
             "errors": ["Client not found."],
         }
 
-    deleted_client = {
-        "id": client.id,
-        "client_name": client.client_name,
-    }
-    client.delete()
+    client.remarks = Client.REMARK_CLOSED
+    client.save(update_fields=["remarks"])
 
     return {
         "ok": True,
-        "message": "Client deleted successfully.",
-        "client": deleted_client,
+        "message": "Client closed successfully.",
+        "client": _serialize_client(client),
     }

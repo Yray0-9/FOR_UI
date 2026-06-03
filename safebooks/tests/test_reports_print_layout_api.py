@@ -15,6 +15,7 @@ class ReportsPrintLayoutApiTests(TestCase):
             username=f"reports_print_{suffix}",
             email=f"reports_print_{suffix}@example.com",
             password_hash="not-used-in-test",
+            status=BookkeeperAccount.STATUS_APPROVED,
         )
 
     def _login_as(self, account: BookkeeperAccount) -> None:

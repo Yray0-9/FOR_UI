@@ -1,0 +1,81 @@
+# BIR Forms List
+
+- BIR Form 0605 - Payment Form
+- BIR Form 0619E - Monthly Remittance Form for Creditable Income Taxes Withheld (Expanded)
+- BIR Form 0619F - Monthly Remittance Form for Final Income Taxes Withheld
+- BIR Form 1600 - Monthly Remittance Return of Value-Added Tax and Other Percentage Taxes Withheld
+- BIR Form 1600PTv2018 - Monthly Remittance Return of Other Percentage Taxes Withheld
+- BIR Form 1600VTv2018 - Monthly Remittance Return of Value-Added Tax Withheld
+- BIR Form 1600WP - Remittance Return of Percentage Tax on Winnings and Prizes...
+- BIR Form 1601C - Monthly Remittance Return of Income Taxes Withheld on Compensation
+- BIR Form 1601Cv2018 - Monthly Remittance Return of Income Taxes Withheld on Compensation (NEW)
+- BIR Form 1601E - Monthly Remittance Return of Creditable Income Taxes Withheld (Expanded)
+- BIR Form 1601EQ - Quarterly Remittance Return of Creditable Income Taxes Withheld (Expanded)
+- BIR Form 1601F - Monthly Remittance Return of Final Income Taxes Withheld
+- BIR Form 1601FQ - Quarterly Remittance Return of Final Income Tax Withheld
+- BIR Form 1602 - Monthly Remittance Return of Final Income Taxes Withheld
+- BIR Form 1602Qv2018 - Quarterly Remittance Return of Final Taxes Withheld on Interest Paid on Deposits Substitutes/Trusts/Etc. (NEW)
+- BIR Form 1603 - Quarterly Remittance Return of Final Income Taxes Withheld
+- BIR Form 1603Qv2018 - Quarterly Remittance Return of Final Income Taxes Withheld on Fringe Benefits Paid to Employees Other Than Rank and File (NEW)
+- BIR Form 1604C - Annual Information Return of Income Taxes Withheld on Compensation
+- BIR Form 1604CF - Annual Information Return of Income Taxes Withheld on Compensation
+- BIR Form 1604F - Annual Information Return of Income Payments Subjected to Final Withholding Taxes
+- BIR Form 1604E - Annual Information Return of Creditable Income Taxes Withheld
+- BIR Form 1604Ev2018 - Annual Information Return of Creditable Income Taxes Withheld (NEW)
+- BIR Form 1606 - ONETT Withholding Tax Return
+- BIR Form 1700 - Annual Income Tax Return
+- BIR Form 1700v2018 - Annual Income Tax Return (NEW)
+- BIR Form 1701 - Annual Income Tax Return
+- BIR Form 1701A - Annual Income Tax Return (NEW)
+- BIR Form 1701MS - Annual Income Tax Return For Individuals Classified as MICRO or SMALL Taxpayers
+- BIR Form 1701v2018 - Annual Income Tax Return (NEW)
+- BIR Form 1701Q - Quarterly Income Tax Return For Self-Employed Individuals, Estates and Trusts
+- BIR Form 1701Qv2018 - Quarterly Income Tax Return For Self-Employed Individuals, Estates and Trusts (NEW)
+- BIR Form 1702EX - Annual Income Tax Return (EXEMPT)
+- BIR Form 1702EXv2018 - Annual Income Tax Return (EXEMPT)
+- BIR Form 1702EXv2018C - Annual Income Tax Return (EXEMPT)
+- BIR Form 1702MX - Annual Income Tax Return (MIXED)
+- BIR Form 1702MXv2018 - Annual Income Tax Return (MIXED)
+- BIR Form 1702MXv2018C - Annual Income Tax Return (MIXED)
+- BIR Form 1702RT - Annual Income Tax Return (REGULAR)
+- BIR Form 1702RTv2018 - Annual Income Tax Return (REGULAR)
+- BIR Form 1702RTv2018C - Annual Income Tax Return (REGULAR)
+- BIR Form 1702Q - Quarterly income Tax Return
+- BIR Form 1702Qv2008C - Quarterly income Tax Return
+- BIR Form 1702Qv2018C - Quarterly income Tax Return
+- BIR Form 1704 - Improperly Accumulated Earnings Tax Return
+- BIR Form 1706 - ONETT Capital Gains Tax Return (Capital Asset)
+- BIR Form 1707 - ONETT Capital Gains Tax Return (Shares of Stock Not Traded Through LSE)
+- BIR Form 1707v2018 - ONETT Capital Gains Tax Return (Shares of Stock Not Traded Through LSE)
+- BIR Form 1707v2021 - ONETT Capital Gains Tax Return (Shares of Stock Not Traded Through LSE)
+- BIR Form 1707A - Annual Capital Gains Tax Return (For Onerous Transfer of Shares of Stocks Not Traded Through the Local Stock Exchange)
+- BIR Form 1707Av2021 - Annual Capital Gains Tax Return (For Onerous Transfer of Shares of Stocks Not Traded Through the Local Stock Exchange)
+- BIR Form 1800 - ONETT Donor's Tax Return
+- BIR Form 1800v2018 - Donor's Tax Return
+- BIR Form 1801 - ONETT Estate Tax Return
+- BIR Form 1801v2018 - ONETT Estate Tax Return
+- BIR Form 2000 - Documentary Stamp Tax Declaration/Return
+- BIR Form 2000v2018 - Monthly Documentary Stamp Tax Declaration/Return (NEW)
+- BIR Form 2000OT - Documentary Stamp Tax Declaration/Return (One-Time Transactions)
+- BIR Form 2000OTv2018 - Documentary Stamp Tax Declaration/Return (One-Time Transactions)
+- BIR Form 2200A - Excise Tax Return for Alcohol Products
+- BIR Form 2200Av2020 - Excise Tax Return for Alcohol Products
+- BIR Form 2200AN - Excise Tax Return for Automobiles and Non-Essential Goods
+- BIR Form 2200ANv2018 - Excise Tax Return for Automobiles and Non-Essential Goods
+- BIR Form 2200Cv2018 - Excise Tax Return for Cosmetic Procedures
+- BIR Form 2200M - Excise Tax Return for Mineral Products
+- BIR Form 2200Mv2018 - Excise Tax Return for Mineral Products
+- BIR Form 2200P - Excise Tax Return for Petroleum Products
+- BIR Form 2200Pv2020 - Excise Tax Return for Petroleum Products
+- BIR Form 2200S - Excise Tax Return for Sweetened Beverages
+- BIR Form 2200T - Excise Tax Return for Tobacco Products
+- BIR Form 2200Tv2020 - Excise Tax Return for Tobacco Products
+- BIR Form 2550M - Monthly Value-Added Tax Declaration
+- BIR Form 2550Q - Quarterly Value-Added Tax Return
+- BIR Form 2550Qv2024 - Quarterly Value-Added (VAT) Tax Return
+- BIR Form 2551Q - Quarterly Percentage Tax Return
+- BIR Form 2551Qv2018 - Quarterly Percentage Tax Return
+- BIR Form 2551M - Monthly Percentage Tax Return
+- BIR Form 2552 - Percentage Tax Return on Stocks
+- BIR Form 2552v2018 - Percentage Tax Return on Stocks
+- BIR Form 2553 - Percentage Tax Payable Under Special Laws

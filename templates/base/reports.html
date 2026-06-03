@@ -88,13 +88,19 @@
                     <select id="reportsTypeSelect" class="form-select reports-control-select" aria-label="Select report type" required>
                         <option value="financial_summary">Financial summary report</option>
                         <option value="compliance_snapshot">Compliance status snapshot</option>
-                        <option value="client_risk_overview">Client risk overview</option>
+                        <option value="client_remarks_overview">Client remarks overview</option>
                     </select>
                 </div>
 
                 <div class="reports-filter-field">
-                    <label class="reports-control-label" for="reportsClientSelect">Client Scope</label>
-                    <select id="reportsClientSelect" class="form-select reports-control-select" aria-label="Select client scope">
+                    <label class="reports-control-label" for="reportsClientSearchInput">Client Scope</label>
+                    <div class="reports-tin-search-input-wrap">
+                        <input type="text" id="reportsClientSearchInput" class="form-control reports-control-input" placeholder="Search client by name or TIN" aria-label="Select client scope" autocomplete="off" style="padding-right: 2.2rem;">
+                        <span class="reports-dropdown-toggle-icon" id="reportsDropdownToggleIcon" title="Toggle client list"><i class="bi bi-chevron-down"></i></span>
+                        <div id="reportsCustomDropdown" class="reports-custom-dropdown" style="display: none;"></div>
+                    </div>
+                    <!-- Hidden native select to store data and handle background triggers -->
+                    <select id="reportsClientSelect" style="display: none;">
                         <option value="all">All clients</option>
                     </select>
                 </div>
@@ -245,6 +251,6 @@
         defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}"
     };
 </script>
-<script src="{% static 'js/reports_shared.js' %}"></script>
-<script src="{% static 'js/reports_page.js' %}"></script>
+<script src="{% static 'js/reports_shared.js' %}?v=1.0.5"></script>
+<script src="{% static 'js/reports_page.js' %}?v=1.0.5"></script>
 {% endblock %}

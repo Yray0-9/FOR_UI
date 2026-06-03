@@ -355,19 +355,23 @@ p {
 }
 
 .status-filed,
-.risk-low {
+.risk-low,
+.remark-new,
+.remark-active {
     background: #dfeeff;
     color: #1e5fd9;
 }
 
 .status-pending,
-.risk-medium {
+.risk-medium,
+.remark-separated {
     background: #fff0d8;
     color: #a25f00;
 }
 
 .status-late,
-.risk-high {
+.risk-high,
+.remark-closed {
     background: #ffe0e0;
     color: #ad2d2d;
 }
@@ -1210,9 +1214,11 @@ body.auth-page {
 body.dashboard-page {
     --dashboard-sidebar-width: 264px;
     --dashboard-sidebar-collapsed-width: 88px;
+    --dashboard-main-padding-x: 1.2rem;
     padding-top: 0;
     background: linear-gradient(165deg, #f5f8ff 0%, #edf3ff 56%, #f7fbff 100%);
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 .dashboard-layout {
@@ -1372,7 +1378,7 @@ body.dashboard-page {
     margin-left: var(--dashboard-sidebar-width);
     width: calc(100% - var(--dashboard-sidebar-width));
     min-height: 100vh;
-    padding: 1rem 1.2rem 1.7rem;
+    padding: 1rem var(--dashboard-main-padding-x) 1.7rem;
     transition: margin-left 0.3s cubic-bezier(0.22, 1, 0.36, 1), width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -1445,8 +1451,8 @@ body.sidebar-collapsed .dashboard-landing-link span {
     content: "";
     position: absolute;
     top: -1.2rem;
-    left: -30px;
-    right: -30px;
+    left: calc(-1 * var(--dashboard-main-padding-x));
+    right: calc(-1 * var(--dashboard-main-padding-x));
     height: 1.25rem;
     background: #f5f8ff;
     pointer-events: none;
@@ -1861,6 +1867,15 @@ body.theme-dark .dashboard-topbar::before {
     margin-bottom: 0.82rem;
 }
 
+.dashboard-table-left-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.62rem;
+    flex-wrap: nowrap;
+    flex: 1 1 auto;
+    max-width: 620px;
+}
+
 .dashboard-table-search {
     min-width: min(100%, 320px);
     flex: 1 1 260px;
@@ -1998,6 +2013,7 @@ body.theme-dark .dashboard-topbar::before {
 
 .dashboard-filter-select {
     min-width: 148px;
+    width: auto;
     border: 1px solid #d7e4fb;
     border-radius: 10px;
     background-color: #f9fbff;
@@ -2164,8 +2180,61 @@ body.theme-dark .dashboard-topbar::before {
     font-weight: 600;
 }
 
-.clients-risk-preview-note {
+.clients-remarks-preview-note {
     color: #1f4fa8;
+}
+
+.clients-directory-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    background-color: #f1f4fa;
+    border-radius: 10px;
+    width: fit-content;
+}
+
+body.theme-dark .clients-directory-tabs {
+    background-color: #17243c;
+}
+
+.directory-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4a5c78;
+    background: transparent;
+    transition: all 0.2s ease-in-out;
+}
+
+body.theme-dark .directory-tab-btn {
+    color: #a0aec0;
+}
+
+.directory-tab-btn:hover {
+    color: #1f5ed9;
+    background-color: rgba(31, 94, 217, 0.05);
+}
+
+body.theme-dark .directory-tab-btn:hover {
+    color: #5390f5;
+    background-color: rgba(83, 144, 245, 0.05);
+}
+
+.directory-tab-btn.active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #1f5ed9 0%, #184db9 100%);
+    box-shadow: 0 4px 10px rgba(31, 94, 217, 0.2);
+}
+
+body.theme-dark .directory-tab-btn.active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%);
+    box-shadow: 0 4px 10px rgba(43, 108, 176, 0.3);
 }
 
 .clients-table tbody.is-filtering {
@@ -2383,6 +2452,28 @@ body.theme-dark .clients-actions-menu .dropdown-item.text-danger:focus-visible i
     color: #ffffff;
     background: linear-gradient(145deg, #184db9, #133f99);
 }
+
+.client-action-btn.primary {
+    color: #ffffff !important;
+    border-color: transparent !important;
+    background: linear-gradient(145deg, #1f5ed9, #184db9) !important;
+}
+
+.client-action-btn.primary i {
+    color: #ffffff !important;
+}
+
+.client-action-btn.primary:hover,
+.client-action-btn.primary:focus-visible {
+    color: #ffffff !important;
+    background: linear-gradient(145deg, #184db9, #133f99) !important;
+}
+
+.client-action-btn.primary:hover i,
+.client-action-btn.primary:focus-visible i {
+    color: #ffffff !important;
+}
+
 
 .clients-empty-state {
     margin-top: 0.88rem;
@@ -2781,6 +2872,7 @@ body.dashboard-page .modal {
 .financial-add-entry-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
 }
 
@@ -3042,205 +3134,6 @@ body.dashboard-page .modal {
     align-items: start;
 }
 
-.financial-line-amount-original {
-    color: #8a9bbd;
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    line-height: 1.1;
-}
-
-.financial-line-amount-calculated {
-    color: #1b3f7c;
-    font-size: 0.9rem;
-    font-weight: 800;
-    line-height: 1.1;
-}
-
-.financial-line-item-row.has-percent-result .financial-line-amount-input {
-    border-color: #b6cff7;
-    background: #f4f8ff;
-    font-size: 0.74rem;
-    color: #6a7fa6;
-}
-
-.financial-line-calc-cell {
-    flex-wrap: wrap;
-}
-
-.financial-line-netvalue-tag {
-    padding: 0.18rem 0.45rem;
-    border-radius: 999px;
-    background: #eaf2ff;
-    color: #1f4f9b;
-    font-size: 0.66rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-.financial-line-percent-tag {
-    padding: 0.18rem 0.45rem;
-    border-radius: 999px;
-    background: #f7ecff;
-    color: #6a2c8f;
-    font-size: 0.66rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-.financial-line-calc-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.financial-line-calc-btn {
-    border: 1px solid #c9daf7;
-    border-radius: 9px;
-    background: #f2f7ff;
-    color: #24509a;
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.financial-line-calc-btn:hover,
-.financial-line-calc-btn:focus-visible {
-    border-color: #b4caf2;
-    background: #e7f0ff;
-    color: #1b3f7c;
-}
-
-.financial-line-calc-indicator {
-    padding: 0.18rem 0.45rem;
-    border-radius: 999px;
-    background: #e7f6ea;
-    color: #1c6b3a;
-    font-size: 0.66rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-.financial-line-item-row.has-calculation {
-    background: transparent;
-}
-
-.financial-line-item-calc-row td {
-    padding: 0.6rem;
-    border-color: #edf3ff;
-}
-
-.financial-line-item-calc-row.is-removing {
-    opacity: 0;
-    transform: translateY(-5px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.financial-line-calc-panel {
-    border: 1px solid #dbe8ff;
-    border-radius: 12px;
-    background: #f8fbff;
-    padding: 0.65rem;
-}
-
-.financial-line-calc-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 0.55rem;
-}
-
-.financial-line-calc-title {
-    font-size: 0.78rem;
-    font-weight: 800;
-    color: #1f3f72;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-}
-
-.financial-line-calc-status {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #5873a4;
-}
-
-.financial-line-calc-grid {
-    display: grid;
-    gap: 0.6rem;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    margin-bottom: 0.5rem;
-}
-
-.financial-line-calc-grid label {
-    display: grid;
-    gap: 0.35rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #4a6396;
-}
-
-.financial-line-calc-grid label span {
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-}
-
-.financial-line-calc-result-wrap {
-    display: grid;
-    gap: 0.35rem;
-    align-content: center;
-}
-
-.financial-line-calc-result-label {
-    font-size: 0.72rem;
-    font-weight: 800;
-    color: #4a6396;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-}
-
-.financial-line-calc-result {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: #1a3a73;
-}
-
-.financial-line-calc-apply-btn {
-    border: 1px solid #c9daf7;
-    border-radius: 8px;
-    background: #ffffff;
-    color: #1c4aa3;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.3rem 0.65rem;
-    justify-self: start;
-}
-
-.financial-line-calc-apply-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.financial-line-calc-link {
-    margin: 0.2rem 0 0.35rem;
-    color: #5b72a1;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.financial-line-calc-note {
-    margin: 0;
-    color: #6c83b0;
-    font-size: 0.72rem;
-    font-weight: 600;
-}
-
 .financial-line-remove-btn {
     border: 1px solid #e7c3c3;
     border-radius: 9px;
@@ -3418,6 +3311,43 @@ select.financial-form-input {
     box-shadow: 0 0 0 0.2rem rgba(39, 103, 225, 0.16);
 }
 
+.financial-line-code-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.financial-line-code-custom-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.financial-line-code-custom-wrapper .financial-line-code-custom-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.financial-line-code-cancel-btn {
+    border: 1px solid #caddff;
+    border-radius: 9px;
+    background: #f7faff;
+    color: #1f5ed9;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.financial-line-code-cancel-btn:hover,
+.financial-line-code-cancel-btn:focus-visible {
+    color: #163f96;
+    border-color: #aecaef;
+    background: #f1f6ff;
+}
+
 .financial-reuse-panel {
     margin-top: 0.85rem;
     display: flex;
@@ -3518,7 +3448,7 @@ select.financial-form-input {
 }
 
 .safebooks-toast-container {
-    z-index: 1090;
+    z-index: 9999 !important;
 }
 
 .safebooks-toast {
@@ -3715,15 +3645,22 @@ select.financial-form-input {
     font-weight: 800;
 }
 
-.risk-low-item .insight-dot {
+.risk-low-item .insight-dot,
+.remark-new-item .insight-dot {
     background: #2a78d8;
 }
 
-.risk-medium-item .insight-dot {
+.remark-active-item .insight-dot {
+    background: #1e7f53;
+}
+
+.risk-medium-item .insight-dot,
+.remark-separated-item .insight-dot {
     background: #d58a26;
 }
 
-.risk-high-item .insight-dot {
+.risk-high-item .insight-dot,
+.remark-closed-item .insight-dot {
     background: #d34c4c;
 }
 
@@ -4283,9 +4220,10 @@ body.dashboard-page.admin-console .dashboard-action-btn:disabled {
     }
 
     .dashboard-main {
+        --dashboard-main-padding-x: 0.78rem;
         margin-left: 0;
         width: 100%;
-        padding: 0.88rem 0.78rem 1.4rem;
+        padding: 0.88rem var(--dashboard-main-padding-x) 1.4rem;
     }
 
     body.sidebar-collapsed .dashboard-main {
@@ -5047,17 +4985,25 @@ body.theme-dark .insight-item .insight-dot {
     box-shadow: 0 0 0 4px rgba(79, 122, 212, 0.2);
 }
 
-body.theme-dark .risk-low-item .insight-dot {
+body.theme-dark .risk-low-item .insight-dot,
+body.theme-dark .remark-new-item .insight-dot {
     background: #4f8fe8;
     box-shadow: 0 0 0 4px rgba(79, 143, 232, 0.2);
 }
 
-body.theme-dark .risk-medium-item .insight-dot {
+body.theme-dark .remark-active-item .insight-dot {
+    background: #34a853;
+    box-shadow: 0 0 0 4px rgba(52, 168, 83, 0.2);
+}
+
+body.theme-dark .risk-medium-item .insight-dot,
+body.theme-dark .remark-separated-item .insight-dot {
     background: #f0b04b;
     box-shadow: 0 0 0 4px rgba(240, 176, 75, 0.2);
 }
 
-body.theme-dark .risk-high-item .insight-dot {
+body.theme-dark .risk-high-item .insight-dot,
+body.theme-dark .remark-closed-item .insight-dot {
     background: #f06a6a;
     box-shadow: 0 0 0 4px rgba(240, 106, 106, 0.2);
 }
@@ -5175,6 +5121,28 @@ body.theme-dark .client-action-btn.delete:focus-visible {
     color: #f7b9b9;
 }
 
+body.theme-dark .client-action-btn.primary {
+    background: linear-gradient(145deg, #2b6de6, #1d4db8) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+}
+
+body.theme-dark .client-action-btn.primary i {
+    color: #ffffff !important;
+}
+
+body.theme-dark .client-action-btn.primary:hover,
+body.theme-dark .client-action-btn.primary:focus-visible {
+    background: linear-gradient(145deg, #1d4db8, #153c94) !important;
+    color: #ffffff !important;
+}
+
+body.theme-dark .client-action-btn.primary:hover i,
+body.theme-dark .client-action-btn.primary:focus-visible i {
+    color: #ffffff !important;
+}
+
+
 body.theme-dark .client-custom-add-btn {
     background: #122038;
     border-color: #2b3c5a;
@@ -5275,6 +5243,19 @@ body.theme-dark select.financial-form-input {
 body.theme-dark .financial-form-input:focus {
     border-color: #3a5490;
     box-shadow: 0 0 0 0.16rem rgba(61, 120, 230, 0.2);
+}
+
+body.theme-dark .financial-line-code-cancel-btn {
+    border-color: #273b5c;
+    background: #0f1c33;
+    color: #9eb0d3;
+}
+
+body.theme-dark .financial-line-code-cancel-btn:hover,
+body.theme-dark .financial-line-code-cancel-btn:focus-visible {
+    border-color: #3b5682;
+    background: #172847;
+    color: #adc0e6;
 }
 
 body.theme-dark .financial-form-input::placeholder {
@@ -5555,90 +5536,6 @@ body.theme-dark .financial-line-amount-input:hover::-webkit-outer-spin-button {
     opacity: 0.9;
 }
 
-body.theme-dark .financial-line-amount-original {
-    color: #7f98c0;
-}
-
-body.theme-dark .financial-line-amount-calculated {
-    color: #e6edf7;
-}
-
-body.theme-dark .financial-line-item-row.has-percent-result .financial-line-amount-input {
-    background: #132642;
-    border-color: #2f446e;
-}
-
-body.theme-dark .financial-line-calc-btn {
-    background: #111f36;
-    border-color: #30466d;
-    color: #aecdff;
-}
-
-body.theme-dark .financial-line-calc-btn:hover,
-body.theme-dark .financial-line-calc-btn:focus-visible {
-    background: #16263f;
-    border-color: #3a5490;
-    color: #d7e6ff;
-}
-
-body.theme-dark .financial-line-netvalue-tag {
-    background: #1a2b4a;
-    color: #aecdff;
-}
-
-body.theme-dark .financial-line-percent-tag {
-    background: #2a1f3a;
-    color: #e2b6ff;
-}
-
-body.theme-dark .financial-line-calc-indicator {
-    background: #1d3a2a;
-    color: #a7e7c1;
-}
-
-body.theme-dark .financial-line-item-calc-row td {
-    background: transparent;
-    border-color: #25344f;
-}
-
-body.theme-dark .financial-line-calc-panel {
-    background: #0f1c33;
-    border-color: #25344f;
-}
-
-body.theme-dark .financial-line-calc-title {
-    color: #d0def3;
-}
-
-body.theme-dark .financial-line-calc-status {
-    color: #9eb0d3;
-}
-
-body.theme-dark .financial-line-calc-grid label {
-    color: #9eb0d3;
-}
-
-body.theme-dark .financial-line-calc-result-label {
-    color: #9eb0d3;
-}
-
-body.theme-dark .financial-line-calc-result {
-    color: #e6edf7;
-}
-
-body.theme-dark .financial-line-calc-apply-btn {
-    background: #111f36;
-    border-color: #30466d;
-    color: #aecdff;
-}
-
-body.theme-dark .financial-line-calc-link {
-    color: #9eb0d3;
-}
-
-body.theme-dark .financial-line-calc-note {
-    color: #9eb0d3;
-}
 
 body.theme-dark .financial-line-remove-btn {
     background: #2a1b23;
@@ -5850,4 +5747,20 @@ body.theme-dark.dashboard-page.admin-console .admin-empty-state {
     background: #0f1c33;
     border-color: #2a3c5a;
     color: #9eb0d3;
+}
+
+/* Responsive adjustments for dashboard Recent Client Activity toolbar to prevent clashing on 15" screens */
+@media (max-width: 1680px) {
+    .dashboard-table-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    .dashboard-table-left-controls {
+        max-width: 100%;
+        width: 100%;
+    }
+    .dashboard-table-filters {
+        width: 100%;
+    }
 }

@@ -33,6 +33,7 @@ class FinancialRecord(models.Model):
     entry_date = models.DateField()
     frequency = models.CharField(max_length=16, choices=FREQUENCY_CHOICES, default=FREQUENCY_MONTHLY)
     notes = models.TextField(blank=True, default="")
+    deadline_date = models.DateField(null=True, blank=True)
     total_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

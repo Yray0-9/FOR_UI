@@ -71,6 +71,12 @@
                 <i class="bi bi-search"></i>
                 <input type="search" id="financialClientsSearchInput" placeholder="Search by client name or TIN" autocomplete="off">
             </label>
+            <select id="financialClientsSortSelect" class="form-select dashboard-filter-select" aria-label="Sort financial records client list">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="name-asc">Alphabetical (A-Z)</option>
+                <option value="name-desc">Alphabetical (Z-A)</option>
+            </select>
             <label class="visually-hidden" for="financialClientsFilter">Filter financial records client list</label>
             <select id="financialClientsFilter" class="form-select dashboard-filter-select" aria-label="Filter clients in financial records list">
                 <option value="all">All Clients</option>
@@ -162,6 +168,7 @@
         const financialClientsTableBody = document.getElementById("financialClientsTableBody");
         const financialClientsSearchInput = document.getElementById("financialClientsSearchInput");
         const financialClientsFilter = document.getElementById("financialClientsFilter");
+        const financialClientsSortSelect = document.getElementById("financialClientsSortSelect");
         const financialClientsCountTag = document.getElementById("financialClientsCountTag");
         const financialClientsEmptyState = document.getElementById("financialClientsEmptyState");
         const uiToastContainer = document.getElementById("uiToastContainer");
@@ -173,6 +180,7 @@
         let financialClientsRequestToken = 0;
         let financialClientsAbortController = null;
         let isFinancialClientsLoading = false;
+        let FINANCIAL_CLIENTS_DATA = [];
 
         const normalize = (value) => String(value || "").trim().toLowerCase();
 
@@ -303,6 +311,142 @@
             window.location.assign(buildDetailUrl(getClientDataFromRow(row)));
         };
 
+        const formatTin = (value) => {
+            const digits = String(value || "").replace(/\D+/g, "").slice(0, 12);
+            if (!digits) {
+                return "";
+            }
+            const groups = digits.match(/.{1,3}/g) || [];
+            return groups.join("-");
+        };
+
+        const normalizeDigits = (value) => String(value || "").replace(/\D+/g, "");
+
+        const formatTinForInput = (value, isDeleting = false) => {
+            const digits = normalizeDigits(value).slice(0, 12);
+            if (!digits) {
+                return "";
+            }
+
+            const groups = digits.match(/.{1,3}/g) || [];
+            let formatted = groups.join("-");
+            if (digits.length % 3 === 0 && digits.length < 12 && !isDeleting) {
+                formatted += "-";
+            }
+            return formatted;
+        };
+
+        const getCursorIndexForDigitCount = (formattedValue, digitCount) => {
+            if (digitCount <= 0) {
+                return 0;
+            }
+
+            let digitsSeen = 0;
+            for (let index = 0; index < formattedValue.length; index += 1) {
+                if (/\d/.test(formattedValue[index])) {
+                    digitsSeen += 1;
+                    if (digitsSeen === digitCount) {
+                        return index + 1;
+                    }
+                }
+            }
+
+            return formattedValue.length;
+        };
+
+        const bindTinInput = (inputElement, allowLetters = false) => {
+            if (!inputElement) {
+                return;
+            }
+
+            let isDeleting = false;
+            inputElement.addEventListener("keydown", (event) => {
+                isDeleting = event.key === "Backspace" || event.key === "Delete";
+            });
+
+            inputElement.addEventListener("input", () => {
+                let rawValue = inputElement.value;
+                
+                if (allowLetters) {
+                    const startsWithDigit = /^\s*\d/.test(rawValue);
+                    if (startsWithDigit) {
+                        const cleaned = rawValue.replace(/[^\d-]/g, "");
+                        if (rawValue !== cleaned) {
+                            rawValue = cleaned;
+                            inputElement.value = cleaned;
+                        }
+                    } else if (/[a-zA-Z]/.test(rawValue)) {
+                        return;
+                    }
+                } else {
+                    const cleaned = rawValue.replace(/[^\d-]/g, "");
+                    if (rawValue !== cleaned) {
+                        rawValue = cleaned;
+                        inputElement.value = cleaned;
+                    }
+                }
+
+                const selectionStart = typeof inputElement.selectionStart === "number"
+                    ? inputElement.selectionStart
+                    : rawValue.length;
+                const digitsBeforeCursor = normalizeDigits(rawValue.slice(0, selectionStart)).length;
+                const formattedValue = formatTinForInput(rawValue, isDeleting);
+
+                if (rawValue !== formattedValue) {
+                    inputElement.value = formattedValue;
+                    if (document.activeElement === inputElement && typeof inputElement.setSelectionRange === "function") {
+                        const totalDigits = normalizeDigits(formattedValue).length;
+                        const cursorIndex = formattedValue.endsWith("-") && digitsBeforeCursor === totalDigits
+                            ? formattedValue.length
+                            : getCursorIndexForDigitCount(formattedValue, digitsBeforeCursor);
+                        inputElement.setSelectionRange(cursorIndex, cursorIndex);
+                    }
+                }
+            });
+
+            inputElement.addEventListener("blur", () => {
+                const value = inputElement.value;
+                if (value) {
+                    if (allowLetters && !/^\s*\d/.test(value)) {
+                        return;
+                    }
+                    const digits = normalizeDigits(value);
+                    if (digits) {
+                        inputElement.value = formatTin(value);
+                    }
+                }
+            });
+        };
+
+        const sortFinancialClients = (clientsList, sortBy) => {
+            const safeClients = Array.isArray(clientsList) ? [...clientsList] : [];
+            if (sortBy === "name-asc") {
+                safeClients.sort((a, b) => normalize(a.client_name).localeCompare(normalize(b.client_name)));
+            } else if (sortBy === "name-desc") {
+                safeClients.sort((a, b) => normalize(b.client_name).localeCompare(normalize(a.client_name)));
+            } else if (sortBy === "oldest") {
+                safeClients.sort((a, b) => {
+                    const aId = Number(a.id || 0);
+                    const bId = Number(b.id || 0);
+                    return aId - bId;
+                });
+            } else {
+                // "newest"
+                safeClients.sort((a, b) => {
+                    const aId = Number(a.id || 0);
+                    const bId = Number(b.id || 0);
+                    return bId - aId;
+                });
+            }
+            return safeClients;
+        };
+
+        const syncSortedFinancialClients = () => {
+            const sortBy = financialClientsSortSelect ? financialClientsSortSelect.value : "newest";
+            const sorted = sortFinancialClients(FINANCIAL_CLIENTS_DATA, sortBy);
+            renderClientRows(sorted);
+        };
+
         const renderClientRows = (clients) => {
             if (!financialClientsTableBody) {
                 return;
@@ -326,11 +470,30 @@
                 row.dataset.activityState = activityState;
                 row.setAttribute("aria-label", `Open financial records for ${client.client_name || "selected client"}`);
 
+                let deadlineBadge = "";
+                if (client.days_remaining !== undefined && client.days_remaining !== null && client.deadline_date) {
+                    if (client.deadline_completed) {
+                        deadlineBadge = `<span class="badge bg-success ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>`;
+                    } else {
+                        const diffDays = client.days_remaining;
+                        if (diffDays < 0) {
+                            deadlineBadge = `<span class="badge bg-danger ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-exclamation-octagon-fill me-1"></i>Overdue (${Math.abs(diffDays)}d)</span>`;
+                        } else if (diffDays <= 5) {
+                            deadlineBadge = `<span class="badge bg-warning text-dark ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-clock-fill me-1"></i>${diffDays}d left</span>`;
+                        } else {
+                            deadlineBadge = `<span class="badge bg-secondary ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-calendar-event me-1"></i>Deadline: ${client.deadline_date}</span>`;
+                        }
+                    }
+                }
+
                 row.innerHTML = `
                     <td>${escapeHtml(client.client_name || "")}</td>
-                    <td>${escapeHtml(client.tin_number || "")}</td>
+                    <td>${escapeHtml(formatTin(client.tin_number))}</td>
                     <td>${escapeHtml(client.trade_name || "")}</td>
-                    <td>${escapeHtml(lastActivity)}</td>
+                    <td>
+                        <div>${escapeHtml(lastActivity)}</div>
+                        ${deadlineBadge}
+                    </td>
                     <td class="clients-actions-cell">
                         <div class="clients-actions">
                             <button type="button" class="btn client-action-btn add-record" data-financial-action="open" title="Open client financial records"><i class="bi bi-journal-text"></i><span>View Financial Records</span></button>
@@ -354,11 +517,16 @@
 
             const rows = getRows();
             const query = normalize(financialClientsSearchInput ? financialClientsSearchInput.value : "");
+            const queryDigits = query.replace(/[^a-z0-9]/g, "");
             const activityFilter = normalize(financialClientsFilter ? financialClientsFilter.value : "all");
             let visibleCount = 0;
 
             rows.forEach((row) => {
-                const matchesQuery = !query || normalize(row.dataset.clientName).includes(query) || normalize(row.dataset.tin).includes(query);
+                const nameMatch = normalize(row.dataset.clientName).includes(query);
+                const clientTin = normalize(row.dataset.tin);
+                const clientTinDigits = clientTin.replace(/[^a-z0-9]/g, "");
+                const tinMatch = clientTin.includes(query) || (queryDigits && clientTinDigits.includes(queryDigits));
+                const matchesQuery = !query || nameMatch || tinMatch;
                 const matchesActivity = activityFilter === "all" || normalize(row.dataset.activityState) === activityFilter;
                 const isVisible = matchesQuery && matchesActivity;
 
@@ -419,12 +587,14 @@
                     setFinancialClientsLoadingState(false);
                     const message = result && result.message ? result.message : "Unable to load financial records clients.";
                     showToast(message);
-                    renderClientRows([]);
+                    FINANCIAL_CLIENTS_DATA = [];
+                    syncSortedFinancialClients();
                     return;
                 }
 
                 setFinancialClientsLoadingState(false);
-                renderClientRows(Array.isArray(result.clients) ? result.clients : []);
+                FINANCIAL_CLIENTS_DATA = Array.isArray(result.clients) ? result.clients : [];
+                syncSortedFinancialClients();
             } catch (error) {
                 if (error && error.name === "AbortError") {
                     return;
@@ -436,7 +606,8 @@
 
                 setFinancialClientsLoadingState(false);
                 showToast("Unable to load financial records clients.");
-                renderClientRows([]);
+                FINANCIAL_CLIENTS_DATA = [];
+                syncSortedFinancialClients();
             }
         };
 
@@ -470,11 +641,16 @@
         }
 
         if (financialClientsSearchInput) {
+            bindTinInput(financialClientsSearchInput, true);
             financialClientsSearchInput.addEventListener("input", debounce(applyFilters));
         }
 
         if (financialClientsFilter) {
             financialClientsFilter.addEventListener("change", applyFilters);
+        }
+
+        if (financialClientsSortSelect) {
+            financialClientsSortSelect.addEventListener("change", syncSortedFinancialClients);
         }
 
         if (dashboardProfileAction) {

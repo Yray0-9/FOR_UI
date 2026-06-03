@@ -16,6 +16,7 @@ class AnalyticsSummaryApiTests(TestCase):
             username=f"analytics_{suffix}",
             email=f"analytics_{suffix}@example.com",
             password_hash="not-used-in-test",
+            status=BookkeeperAccount.STATUS_APPROVED,
         )
 
     def _login_as(self, account: BookkeeperAccount) -> None:
@@ -31,7 +32,7 @@ class AnalyticsSummaryApiTests(TestCase):
             seed = sum(ord(char) for char in str(token or ""))
         return f"{seed:012d}"
 
-    def _create_client(self, *, bookkeeper: BookkeeperAccount, suffix: str, risk: str) -> Client:
+    def _create_client(self, *, bookkeeper: BookkeeperAccount, suffix: str, remarks: str) -> Client:
         return Client.objects.create(
             bookkeeper=bookkeeper,
             client_name=f"Client {suffix}",
@@ -40,7 +41,7 @@ class AnalyticsSummaryApiTests(TestCase):
             location="Panabo",
             permit_number=f"PERMIT-AN-{suffix}",
             email=f"client-analytics-{suffix}@example.com",
-            risk_level=risk,
+            remarks=remarks,
         )
 
     def _create_record_with_lines(
@@ -50,6 +51,7 @@ class AnalyticsSummaryApiTests(TestCase):
         client: Client,
         entry_date: date,
         lines: list[tuple[str, str, Decimal]],
+        frequency: str | None = None,
     ) -> FinancialRecord:
         period, _ = Period.objects.get_or_create(
             client=client,
@@ -62,6 +64,7 @@ class AnalyticsSummaryApiTests(TestCase):
             client=client,
             period=period,
             entry_date=entry_date,
+            frequency=frequency or FinancialRecord.FREQUENCY_MONTHLY,
             notes="Analytics test",
             total_amount=sum((amount for _, _, amount in lines), Decimal("0.00")),
         )
@@ -96,8 +99,8 @@ class AnalyticsSummaryApiTests(TestCase):
         owner = self._create_bookkeeper("owner-all")
         self._login_as(owner)
 
-        client_a = self._create_client(bookkeeper=owner, suffix="A", risk=Client.RISK_LOW)
-        client_b = self._create_client(bookkeeper=owner, suffix="B", risk=Client.RISK_HIGH)
+        client_a = self._create_client(bookkeeper=owner, suffix="A", remarks=Client.REMARK_NEW)
+        client_b = self._create_client(bookkeeper=owner, suffix="B", remarks=Client.REMARK_CLOSED)
 
         self._create_record_with_lines(
             bookkeeper=owner,
@@ -131,16 +134,16 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(payload["summary"]["total_sales"], 1500.0)
         self.assertEqual(payload["summary"]["total_expenses"], 500.0)
         self.assertEqual(payload["summary"]["total_tax"], 150.0)
-        self.assertEqual(payload["summary"]["net_value"], 0.0)
+        self.assertEqual(payload["summary"]["net_value"], 1000.0)
 
-        self.assertEqual(payload["risk_insight"]["level"], Client.RISK_HIGH)
+        self.assertEqual(payload["remarks_insight"]["level"], Client.REMARK_NEW)
         self.assertTrue(payload["has_data"])
         self.assertEqual(len(payload.get("monthly_trend", [])), 6)
 
         comparison = payload.get("comparison", [])
         self.assertEqual(len(comparison), 2)
         self.assertEqual(comparison[0]["client_id"], client_a.id)
-        self.assertEqual(comparison[0]["risk_level_label"], "Low")
+        self.assertEqual(comparison[0]["remarks_label"], "New")
         self.assertEqual(comparison[0]["total_sales"], 1000.0)
 
         available_clients = payload.get("available_clients", [])
@@ -157,8 +160,8 @@ class AnalyticsSummaryApiTests(TestCase):
         owner = self._create_bookkeeper("owner-scope")
         other = self._create_bookkeeper("other-scope")
 
-        owner_client = self._create_client(bookkeeper=owner, suffix="owner", risk=Client.RISK_MEDIUM)
-        other_client = self._create_client(bookkeeper=other, suffix="other", risk=Client.RISK_HIGH)
+        owner_client = self._create_client(bookkeeper=owner, suffix="owner", remarks=Client.REMARK_ACTIVE)
+        other_client = self._create_client(bookkeeper=other, suffix="other", remarks=Client.REMARK_CLOSED)
 
         self._create_record_with_lines(
             bookkeeper=owner,
@@ -198,7 +201,7 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(payload["summary"]["total_sales"], 700.0)
         self.assertEqual(payload["summary"]["total_expenses"], 250.0)
         self.assertEqual(payload["summary"]["total_tax"], 70.0)
-        self.assertEqual(payload["summary"]["net_value"], 0.0)
+        self.assertEqual(payload["summary"]["net_value"], 450.0)
 
         forbidden_response = self.client.get(
             reverse("api_analytics_summary"),
@@ -212,7 +215,7 @@ class AnalyticsSummaryApiTests(TestCase):
 
     def test_analytics_summary_client_with_no_records_returns_empty_payload(self):
         owner = self._create_bookkeeper("owner-empty")
-        empty_client = self._create_client(bookkeeper=owner, suffix="empty", risk=Client.RISK_HIGH)
+        empty_client = self._create_client(bookkeeper=owner, suffix="empty", remarks=Client.REMARK_CLOSED)
 
         self._login_as(owner)
         response = self.client.get(
@@ -245,7 +248,7 @@ class AnalyticsSummaryApiTests(TestCase):
         owner = self._create_bookkeeper("owner-history")
         self._login_as(owner)
 
-        client = self._create_client(bookkeeper=owner, suffix="history", risk=Client.RISK_MEDIUM)
+        client = self._create_client(bookkeeper=owner, suffix="history", remarks=Client.REMARK_ACTIVE)
 
         # Older record should still contribute to totals, even if it is outside the 6-month trend window.
         self._create_record_with_lines(
@@ -273,13 +276,114 @@ class AnalyticsSummaryApiTests(TestCase):
         payload = response.json()
         self.assertEqual(payload["summary"]["total_sales"], 160.0)
         self.assertEqual(payload["summary"]["total_tax"], 40.0)
-        self.assertEqual(payload["summary"]["net_value"], 0.0)
+        self.assertEqual(payload["summary"]["net_value"], 150.0)
 
         monthly_trend = payload.get("monthly_trend", [])
         trend_sales_sum = sum(float(row.get("sales", 0.0)) for row in monthly_trend)
         trend_tax_sum = sum(float(row.get("tax", 0.0)) for row in monthly_trend)
         self.assertEqual(trend_sales_sum, 60.0)
         self.assertEqual(trend_tax_sum, 0.0)
+
+    def test_analytics_predictive_forecast_respects_mixed_frequencies(self):
+        today = timezone.localdate()
+        forecast_year = today.year
+
+        owner = self._create_bookkeeper("owner-mixed-forecast")
+        self._login_as(owner)
+
+        client = self._create_client(bookkeeper=owner, suffix="mixed-forecast", remarks=Client.REMARK_NEW)
+
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(forecast_year, 4, 1),
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+            lines=[("Sales", "Monthly sale Apr", Decimal("100.00"))],
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(forecast_year, 5, 1),
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+            lines=[("Sales", "Monthly sale May", Decimal("200.00"))],
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(forecast_year, 6, 1),
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+            lines=[("Sales", "Monthly sale Jun", Decimal("300.00"))],
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(forecast_year, 3, 1),
+            frequency=FinancialRecord.FREQUENCY_QUARTERLY,
+            lines=[("Expenses", "Quarterly expense Mar", Decimal("120.00"))],
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(forecast_year, 6, 1),
+            frequency=FinancialRecord.FREQUENCY_QUARTERLY,
+            lines=[
+                ("Expenses", "Quarterly expense Jun", Decimal("50.00")),
+                ("BIR Form 2551Qv2018", "Quarterly Percentage Tax Return", Decimal("10.00")),
+                ("BIR Form 1701", "Annual Income Tax Return", Decimal("1000.00")),
+            ],
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(forecast_year, 1, 1),
+            frequency=FinancialRecord.FREQUENCY_ANNUALLY,
+            lines=[("Expenses", "Annual permit expense", Decimal("1200.00"))],
+        )
+
+        response = self.client.get(
+            reverse("api_analytics_summary"),
+            {"client_id": client.id},
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        payload = response.json()
+        forecast = payload.get("predictive_forecast", {})
+        self.assertTrue(forecast.get("has_forecast"))
+        self.assertEqual(forecast.get("frequency"), "mixed")
+        self.assertEqual(forecast.get("frequency_label"), "Mixed Schedule")
+        self.assertEqual(forecast.get("next_period_label"), f"Jul {forecast_year}")
+        self.assertIn("transaction-aware", forecast.get("basis", ""))
+        self.assertIn("Linear Regression", forecast.get("basis", ""))
+
+        projections = forecast.get("future_projections", [])
+        self.assertEqual(len(projections), 3)
+
+        self.assertEqual(projections[0]["period_label"], f"Jul {forecast_year}")
+        self.assertEqual(projections[0]["expected_sales"], 400.0)
+        self.assertIsNone(projections[0]["expected_expenses"])
+        self.assertIsNone(projections[0]["expected_tax"])
+        self.assertFalse(projections[0]["expected_expenses_applicable"])
+        self.assertFalse(projections[0]["expected_tax_applicable"])
+        self.assertEqual(projections[0]["expected_net"], 400.0)
+
+        self.assertEqual(projections[1]["period_label"], f"Aug {forecast_year}")
+        self.assertEqual(projections[1]["expected_sales"], 500.0)
+        self.assertIsNone(projections[1]["expected_expenses"])
+        self.assertIsNone(projections[1]["expected_tax"])
+        self.assertEqual(projections[1]["expected_net"], 500.0)
+
+        self.assertEqual(projections[2]["period_label"], f"Sep {forecast_year}")
+        self.assertEqual(projections[2]["expected_sales"], 600.0)
+        self.assertIsNone(projections[2]["expected_expenses"])
+        self.assertTrue(projections[2]["expected_expenses_applicable"])
+        self.assertTrue(projections[2]["expenses_unreliable"])
+        self.assertEqual(projections[2]["expected_tax"], 10.0)
+        self.assertEqual(projections[2]["tax_method"], "Linear Regression")
+        self.assertTrue(projections[2]["tax_limited_data"])
+        self.assertTrue(projections[2]["expected_net_applicable"])
+        self.assertFalse(projections[2]["expected_net_unreliable"])
+        self.assertEqual(projections[2]["expected_net"], 600.0)
 
     def test_analytics_summary_exposes_tin_for_disambiguation_and_scope(self):
         today = timezone.localdate()
@@ -298,7 +402,7 @@ class AnalyticsSummaryApiTests(TestCase):
             location="Panabo",
             permit_number="PERMIT-SAME-001",
             email="same-a@example.com",
-            risk_level=Client.RISK_LOW,
+            remarks=Client.REMARK_NEW,
         )
         client_b = Client.objects.create(
             bookkeeper=owner,
@@ -308,7 +412,7 @@ class AnalyticsSummaryApiTests(TestCase):
             location="Panabo",
             permit_number="PERMIT-SAME-002",
             email="same-b@example.com",
-            risk_level=Client.RISK_MEDIUM,
+            remarks=Client.REMARK_ACTIVE,
         )
 
         self._create_record_with_lines(
@@ -350,3 +454,99 @@ class AnalyticsSummaryApiTests(TestCase):
 
         self.assertEqual(scoped_payload["scope"]["client_id"], client_b.id)
         self.assertEqual(scoped_payload["scope"]["client_tin"], same_tin_b)
+
+    def test_analytics_linear_regression_forecasting_logic(self):
+        today = timezone.localdate()
+
+        owner = self._create_bookkeeper("owner-lin-reg")
+        self._login_as(owner)
+
+        client = self._create_client(bookkeeper=owner, suffix="linreg", remarks=Client.REMARK_ACTIVE)
+
+        # Create three consecutive months of records
+        y3, m3 = today.year, today.month
+
+        m2 = m3 - 1 if m3 > 1 else 12
+        y2 = y3 if m3 > 1 else y3 - 1
+
+        m1 = m2 - 1 if m2 > 1 else 12
+        y1 = y2 if m2 > 1 else y2 - 1
+
+        date_1 = date(y1, m1, 1)
+        date_2 = date(y2, m2, 1)
+        date_3 = date(y3, m3, 1)
+
+        # Sales: 100, 200, 300
+        # Expenses: 10, 20, 30
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date_1,
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+            lines=[
+                ("Sales", "Sales 1", Decimal("100.00")),
+                ("Expenses", "Exp 1", Decimal("10.00")),
+                ("2550M", "Monthly VAT Tax 1", Decimal("5.00")),
+            ],
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date_2,
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+            lines=[
+                ("Sales", "Sales 2", Decimal("200.00")),
+                ("Expenses", "Exp 2", Decimal("20.00")),
+                ("2550M", "Monthly VAT Tax 2", Decimal("10.00")),
+            ],
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date_3,
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+            lines=[
+                ("Sales", "Sales 3", Decimal("300.00")),
+                ("Expenses", "Exp 3", Decimal("30.00")),
+                ("2550M", "Monthly VAT Tax 3", Decimal("15.00")),
+            ],
+        )
+
+        response = self.client.get(
+            reverse("api_analytics_summary"),
+            {"client_id": client.id},
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        payload = response.json()
+        forecast = payload.get("predictive_forecast", {})
+        self.assertTrue(forecast.get("has_forecast"))
+        self.assertEqual(forecast.get("frequency"), FinancialRecord.FREQUENCY_MONTHLY)
+        self.assertEqual(forecast.get("data_points"), 3)
+
+        # Assert Linear Regression predictions (index 4)
+        self.assertEqual(forecast.get("expected_sales"), 400.0)
+        self.assertEqual(forecast.get("expected_expenses"), 40.0)
+        self.assertEqual(forecast.get("expected_tax"), 20.0)
+        self.assertEqual(forecast.get("expected_net"), 360.0)
+
+        # Assert 3 future projections
+        projections = forecast.get("future_projections", [])
+        self.assertEqual(len(projections), 3)
+
+        self.assertEqual(projections[0]["expected_sales"], 400.0)
+        self.assertEqual(projections[0]["expected_expenses"], 40.0)
+        self.assertEqual(projections[0]["expected_tax"], 20.0)
+        self.assertEqual(projections[0]["expected_net"], 360.0)
+
+        self.assertEqual(projections[1]["expected_sales"], 500.0)
+        self.assertEqual(projections[1]["expected_expenses"], 50.0)
+        self.assertEqual(projections[1]["expected_tax"], 25.0)
+        self.assertEqual(projections[1]["expected_net"], 450.0)
+
+        self.assertEqual(projections[2]["expected_sales"], 600.0)
+        self.assertEqual(projections[2]["expected_expenses"], 60.0)
+        self.assertEqual(projections[2]["expected_tax"], 30.0)
+        self.assertEqual(projections[2]["expected_net"], 540.0)
+

@@ -14,11 +14,11 @@ class WorkspaceDefaults(models.Model):
 
     REPORT_TYPE_FINANCIAL = "financial_summary"
     REPORT_TYPE_COMPLIANCE = "compliance_snapshot"
-    REPORT_TYPE_RISK = "client_risk_overview"
+    REPORT_TYPE_REMARKS = "client_remarks_overview"
     REPORT_TYPE_CHOICES = [
         (REPORT_TYPE_FINANCIAL, "Financial Summary"),
         (REPORT_TYPE_COMPLIANCE, "Compliance Snapshot"),
-        (REPORT_TYPE_RISK, "Client Risk Overview"),
+        (REPORT_TYPE_REMARKS, "Client Remarks Overview"),
     ]
 
     REPORT_RANGE_YTD = "ytd"

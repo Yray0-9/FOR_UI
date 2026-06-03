@@ -5,6 +5,11 @@
     align-items: start;
 }
 
+/* When there is no profile-side column present, let main content fill full width */
+.profile-layout.profile-layout--no-side {
+    grid-template-columns: 1fr;
+}
+
 .profile-main {
     display: grid;
     gap: 1rem;

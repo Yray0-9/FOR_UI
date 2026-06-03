@@ -1,5 +1,7 @@
 .reports-filter-card {
     padding: 0.95rem;
+    position: relative;
+    z-index: 20;
 }
 
 .reports-filter-head {
@@ -29,6 +31,8 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.64rem;
+    position: relative;
+    z-index: 10;
 }
 
 .reports-filter-field {
@@ -342,6 +346,13 @@
     font-weight: 700;
 }
 
+.reports-ledger-totals-row td {
+    border-top: 1.5px solid #2f4f83 !important;
+    background-color: #f7faff !important;
+    color: #1a3668 !important;
+    font-weight: 800 !important;
+}
+
 .reports-ledger-grid-table td:first-child,
 .reports-ledger-grid-table th:first-child {
     width: 92px;
@@ -596,6 +607,13 @@ body.theme-dark .reports-ledger-grid-table td {
     color: #d0def3;
 }
 
+body.theme-dark .reports-ledger-totals-row td {
+    border-top: 1.5px solid #4a6fa8 !important;
+    background-color: #162238 !important;
+    color: #cbdcf7 !important;
+    font-weight: 800 !important;
+}
+
 body.theme-dark .reports-ledger-note {
     color: #9eb0d3;
 }
@@ -611,4 +629,137 @@ body.theme-dark .reports-history-meta strong {
 
 body.theme-dark .reports-history-meta p {
     color: #9eb0d3;
+}
+
+/* Custom Autocomplete Dropdown styles for Reports page */
+.reports-tin-search-input-wrap {
+    position: relative;
+    width: 100%;
+    z-index: 105;
+}
+
+.reports-dropdown-toggle-icon {
+    position: absolute;
+    right: 0.78rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #607aa8;
+    transition: transform 0.24s ease, color 0.24s ease;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+}
+
+.reports-dropdown-toggle-icon:hover {
+    color: #1f5ed9;
+}
+
+.reports-custom-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #d7e4fb;
+    border-radius: 12px;
+    box-shadow: 0 10px 22px rgba(18, 49, 112, 0.12);
+    margin-top: 0.34rem;
+    z-index: 1060;
+    padding: 0.34rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c3d4f5 transparent;
+}
+
+.reports-custom-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.reports-custom-dropdown::-webkit-scrollbar-thumb {
+    background-color: #c3d4f5;
+    border-radius: 3px;
+}
+
+.reports-custom-dropdown-item {
+    padding: 0.52rem 0.68rem;
+    border-radius: 8px;
+    color: #2f4f83;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+.reports-custom-dropdown-item:hover,
+.reports-custom-dropdown-item.is-focused {
+    background: #eef4ff;
+    color: #1845a5;
+}
+
+.reports-custom-dropdown-item.is-active {
+    background: #e8f0ff;
+    color: #1f5ed9;
+}
+
+.reports-custom-dropdown-item .item-tin {
+    font-size: 0.74rem;
+    color: #647fae;
+    font-weight: 600;
+}
+
+.reports-custom-dropdown-empty {
+    padding: 0.68rem;
+    color: #647fae;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* Dark theme overrides for custom dropdown */
+body.theme-dark .reports-custom-dropdown {
+    background: #0f1c33;
+    border-color: #25344f;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.32);
+}
+
+body.theme-dark .reports-custom-dropdown::-webkit-scrollbar-thumb {
+    background-color: #23344f;
+}
+
+body.theme-dark .reports-custom-dropdown-item {
+    color: #e6edf7;
+}
+
+body.theme-dark .reports-custom-dropdown-item:hover,
+body.theme-dark .reports-custom-dropdown-item.is-focused {
+    background: #1c2b46;
+    color: #aecdff;
+}
+
+body.theme-dark .reports-custom-dropdown-item.is-active {
+    background: #12213a;
+    color: #6aa0ff;
+}
+
+body.theme-dark .reports-custom-dropdown-item .item-tin {
+    color: #8fa6cb;
+}
+
+body.theme-dark .reports-custom-dropdown-empty {
+    color: #8fa6cb;
+}
+
+body.theme-dark .reports-dropdown-toggle-icon {
+    color: #9eb0d3;
+}
+
+body.theme-dark .reports-dropdown-toggle-icon:hover {
+    color: #6aa0ff;
 }

@@ -22,6 +22,7 @@ class FinancialRecordsApiTests(TestCase):
             username=f"fin_{suffix}",
             email=f"fin_{suffix}@example.com",
             password_hash="not-used-in-test",
+            status=BookkeeperAccount.STATUS_APPROVED,
         )
 
     def _login_as(self, account: BookkeeperAccount) -> None:
@@ -46,7 +47,7 @@ class FinancialRecordsApiTests(TestCase):
             location="Panabo City",
             permit_number=f"PERMIT-FIN-{suffix}",
             email=f"client-fin-{suffix}@example.com",
-            risk_level=Client.RISK_MEDIUM,
+            remarks=Client.REMARK_ACTIVE,
         )
 
     def _create_record(
@@ -133,7 +134,7 @@ class FinancialRecordsApiTests(TestCase):
         owner_none = self._create_client(bookkeeper=owner, suffix="owner-none")
         other_active = self._create_client(bookkeeper=other, suffix="other-active")
 
-        self._create_record(
+        record = self._create_record(
             bookkeeper=owner,
             client=owner_active,
             year=2026,
@@ -141,6 +142,9 @@ class FinancialRecordsApiTests(TestCase):
             day=11,
             amount=Decimal("500.00"),
         )
+        record.deadline_date = date(2026, 4, 15)
+        record.save()
+
         self._create_record(
             bookkeeper=other,
             client=other_active,
@@ -162,8 +166,14 @@ class FinancialRecordsApiTests(TestCase):
 
         self.assertEqual(rows_by_id[owner_active.id]["activity_state"], "active")
         self.assertEqual(rows_by_id[owner_active.id]["financial_record_count"], 1)
+        self.assertEqual(rows_by_id[owner_active.id]["deadline_date"], "2026-04-15")
+        self.assertTrue("days_remaining" in rows_by_id[owner_active.id])
+        self.assertTrue(rows_by_id[owner_active.id]["deadline_completed"])
+
         self.assertEqual(rows_by_id[owner_none.id]["activity_state"], "none")
         self.assertEqual(rows_by_id[owner_none.id]["financial_record_count"], 0)
+        self.assertEqual(rows_by_id[owner_none.id]["deadline_date"], "")
+        self.assertFalse(rows_by_id[owner_none.id]["deadline_completed"])
 
     def test_financial_records_api_enforces_client_ownership_isolation(self):
         owner = self._create_bookkeeper("owner-isolation")
@@ -296,6 +306,113 @@ class FinancialRecordsApiTests(TestCase):
 
         self.assertEqual(FinancialRecord.objects.filter(client=client).count(), 0)
         self.assertEqual(Period.objects.filter(client=client, year=2026, month=4).count(), 0)
+
+    def test_financial_record_deadline_date_crud(self):
+        owner = self._create_bookkeeper("owner-deadline")
+        client = self._create_client(bookkeeper=owner, suffix="deadline")
+        self._login_as(owner)
+
+        payload = self._build_create_payload()
+        payload["month"] = 3
+        payload["year"] = 2026
+        payload["date"] = "2026-03-15"
+        payload["deadline_date"] = "2026-04-20"
+
+        # 1. Create March record with April deadline -> not completed yet
+        create_response = self.client.post(
+            reverse("api_financial_records", kwargs={"client_id": client.id}),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(create_response.status_code, 201)
+        create_payload = create_response.json()
+        self.assertTrue(create_payload.get("ok"))
+        self.assertEqual(create_payload["record"]["deadline_date"], "2026-04-20")
+        self.assertFalse(create_payload["record"]["deadline_completed"])
+
+        record_id = create_payload["record"]["id"]
+
+        # 2. Update to July deadline -> not completed yet
+        update_payload = {
+            "month": 3,
+            "year": 2026,
+            "date": "2026-03-15",
+            "frequency": "quarterly",
+            "deadline_date": "2026-07-25",
+            "line_items": [
+                {
+                    "type_code": "Sales",
+                    "description": "Updated sale",
+                    "amount": "900.00",
+                }
+            ],
+        }
+        update_response = self.client.put(
+            reverse(
+                "api_financial_record_detail",
+                kwargs={"client_id": client.id, "record_id": record_id},
+            ),
+            data=json.dumps(update_payload),
+            content_type="application/json",
+        )
+        self.assertEqual(update_response.status_code, 200)
+        update_json = update_response.json()
+        self.assertTrue(update_json.get("ok"))
+        self.assertEqual(update_json["record"]["deadline_date"], "2026-07-25")
+        self.assertFalse(update_json["record"]["deadline_completed"])
+
+        # 3. Create another record for July -> should mark the March deadline as completed
+        july_payload = self._build_create_payload()
+        july_payload["month"] = 7
+        july_payload["year"] = 2026
+        july_payload["date"] = "2026-07-05"
+
+        july_response = self.client.post(
+            reverse("api_financial_records", kwargs={"client_id": client.id}),
+            data=json.dumps(july_payload),
+            content_type="application/json",
+        )
+        self.assertEqual(july_response.status_code, 201)
+
+        # 4. Fetch March record detail and check that deadline_completed is now True!
+        fetch_response = self.client.get(
+            reverse("api_financial_records", kwargs={"client_id": client.id}),
+            {"month": 3, "year": 2026},
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(fetch_response.status_code, 200)
+        records_list = fetch_response.json().get("records", [])
+        self.assertEqual(len(records_list), 1)
+        self.assertTrue(records_list[0]["deadline_completed"])
+
+        # 5. Clear deadline_date
+        clear_payload = {
+            "month": 3,
+            "year": 2026,
+            "date": "2026-03-15",
+            "frequency": "quarterly",
+            "deadline_date": "",
+            "line_items": [
+                {
+                    "type_code": "Sales",
+                    "description": "Updated sale",
+                    "amount": "900.00",
+                }
+            ],
+        }
+        clear_response = self.client.put(
+            reverse(
+                "api_financial_record_detail",
+                kwargs={"client_id": client.id, "record_id": record_id},
+            ),
+            data=json.dumps(clear_payload),
+            content_type="application/json",
+        )
+        self.assertEqual(clear_response.status_code, 200)
+        clear_json = clear_response.json()
+        self.assertTrue(clear_json.get("ok"))
+        self.assertEqual(clear_json["record"]["deadline_date"], "")
+        self.assertFalse(clear_json["record"]["deadline_completed"])
 
     def test_financial_records_line_item_validation_errors(self):
         owner = self._create_bookkeeper("owner-validation")

@@ -11,7 +11,7 @@ DEFAULT_CLIENT_SCOPES = {
 DEFAULT_REPORT_TYPES = {
     WorkspaceDefaults.REPORT_TYPE_FINANCIAL,
     WorkspaceDefaults.REPORT_TYPE_COMPLIANCE,
-    WorkspaceDefaults.REPORT_TYPE_RISK,
+    WorkspaceDefaults.REPORT_TYPE_REMARKS,
 }
 DEFAULT_REPORT_RANGES = {
     WorkspaceDefaults.REPORT_RANGE_YTD,

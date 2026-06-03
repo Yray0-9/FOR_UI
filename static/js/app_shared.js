@@ -399,6 +399,84 @@
         };
     };
 
+    const showConfirmDiscard = () => {
+        return new Promise((resolve) => {
+            const modalId = "safebooks-confirm-discard-modal";
+            let modalEl = document.getElementById(modalId);
+            if (modalEl) {
+                modalEl.remove();
+            }
+
+            modalEl = document.createElement("div");
+            modalEl.id = modalId;
+            modalEl.className = "modal fade client-manage-modal";
+            modalEl.setAttribute("tabindex", "-1");
+            modalEl.setAttribute("aria-hidden", "true");
+            modalEl.setAttribute("data-bs-backdrop", "static");
+            modalEl.setAttribute("data-bs-keyboard", "false");
+            modalEl.style.zIndex = "1405";
+
+            modalEl.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title h5">Unsaved Changes</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-0" style="font-size: 0.95rem; color: var(--color-text-muted);">You have unsaved changes. Are you sure you want to discard them?</p>
+                        </div>
+                        <div class="modal-footer" style="border-top: none; padding: 0.5rem 1rem 1rem; display: flex; gap: 0.75rem; justify-content: flex-end;">
+                            <button type="button" class="btn dashboard-action-btn outline" id="confirmDiscardKeepBtn" data-bs-dismiss="modal">Keep Editing</button>
+                            <button type="button" class="btn dashboard-action-btn primary" id="confirmDiscardBtn" style="background-color: #dc3545; border-color: #dc3545; color: #fff;">Discard</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modalEl);
+
+            const modalInstance = new window.bootstrap.Modal(modalEl, {
+                backdrop: "static",
+                keyboard: false
+            });
+
+            let resolved = false;
+
+            const handleResolve = (value) => {
+                if (resolved) return;
+                resolved = true;
+                resolve(value);
+                modalInstance.hide();
+            };
+
+            const discardBtn = modalEl.querySelector("#confirmDiscardBtn");
+            const keepBtn = modalEl.querySelector("#confirmDiscardKeepBtn");
+            const closeBtn = modalEl.querySelector(".btn-close");
+
+            discardBtn.addEventListener("click", () => handleResolve(true));
+            keepBtn.addEventListener("click", () => handleResolve(false));
+            closeBtn.addEventListener("click", () => handleResolve(false));
+
+            modalEl.addEventListener("show.bs.modal", () => {
+                window.setTimeout(() => {
+                    const backdrops = document.querySelectorAll(".modal-backdrop");
+                    if (backdrops.length > 1) {
+                        const lastBackdrop = backdrops[backdrops.length - 1];
+                        lastBackdrop.style.zIndex = "1400";
+                    }
+                }, 0);
+            });
+
+            modalEl.addEventListener("hidden.bs.modal", () => {
+                handleResolve(false);
+                modalEl.remove();
+            });
+
+            modalInstance.show();
+        });
+    };
+
     applyStoredTheme();
 
     window.SafeBooksShared = {
@@ -411,5 +489,6 @@
         setThemePreference,
         getThemePreference,
         initializeSidebarBehavior,
+        showConfirmDiscard,
     };
 })();

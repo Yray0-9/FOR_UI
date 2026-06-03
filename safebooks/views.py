@@ -735,9 +735,17 @@ def analytics_summary_api_view(request):
             )
         client_id = int(client_id_param)
 
+    year_param = (request.GET.get("year") or "").strip()
+    year_filter = year_param if year_param.isdigit() else None
+    
+    horizon_param = (request.GET.get("horizon") or "").strip()
+    horizon = int(horizon_param) if horizon_param.isdigit() else 3
+
     result = get_analytics_summary_for_bookkeeper(
         request.bookkeeper_account,
         client_id=client_id,
+        year_filter=year_filter,
+        horizon=horizon,
     )
     if result.get("ok"):
         return JsonResponse(result)

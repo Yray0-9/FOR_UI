@@ -10,6 +10,11 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/reports.css' %}">
+<style>
+    .table-responsive {
+        min-height: 320px;
+    }
+</style>
 {% endblock %}
 
 {% block skeleton %}
@@ -75,17 +80,34 @@
                 <i class="bi bi-search"></i>
                 <input type="search" id="clientsSearchInput" placeholder="Search by client name or TIN" autocomplete="off">
             </label>
+            <select id="clientsSortSelect" class="form-select dashboard-filter-select" aria-label="Sort clients list">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="name-asc">Alphabetical (A-Z)</option>
+                <option value="name-desc">Alphabetical (Z-A)</option>
+            </select>
             <button type="button" class="btn dashboard-action-btn primary clients-add-btn" data-bs-toggle="modal" data-bs-target="#addClientModal">
                 <i class="bi bi-plus-lg"></i>
                 <span>Add Client</span>
             </button>
         </div>
-        <p class="dashboard-guidance-text clients-risk-preview-note" id="clientsRiskPreviewNote" hidden>High-risk client filter is active.</p>
+        <p class="dashboard-guidance-text clients-remarks-preview-note" id="clientsRemarksPreviewNote" hidden>Closed client remarks filter is active.</p>
     </article>
+
+    <div class="clients-directory-tabs mb-3" aria-label="Directory directory views">
+        <button type="button" class="btn directory-tab-btn active" id="tabActiveDirectory" aria-selected="true">
+            <i class="bi bi-people-fill"></i>
+            <span>Active Directory</span>
+        </button>
+        <button type="button" class="btn directory-tab-btn" id="tabClosed" aria-selected="false">
+            <i class="bi bi-x-circle-fill"></i>
+            <span>Closed</span>
+        </button>
+    </div>
 
     <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.12s;">
         <div class="dashboard-card-head">
-            <h2>Registered Clients</h2>
+            <h2 id="clientsListHeading">Registered Clients</h2>
             <span class="dashboard-tag" id="clientsCountTag">5 Clients</span>
         </div>
         <p class="dashboard-section-hint">Click a client to view details or manage records</p>
@@ -115,7 +137,7 @@
 {% endblock %}
 
 {% block after_layout %}
-<div class="modal fade client-manage-modal" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalTitle" aria-hidden="true">
+<div class="modal fade client-manage-modal" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalTitle" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <form class="modal-content" id="addClientForm" novalidate>
             <div class="modal-header">
@@ -155,7 +177,7 @@
                         <label class="form-label client-form-label" for="addClientBirthday">Birthday (optional)</label>
                         <input class="form-control client-form-input" id="addClientBirthday" name="birthday" type="date">
                     </div>
-                    <div class="col-12">
+                     <div class="col-12">
                         <label class="form-label client-form-label" for="addClientEmail">Email Address (optional)</label>
                         <input class="form-control client-form-input" id="addClientEmail" name="email" type="email" placeholder="example@company.com">
                     </div>
@@ -181,6 +203,7 @@
                             </button>
                         </div>
                     </div>
+
                     <div class="col-12 client-custom-fields-block">
                         <div class="client-custom-fields-head">
                             <span class="client-custom-fields-title">Custom Fields</span>
@@ -220,6 +243,8 @@
                     <div class="client-details-row"><span class="client-details-key">Email Password</span><strong id="viewClientEmailPassword">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">ORUS Account</span><strong id="viewClientOrusAccount">-</strong></div>
                     <div class="client-details-row"><span class="client-details-key">ORUS Password</span><strong id="viewClientOrusPassword">-</strong></div>
+
+                    <div class="client-details-row"><span class="client-details-key">Remarks</span><strong id="viewClientRemarks">-</strong></div>
                 </div>
                 <div class="client-details-custom" id="viewClientCustomFields" hidden>
                     <p class="client-details-custom-title">Custom Fields</p>
@@ -261,7 +286,7 @@
     </div>
 </div>
 
-<div class="modal fade client-manage-modal" id="editClientModal" tabindex="-1" aria-labelledby="editClientModalTitle" aria-hidden="true">
+<div class="modal fade client-manage-modal" id="editClientModal" tabindex="-1" aria-labelledby="editClientModalTitle" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <form class="modal-content" id="editClientForm" novalidate>
             <input type="hidden" id="editClientRowId" name="row_id">
@@ -302,7 +327,7 @@
                         <label class="form-label client-form-label" for="editClientBirthday">Birthday (optional)</label>
                         <input class="form-control client-form-input" id="editClientBirthday" name="birthday" type="date">
                     </div>
-                    <div class="col-12">
+                     <div class="col-12">
                         <label class="form-label client-form-label" for="editClientEmail">Email Address (optional)</label>
                         <input class="form-control client-form-input" id="editClientEmail" name="email" type="email" placeholder="example@company.com">
                     </div>
@@ -328,6 +353,7 @@
                             </button>
                         </div>
                     </div>
+
                     <div class="col-12 client-custom-fields-block">
                         <div class="client-custom-fields-head">
                             <span class="client-custom-fields-title">Custom Fields</span>
@@ -352,16 +378,17 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content client-delete-modal">
             <div class="modal-header">
-                <h2 class="modal-title h5" id="deleteClientModalTitle">Delete Client</h2>
+                <h2 class="modal-title h5" id="deleteClientModalTitle">Close Client</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="clients-delete-text">Are you sure you want to delete this client?</p>
+                <p class="clients-delete-text">Are you sure you want to close the business for this client?</p>
                 <p class="clients-delete-name" id="deleteClientName">-</p>
+                <p class="text-muted mt-2" style="font-size: 0.8rem;">This will mark their status as "Closed" and move them to the Closed section of your directory.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn dashboard-action-btn primary" id="confirmDeleteClientBtn">Delete Client</button>
+                <button type="button" class="btn dashboard-action-btn primary" id="confirmDeleteClientBtn">Close Client</button>
             </div>
         </div>
     </div>
@@ -373,7 +400,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/reports_shared.js' %}"></script>
+<script src="{% static 'js/reports_shared.js' %}?v=1.0.5"></script>
 <script>
     (() => {
         const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
@@ -422,9 +449,10 @@
 
         const clientsTableBody = document.getElementById("clientsTableBody");
         const clientsSearchInput = document.getElementById("clientsSearchInput");
+        const clientsSortSelect = document.getElementById("clientsSortSelect");
         const clientsCountTag = document.getElementById("clientsCountTag");
         const clientsEmptyState = document.getElementById("clientsEmptyState");
-        const clientsRiskPreviewNote = document.getElementById("clientsRiskPreviewNote");
+        const clientsRemarksPreviewNote = document.getElementById("clientsRemarksPreviewNote");
         const uiToastContainer = document.getElementById("uiToastContainer");
 
         const addClientForm = document.getElementById("addClientForm");
@@ -437,6 +465,7 @@
         const editClientLocationInput = document.getElementById("editClientLocation");
         const editClientLocationSelect = document.getElementById("editClientLocationSelect");
         const editClientLocationSummary = document.getElementById("editClientLocationSummary");
+
         const deleteClientName = document.getElementById("deleteClientName");
         const confirmDeleteClientBtn = document.getElementById("confirmDeleteClientBtn");
 
@@ -455,6 +484,8 @@
         const viewClientEmailPassword = document.getElementById("viewClientEmailPassword");
         const viewClientOrusAccount = document.getElementById("viewClientOrusAccount");
         const viewClientOrusPassword = document.getElementById("viewClientOrusPassword");
+
+        const viewClientRemarks = document.getElementById("viewClientRemarks");
         const viewClientCustomFields = document.getElementById("viewClientCustomFields");
         const viewClientCustomFieldsList = document.getElementById("viewClientCustomFieldsList");
 
@@ -485,11 +516,15 @@
         let pendingDeleteRow = null;
         let activeViewedClient = null;
         let filterTransitionTimer = null;
-        let activeRiskFilter = "all";
+        let activeRemarksFilter = "all";
+        let directoryTabFilter = "active";
+        let CLIENTS_DATA = [];
         let clientsSearchDebounceTimer = null;
         let clientsListRequestToken = 0;
         let clientsListAbortController = null;
         let isClientsLoading = false;
+        let addClientFormDirty = false;
+        let editClientFormDirty = false;
 
         const normalize = (value) => String(value || "").trim().toLowerCase();
         const normalizeDigits = (value) => String(value || "").replace(/\D+/g, "");
@@ -504,7 +539,7 @@
             return groups.join("-");
         };
 
-        const formatTinForInput = (value) => {
+        const formatTinForInput = (value, isDeleting = false) => {
             const digits = normalizeDigits(value).slice(0, TIN_MAX_DIGITS);
             if (!digits) {
                 return "";
@@ -512,7 +547,7 @@
 
             const groups = digits.match(/.{1,3}/g) || [];
             let formatted = groups.join("-");
-            if (digits.length % 3 === 0 && digits.length < TIN_MAX_DIGITS) {
+            if (digits.length % 3 === 0 && digits.length < TIN_MAX_DIGITS && !isDeleting) {
                 formatted += "-";
             }
             return formatted;
@@ -1081,18 +1116,43 @@
             return formattedValue.length;
         };
 
-        const bindTinInput = (inputElement) => {
+        const bindTinInput = (inputElement, allowLetters = false) => {
             if (!inputElement) {
                 return;
             }
 
+            let isDeleting = false;
+            inputElement.addEventListener("keydown", (event) => {
+                isDeleting = event.key === "Backspace" || event.key === "Delete";
+            });
+
             inputElement.addEventListener("input", () => {
-                const rawValue = inputElement.value;
+                let rawValue = inputElement.value;
+                
+                if (allowLetters) {
+                    const startsWithDigit = /^\s*\d/.test(rawValue);
+                    if (startsWithDigit) {
+                        const cleaned = rawValue.replace(/[^\d-]/g, "");
+                        if (rawValue !== cleaned) {
+                            rawValue = cleaned;
+                            inputElement.value = cleaned;
+                        }
+                    } else if (/[a-zA-Z]/.test(rawValue)) {
+                        return;
+                    }
+                } else {
+                    const cleaned = rawValue.replace(/[^\d-]/g, "");
+                    if (rawValue !== cleaned) {
+                        rawValue = cleaned;
+                        inputElement.value = cleaned;
+                    }
+                }
+
                 const selectionStart = typeof inputElement.selectionStart === "number"
                     ? inputElement.selectionStart
                     : rawValue.length;
                 const digitsBeforeCursor = normalizeDigits(rawValue.slice(0, selectionStart)).length;
-                const formattedValue = formatTinForInput(rawValue);
+                const formattedValue = formatTinForInput(rawValue, isDeleting);
 
                 if (rawValue !== formattedValue) {
                     inputElement.value = formattedValue;
@@ -1107,7 +1167,16 @@
             });
 
             inputElement.addEventListener("blur", () => {
-                inputElement.value = formatTin(inputElement.value);
+                const value = inputElement.value;
+                if (value) {
+                    if (allowLetters && !/^\s*\d/.test(value)) {
+                        return;
+                    }
+                    const digits = normalizeDigits(value);
+                    if (digits) {
+                        inputElement.value = formatTin(value);
+                    }
+                }
             });
         };
 
@@ -1174,6 +1243,14 @@
         };
 
         const formatCurrency = (value) => currencyFormatter.format(safeNumber(value));
+        const formatPercentDisplay = (value) => {
+            const parsed = Number(value);
+            if (!Number.isFinite(parsed)) {
+                return "Not provided";
+            }
+            const fixed = parsed.toFixed(2).replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
+            return `${fixed}%`;
+        };
 
         const formatGeneratedDateTime = (value) => {
             const parsed = new Date(String(value || ""));
@@ -1533,8 +1610,9 @@
                 emailPassword: client.email_password || "",
                 orusAccount: client.orus_account || "",
                 orusPassword: client.orus_password || "",
+                forecastGrowthPercent: 0,
                 customFields: Array.isArray(client.custom_fields) ? client.custom_fields : [],
-                risk: client.risk_level || "medium"
+                remarks: client.remarks || "new"
             };
         };
 
@@ -1612,8 +1690,9 @@
                 emailPassword: row.dataset.emailPassword || "",
                 orusAccount: row.dataset.orusAccount || "",
                 orusPassword: row.dataset.orusPassword || "",
+                forecastGrowthPercent: safeNumber(row.dataset.forecastGrowthPercent || 0),
                 customFields,
-                risk: row.dataset.risk || "medium"
+                remarks: row.dataset.remarks || "new"
             };
         };
 
@@ -1631,8 +1710,9 @@
             row.dataset.emailPassword = data.emailPassword || "";
             row.dataset.orusAccount = data.orusAccount || "";
             row.dataset.orusPassword = data.orusPassword || "";
+            row.dataset.forecastGrowthPercent = String(data.forecastGrowthPercent ?? 0);
             row.dataset.customFields = JSON.stringify(data.customFields || []);
-            row.dataset.risk = data.risk || "medium";
+            row.dataset.remarks = data.remarks || "new";
             row.setAttribute("aria-label", `View details for ${data.clientName}`);
 
             const cells = row.querySelectorAll("td");
@@ -1651,6 +1731,66 @@
         };
 
         const renderClientRowHtml = (data) => {
+            const isClosed = normalize(data.remarks) === "closed";
+            
+            let menuHtml = "";
+            if (isClosed) {
+                // For closed clients: ONLY View Details, Edit Client, Restore Client
+                menuHtml = `
+                    <li>
+                        <button type="button" class="dropdown-item client-action-btn view" data-client-action="view">
+                            <i class="bi bi-eye"></i><span>View Details</span>
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <button type="button" class="dropdown-item client-action-btn edit" data-client-action="edit">
+                            <i class="bi bi-pencil-square"></i><span>Edit Client</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item client-action-btn restore text-success" data-client-action="restore">
+                            <i class="bi bi-arrow-counterclockwise"></i><span>Restore Client</span>
+                        </button>
+                    </li>
+                `;
+            } else {
+                // For active/open clients: View Details, Analytics, Financial Records, Generate Report, Edit Client, Close Client
+                menuHtml = `
+                    <li>
+                        <button type="button" class="dropdown-item client-action-btn view" data-client-action="view">
+                            <i class="bi bi-eye"></i><span>View Details</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item client-action-btn analytics" data-client-action="analytics">
+                            <i class="bi bi-bar-chart-line"></i><span>Analytics</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item client-action-btn" data-client-action="add-record">
+                            <i class="bi bi-journal-plus"></i><span>Financial Records</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item client-action-btn report primary" data-client-action="report">
+                            <i class="bi bi-file-earmark-text"></i><span>Generate Report</span>
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <button type="button" class="dropdown-item client-action-btn edit" data-client-action="edit">
+                            <i class="bi bi-pencil-square"></i><span>Edit Client</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item client-action-btn delete text-danger" data-client-action="delete">
+                            <i class="bi bi-x-circle"></i><span>Close Client</span>
+                        </button>
+                    </li>
+                `;
+            }
+
             return `
                 <td>${escapeHtml(data.clientName)}</td>
                 <td>${escapeHtml(data.tin)}</td>
@@ -1662,37 +1802,7 @@
                             <i class="bi bi-three-dots"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end clients-actions-menu">
-                            <li>
-                                <button type="button" class="dropdown-item client-action-btn view" data-client-action="view">
-                                    <i class="bi bi-eye"></i><span>View Details</span>
-                                </button>
-                            </li>
-                            <li>
-                                <button type="button" class="dropdown-item client-action-btn analytics" data-client-action="analytics">
-                                    <i class="bi bi-bar-chart-line"></i><span>Analytics</span>
-                                </button>
-                            </li>
-                            <li>
-                                <button type="button" class="dropdown-item client-action-btn report" data-client-action="report">
-                                    <i class="bi bi-file-earmark-text"></i><span>Generate Report</span>
-                                </button>
-                            </li>
-                            <li>
-                                <button type="button" class="dropdown-item client-action-btn add-record" data-client-action="add-record">
-                                    <i class="bi bi-journal-plus"></i><span>Financial Records</span>
-                                </button>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <button type="button" class="dropdown-item client-action-btn edit" data-client-action="edit">
-                                    <i class="bi bi-pencil-square"></i><span>Edit Client</span>
-                                </button>
-                            </li>
-                            <li>
-                                <button type="button" class="dropdown-item client-action-btn delete text-danger" data-client-action="delete">
-                                    <i class="bi bi-trash3"></i><span>Delete Client</span>
-                                </button>
-                            </li>
+                            ${menuHtml}
                         </ul>
                     </div>
                 </td>
@@ -1709,14 +1819,52 @@
             return row;
         };
 
+        const sortClients = (clientsList, sortBy) => {
+            const safeClients = Array.isArray(clientsList) ? [...clientsList] : [];
+            if (sortBy === "name-asc") {
+                safeClients.sort((a, b) => normalize(a.client_name).localeCompare(normalize(b.client_name)));
+            } else if (sortBy === "name-desc") {
+                safeClients.sort((a, b) => normalize(b.client_name).localeCompare(normalize(a.client_name)));
+            } else if (sortBy === "oldest") {
+                safeClients.sort((a, b) => {
+                    const aTime = toTimestamp(a && a.created_at);
+                    const bTime = toTimestamp(b && b.created_at);
+                    if (aTime !== bTime) {
+                        return aTime - bTime;
+                    }
+                    const aId = Number(a && a.id ? a.id : 0);
+                    const bId = Number(b && b.id ? b.id : 0);
+                    return aId - bId;
+                });
+            } else {
+                // "newest"
+                safeClients.sort((a, b) => {
+                    const aTime = toTimestamp(a && a.created_at);
+                    const bTime = toTimestamp(b && b.created_at);
+                    if (bTime !== aTime) {
+                        return bTime - aTime;
+                    }
+                    const aId = Number(a && a.id ? a.id : 0);
+                    const bId = Number(b && b.id ? b.id : 0);
+                    return bId - aId;
+                });
+            }
+            return safeClients;
+        };
+
+        const syncSortedClients = () => {
+            const sortBy = clientsSortSelect ? clientsSortSelect.value : "newest";
+            const sorted = sortClients(CLIENTS_DATA, sortBy);
+            syncClientRowsFromApi(sorted);
+        };
+
         const syncClientRowsFromApi = (clients) => {
             if (!clientsTableBody) {
                 return;
             }
 
             clientsTableBody.innerHTML = "";
-            const sortedClients = sortClientsByRecent(clients);
-            sortedClients.forEach((client) => {
+            clients.forEach((client) => {
                 const row = createClientRowElement(mapClientFromApi(client));
                 clientsTableBody.appendChild(row);
                 initializeTooltips(row);
@@ -1850,29 +1998,35 @@
             const cleanedTypeColumns = Array.isArray(typeColumns)
                 ? typeColumns.filter((value) => String(value || "").trim())
                 : [];
-            const useTypeColumns = cleanedTypeColumns.length > 0;
+            const orderedTypeColumns = reportsShared && typeof reportsShared.normalizeFinancialSummaryColumns === "function"
+                ? reportsShared.normalizeFinancialSummaryColumns(cleanedTypeColumns)
+                : cleanedTypeColumns;
+            const useTypeColumns = orderedTypeColumns.length > 0;
 
             const reportColumns = useTypeColumns
-                ? ["Period", ...cleanedTypeColumns, "Net Value"]
+                ? ["Period", ...orderedTypeColumns, "Net Value"]
                 : ["Period", "Sales", "Expenses", "Tax", "Net Value"];
 
             const reportRows = rows
                 .filter((row) => isTrendMonthWithinRange(row.year, row.month, filters))
                 .map((row) => {
                     const periodLabel = `${row.month_label || row.month || "-"} ${row.year || ""}`.trim();
+                    const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
+                    const salesValue = Number(row.sales || 0);
+                    const expensesValue = Number(row.expenses || 0);
+                    const netValue = salesValue - expensesValue;
                     if (!useTypeColumns) {
                         return [
                             periodLabel,
-                            formatCurrency(row.sales),
-                            formatCurrency(row.expenses),
+                            formatCurrency(salesValue),
+                            formatCurrency(expensesValue),
                             formatCurrency(row.tax),
-                            formatCurrency(row.net_value),
+                            formatCurrency(netValue),
                         ];
                     }
 
-                    const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
-                    const typeValues = cleanedTypeColumns.map((label) => formatCurrency(typeBreakdown[label]));
-                    return [periodLabel, ...typeValues, formatCurrency(row.net_value)];
+                    const typeValues = orderedTypeColumns.map((label) => formatCurrency(typeBreakdown[label]));
+                    return [periodLabel, ...typeValues, formatCurrency(netValue)];
                 });
 
             return {
@@ -2089,6 +2243,17 @@
             if (viewClientOrusPassword) {
                 viewClientOrusPassword.textContent = toDisplayValue(data.orusPassword);
             }
+
+            if (viewClientRemarks) {
+                const remarksLabels = {
+                    "new": "New",
+                    "active": "Active",
+                    "separated": "Separated",
+                    "closed": "Closed"
+                };
+                const val = normalize(data.remarks);
+                viewClientRemarks.textContent = remarksLabels[val] || val || "-";
+            }
             renderClientCustomFields(data.customFields);
         };
 
@@ -2104,6 +2269,8 @@
             const editClientOrusAccount = document.getElementById("editClientOrusAccount");
             const editClientOrusPassword = document.getElementById("editClientOrusPassword");
 
+            const editClientRemarks = document.getElementById("editClientRemarks");
+
             if (editRowId) {
                 editRowId.value = row.dataset.clientId || "";
             }
@@ -2115,6 +2282,9 @@
             }
             if (editClientTradeName) {
                 editClientTradeName.value = data.tradeName;
+            }
+            if (editClientRemarks) {
+                editClientRemarks.value = data.remarks || "new";
             }
             applyLocationSelection(editLocationState, data.location);
             if (editClientPermitNumber) {
@@ -2135,6 +2305,7 @@
             if (editClientOrusPassword) {
                 editClientOrusPassword.value = data.orusPassword || "";
             }
+
         };
 
         const openViewModal = (row) => {
@@ -2156,6 +2327,7 @@
             setEditFormData(row, clientData);
             renderCustomFields(editClientCustomFields, clientData.customFields, "edit");
             editClientModal.show();
+            editClientFormDirty = false;
         };
 
         const openDeleteModal = (row) => {
@@ -2197,8 +2369,15 @@
                 const tinDigits = normalizeDigits(row.dataset.tinRaw || row.dataset.tin || "");
                 const matchesTin = queryDigits ? tinDigits.includes(queryDigits) : false;
                 const matchesQuery = !query || normalize(row.dataset.clientName).includes(query) || matchesTin;
-                const matchesRisk = activeRiskFilter === "all" || normalize(row.dataset.risk || "") === activeRiskFilter;
-                const isVisible = matchesQuery && matchesRisk;
+                const remarksVal = normalize(row.dataset.remarks || "");
+                let matchesRemarksTab = false;
+                if (directoryTabFilter === "active") {
+                    matchesRemarksTab = remarksVal !== "closed" && remarksVal !== "separated";
+                } else {
+                    matchesRemarksTab = remarksVal === "closed" || remarksVal === "separated";
+                }
+                const matchesRemarks = matchesRemarksTab && (activeRemarksFilter === "all" || remarksVal === activeRemarksFilter);
+                const isVisible = matchesQuery && matchesRemarks;
                 row.hidden = !isVisible;
                 row.setAttribute("aria-hidden", String(!isVisible));
                 if (isVisible) {
@@ -2253,7 +2432,8 @@
                 const result = await parseJsonSafe(response);
                 if (!response.ok || !result || !result.ok) {
                     setClientsLoadingState(false);
-                    syncClientRowsFromApi([]);
+                    CLIENTS_DATA = [];
+                    syncSortedClients();
                     const message = result && result.message
                         ? result.message
                         : "Unable to load clients. Please try again.";
@@ -2262,8 +2442,8 @@
                 }
 
                 setClientsLoadingState(false);
-                const clients = Array.isArray(result.clients) ? result.clients : [];
-                syncClientRowsFromApi(clients);
+                CLIENTS_DATA = Array.isArray(result.clients) ? result.clients : [];
+                syncSortedClients();
             } catch (error) {
                 if (error && error.name === "AbortError") {
                     return;
@@ -2274,8 +2454,59 @@
                 }
 
                 setClientsLoadingState(false);
-                syncClientRowsFromApi([]);
+                CLIENTS_DATA = [];
+                syncSortedClients();
                 showToast("Unable to load clients. Please check your connection and try again.");
+            }
+        };
+
+        const handleRestoreClient = async (row) => {
+            if (!row) return;
+            const clientData = getClientDataFromRow(row);
+            if (!clientData || !clientData.clientId) {
+                showToast("Client record is invalid.");
+                return;
+            }
+
+            const payload = {
+                client_name: clientData.clientName,
+                tin_number: clientData.tinRaw || clientData.tin,
+                trade_name: clientData.tradeName,
+                location: clientData.location,
+                permit_number: clientData.permitNumber,
+                birthday: clientData.birthday,
+                email: clientData.email,
+                email_password: clientData.emailPassword,
+                orus_account: clientData.orusAccount,
+                orus_password: clientData.orusPassword,
+                custom_fields: clientData.customFields,
+                forecast_growth_percent: 0,
+                remarks: "active"
+            };
+
+            const csrfToken = getCookieValue("csrftoken");
+            try {
+                const response = await fetch(buildClientDetailApiUrl(clientData.clientId), {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken
+                    },
+                    credentials: "same-origin",
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await parseJsonSafe(response);
+                if (!response.ok || !result || !result.ok) {
+                    const message = result && result.message ? result.message : "Unable to restore client.";
+                    showToast(message);
+                    return;
+                }
+
+                await loadClientsFromApi();
+                showToast(result.message || "Client restored successfully.");
+            } catch (error) {
+                showToast("An error occurred while restoring the client.");
             }
         };
 
@@ -2302,20 +2533,48 @@
                         openEditModal(row);
                     } else if (action === "delete") {
                         openDeleteModal(row);
+                    } else if (action === "restore") {
+                        handleRestoreClient(row);
                     } else if (action === "add-record") {
                         goToFinancialRecords(getClientDataFromRow(row));
                     }
                     return;
                 }
+
+                const actionsCell = event.target.closest(".clients-actions-cell");
+                if (actionsCell) {
+                    return;
+                }
+
+                openViewModal(row);
+            });
+
+            clientsTableBody.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    const row = event.target.closest(".clients-row");
+                    if (!row) {
+                        return;
+                    }
+
+                    if (event.target === row) {
+                        event.preventDefault();
+                        openViewModal(row);
+                    }
+                }
             });
         }
 
         if (clientsSearchInput) {
+            bindTinInput(clientsSearchInput, true);
             clientsSearchInput.addEventListener("input", debounce(applyClientsSearch));
         }
 
-        bindTinInput(addClientTinInput);
-        bindTinInput(editClientTinInput);
+        if (clientsSortSelect) {
+            clientsSortSelect.addEventListener("change", syncSortedClients);
+        }
+
+        bindTinInput(addClientTinInput, false);
+        bindTinInput(editClientTinInput, false);
         bindPasswordToggles();
 
         const addLocationState = createLocationState({
@@ -2366,8 +2625,8 @@
                     email_password: document.getElementById("addClientEmailPassword") ? document.getElementById("addClientEmailPassword").value.trim() : "",
                     orus_account: document.getElementById("addClientOrusAccount") ? document.getElementById("addClientOrusAccount").value.trim() : "",
                     orus_password: document.getElementById("addClientOrusPassword") ? document.getElementById("addClientOrusPassword").value.trim() : "",
-                    custom_fields: collectCustomFields(addClientCustomFields),
-                    risk_level: "medium"
+                    forecast_growth_percent: 0,
+                    custom_fields: collectCustomFields(addClientCustomFields)
                 };
 
                 const csrfToken = getCookieValue("csrftoken");
@@ -2388,6 +2647,7 @@
                     return;
                 }
 
+                addClientFormDirty = false;
                 addClientForm.reset();
                 clearCustomFields(addClientCustomFields);
                 if (addClientModal) {
@@ -2431,8 +2691,8 @@
                     email_password: document.getElementById("editClientEmailPassword") ? document.getElementById("editClientEmailPassword").value.trim() : "",
                     orus_account: document.getElementById("editClientOrusAccount") ? document.getElementById("editClientOrusAccount").value.trim() : "",
                     orus_password: document.getElementById("editClientOrusPassword") ? document.getElementById("editClientOrusPassword").value.trim() : "",
-                    custom_fields: collectCustomFields(editClientCustomFields),
-                    risk_level: editingRow.dataset.risk || "medium"
+                    forecast_growth_percent: 0,
+                    custom_fields: collectCustomFields(editClientCustomFields)
                 };
 
                 const csrfToken = getCookieValue("csrftoken");
@@ -2453,6 +2713,7 @@
                     return;
                 }
 
+                editClientFormDirty = false;
                 if (editClientModal) {
                     editClientModal.hide();
                 }
@@ -2501,16 +2762,79 @@
             });
         }
 
+        if (addClientForm) {
+            addClientForm.addEventListener("input", () => { addClientFormDirty = true; });
+            addClientForm.addEventListener("change", () => { addClientFormDirty = true; });
+        }
+        if (editClientForm) {
+            editClientForm.addEventListener("input", () => { editClientFormDirty = true; });
+            editClientForm.addEventListener("change", () => { editClientFormDirty = true; });
+        }
+
         if (editClientModalElement) {
+            editClientModalElement.addEventListener("hide.bs.modal", (event) => {
+                if (editClientFormDirty) {
+                    event.preventDefault();
+                    if (shared && typeof shared.showConfirmDiscard === "function") {
+                        shared.showConfirmDiscard().then((discard) => {
+                            if (discard) {
+                                editClientFormDirty = false;
+                                if (editClientModal) {
+                                    editClientModal.hide();
+                                }
+                            }
+                        });
+                    } else {
+                        const discard = confirm("You have unsaved changes. Are you sure you want to discard them?");
+                        if (discard) {
+                            editClientFormDirty = false;
+                            if (editClientModal) {
+                                editClientModal.hide();
+                            }
+                        }
+                    }
+                }
+            });
             editClientModalElement.addEventListener("hidden.bs.modal", () => {
+                editClientFormDirty = false;
                 editingRow = null;
+                if (editClientForm) {
+                    editClientForm.reset();
+                }
                 clearCustomFields(editClientCustomFields);
                 resetLocationState(editLocationState);
             });
         }
 
         if (addClientModalElement) {
+            addClientModalElement.addEventListener("hide.bs.modal", (event) => {
+                if (addClientFormDirty) {
+                    event.preventDefault();
+                    if (shared && typeof shared.showConfirmDiscard === "function") {
+                        shared.showConfirmDiscard().then((discard) => {
+                            if (discard) {
+                                addClientFormDirty = false;
+                                if (addClientModal) {
+                                    addClientModal.hide();
+                                }
+                            }
+                        });
+                    } else {
+                        const discard = confirm("You have unsaved changes. Are you sure you want to discard them?");
+                        if (discard) {
+                            addClientFormDirty = false;
+                            if (addClientModal) {
+                                addClientModal.hide();
+                            }
+                        }
+                    }
+                }
+            });
             addClientModalElement.addEventListener("hidden.bs.modal", () => {
+                addClientFormDirty = false;
+                if (addClientForm) {
+                    addClientForm.reset();
+                }
                 clearCustomFields(addClientCustomFields);
                 resetLocationState(addLocationState);
             });
@@ -2602,16 +2926,63 @@
             });
         });
 
+        const updateHeadingText = () => {
+            const clientsListHeading = document.getElementById("clientsListHeading");
+            if (clientsListHeading) {
+                if (directoryTabFilter === "closed") {
+                    clientsListHeading.textContent = "Closed Client Businesses";
+                } else {
+                    clientsListHeading.textContent = "Registered Clients";
+                }
+            }
+        };
+
+        const tabActiveDirectory = document.getElementById("tabActiveDirectory");
+        const tabClosed = document.getElementById("tabClosed");
+
+        if (tabActiveDirectory && tabClosed) {
+            tabActiveDirectory.addEventListener("click", () => {
+                directoryTabFilter = "active";
+                tabActiveDirectory.classList.add("active");
+                tabActiveDirectory.setAttribute("aria-selected", "true");
+                tabClosed.classList.remove("active");
+                tabClosed.setAttribute("aria-selected", "false");
+                updateHeadingText();
+                applyClientsSearch();
+            });
+
+            tabClosed.addEventListener("click", () => {
+                directoryTabFilter = "closed";
+                tabClosed.classList.add("active");
+                tabClosed.setAttribute("aria-selected", "true");
+                tabActiveDirectory.classList.remove("active");
+                tabActiveDirectory.setAttribute("aria-selected", "false");
+                updateHeadingText();
+                applyClientsSearch();
+            });
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
-        const requestedRiskFilter = normalize(urlParams.get("risk") || "all");
-        if (requestedRiskFilter === "high" || requestedRiskFilter === "medium" || requestedRiskFilter === "low") {
-            activeRiskFilter = requestedRiskFilter;
-            if (clientsRiskPreviewNote) {
-                const displayValue = requestedRiskFilter.charAt(0).toUpperCase() + requestedRiskFilter.slice(1);
-                clientsRiskPreviewNote.textContent = `${displayValue}-risk client filter is active.`;
-                clientsRiskPreviewNote.hidden = false;
+        const requestedRemarksFilter = normalize(urlParams.get("remark") || "all");
+        if (requestedRemarksFilter === "new" || requestedRemarksFilter === "active" || requestedRemarksFilter === "separated" || requestedRemarksFilter === "closed") {
+            activeRemarksFilter = requestedRemarksFilter;
+            if (requestedRemarksFilter === "closed" || requestedRemarksFilter === "separated") {
+                directoryTabFilter = "closed";
+                if (tabActiveDirectory && tabClosed) {
+                    tabClosed.classList.add("active");
+                    tabClosed.setAttribute("aria-selected", "true");
+                    tabActiveDirectory.classList.remove("active");
+                    tabActiveDirectory.setAttribute("aria-selected", "false");
+                }
+            }
+            if (clientsRemarksPreviewNote) {
+                const displayValue = requestedRemarksFilter.charAt(0).toUpperCase() + requestedRemarksFilter.slice(1);
+                clientsRemarksPreviewNote.textContent = `${displayValue} client remarks filter is active.`;
+                clientsRemarksPreviewNote.hidden = false;
             }
         }
+
+        updateHeadingText();
 
         hydrateHeaderUser();
         initializeTooltips();

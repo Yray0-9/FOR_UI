@@ -4,15 +4,18 @@ from .user_model import BookkeeperAccount
 
 
 class Client(models.Model):
-    RISK_LOW = "low"
-    RISK_MEDIUM = "medium"
-    RISK_HIGH = "high"
+    REMARK_NEW = "new"
+    REMARK_ACTIVE = "active"
+    REMARK_SEPARATED = "separated"
+    REMARK_CLOSED = "closed"
 
-    RISK_LEVEL_CHOICES = [
-        (RISK_LOW, "Low"),
-        (RISK_MEDIUM, "Medium"),
-        (RISK_HIGH, "High"),
+    REMARK_CHOICES = [
+        (REMARK_NEW, "New"),
+        (REMARK_ACTIVE, "Active"),
+        (REMARK_SEPARATED, "Separated"),
+        (REMARK_CLOSED, "Closed"),
     ]
+
 
     bookkeeper = models.ForeignKey(
         BookkeeperAccount,
@@ -30,10 +33,11 @@ class Client(models.Model):
     orus_account = models.CharField(max_length=255, blank=True, default="")
     orus_password = models.CharField(max_length=255, blank=True, default="")
     custom_fields = models.JSONField(blank=True, default=list)
-    risk_level = models.CharField(
-        max_length=10,
-        choices=RISK_LEVEL_CHOICES,
-        default=RISK_MEDIUM,
+    forecast_growth_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    remarks = models.CharField(
+        max_length=20,
+        choices=REMARK_CHOICES,
+        default=REMARK_NEW,
     )
     date_registered = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -45,7 +49,7 @@ class Client(models.Model):
         indexes = [
             models.Index(fields=["bookkeeper"]),
             models.Index(fields=["client_name"]),
-            models.Index(fields=["risk_level"]),
+            models.Index(fields=["remarks"]),
         ]
 
     def __str__(self) -> str:

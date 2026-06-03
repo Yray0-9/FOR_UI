@@ -67,36 +67,68 @@
 {% block content %}
 <section class="dashboard-content">
     <article class="dashboard-card dashboard-fade-up analytics-filter-card" style="--delay: 0.06s;">
-        <div class="analytics-control-grid">
-            <div class="analytics-control-item">
-                <label class="analytics-control-label" for="analyticsClientSelect">Select Client</label>
-                <select id="analyticsClientSelect" class="form-select analytics-client-select" aria-label="Select client for analytics insights"></select>
-                <div class="analytics-tin-search-wrap mt-2">
-                    <label class="analytics-control-label" for="analyticsTinSearchInput">Search by TIN</label>
+        <div class="analytics-control-grid" style="grid-template-columns: minmax(0, 1.15fr) auto auto;">
+            <div class="analytics-control-item" style="max-width: 480px; width: 100%;">
+                <div class="analytics-tin-search-wrap">
+                    <label class="analytics-control-label" for="analyticsTinSearchInput">Search Client</label>
                     <div class="analytics-tin-search-row">
-                        <input type="text" id="analyticsTinSearchInput" class="form-control analytics-tin-search-input" list="analyticsTinSuggestions" placeholder="Enter client TIN" aria-label="Search client analytics by TIN">
+                        <div class="analytics-tin-search-input-wrap">
+                            <input type="text" id="analyticsTinSearchInput" class="form-control analytics-tin-search-input" placeholder="Enter client name or TIN" aria-label="Search client analytics by name or TIN" autocomplete="off" style="padding-right: 2.2rem;">
+                            <span class="analytics-dropdown-toggle-icon" id="analyticsDropdownToggleIcon" title="Toggle client list"><i class="bi bi-chevron-down"></i></span>
+                            <div id="analyticsCustomDropdown" class="analytics-custom-dropdown" style="display: none;"></div>
+                        </div>
                         <button type="button" class="btn dashboard-action-btn outline analytics-tin-search-btn" id="analyticsTinSearchButton">Find</button>
                     </div>
-                    <datalist id="analyticsTinSuggestions"></datalist>
                 </div>
-                <p class="dashboard-guidance-text mt-2">Select a client to view financial insights.</p>
+                <p class="dashboard-guidance-text mt-2">Enter a client's name or TIN to view financial insights. Clear the input to view all clients.</p>
                 <p class="dashboard-guidance-text mt-2" id="analyticsScopeHint">Viewing: All Clients</p>
             </div>
-            <div class="analytics-guidance-stack" aria-label="Analytics user guidance">
-                <div class="analytics-guidance-chip">
-                    <p>Select a client to begin.</p>
-                </div>
-                <div class="analytics-guidance-chip">
-                    <p>Use TIN search when clients have similar names.</p>
-                </div>
+            
+            <div class="analytics-control-item">
+                <label class="analytics-control-label" for="analyticsYearFilter">Year Range</label>
+                <select id="analyticsYearFilter" class="form-select analytics-select">
+                    <option value="all">All Time</option>
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                </select>
+                <p class="dashboard-guidance-text mt-2">Filter historical data</p>
             </div>
+
+            <div class="analytics-control-item">
+                <label class="analytics-control-label" for="analyticsHorizonFilter">Forecast Horizon</label>
+                <select id="analyticsHorizonFilter" class="form-select analytics-select">
+                    <option value="3">3 Months</option>
+                    <option value="6">6 Months</option>
+                    <option value="12">12 Months</option>
+                </select>
+                <p class="dashboard-guidance-text mt-2">Projection length</p>
+            </div>
+
+            <!-- Hidden native select to store data and handle background triggers -->
+            <select id="analyticsClientSelect" style="display: none;">
+                <option value="all">All Clients</option>
+            </select>
         </div>
     </article>
 
-    <div id="analyticsDataPanels">
+    <div class="analytics-tabs-container dashboard-fade-up mt-3" style="--delay: 0.08s;">
+        <ul class="nav nav-tabs analytics-nav-tabs" id="analyticsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard-tab-pane" type="button" role="tab" aria-controls="dashboard-tab-pane" aria-selected="true"><i class="bi bi-grid"></i> Financial Dashboard</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="forecasting-tab" data-bs-toggle="tab" data-bs-target="#forecasting-tab-pane" type="button" role="tab" aria-controls="forecasting-tab-pane" aria-selected="false"><i class="bi bi-graph-up"></i> Predictive Forecasting</button>
+            </li>
+        </ul>
+    </div>
+
+    <div id="analyticsDataPanels" class="tab-content mt-3">
+        <!-- Tab 1: Financial Dashboard -->
+        <div class="tab-pane fade show active" id="dashboard-tab-pane" role="tabpanel" aria-labelledby="dashboard-tab" tabindex="0">
         <div class="row g-3 dashboard-stats-row mt-1">
-            <div class="col-sm-6 col-xl-3">
-                <article class="dashboard-stat-card dashboard-fade-up" style="--delay: 0.1s;">
+            <div class="col-sm-6 col-xl-3 d-flex">
+                <article class="dashboard-stat-card dashboard-fade-up w-100 h-100" style="--delay: 0.1s;">
                     <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
                     <div>
                         <p class="stat-label">Total Sales</p>
@@ -105,8 +137,8 @@
                     </div>
                 </article>
             </div>
-            <div class="col-sm-6 col-xl-3">
-                <article class="dashboard-stat-card dashboard-fade-up" style="--delay: 0.14s;">
+            <div class="col-sm-6 col-xl-3 d-flex">
+                <article class="dashboard-stat-card dashboard-fade-up w-100 h-100" style="--delay: 0.14s;">
                     <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
                     <div>
                         <p class="stat-label">Total Expenses</p>
@@ -115,8 +147,8 @@
                     </div>
                 </article>
             </div>
-            <div class="col-sm-6 col-xl-3">
-                <article class="dashboard-stat-card dashboard-fade-up" style="--delay: 0.18s;">
+            <div class="col-sm-6 col-xl-3 d-flex">
+                <article class="dashboard-stat-card dashboard-fade-up w-100 h-100" style="--delay: 0.18s;">
                     <div class="stat-icon"><i class="bi bi-receipt"></i></div>
                     <div>
                         <p class="stat-label">Total Tax</p>
@@ -125,13 +157,13 @@
                     </div>
                 </article>
             </div>
-            <div class="col-sm-6 col-xl-3">
-                <article class="dashboard-stat-card dashboard-fade-up" style="--delay: 0.22s;">
+            <div class="col-sm-6 col-xl-3 d-flex">
+                <article class="dashboard-stat-card dashboard-fade-up w-100 h-100" style="--delay: 0.22s;">
                     <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
                     <div>
                         <p class="stat-label">Net Value</p>
                         <h3 id="analyticsNetValueValue">PHP 0.00</h3>
-                        <p class="stat-note">Sales minus expenses and tax</p>
+                        <p class="stat-note">Sales minus expenses</p>
                     </div>
                 </article>
             </div>
@@ -140,7 +172,7 @@
         <p class="analytics-timeframe-caption analytics-timeframe-caption-summary dashboard-fade-up" id="analyticsSummaryTimeframeCaption" style="--delay: 0.24s;">Totals use all recorded entries in the selected scope.</p>
 
         <div class="row g-3 mt-1">
-            <div class="col-12 col-xl-8 d-grid gap-3">
+            <div class="col-12">
                 <article class="dashboard-card dashboard-fade-up" style="--delay: 0.26s;">
                     <div class="dashboard-card-head">
                         <h2>Monthly Trend</h2>
@@ -160,89 +192,80 @@
                         <div class="analytics-month-labels" id="analyticsMonthLabels"></div>
                     </div>
                 </article>
+            </div>
+        </div>
 
-                <article class="dashboard-card dashboard-fade-up analytics-predictive-card" style="--delay: 0.3s;">
+        </div> <!-- End Tab 1 -->
+
+        <!-- Tab 2: Predictive Forecasting -->
+        <div class="tab-pane fade" id="forecasting-tab-pane" role="tabpanel" aria-labelledby="forecasting-tab" tabindex="0">
+            <div class="row g-3 analytics-forecasting-row">
+
+                <div class="col-12 col-lg-6">
+                    <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-card" style="--delay: 0.34s;">
                     <div class="dashboard-card-head">
-                        <h2>Predictive Analytics Forecasting</h2>
-                        <span class="dashboard-tag">Preview</span>
+                        <h2>Forecasting Insight</h2>
                     </div>
-                    <p class="dashboard-panel-hint">Projected next-period outlook for sales, expenses, and tax.</p>
+                    <p class="dashboard-panel-hint">Mathematical forecast for the upcoming period based on your historical financial data.</p>
+                    <p class="analytics-predictive-period" id="analyticsPredictivePeriod">Next period: --</p>
                     <div class="analytics-predictive-grid" aria-label="Predictive analytics forecast summary">
                         <div class="analytics-predictive-item">
-                            <span class="analytics-predictive-label">Expected Sales</span>
-                            <strong class="analytics-predictive-value">PHP --</strong>
-                            <span class="analytics-predictive-subtext">Forecast model pending</span>
+                            <span class="analytics-predictive-label">Projected Sales</span>
+                            <strong class="analytics-predictive-value" id="analyticsPredictiveSalesValue">PHP --</strong>
+                            <span class="analytics-predictive-subtext" id="analyticsPredictiveSalesNote">Needs historical data</span>
                         </div>
                         <div class="analytics-predictive-item">
-                            <span class="analytics-predictive-label">Expected Expenses</span>
-                            <strong class="analytics-predictive-value">PHP --</strong>
-                            <span class="analytics-predictive-subtext">Forecast model pending</span>
+                            <span class="analytics-predictive-label">Projected Expenses</span>
+                            <strong class="analytics-predictive-value" id="analyticsPredictiveExpensesValue">PHP --</strong>
+                            <span class="analytics-predictive-subtext" id="analyticsPredictiveExpensesNote">Needs historical data</span>
                         </div>
                         <div class="analytics-predictive-item">
-                            <span class="analytics-predictive-label">Expected Tax</span>
-                            <strong class="analytics-predictive-value">PHP --</strong>
-                            <span class="analytics-predictive-subtext">Forecast model pending</span>
+                            <span class="analytics-predictive-label">Projected Tax</span>
+                            <strong class="analytics-predictive-value" id="analyticsPredictiveTaxValue">PHP --</strong>
+                            <span class="analytics-predictive-subtext" id="analyticsPredictiveTaxNote">Needs historical data</span>
                         </div>
                     </div>
                     <div class="analytics-predictive-chart">
                         <div class="analytics-predictive-chart-shell" aria-hidden="true">
                             <svg class="analytics-predictive-spark" viewBox="0 0 240 84" preserveAspectRatio="none">
-                                <polyline class="analytics-predictive-line" points=""></polyline>
+                                <polyline class="analytics-predictive-line" id="analyticsPredictiveLine" points=""></polyline>
                             </svg>
-                            <p class="analytics-predictive-placeholder">Forecast visualization will appear once modeling is enabled.</p>
+                            <p class="analytics-predictive-placeholder" id="analyticsPredictivePlaceholder">Forecast visualization will appear after enough data is available.</p>
                         </div>
                     </div>
                 </article>
             </div>
 
-            <div class="col-12 col-xl-4 d-grid gap-3">
-                <article class="dashboard-card dashboard-fade-up" style="--delay: 0.34s;">
+            <div class="col-12 col-lg-6">
+                <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-report-card" style="--delay: 0.36s;">
                     <div class="dashboard-card-head">
-                        <h2>Risk Insight</h2>
+                        <h2>Predictive Forecast Report</h2>
+                        <span class="dashboard-tag">Linear Regression</span>
                     </div>
-                    <div class="analytics-risk-shell">
-                        <span class="analytics-risk-badge medium" id="analyticsRiskBadge">Medium Risk</span>
-                        <h3 class="analytics-risk-title" id="analyticsRiskTitle">Medium Risk</h3>
-                        <p class="analytics-risk-description" id="analyticsRiskDescription">This client has occasional missing entries and needs regular follow-up.</p>
+                    <p class="dashboard-section-hint">Data-driven future projections for the selected forecast horizon.</p>
+                    <div class="table-responsive analytics-predictive-report-scroll">
+                        <table class="table table-hover align-middle dashboard-table analytics-predictive-report-table mb-0" id="predictiveForecastTable">
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Projected Sales</th>
+                                    <th>Projected Expenses</th>
+                                    <th>Projected Tax</th>
+                                    <th>Projected Net Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="predictiveForecastTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">Needs historical data to compute regression lines.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </article>
-
-                <article class="dashboard-card dashboard-fade-up" style="--delay: 0.38s;">
-                    <div class="dashboard-card-head">
-                        <h2>Forecasting</h2>
-                    </div>
-                    <p class="dashboard-panel-hint">Based on previous financial patterns.</p>
-                    <p class="analytics-forecast-value" id="analyticsForecastValue">Expected Trend: Stable</p>
-                    <p class="analytics-forecast-note" id="analyticsForecastDescription">Recent movement suggests a stable financial pattern.</p>
-                    <div class="analytics-sparkline-wrap" aria-hidden="true">
-                        <svg class="analytics-sparkline" viewBox="0 0 240 84" preserveAspectRatio="none">
-                            <polyline id="analyticsForecastLine" class="analytics-sparkline-line" points=""></polyline>
-                        </svg>
-                    </div>
-                </article>
             </div>
-        </div>
-
-        <article class="dashboard-card dashboard-fade-up analytics-comparison-card" id="analyticsComparisonCard" style="--delay: 0.38s;" hidden>
-            <div class="dashboard-card-head">
-                <h2>Client Comparison</h2>
-                <span class="dashboard-tag">All Clients View</span>
             </div>
-            <p class="dashboard-section-hint">Simple comparison to help identify top-performing and high-risk clients.</p>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle dashboard-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Client Name</th>
-                            <th>Total Sales</th>
-                            <th>Risk Level</th>
-                        </tr>
-                    </thead>
-                    <tbody id="analyticsComparisonBody"></tbody>
-                </table>
             </div>
-            <p class="analytics-comparison-note mt-2">Minimal columns for easy scanning.</p>
-        </article>
+        </div> <!-- End Tab 2 -->
     </div>
 
     <article class="analytics-empty-state" id="analyticsEmptyState" hidden>
@@ -296,19 +319,30 @@
         const analyticsExpensesLine = document.getElementById("analyticsExpensesLine");
         const analyticsMonthLabels = document.getElementById("analyticsMonthLabels");
 
-        const analyticsRiskBadge = document.getElementById("analyticsRiskBadge");
-        const analyticsRiskTitle = document.getElementById("analyticsRiskTitle");
-        const analyticsRiskDescription = document.getElementById("analyticsRiskDescription");
+        const analyticsRemarksBadge = document.getElementById("analyticsRemarksBadge");
+        const analyticsRemarksTitle = document.getElementById("analyticsRemarksTitle");
+        const analyticsRemarksDescription = document.getElementById("analyticsRemarksDescription");
 
         const analyticsForecastValue = document.getElementById("analyticsForecastValue");
         const analyticsForecastDescription = document.getElementById("analyticsForecastDescription");
         const analyticsForecastLine = document.getElementById("analyticsForecastLine");
 
-        const analyticsComparisonCard = document.getElementById("analyticsComparisonCard");
-        const analyticsComparisonBody = document.getElementById("analyticsComparisonBody");
+        const analyticsPredictivePeriod = document.getElementById("analyticsPredictivePeriod");
+        const analyticsPredictiveSalesValue = document.getElementById("analyticsPredictiveSalesValue");
+        const analyticsPredictiveExpensesValue = document.getElementById("analyticsPredictiveExpensesValue");
+        const analyticsPredictiveTaxValue = document.getElementById("analyticsPredictiveTaxValue");
+        const analyticsPredictiveSalesNote = document.getElementById("analyticsPredictiveSalesNote");
+        const analyticsPredictiveExpensesNote = document.getElementById("analyticsPredictiveExpensesNote");
+        const analyticsPredictiveTaxNote = document.getElementById("analyticsPredictiveTaxNote");
+        const analyticsPredictiveLine = document.getElementById("analyticsPredictiveLine");
+        const analyticsPredictivePlaceholder = document.getElementById("analyticsPredictivePlaceholder");
+
         const analyticsScopeHint = document.getElementById("analyticsScopeHint");
         const analyticsSummaryTimeframeCaption = document.getElementById("analyticsSummaryTimeframeCaption");
         const analyticsTrendTimeframeCaption = document.getElementById("analyticsTrendTimeframeCaption");
+
+        const analyticsYearFilter = document.getElementById("analyticsYearFilter");
+        const analyticsHorizonFilter = document.getElementById("analyticsHorizonFilter");
 
         if (!body) {
             return;
@@ -437,10 +471,166 @@
             return currencyFormatter.format(Number(value || 0));
         };
 
+        const projectionHasValue = (source, valueKey) => {
+            if (!source || typeof source !== "object") {
+                return false;
+            }
+
+            const applicabilityKey = `${valueKey}_applicable`;
+            if (source[applicabilityKey] === false) {
+                return false;
+            }
+
+            return source[valueKey] !== null && typeof source[valueKey] !== "undefined";
+        };
+
+        const getProjectionCategoryKey = (valueKey) => {
+            if (valueKey === "expected_sales") {
+                return "sales";
+            }
+            if (valueKey === "expected_expenses") {
+                return "expenses";
+            }
+            if (valueKey === "expected_tax") {
+                return "tax";
+            }
+            if (valueKey === "expected_net") {
+                return "expected_net";
+            }
+            return "";
+        };
+
+        const projectionCannotForecast = (source, valueKey) => {
+            if (!source || typeof source !== "object") {
+                return false;
+            }
+
+            const categoryKey = getProjectionCategoryKey(valueKey);
+            if (categoryKey === "expected_net") {
+                return Boolean(source.expected_net_unreliable);
+            }
+
+            const applicabilityKey = `${valueKey}_applicable`;
+            const unreliableKey = `${categoryKey}_unreliable`;
+            return source[applicabilityKey] === true && Boolean(source[unreliableKey]);
+        };
+
+        const formatProjectionCurrency = (source, valueKey) => {
+            if (projectionHasValue(source, valueKey)) {
+                return formatCurrency(source[valueKey]);
+            }
+
+            return projectionCannotForecast(source, valueKey) ? "Cannot forecast" : "N/A";
+        };
+
+        const getProjectionMethodLabel = (source, categoryKey, valueKey) => {
+            if (!projectionHasValue(source, valueKey)) {
+                return projectionCannotForecast(source, valueKey)
+                    ? "Insufficient stable data"
+                    : "Not scheduled this period";
+            }
+
+            return String(source[`${categoryKey}_method`] || "Linear Regression");
+        };
+
+        const formatTin = (value) => {
+            const digits = String(value || "").replace(/\D+/g, "").slice(0, 12);
+            if (!digits) {
+                return "";
+            }
+            const groups = digits.match(/.{1,3}/g) || [];
+            return groups.join("-");
+        };
+
         const normalizeTin = (value) => {
             return String(value || "")
                 .toUpperCase()
                 .replace(/[^A-Z0-9]/g, "");
+        };
+
+        const formatTinForInput = (value, isDeleting = false) => {
+            const digits = String(value || "").replace(/\D+/g, "").slice(0, 12);
+            if (!digits) {
+                return "";
+            }
+
+            const groups = digits.match(/.{1,3}/g) || [];
+            let formatted = groups.join("-");
+            if (digits.length % 3 === 0 && digits.length < 12 && !isDeleting) {
+                formatted += "-";
+            }
+            return formatted;
+        };
+
+        const getCursorIndexForDigitCount = (formattedValue, digitCount) => {
+            if (digitCount <= 0) {
+                return 0;
+            }
+
+            let digitsSeen = 0;
+            for (let index = 0; index < formattedValue.length; index += 1) {
+                if (/\d/.test(formattedValue[index])) {
+                    digitsSeen += 1;
+                    if (digitsSeen === digitCount) {
+                        return index + 1;
+                    }
+                }
+            }
+
+            return formattedValue.length;
+        };
+
+        const bindTinInput = (inputElement) => {
+            if (!inputElement) {
+                return;
+            }
+
+            let isDeleting = false;
+            inputElement.addEventListener("keydown", (event) => {
+                isDeleting = event.key === "Backspace" || event.key === "Delete";
+            });
+
+            inputElement.addEventListener("input", () => {
+                let rawValue = inputElement.value;
+                const startsWithDigit = /^\s*\d/.test(rawValue);
+                
+                if (startsWithDigit) {
+                    const cleaned = rawValue.replace(/[^\d-]/g, "");
+                    if (rawValue !== cleaned) {
+                        rawValue = cleaned;
+                        inputElement.value = cleaned;
+                    }
+                } else if (/[a-zA-Z]/.test(rawValue)) {
+                    return;
+                }
+
+                const selectionStart = typeof inputElement.selectionStart === "number"
+                    ? inputElement.selectionStart
+                    : rawValue.length;
+                const digitsBeforeCursor = String(rawValue.slice(0, selectionStart)).replace(/\D+/g, "").length;
+                const formattedValue = formatTinForInput(rawValue, isDeleting);
+
+                if (rawValue !== formattedValue) {
+                    inputElement.value = formattedValue;
+                    if (document.activeElement === inputElement && typeof inputElement.setSelectionRange === "function") {
+                        const totalDigits = String(formattedValue).replace(/\D+/g, "").length;
+                        const cursorIndex = formattedValue.endsWith("-") && digitsBeforeCursor === totalDigits
+                            ? formattedValue.length
+                            : getCursorIndexForDigitCount(formattedValue, digitsBeforeCursor);
+                        inputElement.setSelectionRange(cursorIndex, cursorIndex);
+                    }
+                }
+            });
+
+            inputElement.addEventListener("blur", () => {
+                const value = inputElement.value;
+                if (value && /^\s*\d/.test(value)) {
+                    const digits = String(value).replace(/\D+/g, "");
+                    if (digits) {
+                        inputElement.value = formatTin(value);
+                    }
+                }
+            });
         };
 
         const findClientById = (clientId) => {
@@ -454,15 +644,42 @@
             }) || null;
         };
 
-        const findClientByTin = (tinValue) => {
-            const targetTin = normalizeTin(tinValue);
-            if (!targetTin) {
+        const findClientByNameOrTin = (query) => {
+            const cleanQuery = String(query || "").trim().toLowerCase();
+            if (!cleanQuery) {
                 return null;
             }
 
-            return analyticsAvailableClients.find((clientOption) => {
-                return normalizeTin(clientOption.tin_number) === targetTin;
-            }) || null;
+            // 1. Try exact match on name
+            let matched = analyticsAvailableClients.find((c) => {
+                return String(c.client_name || "").toLowerCase() === cleanQuery;
+            });
+            if (matched) return matched;
+
+            // 2. Try exact match on TIN
+            const cleanDigits = cleanQuery.replace(/\D+/g, "");
+            if (cleanDigits) {
+                matched = analyticsAvailableClients.find((c) => {
+                    return String(c.tin_number || "").replace(/\D+/g, "") === cleanDigits;
+                });
+                if (matched) return matched;
+            }
+
+            // 3. Try partial match on name
+            matched = analyticsAvailableClients.find((c) => {
+                return String(c.client_name || "").toLowerCase().includes(cleanQuery);
+            });
+            if (matched) return matched;
+
+            // 4. Try partial match on TIN
+            if (cleanDigits) {
+                matched = analyticsAvailableClients.find((c) => {
+                    return String(c.tin_number || "").replace(/\D+/g, "").includes(cleanDigits);
+                });
+                if (matched) return matched;
+            }
+
+            return null;
         };
 
         const syncTinInputForClientId = (clientId) => {
@@ -472,27 +689,113 @@
 
             const matchedClient = findClientById(clientId);
             analyticsTinSearchInput.value = matchedClient && matchedClient.tin_number
-                ? String(matchedClient.tin_number)
+                ? formatTin(matchedClient.tin_number)
                 : "";
         };
 
-        const renderTinSuggestions = () => {
-            if (!analyticsTinSuggestions) {
-                return;
+        let activeDropdownFocusIndex = -1;
+
+        const renderCustomDropdown = (query) => {
+            const dropdown = document.getElementById("analyticsCustomDropdown");
+            if (!dropdown) return;
+
+            dropdown.innerHTML = "";
+            activeDropdownFocusIndex = -1;
+
+            const cleanQuery = String(query || "").trim().toLowerCase();
+            let filtered = [];
+
+            if (!cleanQuery) {
+                filtered = analyticsAvailableClients;
+            } else {
+                const cleanDigits = cleanQuery.replace(/\D+/g, "");
+                filtered = analyticsAvailableClients.filter((client) => {
+                    const nameMatch = String(client.client_name || "").toLowerCase().includes(cleanQuery);
+                    const tinMatch = cleanDigits && String(client.tin_number || "").replace(/\D+/g, "").includes(cleanDigits);
+                    return nameMatch || tinMatch;
+                });
             }
 
-            analyticsTinSuggestions.innerHTML = "";
+            const currentSelectedValue = analyticsClientSelect ? analyticsClientSelect.value : "all";
 
-            analyticsAvailableClients.forEach((clientOption) => {
-                const tinValue = String(clientOption.tin_number || "").trim();
-                if (!tinValue) {
-                    return;
+            // "All Clients" Option
+            const allItem = document.createElement("div");
+            allItem.className = "analytics-custom-dropdown-item";
+            allItem.dataset.id = "all";
+            if (currentSelectedValue === "all") {
+                allItem.classList.add("is-active");
+            }
+            allItem.innerHTML = `<span>All Clients</span><span class="item-tin">Reset filter</span>`;
+            dropdown.appendChild(allItem);
+
+            filtered.forEach((client) => {
+                const item = document.createElement("div");
+                item.className = "analytics-custom-dropdown-item";
+                item.dataset.id = String(client.id);
+                if (String(client.id) === currentSelectedValue) {
+                    item.classList.add("is-active");
                 }
+                const clientName = String(client.client_name || "Client");
+                const clientTin = String(client.tin_number || "").trim();
+                item.innerHTML = `<span>${escapeHtml(clientName)}</span>${clientTin ? `<span class="item-tin">TIN: ${formatTin(clientTin)}</span>` : ""}`;
+                dropdown.appendChild(item);
+            });
 
-                const optionElement = document.createElement("option");
-                optionElement.value = tinValue;
-                optionElement.label = String(clientOption.client_name || "Client");
-                analyticsTinSuggestions.appendChild(optionElement);
+            if (filtered.length === 0 && cleanQuery) {
+                const emptyItem = document.createElement("div");
+                emptyItem.className = "analytics-custom-dropdown-empty";
+                emptyItem.textContent = "No matching clients found";
+                dropdown.appendChild(emptyItem);
+            }
+
+            // Click Events
+            const items = dropdown.querySelectorAll(".analytics-custom-dropdown-item");
+            items.forEach((item) => {
+                item.addEventListener("click", () => {
+                    const selectedVal = item.dataset.id;
+                    if (analyticsClientSelect) {
+                        analyticsClientSelect.value = selectedVal;
+                        analyticsClientSelect.dispatchEvent(new Event("change"));
+                    }
+                    hideCustomDropdown();
+                });
+            });
+        };
+
+        const showCustomDropdown = () => {
+            const dropdown = document.getElementById("analyticsCustomDropdown");
+            const toggleIcon = document.getElementById("analyticsDropdownToggleIcon");
+            if (!dropdown) return;
+
+            renderCustomDropdown(analyticsTinSearchInput ? analyticsTinSearchInput.value : "");
+            dropdown.style.display = "block";
+            
+            if (toggleIcon) {
+                toggleIcon.style.transform = "translateY(-50%) rotate(180deg)";
+            }
+        };
+
+        const hideCustomDropdown = () => {
+            const dropdown = document.getElementById("analyticsCustomDropdown");
+            const toggleIcon = document.getElementById("analyticsDropdownToggleIcon");
+            if (dropdown) {
+                dropdown.style.display = "none";
+            }
+            if (toggleIcon) {
+                toggleIcon.style.transform = "translateY(-50%)";
+            }
+            activeDropdownFocusIndex = -1;
+        };
+
+        const updateDropdownFocus = (items) => {
+            items.forEach((item, idx) => {
+                if (idx === activeDropdownFocusIndex) {
+                    item.classList.add("is-focused");
+                    // Ensure focused item is visible in scrolling overlay container
+                    item.scrollIntoView({ block: "nearest" });
+                } else {
+                    item.classList.remove("is-focused");
+                }
             });
         };
 
@@ -894,44 +1197,141 @@
             animatePolyline(analyticsForecastLine, { duration: 640, delay: 0 });
         };
 
-        const applyRiskMeta = (risk) => {
-            if (!analyticsRiskBadge || !analyticsRiskTitle || !analyticsRiskDescription) {
+        const renderPredictiveSparkline = (values) => {
+            if (!analyticsPredictiveLine) {
                 return;
             }
 
-            const normalizedLevel = String((risk && risk.level) || "medium").toLowerCase();
-            const title = String((risk && risk.title) || "Medium Risk");
-            const description = String((risk && risk.description) || "This client needs regular follow-up.");
+            const points = buildPolylinePoints(values, 240, 84, {
+                left: 8,
+                right: 8,
+                top: 8,
+                bottom: 10,
+            });
 
-            analyticsRiskBadge.classList.remove("low", "medium", "high");
-            if (normalizedLevel === "low" || normalizedLevel === "high") {
-                analyticsRiskBadge.classList.add(normalizedLevel);
-            } else {
-                analyticsRiskBadge.classList.add("medium");
-            }
-
-            analyticsRiskBadge.textContent = title;
-            analyticsRiskTitle.textContent = title;
-            analyticsRiskDescription.textContent = description;
+            analyticsPredictiveLine.setAttribute("points", points);
+            animatePolyline(analyticsPredictiveLine, { duration: 640, delay: 0 });
         };
 
-        const renderComparisonTable = (rows) => {
-            if (!analyticsComparisonBody) {
+        const applyPredictiveForecast = (forecast) => {
+            const safeForecast = forecast && typeof forecast === "object" ? forecast : {};
+            const hasForecast = Boolean(safeForecast.has_forecast);
+            const basis = String(safeForecast.basis || "Forecast based on recent entries.");
+            const nextPeriodLabel = String(safeForecast.next_period_label || "").trim();
+            const frequencyLabel = String(safeForecast.frequency_label || "").trim();
+            const periodHasFrequency = /\bQ\d\b/.test(nextPeriodLabel) || /Annual/i.test(nextPeriodLabel);
+            const frequencySuffix = frequencyLabel && !periodHasFrequency ? ` • ${frequencyLabel}` : "";
+
+            if (analyticsPredictivePeriod) {
+                analyticsPredictivePeriod.textContent = nextPeriodLabel
+                    ? `Next period: ${nextPeriodLabel}${frequencySuffix}`
+                    : "Next period: --";
+            }
+
+            if (analyticsPredictiveSalesValue) {
+                analyticsPredictiveSalesValue.textContent = hasForecast
+                    ? formatProjectionCurrency(safeForecast, "expected_sales")
+                    : "PHP --";
+            }
+            if (analyticsPredictiveExpensesValue) {
+                analyticsPredictiveExpensesValue.textContent = hasForecast
+                    ? formatProjectionCurrency(safeForecast, "expected_expenses")
+                    : "PHP --";
+            }
+            if (analyticsPredictiveTaxValue) {
+                analyticsPredictiveTaxValue.textContent = hasForecast
+                    ? formatProjectionCurrency(safeForecast, "expected_tax")
+                    : "PHP --";
+            }
+
+            const pendingLabel = "Needs historical data";
+            if (analyticsPredictiveSalesNote) {
+                analyticsPredictiveSalesNote.textContent = hasForecast
+                    ? getProjectionMethodLabel(safeForecast, "sales", "expected_sales")
+                    : pendingLabel;
+            }
+            if (analyticsPredictiveExpensesNote) {
+                analyticsPredictiveExpensesNote.textContent = hasForecast
+                    ? getProjectionMethodLabel(safeForecast, "expenses", "expected_expenses")
+                    : pendingLabel;
+            }
+            if (analyticsPredictiveTaxNote) {
+                analyticsPredictiveTaxNote.textContent = hasForecast
+                    ? getProjectionMethodLabel(safeForecast, "tax", "expected_tax")
+                    : pendingLabel;
+            }
+
+            if (analyticsPredictivePlaceholder) {
+                analyticsPredictivePlaceholder.textContent = hasForecast
+                    ? basis
+                    : "Forecast visualization will appear after enough data is available.";
+            }
+
+            renderPredictiveSparkline(hasForecast ? (safeForecast.sparkline || []) : []);
+        };
+
+        const predictiveForecastTableBody = document.getElementById("predictiveForecastTableBody");
+
+        const renderPredictiveForecastReport = (futureProjections) => {
+            if (!predictiveForecastTableBody) {
                 return;
             }
 
-            const safeRows = Array.isArray(rows) ? rows : [];
-            analyticsComparisonBody.innerHTML = safeRows
-                .map((row) => {
+            const safeProjections = Array.isArray(futureProjections) ? futureProjections : [];
+            if (!safeProjections.length) {
+                predictiveForecastTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Needs historical data to compute regression lines.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            predictiveForecastTableBody.innerHTML = safeProjections
+                .map((proj) => {
+                    const period = String(proj.period_label || "-");
+                    const sales = formatProjectionCurrency(proj, "expected_sales");
+                    const expenses = formatProjectionCurrency(proj, "expected_expenses");
+                    const tax = formatProjectionCurrency(proj, "expected_tax");
+                    const net = formatProjectionCurrency(proj, "expected_net");
+
+                    const netNum = Number(proj.expected_net || 0);
+                    const netClass = projectionHasValue(proj, "expected_net")
+                        ? (netNum > 0 ? "text-success" : (netNum < 0 ? "text-danger" : "text-muted"))
+                        : "text-muted";
+
                     return `
                         <tr>
-                            <td>${escapeHtml(row.client_name || row.clientName || "")}</td>
-                            <td>${escapeHtml(formatCurrency(row.total_sales || row.totalSales || 0))}</td>
-                            <td>${escapeHtml(row.risk_level_label || row.riskLevel || "Medium")}</td>
+                            <td><strong>${escapeHtml(period)}</strong></td>
+                            <td>${escapeHtml(sales)}</td>
+                            <td>${escapeHtml(expenses)}</td>
+                            <td>${escapeHtml(tax)}</td>
+                            <td><strong class="${netClass}">${escapeHtml(net)}</strong></td>
                         </tr>
                     `;
                 })
                 .join("");
+        };
+
+        const applyRemarksMeta = (remarksInsight) => {
+            if (!analyticsRemarksBadge || !analyticsRemarksTitle || !analyticsRemarksDescription) {
+                return;
+            }
+
+            const normalizedLevel = String((remarksInsight && remarksInsight.level) || "active").toLowerCase();
+            const title = String((remarksInsight && remarksInsight.title) || "Active Client");
+            const description = String((remarksInsight && remarksInsight.description) || "This client actively pays and files their compliance regularly.");
+
+            analyticsRemarksBadge.classList.remove("new", "active", "separated", "closed");
+            if (["new", "active", "separated", "closed"].includes(normalizedLevel)) {
+                analyticsRemarksBadge.classList.add(normalizedLevel);
+            } else {
+                analyticsRemarksBadge.classList.add("active");
+            }
+
+            analyticsRemarksBadge.textContent = remarksInsight && remarksInsight.title ? remarksInsight.title : "Active";
+            analyticsRemarksTitle.textContent = title;
+            analyticsRemarksDescription.textContent = description;
         };
 
         const applyAnalyticsFallbackState = () => {
@@ -963,9 +1363,9 @@
             }
 
             renderTrend([]);
-            applyRiskMeta({
-                level: "medium",
-                title: "Medium Risk",
+            applyRemarksMeta({
+                level: "active",
+                title: "Active Client",
                 description: "Data will appear once financial records are available.",
             });
 
@@ -977,11 +1377,13 @@
             }
             renderForecastSparkline([]);
 
-            if (analyticsComparisonCard) {
-                analyticsComparisonCard.hidden = true;
-            }
-            renderComparisonTable([]);
+            applyPredictiveForecast({
+                has_forecast: false,
+            });
+
         };
+
+
 
         const applyAnalyticsPayload = (payload) => {
             const hasData = Boolean(payload && payload.has_data);
@@ -1003,22 +1405,25 @@
             }
 
             const summary = payload && payload.summary ? payload.summary : {};
+            const totalSalesValue = Number(summary.total_sales || 0);
+            const totalExpensesValue = Number(summary.total_expenses || 0);
+            const netValue = totalSalesValue - totalExpensesValue;
             if (analyticsTotalSalesValue) {
-                analyticsTotalSalesValue.textContent = formatCurrency(summary.total_sales || 0);
+                analyticsTotalSalesValue.textContent = formatCurrency(totalSalesValue);
             }
             if (analyticsTotalExpensesValue) {
-                analyticsTotalExpensesValue.textContent = formatCurrency(summary.total_expenses || 0);
+                analyticsTotalExpensesValue.textContent = formatCurrency(totalExpensesValue);
             }
             if (analyticsTotalTaxValue) {
                 analyticsTotalTaxValue.textContent = formatCurrency(summary.total_tax || 0);
             }
             if (analyticsNetValueValue) {
-                analyticsNetValueValue.textContent = formatCurrency(summary.net_value || 0);
+                analyticsNetValueValue.textContent = formatCurrency(netValue);
             }
 
             const trendRows = payload && Array.isArray(payload.monthly_trend) ? payload.monthly_trend : [];
             renderTrend(trendRows);
-            applyRiskMeta(payload && payload.risk_insight ? payload.risk_insight : {});
+            applyRemarksMeta(payload && payload.remarks_insight ? payload.remarks_insight : {});
 
             const forecast = payload && payload.forecast ? payload.forecast : {};
             if (analyticsForecastValue) {
@@ -1031,6 +1436,11 @@
             }
             renderForecastSparkline(forecast.sparkline || []);
 
+            const predictiveForecast = payload && payload.predictive_forecast ? payload.predictive_forecast : {};
+            applyPredictiveForecast(predictiveForecast);
+            renderPredictiveForecastReport(predictiveForecast.future_projections || []);
+
+
             const scope = payload && payload.scope ? payload.scope : {};
             const isAllClients = Boolean(scope.is_all);
             applyTimeframeCaptions(scope, trendRows);
@@ -1039,33 +1449,30 @@
                 const scopeClientTin = String(scope.client_tin || "").trim();
                 const scopeLabel = isAllClients
                     ? "Viewing: All Clients"
-                    : `Viewing: ${scopeClientName}${scopeClientTin ? ` (TIN: ${scopeClientTin})` : ""}`;
+                    : `Viewing: ${scopeClientName}${scopeClientTin ? ` (TIN: ${formatTin(scopeClientTin)})` : ""}`;
                 analyticsScopeHint.textContent = scopeLabel;
             }
             syncAnalyticsUrlFromScope(scope);
-            const comparisonRows = payload && Array.isArray(payload.comparison) ? payload.comparison : [];
-            if (analyticsComparisonCard) {
-                analyticsComparisonCard.hidden = !isAllClients || comparisonRows.length === 0;
-            }
-            renderComparisonTable(comparisonRows);
         };
 
         const populateClientSelector = (availableClients, selectedClientId) => {
+            const activeClients = (Array.isArray(availableClients) ? availableClients : [])
+                .filter((c) => String(c.remarks || "").toLowerCase() !== "closed");
+
+            analyticsAvailableClients = activeClients.map((clientOption) => ({
+                id: clientOption.id,
+                client_name: clientOption.client_name,
+                tin_number: clientOption.tin_number || "",
+                trade_name: clientOption.trade_name || "",
+                remarks: clientOption.remarks || "new",
+            }));
+
+            renderCustomDropdown("");
+            setTinSearchEnabled(analyticsAvailableClients.length > 0);
+
             if (!analyticsClientSelect) {
                 return;
             }
-
-            analyticsAvailableClients = Array.isArray(availableClients)
-                ? availableClients.map((clientOption) => ({
-                    id: clientOption.id,
-                    client_name: clientOption.client_name,
-                    tin_number: clientOption.tin_number || "",
-                    trade_name: clientOption.trade_name || "",
-                }))
-                : [];
-
-            renderTinSuggestions();
-            setTinSearchEnabled(analyticsAvailableClients.length > 0);
 
             analyticsClientSelect.innerHTML = "";
 
@@ -1074,13 +1481,13 @@
             allOptionElement.textContent = "All Clients";
             analyticsClientSelect.appendChild(allOptionElement);
 
-            (Array.isArray(availableClients) ? availableClients : []).forEach((clientOption) => {
+            analyticsAvailableClients.forEach((clientOption) => {
                 const optionElement = document.createElement("option");
                 optionElement.value = String(clientOption.id || "");
                 const clientName = String(clientOption.client_name || "Client");
                 const clientTin = String(clientOption.tin_number || "").trim();
                 optionElement.textContent = clientTin
-                    ? `${clientName} (TIN: ${clientTin})`
+                    ? `${clientName} (TIN: ${formatTin(clientTin)})`
                     : clientName;
                 analyticsClientSelect.appendChild(optionElement);
             });
@@ -1116,29 +1523,34 @@
         };
 
         const buildAnalyticsSummaryApiUrl = (clientId) => {
-            if (!Number.isFinite(clientId) || clientId <= 0) {
-                return ANALYTICS_SUMMARY_API_URL;
+            const params = new URLSearchParams();
+            
+            if (Number.isFinite(clientId) && clientId > 0) {
+                params.set("client_id", String(clientId));
+            }
+            
+            if (analyticsYearFilter && analyticsYearFilter.value !== "all") {
+                params.set("year", analyticsYearFilter.value);
+            }
+            
+            if (analyticsHorizonFilter) {
+                params.set("horizon", analyticsHorizonFilter.value);
             }
 
-            const params = new URLSearchParams();
-            params.set("client_id", String(clientId));
             return `${ANALYTICS_SUMMARY_API_URL}?${params.toString()}`;
         };
 
         const handleTinSearch = () => {
-            const tinValue = String(analyticsTinSearchInput ? analyticsTinSearchInput.value : "").trim();
-            if (!tinValue) {
-                if (analyticsClientSelect) {
-                    analyticsClientSelect.value = "all";
-                }
+            const queryValue = String(analyticsTinSearchInput ? analyticsTinSearchInput.value : "").trim();
+            if (!queryValue) {
                 analyticsScopeForced = false;
                 loadAnalyticsSummaryFromApi(null);
                 return;
             }
 
-            const matchedClient = findClientByTin(tinValue);
+            const matchedClient = findClientByNameOrTin(queryValue);
             if (!matchedClient) {
-                showToast("No client matched that TIN. Please check the value and try again.", "warning");
+                showToast("No client matched that name or TIN. Please check the value and try again.", "warning");
                 return;
             }
 
@@ -1148,11 +1560,10 @@
                 return;
             }
 
-            if (analyticsClientSelect) {
-                analyticsClientSelect.value = String(matchedClientId);
-            }
             analyticsScopeForced = true;
-            syncTinInputForClientId(matchedClientId);
+            if (analyticsTinSearchInput) {
+                analyticsTinSearchInput.value = formatTin(matchedClient.tin_number);
+            }
             loadAnalyticsSummaryFromApi(matchedClientId);
         };
 
@@ -1230,8 +1641,20 @@
             applyAnalyticsFallbackState();
             hydrateHeaderUser();
             setTinSearchEnabled(false);
-            if (analyticsTinSearchInput && initialTinParam) {
-                analyticsTinSearchInput.value = initialTinParam;
+            if (analyticsTinSearchInput) {
+                bindTinInput(analyticsTinSearchInput);
+                if (initialTinParam) {
+                    analyticsTinSearchInput.value = formatTin(initialTinParam);
+                }
+
+                // Autocomplete Focus & Dynamic Input Listeners
+                analyticsTinSearchInput.addEventListener("focus", () => {
+                    showCustomDropdown();
+                });
+
+                analyticsTinSearchInput.addEventListener("input", () => {
+                    showCustomDropdown();
+                });
             }
 
             const defaults = await fetchWorkspaceDefaults();
@@ -1254,6 +1677,18 @@
                     loadAnalyticsSummaryFromApi(selectedClientId);
                 });
             }
+            
+            if (analyticsYearFilter) {
+                analyticsYearFilter.addEventListener("change", () => {
+                    loadAnalyticsSummaryFromApi(getSelectedClientId());
+                });
+            }
+            
+            if (analyticsHorizonFilter) {
+                analyticsHorizonFilter.addEventListener("change", () => {
+                    loadAnalyticsSummaryFromApi(getSelectedClientId());
+                });
+            }
 
             if (analyticsTinSearchButton) {
                 analyticsTinSearchButton.addEventListener("click", () => {
@@ -1263,12 +1698,66 @@
 
             if (analyticsTinSearchInput) {
                 analyticsTinSearchInput.addEventListener("keydown", (event) => {
+                    const dropdown = document.getElementById("analyticsCustomDropdown");
+                    if (dropdown && dropdown.style.display === "block") {
+                        const items = Array.from(dropdown.querySelectorAll(".analytics-custom-dropdown-item"));
+                        if (items.length > 0) {
+                            if (event.key === "ArrowDown") {
+                                event.preventDefault();
+                                activeDropdownFocusIndex = (activeDropdownFocusIndex + 1) % items.length;
+                                updateDropdownFocus(items);
+                                return;
+                            }
+                            if (event.key === "ArrowUp") {
+                                event.preventDefault();
+                                activeDropdownFocusIndex = (activeDropdownFocusIndex - 1 + items.length) % items.length;
+                                updateDropdownFocus(items);
+                                return;
+                            }
+                            if (event.key === "Enter") {
+                                if (activeDropdownFocusIndex >= 0 && activeDropdownFocusIndex < items.length) {
+                                    event.preventDefault();
+                                    items[activeDropdownFocusIndex].click();
+                                    return;
+                                }
+                            }
+                            if (event.key === "Escape") {
+                                event.preventDefault();
+                                hideCustomDropdown();
+                                return;
+                            }
+                        }
+                    }
+
                     if (event.key === "Enter") {
                         event.preventDefault();
                         handleTinSearch();
                     }
                 });
             }
+
+            const toggleIcon = document.getElementById("analyticsDropdownToggleIcon");
+            if (toggleIcon) {
+                toggleIcon.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    const dropdown = document.getElementById("analyticsCustomDropdown");
+                    if (dropdown && dropdown.style.display === "block") {
+                        hideCustomDropdown();
+                    } else {
+                        if (analyticsTinSearchInput) {
+                            analyticsTinSearchInput.focus();
+                        }
+                        showCustomDropdown();
+                    }
+                });
+            }
+
+            document.addEventListener("click", (event) => {
+                const searchWrap = document.querySelector(".analytics-tin-search-input-wrap");
+                if (searchWrap && !searchWrap.contains(event.target)) {
+                    hideCustomDropdown();
+                }
+            });
 
             if (dashboardProfileAction) {
                 dashboardProfileAction.addEventListener("click", (event) => {

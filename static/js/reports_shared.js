@@ -64,6 +64,85 @@
         return columns.some((label) => /net\s*value|sales|expenses|tax/i.test(String(label || "")));
     };
 
+    const normalizeFinancialSummaryColumns = (columns) => {
+        const normalizedColumns = Array.isArray(columns) ? columns : [];
+        const priority = {
+            period: 0,
+            sales: 1,
+            expenses: 2,
+            tax: 3,
+            netvalue: 4,
+            net_value: 4,
+        };
+
+        const toSortKey = (label) => {
+            const text = String(label || "").trim();
+            const compact = text.toLowerCase().replace(/[^a-z0-9]+/g, "");
+            const matchedPriority = priority[compact];
+            return Number.isFinite(matchedPriority) ? matchedPriority : 50;
+        };
+
+        const periodColumns = [];
+        const salesColumns = [];
+        const expenseColumns = [];
+        const taxColumns = [];
+        const otherColumns = [];
+        const netColumns = [];
+
+        normalizedColumns.forEach((column) => {
+            const label = toColumnLabel(column);
+            const compact = String(label || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+            if (!label) {
+                return;
+            }
+
+            if (/^period|month$/.test(compact)) {
+                periodColumns.push(column);
+                return;
+            }
+
+            if (compact === "sales") {
+                salesColumns.push(column);
+                return;
+            }
+
+            if (compact === "expenses") {
+                expenseColumns.push(column);
+                return;
+            }
+
+            if (compact === "tax") {
+                taxColumns.push(column);
+                return;
+            }
+
+            if (compact === "netvalue" || compact === "net_value") {
+                netColumns.push(column);
+                return;
+            }
+
+            otherColumns.push({ column, sortKey: toSortKey(label), label: label.toLowerCase() });
+        });
+
+        otherColumns.sort((left, right) => {
+            if (left.sortKey !== right.sortKey) {
+                return left.sortKey - right.sortKey;
+            }
+
+            return left.label.localeCompare(right.label);
+        });
+
+        return [
+            ...periodColumns,
+            ...salesColumns,
+            ...expenseColumns,
+            ...taxColumns,
+            ...otherColumns.map((entry) => entry.column),
+            ...netColumns,
+        ];
+    };
+
     const buildReportSheetHtml = (options) => {
         const settings = options && typeof options === "object" ? options : {};
         const meta = settings.meta && typeof settings.meta === "object" ? settings.meta : {};
@@ -107,7 +186,7 @@
         const columns = rawColumns
             .map((column) => toColumnLabel(column))
             .filter((label) => Boolean(String(label || "").trim()));
-        const finalColumns = columns.length ? columns : ["Details"];
+        const finalColumns = columns.length ? normalizeFinancialSummaryColumns(columns) : ["Details"];
 
         const rows = Array.isArray(table.rows) ? table.rows : [];
         const minRows = Number.isFinite(table.minRows) ? table.minRows : 14;
@@ -152,15 +231,26 @@
             }
         }
 
-        const rowsWithTotals = totalsRow ? [...rows, totalsRow] : rows;
-        const rowCount = Math.max(minRows, rowsWithTotals.length);
+        let finalRows = [...rows];
+        if (totalsRow) {
+            if (rows.length < minRows - 1) {
+                const blankPaddingCount = minRows - rows.length - 1;
+                for (let i = 0; i < blankPaddingCount; i++) {
+                    finalRows.push(null);
+                }
+                finalRows.push(totalsRow);
+            } else {
+                finalRows.push(totalsRow);
+            }
+        }
+        const rowCount = Math.max(minRows, finalRows.length);
 
         const headerMarkup = finalColumns
             .map((label) => `<th>${escapeHtml(toDisplayText(label, "VALUE"))}</th>`)
             .join("");
 
         const rowsMarkup = Array.from({ length: rowCount }, (_, rowIndex) => {
-            const row = rowsWithTotals[rowIndex];
+            const row = finalRows[rowIndex];
             if (!row) {
                 return `
                     <tr>
@@ -168,6 +258,9 @@
                     </tr>
                 `;
             }
+
+            const isTotalsRow = row === totalsRow;
+            const rowClass = isTotalsRow ? ' class="reports-ledger-totals-row"' : "";
 
             const rowCells = Array.isArray(row) ? row : finalColumns.map((column) => row[column]);
             const cellsMarkup = finalColumns
@@ -177,7 +270,7 @@
                 .join("");
 
             return `
-                <tr>
+                <tr${rowClass}>
                     ${cellsMarkup}
                 </tr>
             `;
@@ -246,9 +339,11 @@
                     </tr>
                     <tr>
                         <th>Email Password</th>
-                        <td>${escapeHtml(emailPassword)}</td>
+                        <td colspan="3">${escapeHtml(emailPassword)}</td>
+                    </tr>
+                    <tr>
                         <th>ORUS Account</th>
-                        <td>${escapeHtml(orusAccount)}</td>
+                        <td colspan="3">${escapeHtml(orusAccount)}</td>
                     </tr>
                     <tr>
                         <th>ORUS Password</th>
@@ -277,5 +372,6 @@
 
     window.SafeBooksReportsShared = {
         buildReportSheetHtml,
+        normalizeFinancialSummaryColumns,
     };
 })();

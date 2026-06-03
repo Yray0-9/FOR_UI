@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from django.db.models import Count, OuterRef, Q, Subquery
@@ -43,14 +44,23 @@ def _months_between(start_date, end_date) -> int:
 
 def _is_due_for_frequency(last_entry_date, frequency: str, reference_date) -> bool:
     interval = FREQUENCY_INTERVALS.get(frequency, 1)
-    return _months_between(last_entry_date, reference_date) >= interval
+    months_passed = _months_between(last_entry_date, reference_date)
+
+    if frequency == FinancialRecord.FREQUENCY_QUARTERLY:
+        return months_passed > interval
+
+    return months_passed >= interval
 
 
 def _build_client_activity_payload(client, current_period_label: str, reference_date) -> dict:
     has_entries = (client.record_count or 0) > 0
     has_current_period_entries = (client.current_period_entries or 0) > 0
     frequency = client.last_frequency or FinancialRecord.FREQUENCY_MONTHLY
-    is_due = has_entries and _is_due_for_frequency(client.last_entry_date, frequency, reference_date)
+    deadline_date = getattr(client, "last_deadline_date", None)
+    if deadline_date:
+        is_due = has_entries and reference_date >= deadline_date
+    else:
+        is_due = has_entries and _is_due_for_frequency(client.last_entry_date, frequency, reference_date)
 
     if has_current_period_entries:
         status = "updated"
@@ -72,9 +82,19 @@ def _build_client_activity_payload(client, current_period_label: str, reference_
     else:
         current_period = current_period_label
 
-    risk = client.risk_level or Client.RISK_MEDIUM
-    if risk not in {Client.RISK_LOW, Client.RISK_MEDIUM, Client.RISK_HIGH}:
-        risk = Client.RISK_MEDIUM
+    remarks = client.remarks or Client.REMARK_NEW
+    if remarks not in {Client.REMARK_NEW, Client.REMARK_ACTIVE, Client.REMARK_SEPARATED, Client.REMARK_CLOSED}:
+        remarks = Client.REMARK_NEW
+
+    deadline_date = deadline_date.isoformat() if deadline_date else ""
+    days_remaining = None
+    deadline_completed = False
+    if getattr(client, "last_deadline_date", None):
+        days_remaining = (client.last_deadline_date - reference_date).days
+        deadline_completed = FinancialRecord.objects.filter(
+            client=client,
+            entry_date__gte=date(client.last_deadline_date.year, client.last_deadline_date.month, 1),
+        ).exists()
 
     return {
         "client_id": client.id,
@@ -84,8 +104,11 @@ def _build_client_activity_payload(client, current_period_label: str, reference_
         "last_entry_date": last_entry_date,
         "current_period": current_period,
         "status": status,
-        "risk": risk,
+        "remarks": remarks,
         "compliance": compliance,
+        "deadline_date": deadline_date,
+        "days_remaining": days_remaining,
+        "deadline_completed": deadline_completed,
     }
 
 
@@ -100,6 +123,11 @@ def get_dashboard_summary_for_bookkeeper(bookkeeper) -> dict:
     current_year = today.year
     current_month = today.month
     current_period_label = _period_label(current_month, current_year)
+
+    # Dynamic Client Promotion & Status Checks
+    from safebooks.services.client_service import check_and_promote_new_client
+    for client in Client.objects.filter(bookkeeper=bookkeeper).exclude(remarks=Client.REMARK_CLOSED):
+        check_and_promote_new_client(client)
 
     latest_record_for_client = (
         FinancialRecord.objects.filter(
@@ -130,13 +158,14 @@ def get_dashboard_summary_for_bookkeeper(bookkeeper) -> dict:
             last_period_month=Subquery(latest_record_for_client.values("period__month")[:1]),
             last_period_year=Subquery(latest_record_for_client.values("period__year")[:1]),
             last_frequency=Subquery(latest_record_for_client.values("frequency")[:1]),
+            last_deadline_date=Subquery(latest_record_for_client.values("deadline_date")[:1]),
         )
         .order_by("-created_at", "-id")
     )
 
     recent_client_activity = [
         _build_client_activity_payload(client, current_period_label, today)
-        for client in clients
+        for client in clients if client.remarks != Client.REMARK_CLOSED
     ]
 
     recent_entries = list(
@@ -148,15 +177,17 @@ def get_dashboard_summary_for_bookkeeper(bookkeeper) -> dict:
     recent_entries_payload = [_serialize_recent_entry(record) for record in recent_entries]
 
     total_clients = len(clients)
+    total_active_clients = len(recent_client_activity)
     total_entries_this_month = FinancialRecord.objects.filter(
         bookkeeper=bookkeeper,
         period__month=current_month,
         period__year=current_year,
     ).count()
 
-    risk_low_count = sum(1 for client in clients if client.risk_level == Client.RISK_LOW)
-    risk_medium_count = sum(1 for client in clients if client.risk_level == Client.RISK_MEDIUM)
-    risk_high_count = sum(1 for client in clients if client.risk_level == Client.RISK_HIGH)
+    remark_new_count = sum(1 for client in clients if client.remarks == Client.REMARK_NEW)
+    remark_active_count = sum(1 for client in clients if client.remarks == Client.REMARK_ACTIVE)
+    remark_separated_count = sum(1 for client in clients if client.remarks == Client.REMARK_SEPARATED)
+    remark_closed_count = sum(1 for client in clients if client.remarks == Client.REMARK_CLOSED)
 
     filed_count = sum(1 for row in recent_client_activity if row["compliance"] == "filed")
     pending_count = sum(1 for row in recent_client_activity if row["compliance"] == "pending")
@@ -171,25 +202,26 @@ def get_dashboard_summary_for_bookkeeper(bookkeeper) -> dict:
             "total_clients": total_clients,
             "total_entries_this_month": total_entries_this_month,
             "pending_compliance": pending_compliance_count,
-            "high_risk_clients": risk_high_count,
+            "new_clients": remark_new_count,
         },
-        "risk_summary": {
-            "low": risk_low_count,
-            "medium": risk_medium_count,
-            "high": risk_high_count,
+        "remarks_summary": {
+            "new": remark_new_count,
+            "active": remark_active_count,
+            "separated": remark_separated_count,
+            "closed": remark_closed_count,
         },
         "compliance_summary": {
             "filed": {
                 "count": filed_count,
-                "percentage": _calculate_percentage(filed_count, total_clients),
+                "percentage": _calculate_percentage(filed_count, total_active_clients),
             },
             "pending": {
                 "count": pending_count,
-                "percentage": _calculate_percentage(pending_count, total_clients),
+                "percentage": _calculate_percentage(pending_count, total_active_clients),
             },
             "late": {
                 "count": late_count,
-                "percentage": _calculate_percentage(late_count, total_clients),
+                "percentage": _calculate_percentage(late_count, total_active_clients),
             },
         },
         "recent_client_activity": recent_client_activity,

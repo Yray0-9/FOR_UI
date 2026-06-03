@@ -2,20 +2,14 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
-from django.db.models import Count, Max
+from django.db.models import Count, Max, OuterRef, Subquery
+from django.utils import timezone
 
 from safebooks.models import Client, FinancialRecord, FinancialRecordLine, Period
 
 
 MONTH_NUMBER_TO_NAME = dict(Period.MONTH_CHOICES)
 MONTH_NAME_TO_NUMBER = {label.lower(): number for number, label in Period.MONTH_CHOICES}
-CALC_OPERATIONS = {
-    FinancialRecordLine.CALC_ADD,
-    FinancialRecordLine.CALC_SUBTRACT,
-    FinancialRecordLine.CALC_MULTIPLY,
-    FinancialRecordLine.CALC_DIVIDE,
-    FinancialRecordLine.CALC_PERCENT,
-}
 ALLOWED_FREQUENCIES = {
     FinancialRecord.FREQUENCY_MONTHLY,
     FinancialRecord.FREQUENCY_QUARTERLY,
@@ -107,6 +101,22 @@ def _normalize_required_date(value, label: str):
     return parsed_date, None
 
 
+def _normalize_optional_date(value, label: str):
+    cleaned_value = _normalize_text(value)
+    if not cleaned_value:
+        return None, None
+
+    try:
+        parsed_date = date.fromisoformat(cleaned_value)
+    except ValueError:
+        return None, f"{label} must use YYYY-MM-DD format."
+
+    if parsed_date.year < 2000 or parsed_date.year > 2100:
+        return None, f"{label} year must be between 2000 and 2100."
+
+    return parsed_date, None
+
+
 def _normalize_amount(value):
     cleaned_value = _normalize_text(value)
     if not cleaned_value:
@@ -121,88 +131,6 @@ def _normalize_amount(value):
         return None, "Amount cannot be negative."
 
     return amount.quantize(Decimal("0.01")), None
-
-
-def _normalize_calc_operation(value):
-    cleaned_value = _normalize_text(value).lower()
-    if not cleaned_value:
-        return "", None
-
-    if cleaned_value not in CALC_OPERATIONS:
-        return None, "Invalid calculation operation."
-
-    return cleaned_value, None
-
-
-def _normalize_calc_percent(value):
-    cleaned_value = _normalize_text(value)
-    if not cleaned_value:
-        return None, None
-
-    try:
-        percent = Decimal(cleaned_value)
-    except (InvalidOperation, TypeError):
-        return None, "Percent must be a valid number."
-
-    if percent < 0:
-        return None, "Percent cannot be negative."
-
-    return percent.quantize(Decimal("0.01")), None
-
-
-def _normalize_calc_original_amount(value):
-    cleaned_value = _normalize_text(value)
-    if not cleaned_value:
-        return None, None
-
-    amount, amount_error = _normalize_amount(cleaned_value)
-    if amount_error:
-        return None, f"Original amount: {amount_error}"
-
-    return amount, None
-
-
-def _normalize_calc_applied(value) -> bool:
-    if isinstance(value, bool):
-        return value
-
-    cleaned_value = _normalize_text(value).lower()
-    return cleaned_value in {"1", "true", "yes", "applied"}
-
-
-def _calculate_line_result(line_item, target_amount: Decimal | None):
-    operation = line_item.get("calc_operation")
-    applied = line_item.get("calc_applied")
-    if not applied or not operation:
-        return None, None
-
-    base_amount = line_item.get("amount")
-    if base_amount is None:
-        return None, None
-
-    if operation == FinancialRecordLine.CALC_PERCENT:
-        percent = line_item.get("calc_percent")
-        if percent is None:
-            return None, "Percent is required for percentage calculations."
-        base_for_percent = line_item.get("calc_original_amount") or base_amount
-        result = base_for_percent * (percent / Decimal("100"))
-        return result.quantize(Decimal("0.01")), None
-
-    if target_amount is None:
-        return None, "Target line item is required for calculations."
-
-    if operation == FinancialRecordLine.CALC_ADD:
-        return (base_amount + target_amount).quantize(Decimal("0.01")), None
-    if operation == FinancialRecordLine.CALC_SUBTRACT:
-        return (base_amount - target_amount).quantize(Decimal("0.01")), None
-    if operation == FinancialRecordLine.CALC_MULTIPLY:
-        return (base_amount * target_amount).quantize(Decimal("0.01")), None
-    if operation == FinancialRecordLine.CALC_DIVIDE:
-        if target_amount == 0:
-            return None, "Division by zero is not allowed."
-        return (base_amount / target_amount).quantize(Decimal("0.01")), None
-
-    return None, "Invalid calculation operation."
 
 
 def _normalize_line_items(line_items):
@@ -221,11 +149,6 @@ def _normalize_line_items(line_items):
         description = _normalize_text(line_item.get("description"))
         amount, amount_error = _normalize_amount(line_item.get("amount"))
         client_line_id = _normalize_text(line_item.get("client_line_id") or line_item.get("line_id"))
-        calc_operation, calc_operation_error = _normalize_calc_operation(line_item.get("calc_operation"))
-        calc_target_id = _normalize_text(line_item.get("calc_target_id"))
-        calc_percent, calc_percent_error = _normalize_calc_percent(line_item.get("calc_percent"))
-        calc_original_amount, calc_original_error = _normalize_calc_original_amount(line_item.get("calc_original_amount"))
-        calc_applied = _normalize_calc_applied(line_item.get("calc_applied"))
 
         if not type_code:
             errors.append(f"Line item #{index} type/code is required.")
@@ -233,13 +156,6 @@ def _normalize_line_items(line_items):
             errors.append(f"Line item #{index} description is required.")
         if amount_error:
             errors.append(f"Line item #{index}: {amount_error}")
-        if calc_operation_error:
-            errors.append(f"Line item #{index}: {calc_operation_error}")
-        if calc_percent_error:
-            errors.append(f"Line item #{index}: {calc_percent_error}")
-        if calc_original_error:
-            errors.append(f"Line item #{index}: {calc_original_error}")
-
         if type_code and description and amount is not None:
             cleaned_line_items.append(
                 {
@@ -247,11 +163,6 @@ def _normalize_line_items(line_items):
                     "type_code": type_code,
                     "description": description,
                     "amount": amount,
-                    "calc_operation": calc_operation,
-                    "calc_target_id": calc_target_id,
-                    "calc_percent": calc_percent,
-                    "calc_original_amount": calc_original_amount,
-                    "calc_applied": calc_applied,
                     "sort_order": index,
                 }
             )
@@ -284,6 +195,7 @@ def _serialize_client(client: Client) -> dict:
         "orus_account": client.orus_account,
         "orus_password": client.orus_password,
         "custom_fields": client.custom_fields or [],
+        "forecast_growth_percent": float((client.forecast_growth_percent or Decimal("0.00")).quantize(Decimal("0.01"))),
     }
 
 
@@ -293,23 +205,26 @@ def _serialize_line_item(line_item: FinancialRecordLine) -> dict:
         "type_code": line_item.type_code,
         "description": line_item.description,
         "amount": str(line_item.amount),
-        "calc_operation": line_item.calc_operation or "",
-        "calc_target_id": line_item.calc_target_id,
-        "calc_percent": str(line_item.calc_percent) if line_item.calc_percent is not None else "",
-        "calc_result": str(line_item.calc_result) if line_item.calc_result is not None else "",
-        "calc_original_amount": str(line_item.calc_original_amount) if line_item.calc_original_amount is not None else "",
-        "calc_applied": bool(line_item.calc_applied),
     }
 
 
 def _serialize_record(record: FinancialRecord) -> dict:
     line_items = list(record.line_items.all().order_by("sort_order", "id"))
 
+    deadline_completed = False
+    if record.deadline_date:
+        deadline_completed = FinancialRecord.objects.filter(
+            client=record.client,
+            entry_date__gte=date(record.deadline_date.year, record.deadline_date.month, 1),
+        ).exists()
+
     return {
         "id": record.id,
         "date": record.entry_date.isoformat() if record.entry_date else "",
         "frequency": record.frequency or FinancialRecord.FREQUENCY_MONTHLY,
         "notes": record.notes or "",
+        "deadline_date": record.deadline_date.isoformat() if record.deadline_date else "",
+        "deadline_completed": deadline_completed,
         "total_amount": str(record.total_amount or Decimal("0.00")),
         "line_items_count": len(line_items),
         "line_items": [_serialize_line_item(line_item) for line_item in line_items],
@@ -358,18 +273,40 @@ def _resolve_client_for_bookkeeper(bookkeeper, client_id):
 
 
 def list_financial_clients_for_bookkeeper(bookkeeper) -> dict:
+    latest_record_for_client = (
+        FinancialRecord.objects.filter(
+            bookkeeper=bookkeeper,
+            client_id=OuterRef("pk"),
+        )
+        .order_by("-entry_date", "-id")
+    )
+
     clients = (
         Client.objects.filter(bookkeeper=bookkeeper)
+        .exclude(remarks=Client.REMARK_CLOSED)
         .annotate(
             last_activity=Max("financial_records__entry_date"),
             financial_record_count=Count("financial_records", distinct=True),
+            last_deadline_date=Subquery(latest_record_for_client.values("deadline_date")[:1]),
         )
         .order_by("-created_at", "-id")
     )
 
     payload = []
+    today = timezone.localdate()
     for client in clients:
         last_activity = client.last_activity.isoformat() if client.last_activity else ""
+        
+        deadline_date = client.last_deadline_date.isoformat() if client.last_deadline_date else ""
+        days_remaining = None
+        deadline_completed = False
+        if client.last_deadline_date:
+            days_remaining = (client.last_deadline_date - today).days
+            deadline_completed = FinancialRecord.objects.filter(
+                client=client,
+                entry_date__gte=date(client.last_deadline_date.year, client.last_deadline_date.month, 1),
+            ).exists()
+
         payload.append(
             {
                 "id": client.id,
@@ -379,6 +316,9 @@ def list_financial_clients_for_bookkeeper(bookkeeper) -> dict:
                 "last_activity": last_activity,
                 "activity_state": "active" if last_activity else "none",
                 "financial_record_count": client.financial_record_count,
+                "deadline_date": deadline_date,
+                "days_remaining": days_remaining,
+                "deadline_completed": deadline_completed,
             }
         )
 
@@ -393,58 +333,75 @@ def list_records_for_client_period(bookkeeper, client_id: int, month_value=None,
     if error_response:
         return error_response
 
-    month, month_error = _normalize_month(month_value)
-    if month_error:
-        return {
-            "ok": False,
-            "message": month_error,
-            "errors": [month_error],
-        }
+    is_all = str(month_value).strip().lower() == "all"
 
-    year, year_error = _normalize_year(year_value)
-    if year_error:
-        return {
-            "ok": False,
-            "message": year_error,
-            "errors": [year_error],
-        }
-
-    period = Period.objects.filter(client=client, month=month, year=year).first()
-    if period is None:
-        records = []
-    else:
+    if is_all:
         records = list(
             FinancialRecord.objects.filter(
                 bookkeeper=bookkeeper,
                 client=client,
-                period=period,
             )
             .prefetch_related("line_items")
             .order_by("-entry_date", "-id")
         )
+        month = "all"
+        year = "all"
+    else:
+        month, month_error = _normalize_month(month_value)
+        if month_error:
+            return {
+                "ok": False,
+                "message": month_error,
+                "errors": [month_error],
+            }
+
+        year, year_error = _normalize_year(year_value)
+        if year_error:
+            return {
+                "ok": False,
+                "message": year_error,
+                "errors": [year_error],
+            }
+
+        period = Period.objects.filter(client=client, month=month, year=year).first()
+        if period is None:
+            records = []
+        else:
+            records = list(
+                FinancialRecord.objects.filter(
+                    bookkeeper=bookkeeper,
+                    client=client,
+                    period=period,
+                )
+                .prefetch_related("line_items")
+                .order_by("-entry_date", "-id")
+            )
 
     has_any_records = FinancialRecord.objects.filter(
         bookkeeper=bookkeeper,
         client=client,
     ).exists()
 
-    period_start = date(year, month, 1)
-    prior_frequencies = list(
-        FinancialRecord.objects.filter(
-            bookkeeper=bookkeeper,
-            client=client,
-            entry_date__lt=period_start,
+    if is_all:
+        prior_frequencies = []
+    else:
+        period_start = date(year, month, 1)
+        prior_frequencies = list(
+            FinancialRecord.objects.filter(
+                bookkeeper=bookkeeper,
+                client=client,
+                entry_date__lt=period_start,
+            )
+            .values_list("frequency", flat=True)
+            .distinct()
         )
-        .values_list("frequency", flat=True)
-        .distinct()
-    )
 
     return {
         "ok": True,
         "client": _serialize_client(client),
         "period": {
             "month": month,
-            "month_label": MONTH_NUMBER_TO_NAME.get(month, str(month)),
+            "month_label": "All Periods" if is_all else MONTH_NUMBER_TO_NAME.get(month, str(month)),
             "year": year,
         },
         "records": [_serialize_record(record) for record in records],
@@ -625,6 +582,14 @@ def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> d
             "errors": [frequency_error],
         }
 
+    deadline_date, deadline_date_error = _normalize_optional_date(data.get("deadline_date"), "Deadline Date")
+    if deadline_date_error:
+        return {
+            "ok": False,
+            "message": deadline_date_error,
+            "errors": [deadline_date_error],
+        }
+
     notes = _normalize_text(data.get("notes"))
     line_items, line_item_errors = _normalize_line_items(data.get("line_items"))
     if line_item_errors:
@@ -634,34 +599,9 @@ def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> d
             "errors": line_item_errors,
         }
 
-    line_item_map = {}
     for line_item in line_items:
         line_id = line_item.get("client_line_id") or f"line-{line_item['sort_order']}"
         line_item["client_line_id"] = line_id
-        line_item_map[line_id] = line_item
-
-    calc_errors = []
-    for line_item in line_items:
-        operation = line_item.get("calc_operation")
-        target_id = line_item.get("calc_target_id")
-        target_item = line_item_map.get(target_id) if target_id else None
-        target_amount = target_item.get("amount") if target_item else None
-        result, calc_error = _calculate_line_result(line_item, target_amount)
-        if calc_error:
-            calc_errors.append(calc_error)
-        line_item["calc_result"] = result
-
-        if operation == FinancialRecordLine.CALC_PERCENT and line_item.get("calc_applied") and result is not None:
-            if line_item.get("calc_original_amount") is None:
-                line_item["calc_original_amount"] = line_item.get("amount")
-            line_item["amount"] = result
-
-    if calc_errors:
-        return {
-            "ok": False,
-            "message": calc_errors[0],
-            "errors": calc_errors,
-        }
 
     with transaction.atomic():
         period, _ = Period.objects.get_or_create(client=client, month=month, year=year)
@@ -673,36 +613,21 @@ def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> d
             entry_date=entry_date,
             frequency=frequency,
             notes=notes,
+            deadline_date=deadline_date,
             total_amount=_sum_line_item_amounts(line_items),
         )
 
-        created_line_items = {}
         for line_item in line_items:
-            created_line = FinancialRecordLine.objects.create(
+            FinancialRecordLine.objects.create(
                 record=record,
                 type_code=line_item["type_code"],
                 description=line_item["description"],
                 amount=line_item["amount"],
                 sort_order=line_item["sort_order"],
-                calc_operation=line_item.get("calc_operation") or "",
-                calc_percent=line_item.get("calc_percent"),
-                calc_result=line_item.get("calc_result"),
-                calc_original_amount=line_item.get("calc_original_amount"),
-                calc_applied=bool(line_item.get("calc_applied")),
             )
-            created_line_items[line_item["client_line_id"]] = created_line
 
-        for line_item in line_items:
-            target_id = line_item.get("calc_target_id")
-            operation = line_item.get("calc_operation")
-            if not target_id or operation == FinancialRecordLine.CALC_PERCENT:
-                continue
-
-            source_line = created_line_items.get(line_item["client_line_id"])
-            target_line = created_line_items.get(target_id)
-            if source_line and target_line:
-                source_line.calc_target = target_line
-                source_line.save(update_fields=["calc_target"])
+    from safebooks.services.client_service import check_and_promote_new_client
+    check_and_promote_new_client(client)
 
     refreshed_record = FinancialRecord.objects.filter(id=record.id).prefetch_related("line_items").first()
 
@@ -744,6 +669,17 @@ def update_record_for_client_period(bookkeeper, client_id: int, record_id: int, 
 
     notes = _normalize_text(data.get("notes", record.notes))
 
+    if "deadline_date" in data:
+        deadline_date, deadline_date_error = _normalize_optional_date(data.get("deadline_date"), "Deadline Date")
+        if deadline_date_error:
+            return {
+                "ok": False,
+                "message": deadline_date_error,
+                "errors": [deadline_date_error],
+            }
+    else:
+        deadline_date = record.deadline_date
+
     if "frequency" in data:
         frequency, frequency_error = _normalize_frequency(data.get("frequency"))
         if frequency_error:
@@ -763,46 +699,15 @@ def update_record_for_client_period(bookkeeper, client_id: int, record_id: int, 
                 "message": line_item_errors[0],
                 "errors": line_item_errors,
             }
-
-        line_item_map = {}
         for line_item in line_items:
             line_id = line_item.get("client_line_id") or f"line-{line_item['sort_order']}"
             line_item["client_line_id"] = line_id
-            line_item_map[line_id] = line_item
-
-        calc_errors = []
-        for line_item in line_items:
-            target_id = line_item.get("calc_target_id")
-            target_item = line_item_map.get(target_id) if target_id else None
-            target_amount = target_item.get("amount") if target_item else None
-            result, calc_error = _calculate_line_result(line_item, target_amount)
-            if calc_error:
-                calc_errors.append(calc_error)
-            line_item["calc_result"] = result
-
-            if line_item.get("calc_operation") == FinancialRecordLine.CALC_PERCENT and line_item.get("calc_applied") and result is not None:
-                if line_item.get("calc_original_amount") is None:
-                    line_item["calc_original_amount"] = line_item.get("amount")
-                line_item["amount"] = result
-
-        if calc_errors:
-            return {
-                "ok": False,
-                "message": calc_errors[0],
-                "errors": calc_errors,
-            }
     else:
         line_items = [
             {
                 "type_code": line_item.type_code,
                 "description": line_item.description,
                 "amount": line_item.amount,
-                "calc_operation": line_item.calc_operation,
-                "calc_target_id": line_item.calc_target_id,
-                "calc_percent": line_item.calc_percent,
-                "calc_result": line_item.calc_result,
-                "calc_original_amount": line_item.calc_original_amount,
-                "calc_applied": line_item.calc_applied,
                 "sort_order": line_item.sort_order,
             }
             for line_item in record.line_items.all().order_by("sort_order", "id")
@@ -815,38 +720,23 @@ def update_record_for_client_period(bookkeeper, client_id: int, record_id: int, 
         record.entry_date = entry_date
         record.frequency = frequency
         record.notes = notes
+        record.deadline_date = deadline_date
         record.total_amount = _sum_line_item_amounts(line_items)
-        record.save(update_fields=["period", "entry_date", "frequency", "notes", "total_amount", "updated_at"])
+        record.save(update_fields=["period", "entry_date", "frequency", "notes", "deadline_date", "total_amount", "updated_at"])
 
         if "line_items" in data:
             record.line_items.all().delete()
-            created_line_items = {}
             for line_item in line_items:
-                created_line = FinancialRecordLine.objects.create(
+                FinancialRecordLine.objects.create(
                     record=record,
                     type_code=line_item["type_code"],
                     description=line_item["description"],
                     amount=line_item["amount"],
                     sort_order=line_item["sort_order"],
-                    calc_operation=line_item.get("calc_operation") or "",
-                    calc_percent=line_item.get("calc_percent"),
-                    calc_result=line_item.get("calc_result"),
-                    calc_original_amount=line_item.get("calc_original_amount"),
-                    calc_applied=bool(line_item.get("calc_applied")),
                 )
-                created_line_items[line_item["client_line_id"]] = created_line
 
-            for line_item in line_items:
-                target_id = line_item.get("calc_target_id")
-                operation = line_item.get("calc_operation")
-                if not target_id or operation == FinancialRecordLine.CALC_PERCENT:
-                    continue
-
-                source_line = created_line_items.get(line_item["client_line_id"])
-                target_line = created_line_items.get(target_id)
-                if source_line and target_line:
-                    source_line.calc_target = target_line
-                    source_line.save(update_fields=["calc_target"])
+    from safebooks.services.client_service import check_and_promote_new_client
+    check_and_promote_new_client(client)
 
     refreshed_record = FinancialRecord.objects.filter(id=record.id).prefetch_related("line_items").first()
 
