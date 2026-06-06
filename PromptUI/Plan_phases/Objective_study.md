@@ -1,6 +1,6 @@
 # Objectives of the Study
 
-The primary objective of this study is to develop **SafeBooks: A Web-Based Bookkeeping Platform for Client Transaction Entry Records with Financial Analytics and Rule-Based Predictive Forecasting** that centralizes client financial record management, supports compliance monitoring and client remarks tracking, and improves bookkeeping operations through organized recordkeeping, descriptive analytics, and rule-based predictive forecasting indicators.
+The primary objective of this study is to develop **SafeBooks: A Web-Based Client Financial Records Monitoring System with Compliance Tracking and Forecasting Analytics** that centralizes client financial record management, supports compliance monitoring and client remarks tracking, and improves bookkeeping operations through organized recordkeeping, descriptive analytics, and forecasting outputs.
 
 Specifically, the study aims to:
 
@@ -8,7 +8,7 @@ Specifically, the study aims to:
 
 2. **Develop a financial records management module** that organizes encoded BIR transactions, period-based financial entries, and generates structured financial totals and summaries for client transaction entry.
 
-3. **Develop a Financial Analytics Engine** that summarizes sales, expenses, and tax-related records, presents descriptive financial trends and monthly summaries, and generates rule-based predictive forecasting indicators for sales, expenses, and tax based on recorded financial movement.
+3. **Develop a Financial Analytics Engine** that summarizes sales, expenses, and tax-related records, presents descriptive financial trends and monthly summaries, and generates forecasting outputs for sales, expenses, and tax based on recorded financial movement.
 
 4. **Implement client remarks and compliance monitoring** that tracks client activity status (new, active, separated, closed), highlights filing status (filed, pending, late), and supports follow-up for bookkeepers.
 

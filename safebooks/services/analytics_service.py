@@ -166,8 +166,10 @@ FREQUENCY_INTERVALS = {
 }
 
 FORECAST_CATEGORIES = ("sales", "expenses", "tax")
-FORECAST_LIMITED_DATA_MESSAGE = "Groups with fewer than 2 records use a one-point Linear Regression baseline until more history is available."
+FORECAST_METHOD_LABEL = "Weighted Moving Average"
+FORECAST_LIMITED_DATA_MESSAGE = "Groups with fewer than 3 records use the latest-value fallback until enough history is available for Weighted Moving Average."
 FORECAST_MIXED_FREQUENCY = "mixed"
+WMA_WEIGHTS = (Decimal("0.20"), Decimal("0.30"), Decimal("0.50"))
 
 
 def _to_money_number(value: Decimal) -> float:
@@ -386,34 +388,18 @@ def _weighted_average(values: list[Decimal]) -> Decimal:
 
     return weighted_sum / weight_total
 
+def _weighted_moving_average_next(values: list[Decimal]) -> Decimal | None:
+    if not values:
+        return None
 
+    if len(values) < len(WMA_WEIGHTS):
+        return values[-1]
 
-
-
-def _linear_regression_line(y_series: list[Decimal]) -> tuple[Decimal, Decimal, Decimal]:
-    """
-    Given a list of Decimal values representing a historical series,
-    compute the linear regression slope (m) and intercept (c) for indices x = 1, 2, ..., n.
-    Returns: (m, c, denominator)
-    """
-    n = len(y_series)
-    if n == 0:
-        return Decimal("0.00"), Decimal("0.00"), Decimal("0.00")
-    if n == 1:
-        return Decimal("0.00"), y_series[0], Decimal("1.00")
-
-    sum_x = Decimal(str(sum(range(1, n + 1))))
-    sum_y = sum(y_series, Decimal("0.00"))
-    sum_xx = Decimal(str(sum(x * x for x in range(1, n + 1))))
-    sum_xy = sum(Decimal(str(x)) * y for x, y in zip(range(1, n + 1), y_series))
-
-    denominator = Decimal(str(n)) * sum_xx - sum_x * sum_x
-    if denominator == 0:
-        return Decimal("0.00"), y_series[-1], Decimal("0.00")
-
-    m = (Decimal(str(n)) * sum_xy - sum_x * sum_y) / denominator
-    c = (sum_y - m * sum_x) / Decimal(str(n))
-    return m, c, denominator
+    last_three = values[-len(WMA_WEIGHTS):]
+    return sum(
+        (value or Decimal("0.00")) * weight
+        for value, weight in zip(last_three, WMA_WEIGHTS)
+    )
 
 
 def _frequency_interval_months(frequency: str) -> int:
@@ -502,7 +488,6 @@ def _build_group_forecast_model(
     data_points = len(values)
     last_year, last_month = period_keys[-1]
     normalized_frequency = _normalize_frequency(frequency)
-    slope, intercept, denominator = _linear_regression_line(values)
 
     model = {
         "client_id": client_id,
@@ -513,9 +498,9 @@ def _build_group_forecast_model(
         "last_year": last_year,
         "last_month": last_month,
         "data_points": data_points,
-        "uses_limited_data": data_points < 2 or denominator == 0,
-        "slope": slope,
-        "intercept": intercept,
+        "uses_limited_data": data_points < len(WMA_WEIGHTS),
+        "history": values,
+        "projected_values": {},
     }
 
     return model
@@ -538,8 +523,24 @@ def _project_group_value(
         return False, None, False
 
     step_count = months_after_latest // interval
-    x_value = Decimal(str(model["data_points"] + step_count))
-    value = (model["slope"] * x_value) + model["intercept"]
+    projected_values = model["projected_values"]
+    if step_count in projected_values:
+        return True, projected_values[step_count], False
+
+    values = list(model["history"])
+    for index in range(1, step_count + 1):
+        if index in projected_values:
+            next_value = projected_values[index]
+        else:
+            next_value = _weighted_moving_average_next(values)
+            projected_values[index] = next_value
+
+        if next_value is not None:
+            values.append(next_value)
+
+    value = projected_values.get(step_count)
+    if value is None:
+        return True, None, False
     if value < 0:
         return True, None, True
 
@@ -555,7 +556,7 @@ def _money_or_none(value: Decimal | None) -> float | None:
 def _resolve_forecast_context(bookkeeper, scope_client: Client | None, reference_date) -> tuple[str, int, int, int]:
     """Returns (frequency, reference_year, reference_month, period_count).
     period_count spans from the earliest record to the latest so the
-    regression line uses every available data point.
+    forecast can consider every available data point.
     """
     record_query = FinancialRecord.objects.filter(bookkeeper=bookkeeper)
     if scope_client is not None:
@@ -724,9 +725,9 @@ def _build_predictive_forecast(
             "expected_sales_applicable": category_applicability["sales"],
             "expected_expenses_applicable": category_applicability["expenses"],
             "expected_tax_applicable": category_applicability["tax"],
-            "sales_method": "Linear Regression" if category_applicability["sales"] else "Not scheduled",
-            "expenses_method": "Linear Regression" if category_applicability["expenses"] else "Not scheduled",
-            "tax_method": "Linear Regression" if category_applicability["tax"] else "Not scheduled",
+            "sales_method": FORECAST_METHOD_LABEL if category_applicability["sales"] else "Not scheduled",
+            "expenses_method": FORECAST_METHOD_LABEL if category_applicability["expenses"] else "Not scheduled",
+            "tax_method": FORECAST_METHOD_LABEL if category_applicability["tax"] else "Not scheduled",
             "sales_limited_data": category_limited_data["sales"],
             "expenses_limited_data": category_limited_data["expenses"],
             "tax_limited_data": category_limited_data["tax"],
@@ -746,7 +747,7 @@ def _build_predictive_forecast(
         default=0,
     )
     basis = (
-        "Forecast calculated using separate transaction-aware and frequency-aware Linear Regression models for each client, category, and frequency."
+        "Forecast calculated using separate transaction-aware and frequency-aware Weighted Moving Average models for each client, category, and frequency."
     )
     if limited_data_used:
         basis = f"{basis} {FORECAST_LIMITED_DATA_MESSAGE}"

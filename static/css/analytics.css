@@ -418,6 +418,278 @@
     font-size: 0.86rem;
 }
 
+.analytics-forecast-projection-head {
+    align-items: flex-start;
+}
+
+.analytics-forecast-projection-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.52rem 0.9rem;
+    margin-bottom: 0.65rem;
+}
+
+.analytics-forecast-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    color: #526b99;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 1px 2px rgba(15, 35, 75, 0.08);
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+    cursor: pointer;
+}
+
+.analytics-forecast-legend-item:hover,
+.analytics-forecast-legend-item.is-active {
+    border-color: #c7d7f3;
+    background: #ffffff;
+    color: #3a4f77;
+}
+
+.analytics-forecast-legend-item i {
+    width: 0.72rem;
+    height: 0.72rem;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.analytics-forecast-legend-item.sales i {
+    background: #2563d8;
+}
+
+.analytics-forecast-legend-item.expenses i {
+    background: #e4872a;
+}
+
+.analytics-forecast-legend-item.tax i {
+    background: #805ad5;
+}
+
+.analytics-forecast-legend-item.net i {
+    background: #14945b;
+}
+
+.analytics-forecast-projection-shell {
+    position: relative;
+    border: 1px solid #dfe9fc;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #fbfdff 0%, #f6f9ff 100%);
+    box-shadow: 0 14px 28px rgba(20, 45, 90, 0.08);
+    min-height: 386px;
+    overflow: hidden;
+    padding: 0.42rem 0.5rem;
+}
+
+.analytics-forecast-projection-svg {
+    display: block;
+    width: 100%;
+    height: 360px;
+}
+
+.analytics-forecast-grid-line {
+    stroke: #dce7fa;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.analytics-forecast-grid-line.baseline {
+    stroke: #cad8f1;
+}
+
+.analytics-forecast-grid-label {
+    fill: #6c85b0;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.analytics-forecast-projection-line {
+    fill: none;
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 1px 0 rgba(15, 35, 75, 0.12));
+}
+
+.analytics-forecast-projection-bridge {
+    fill: none;
+    stroke-width: 2;
+    stroke-dasharray: 6 6;
+    opacity: 0.35;
+    vector-effect: non-scaling-stroke;
+}
+
+.analytics-forecast-projection-bridge.sales {
+    stroke: #2563d8;
+}
+
+.analytics-forecast-projection-bridge.expenses {
+    stroke: #e4872a;
+}
+
+.analytics-forecast-projection-bridge.tax {
+    stroke: #805ad5;
+}
+
+.analytics-forecast-projection-bridge.net {
+    stroke: #14945b;
+}
+
+.analytics-forecast-projection-line.sales {
+    stroke: #2563d8;
+}
+
+.analytics-forecast-projection-line.expenses {
+    stroke: #e4872a;
+}
+
+.analytics-forecast-projection-line.tax {
+    stroke: #805ad5;
+}
+
+.analytics-forecast-projection-line.net {
+    stroke: #14945b;
+}
+
+.analytics-forecast-projection-dot {
+    stroke: #ffffff;
+    stroke-width: 2;
+    cursor: pointer;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 2px 4px rgba(15, 35, 75, 0.15));
+    transition: stroke-width 140ms ease, filter 140ms ease;
+}
+
+.analytics-forecast-projection-dot:hover {
+    stroke-width: 3;
+    filter: drop-shadow(0 4px 6px rgba(15, 35, 75, 0.18));
+}
+
+.analytics-forecast-projection-dot:focus {
+    outline: none;
+    stroke: #173261;
+    stroke-width: 3;
+}
+
+.analytics-forecast-projection-dot.sales {
+    fill: #2563d8;
+}
+
+.analytics-forecast-projection-dot.expenses {
+    fill: #e4872a;
+}
+
+.analytics-forecast-projection-dot.tax {
+    fill: #805ad5;
+}
+
+.analytics-forecast-projection-dot.net {
+    fill: #14945b;
+}
+
+.analytics-forecast-projection-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 1rem;
+    background: rgba(248, 251, 255, 0.88);
+    color: #6c85b0;
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.analytics-forecast-projection-empty[hidden] {
+    display: none;
+}
+
+.analytics-forecast-projection-tooltip {
+    position: absolute;
+    z-index: 3;
+    min-width: 138px;
+    border: 1px solid #cddbf5;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 12px 24px rgba(18, 49, 112, 0.16);
+    color: #173261;
+    padding: 0.48rem 0.56rem;
+    pointer-events: none;
+}
+
+.analytics-forecast-projection-tooltip[hidden] {
+    display: none;
+}
+
+.analytics-forecast-projection-tooltip strong,
+.analytics-forecast-projection-tooltip span,
+.analytics-forecast-projection-tooltip b {
+    display: block;
+}
+
+.analytics-forecast-projection-tooltip strong {
+    font-size: 0.78rem;
+    font-weight: 900;
+}
+
+.analytics-forecast-projection-tooltip span {
+    color: #607aa8;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.analytics-forecast-projection-tooltip b {
+    margin-top: 0.1rem;
+    color: #173261;
+    font-size: 0.84rem;
+    font-weight: 900;
+}
+
+.analytics-forecast-projection-labels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
+    gap: 0.35rem;
+    margin-top: 0.54rem;
+    color: #526b99;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.analytics-forecast-projection-labels span {
+    min-width: 0;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.analytics-forecast-projection-shell[data-active-series] .analytics-forecast-projection-line,
+.analytics-forecast-projection-shell[data-active-series] .analytics-forecast-projection-dot,
+.analytics-forecast-projection-shell[data-active-series] .analytics-forecast-projection-bridge {
+    opacity: 0.2;
+}
+
+.analytics-forecast-projection-shell[data-active-series="sales"] .analytics-forecast-projection-line.sales,
+.analytics-forecast-projection-shell[data-active-series="sales"] .analytics-forecast-projection-dot.sales,
+.analytics-forecast-projection-shell[data-active-series="sales"] .analytics-forecast-projection-bridge.sales,
+.analytics-forecast-projection-shell[data-active-series="expenses"] .analytics-forecast-projection-line.expenses,
+.analytics-forecast-projection-shell[data-active-series="expenses"] .analytics-forecast-projection-dot.expenses,
+.analytics-forecast-projection-shell[data-active-series="expenses"] .analytics-forecast-projection-bridge.expenses,
+.analytics-forecast-projection-shell[data-active-series="tax"] .analytics-forecast-projection-line.tax,
+.analytics-forecast-projection-shell[data-active-series="tax"] .analytics-forecast-projection-dot.tax,
+.analytics-forecast-projection-shell[data-active-series="tax"] .analytics-forecast-projection-bridge.tax,
+.analytics-forecast-projection-shell[data-active-series="net"] .analytics-forecast-projection-line.net,
+.analytics-forecast-projection-shell[data-active-series="net"] .analytics-forecast-projection-dot.net,
+.analytics-forecast-projection-shell[data-active-series="net"] .analytics-forecast-projection-bridge.net {
+    opacity: 1;
+}
+
 .analytics-sparkline-line {
     fill: none;
     stroke: #356bd6;
@@ -456,6 +728,14 @@
     .analytics-predictive-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .analytics-forecast-projection-shell {
+        min-height: 360px;
+    }
+
+    .analytics-forecast-projection-svg {
+        height: 334px;
+    }
 }
 
 @media (max-width: 767.98px) {
@@ -482,6 +762,24 @@
 
     .analytics-predictive-grid {
         grid-template-columns: 1fr;
+    }
+
+    .analytics-forecast-projection-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .analytics-forecast-projection-shell {
+        min-height: 330px;
+        padding: 0.34rem;
+    }
+
+    .analytics-forecast-projection-svg {
+        height: 304px;
+    }
+
+    .analytics-forecast-projection-labels {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
@@ -641,6 +939,65 @@ body.theme-dark .analytics-predictive-report-scroll::-webkit-scrollbar-track {
 body.theme-dark .analytics-predictive-report-table thead th {
     background: #0f1c33;
     box-shadow: 0 1px 0 #25344f;
+}
+
+body.theme-dark .analytics-forecast-legend-item,
+body.theme-dark .analytics-forecast-projection-labels {
+    color: #9eb0d3;
+}
+
+body.theme-dark .analytics-forecast-legend-item {
+    background: rgba(15, 28, 51, 0.7);
+    border-color: #25344f;
+    box-shadow: none;
+}
+
+body.theme-dark .analytics-forecast-legend-item:hover,
+body.theme-dark .analytics-forecast-legend-item.is-active {
+    background: #13213a;
+    border-color: #3a4f77;
+    color: #c7d6f4;
+}
+
+body.theme-dark .analytics-forecast-projection-bridge {
+    opacity: 0.45;
+}
+
+body.theme-dark .analytics-forecast-projection-shell {
+    border-color: #25344f;
+    background: linear-gradient(180deg, #0f1c33 0%, #13213a 100%);
+}
+
+body.theme-dark .analytics-forecast-grid-line {
+    stroke: #25344f;
+}
+
+body.theme-dark .analytics-forecast-grid-label {
+    fill: #9eb0d3;
+}
+
+body.theme-dark .analytics-forecast-projection-dot {
+    stroke: #101a2c;
+}
+
+body.theme-dark .analytics-forecast-projection-tooltip {
+    background: #101a2c;
+    border-color: #25344f;
+    box-shadow: 0 12px 24px rgba(2, 8, 20, 0.45);
+    color: #e6edf7;
+}
+
+body.theme-dark .analytics-forecast-projection-tooltip span {
+    color: #9eb0d3;
+}
+
+body.theme-dark .analytics-forecast-projection-tooltip b {
+    color: #e6edf7;
+}
+
+body.theme-dark .analytics-forecast-projection-empty {
+    background: rgba(15, 28, 51, 0.9);
+    color: #9eb0d3;
 }
 
 /* Custom Autocomplete Dropdown styles */

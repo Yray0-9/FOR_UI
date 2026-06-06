@@ -200,70 +200,101 @@
         <!-- Tab 2: Predictive Forecasting -->
         <div class="tab-pane fade" id="forecasting-tab-pane" role="tabpanel" aria-labelledby="forecasting-tab" tabindex="0">
             <div class="row g-3 analytics-forecasting-row">
-
                 <div class="col-12 col-lg-6">
                     <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-card" style="--delay: 0.34s;">
-                    <div class="dashboard-card-head">
-                        <h2>Forecasting Insight</h2>
-                    </div>
-                    <p class="dashboard-panel-hint">Mathematical forecast for the upcoming period based on your historical financial data.</p>
-                    <p class="analytics-predictive-period" id="analyticsPredictivePeriod">Next period: --</p>
-                    <div class="analytics-predictive-grid" aria-label="Predictive analytics forecast summary">
-                        <div class="analytics-predictive-item">
-                            <span class="analytics-predictive-label">Projected Sales</span>
-                            <strong class="analytics-predictive-value" id="analyticsPredictiveSalesValue">PHP --</strong>
-                            <span class="analytics-predictive-subtext" id="analyticsPredictiveSalesNote">Needs historical data</span>
+                        <div class="dashboard-card-head">
+                            <h2>Forecasting Insight</h2>
                         </div>
-                        <div class="analytics-predictive-item">
-                            <span class="analytics-predictive-label">Projected Expenses</span>
-                            <strong class="analytics-predictive-value" id="analyticsPredictiveExpensesValue">PHP --</strong>
-                            <span class="analytics-predictive-subtext" id="analyticsPredictiveExpensesNote">Needs historical data</span>
+                        <p class="dashboard-panel-hint">Mathematical forecast for the upcoming period based on your historical financial data.</p>
+                        <p class="analytics-predictive-period" id="analyticsPredictivePeriod">Next period: --</p>
+                        <div class="analytics-predictive-grid" aria-label="Predictive analytics forecast summary">
+                            <div class="analytics-predictive-item">
+                                <span class="analytics-predictive-label">Projected Sales</span>
+                                <strong class="analytics-predictive-value" id="analyticsPredictiveSalesValue">PHP --</strong>
+                                <span class="analytics-predictive-subtext" id="analyticsPredictiveSalesNote">Needs historical data</span>
+                            </div>
+                            <div class="analytics-predictive-item">
+                                <span class="analytics-predictive-label">Projected Expenses</span>
+                                <strong class="analytics-predictive-value" id="analyticsPredictiveExpensesValue">PHP --</strong>
+                                <span class="analytics-predictive-subtext" id="analyticsPredictiveExpensesNote">Needs historical data</span>
+                            </div>
+                            <div class="analytics-predictive-item">
+                                <span class="analytics-predictive-label">Projected Tax</span>
+                                <strong class="analytics-predictive-value" id="analyticsPredictiveTaxValue">PHP --</strong>
+                                <span class="analytics-predictive-subtext" id="analyticsPredictiveTaxNote">Needs historical data</span>
+                            </div>
                         </div>
-                        <div class="analytics-predictive-item">
-                            <span class="analytics-predictive-label">Projected Tax</span>
-                            <strong class="analytics-predictive-value" id="analyticsPredictiveTaxValue">PHP --</strong>
-                            <span class="analytics-predictive-subtext" id="analyticsPredictiveTaxNote">Needs historical data</span>
+                        <div class="analytics-predictive-chart">
+                            <div class="analytics-predictive-chart-shell" aria-hidden="true">
+                                <svg class="analytics-predictive-spark" viewBox="0 0 240 84" preserveAspectRatio="none">
+                                    <polyline class="analytics-predictive-line" id="analyticsPredictiveLine" points=""></polyline>
+                                </svg>
+                                <p class="analytics-predictive-placeholder" id="analyticsPredictivePlaceholder">Forecast visualization will appear after enough data is available.</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="analytics-predictive-chart">
-                        <div class="analytics-predictive-chart-shell" aria-hidden="true">
-                            <svg class="analytics-predictive-spark" viewBox="0 0 240 84" preserveAspectRatio="none">
-                                <polyline class="analytics-predictive-line" id="analyticsPredictiveLine" points=""></polyline>
-                            </svg>
-                            <p class="analytics-predictive-placeholder" id="analyticsPredictivePlaceholder">Forecast visualization will appear after enough data is available.</p>
+                    </article>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-report-card" style="--delay: 0.36s;">
+                        <div class="dashboard-card-head">
+                            <h2>Predictive Forecast Report</h2>
+                            <span class="dashboard-tag">Weighted Moving Average</span>
                         </div>
-                    </div>
-                </article>
+                        <p class="dashboard-section-hint">Data-driven future projections for the selected forecast horizon.</p>
+                        <div class="table-responsive analytics-predictive-report-scroll">
+                            <table class="table table-hover align-middle dashboard-table analytics-predictive-report-table mb-0" id="predictiveForecastTable">
+                                <thead>
+                                    <tr>
+                                        <th>Period</th>
+                                        <th>Projected Sales</th>
+                                        <th>Projected Expenses</th>
+                                        <th>Projected Tax</th>
+                                        <th>Projected Net Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="predictiveForecastTableBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">Needs historical data to compute forecasts.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
             </div>
 
-            <div class="col-12 col-lg-6">
-                <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-report-card" style="--delay: 0.36s;">
-                    <div class="dashboard-card-head">
-                        <h2>Predictive Forecast Report</h2>
-                        <span class="dashboard-tag">Linear Regression</span>
-                    </div>
-                    <p class="dashboard-section-hint">Data-driven future projections for the selected forecast horizon.</p>
-                    <div class="table-responsive analytics-predictive-report-scroll">
-                        <table class="table table-hover align-middle dashboard-table analytics-predictive-report-table mb-0" id="predictiveForecastTable">
-                            <thead>
-                                <tr>
-                                    <th>Period</th>
-                                    <th>Projected Sales</th>
-                                    <th>Projected Expenses</th>
-                                    <th>Projected Tax</th>
-                                    <th>Projected Net Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="predictiveForecastTableBody">
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">Needs historical data to compute regression lines.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </article>
-            </div>
-            </div>
+            <div class="row g-3 mt-3">
+                <div class="col-12">
+                    <article class="dashboard-card dashboard-fade-up analytics-forecast-projection-card" style="--delay: 0.38s;">
+                        <div class="dashboard-card-head analytics-forecast-projection-head">
+                            <div>
+                                <h2>Forecast Projection Graph</h2>
+                                <p class="dashboard-section-hint mb-0" id="analyticsForecastProjectionHint">All projected values are shown in separate scaled lanes for clearer comparison.</p>
+                            </div>
+                        </div>
+                        <div class="analytics-forecast-projection-legend" aria-label="Forecast projection graph legend">
+                            <span class="analytics-forecast-legend-item sales" data-forecast-series="sales"><i></i>Sales</span>
+                            <span class="analytics-forecast-legend-item expenses" data-forecast-series="expenses"><i></i>Expenses</span>
+                            <span class="analytics-forecast-legend-item tax" data-forecast-series="tax"><i></i>Tax</span>
+                            <span class="analytics-forecast-legend-item net" data-forecast-series="net"><i></i>Net Value</span>
+                        </div>
+                        <div class="analytics-forecast-projection-shell">
+                            <svg class="analytics-forecast-projection-svg" viewBox="0 0 720 360" preserveAspectRatio="none" role="img" aria-label="Projected sales, expenses, tax, and net value across the forecast horizon">
+                                <g id="analyticsForecastProjectionGrid"></g>
+                                <g id="analyticsForecastProjectionBridges"></g>
+                                <polyline class="analytics-forecast-projection-line sales" id="analyticsForecastProjectionSalesLine" points=""></polyline>
+                                <polyline class="analytics-forecast-projection-line expenses" id="analyticsForecastProjectionExpensesLine" points=""></polyline>
+                                <polyline class="analytics-forecast-projection-line tax" id="analyticsForecastProjectionTaxLine" points=""></polyline>
+                                <polyline class="analytics-forecast-projection-line net" id="analyticsForecastProjectionNetLine" points=""></polyline>
+                                <g id="analyticsForecastProjectionDots"></g>
+                            </svg>
+                            <div class="analytics-forecast-projection-tooltip" id="analyticsForecastProjectionTooltip" role="status" hidden></div>
+                            <p class="analytics-forecast-projection-empty" id="analyticsForecastProjectionEmpty">Needs forecast data to draw the projection graph.</p>
+                        </div>
+                        <div class="analytics-forecast-projection-labels" id="analyticsForecastProjectionLabels"></div>
+                    </article>
+                </div>
             </div>
         </div> <!-- End Tab 2 -->
     </div>
@@ -336,6 +367,19 @@
         const analyticsPredictiveTaxNote = document.getElementById("analyticsPredictiveTaxNote");
         const analyticsPredictiveLine = document.getElementById("analyticsPredictiveLine");
         const analyticsPredictivePlaceholder = document.getElementById("analyticsPredictivePlaceholder");
+        const analyticsForecastProjectionGrid = document.getElementById("analyticsForecastProjectionGrid");
+        const analyticsForecastProjectionBridges = document.getElementById("analyticsForecastProjectionBridges");
+        const analyticsForecastProjectionSalesLine = document.getElementById("analyticsForecastProjectionSalesLine");
+        const analyticsForecastProjectionExpensesLine = document.getElementById("analyticsForecastProjectionExpensesLine");
+        const analyticsForecastProjectionTaxLine = document.getElementById("analyticsForecastProjectionTaxLine");
+        const analyticsForecastProjectionNetLine = document.getElementById("analyticsForecastProjectionNetLine");
+        const analyticsForecastProjectionDots = document.getElementById("analyticsForecastProjectionDots");
+        const analyticsForecastProjectionLabels = document.getElementById("analyticsForecastProjectionLabels");
+        const analyticsForecastProjectionEmpty = document.getElementById("analyticsForecastProjectionEmpty");
+        const analyticsForecastProjectionTooltip = document.getElementById("analyticsForecastProjectionTooltip");
+        const analyticsForecastProjectionHint = document.getElementById("analyticsForecastProjectionHint");
+        const analyticsForecastProjectionShell = document.querySelector(".analytics-forecast-projection-shell");
+        const analyticsForecastLegendItems = Array.from(document.querySelectorAll(".analytics-forecast-legend-item"));
 
         const analyticsScopeHint = document.getElementById("analyticsScopeHint");
         const analyticsSummaryTimeframeCaption = document.getElementById("analyticsSummaryTimeframeCaption");
@@ -396,6 +440,12 @@
             currency: "PHP",
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
+        });
+        const compactCurrencyFormatter = new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+            notation: "compact",
+            maximumFractionDigits: 1,
         });
 
         const sidebarState = shared && typeof shared.initializeSidebarBehavior === "function"
@@ -471,6 +521,10 @@
             return currencyFormatter.format(Number(value || 0));
         };
 
+        const formatCompactCurrency = (value) => {
+            return compactCurrencyFormatter.format(Number(value || 0));
+        };
+
         const projectionHasValue = (source, valueKey) => {
             if (!source || typeof source !== "object") {
                 return false;
@@ -530,7 +584,7 @@
                     : "Not scheduled this period";
             }
 
-            return String(source[`${categoryKey}_method`] || "Linear Regression");
+            return String(source[`${categoryKey}_method`] || "Weighted Moving Average");
         };
 
         const formatTin = (value) => {
@@ -1135,6 +1189,65 @@
             });
         };
 
+        const fillSeriesGaps = (values) => {
+            const filled = Array.isArray(values) ? values.slice() : [];
+            let lastValid = null;
+
+            filled.forEach((value, index) => {
+                if (Number.isFinite(value)) {
+                    lastValid = value;
+                    return;
+                }
+                if (Number.isFinite(lastValid)) {
+                    filled[index] = lastValid;
+                }
+            });
+
+            let nextValid = null;
+            for (let index = filled.length - 1; index >= 0; index -= 1) {
+                const originalValue = values[index];
+                if (Number.isFinite(originalValue)) {
+                    nextValid = originalValue;
+                } else if (!Number.isFinite(filled[index]) && Number.isFinite(nextValid)) {
+                    filled[index] = nextValid;
+                }
+            }
+
+            return filled;
+        };
+
+        const setForecastSeriesHighlight = (seriesKey) => {
+            if (!analyticsForecastProjectionShell) {
+                return;
+            }
+
+            if (seriesKey) {
+                analyticsForecastProjectionShell.dataset.activeSeries = seriesKey;
+            } else {
+                delete analyticsForecastProjectionShell.dataset.activeSeries;
+            }
+
+            analyticsForecastLegendItems.forEach((item) => {
+                item.classList.toggle("is-active", item.dataset.forecastSeries === seriesKey);
+            });
+        };
+
+        const bindForecastLegendHighlight = () => {
+            if (!analyticsForecastLegendItems.length) {
+                return;
+            }
+
+            analyticsForecastLegendItems.forEach((item) => {
+                const seriesKey = item.dataset.forecastSeries;
+                if (!seriesKey) {
+                    return;
+                }
+
+                item.addEventListener("mouseenter", () => setForecastSeriesHighlight(seriesKey));
+                item.addEventListener("mouseleave", () => setForecastSeriesHighlight(""));
+            });
+        };
+
         const renderTrendGrid = () => {
             if (!analyticsTrendGrid) {
                 return;
@@ -1281,7 +1394,7 @@
             if (!safeProjections.length) {
                 predictiveForecastTableBody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">Needs historical data to compute regression lines.</td>
+                        <td colspan="5" class="text-center text-muted py-4">Needs historical data to compute forecasts.</td>
                     </tr>
                 `;
                 return;
@@ -1311,6 +1424,292 @@
                     `;
                 })
                 .join("");
+        };
+
+        const renderForecastProjectionChart = (futureProjections) => {
+            if (
+                !analyticsForecastProjectionGrid
+                || !analyticsForecastProjectionBridges
+                || !analyticsForecastProjectionDots
+                || !analyticsForecastProjectionLabels
+                || !analyticsForecastProjectionEmpty
+            ) {
+                return;
+            }
+
+            const rows = Array.isArray(futureProjections) ? futureProjections : [];
+            const series = [
+                {
+                    key: "expected_sales",
+                    label: "Sales",
+                    className: "sales",
+                    lineElement: analyticsForecastProjectionSalesLine,
+                },
+                {
+                    key: "expected_expenses",
+                    label: "Expenses",
+                    className: "expenses",
+                    lineElement: analyticsForecastProjectionExpensesLine,
+                },
+                {
+                    key: "expected_tax",
+                    label: "Tax",
+                    className: "tax",
+                    lineElement: analyticsForecastProjectionTaxLine,
+                },
+                {
+                    key: "expected_net",
+                    label: "Net Value",
+                    className: "net",
+                    lineElement: analyticsForecastProjectionNetLine,
+                },
+            ];
+
+            const clearChart = () => {
+                series.forEach((item) => {
+                    if (item.lineElement) {
+                        item.lineElement.setAttribute("points", "");
+                    }
+                });
+                analyticsForecastProjectionGrid.innerHTML = "";
+                analyticsForecastProjectionBridges.innerHTML = "";
+                analyticsForecastProjectionDots.innerHTML = "";
+                analyticsForecastProjectionLabels.innerHTML = "";
+                if (analyticsForecastProjectionTooltip) {
+                    analyticsForecastProjectionTooltip.hidden = true;
+                }
+                analyticsForecastProjectionEmpty.textContent = "Needs forecast data to draw the projection graph.";
+                analyticsForecastProjectionEmpty.hidden = false;
+            };
+
+            if (!rows.length) {
+                clearChart();
+                return;
+            }
+
+            const width = 720;
+            const height = 360;
+            const padding = {
+                left: 94,
+                right: 24,
+                top: 20,
+                bottom: 20,
+            };
+            const laneGap = 16;
+            const laneCount = series.length;
+            const laneHeight = (height - padding.top - padding.bottom - laneGap * (laneCount - 1)) / laneCount;
+            const chartWidth = width - padding.left - padding.right;
+            const xForIndex = (index) => {
+                if (rows.length <= 1) {
+                    return padding.left + chartWidth / 2;
+                }
+                return padding.left + (index / (rows.length - 1)) * chartWidth;
+            };
+
+            const plottedSeries = series.map((item, laneIndex) => {
+                const laneTop = padding.top + laneIndex * (laneHeight + laneGap);
+                const laneBottom = laneTop + laneHeight;
+                const rawValues = rows.map((row) => {
+                    if (!projectionHasValue(row, item.key) || projectionCannotForecast(row, item.key)) {
+                        return null;
+                    }
+
+                    const value = Number(row[item.key]);
+                    return Number.isFinite(value) ? value : null;
+                });
+                let firstIndex = -1;
+                let lastIndex = -1;
+                rawValues.forEach((value, index) => {
+                    if (!Number.isFinite(value)) {
+                        return;
+                    }
+                    if (firstIndex === -1) {
+                        firstIndex = index;
+                    }
+                    lastIndex = index;
+                });
+
+                const points = rawValues
+                    .map((value, index) => {
+                        if (!Number.isFinite(value)) {
+                            return null;
+                        }
+
+                        return {
+                            index,
+                            value,
+                            period: String(rows[index].period_label || "-"),
+                        };
+                    })
+                    .filter(Boolean);
+                const values = points.map((point) => point.value);
+                const rawMin = values.length ? Math.min(0, ...values) : 0;
+                const rawMax = values.length ? Math.max(...values, 1) : 1;
+                const rawRange = rawMax - rawMin || Math.max(Math.abs(rawMax), 1);
+                const minValue = rawMin < 0 ? rawMin - rawRange * 0.08 : 0;
+                const maxValue = rawMax + rawRange * 0.08;
+                const valueRange = maxValue - minValue || 1;
+                const yForValue = (value) => laneTop + ((maxValue - value) / valueRange) * laneHeight;
+                const filledValues = firstIndex === -1 ? [] : fillSeriesGaps(rawValues);
+                const bridgePoints = firstIndex === -1 ? [] : filledValues
+                    .map((value, index) => {
+                        if (index < firstIndex || index > lastIndex) {
+                            return null;
+                        }
+                        if (!Number.isFinite(value)) {
+                            return null;
+                        }
+                        return {
+                            index,
+                            value,
+                        };
+                    })
+                    .filter(Boolean);
+
+                return {
+                    ...item,
+                    laneTop,
+                    laneBottom,
+                    points,
+                    bridgePoints,
+                    minValue,
+                    maxValue,
+                    midValue: minValue + valueRange / 2,
+                    yForValue,
+                };
+            });
+
+            if (!plottedSeries.some((item) => item.points.length > 0)) {
+                clearChart();
+                return;
+            }
+
+            analyticsForecastProjectionEmpty.hidden = true;
+            if (analyticsForecastProjectionHint) {
+                analyticsForecastProjectionHint.textContent = "Sales, expenses, tax, and net value are shown together with separate scales.";
+            }
+
+            const allPlottedValues = plottedSeries.flatMap((item) => item.points.map((point) => point.value));
+            const axisRawMin = Math.min(0, ...allPlottedValues);
+            const axisRawMax = Math.max(...allPlottedValues, 1);
+            const axisRange = axisRawMax - axisRawMin || Math.max(Math.abs(axisRawMax), 1);
+            const axisMin = axisRawMin < 0 ? axisRawMin - axisRange * 0.08 : 0;
+            const axisMax = axisRawMax + axisRange * 0.08;
+            const axisValueRange = axisMax - axisMin || 1;
+            const axisTop = padding.top;
+            const axisBottom = height - padding.bottom;
+            const axisHeight = axisBottom - axisTop;
+            const axisLabelMarkup = Array.from({ length: 5 })
+                .map((_, index) => {
+                    const ratio = index / 4;
+                    const y = axisTop + ratio * axisHeight;
+                    const value = axisMax - ratio * axisValueRange;
+                    return `<text class="analytics-forecast-grid-label" x="${padding.left - 12}" y="${(y + 4).toFixed(2)}" text-anchor="end">${escapeHtml(formatCompactCurrency(value))}</text>`;
+                })
+                .join("");
+
+            analyticsForecastProjectionGrid.innerHTML = axisLabelMarkup + plottedSeries
+                .map((item) => {
+                    const laneCenter = item.laneTop + laneHeight / 2;
+                    return `
+                        <line class="analytics-forecast-grid-line" x1="${padding.left}" y1="${item.laneTop.toFixed(2)}" x2="${width - padding.right}" y2="${item.laneTop.toFixed(2)}"></line>
+                        <line class="analytics-forecast-grid-line" x1="${padding.left}" y1="${laneCenter.toFixed(2)}" x2="${width - padding.right}" y2="${laneCenter.toFixed(2)}"></line>
+                        <line class="analytics-forecast-grid-line baseline" x1="${padding.left}" y1="${item.laneBottom.toFixed(2)}" x2="${width - padding.right}" y2="${item.laneBottom.toFixed(2)}"></line>
+                    `;
+                })
+                .join("");
+
+            analyticsForecastProjectionLabels.innerHTML = rows
+                .map((row) => `<span title="${escapeHtml(String(row.period_label || "-"))}">${escapeHtml(String(row.period_label || "-"))}</span>`)
+                .join("");
+
+            analyticsForecastProjectionBridges.innerHTML = plottedSeries
+                .map((item) => {
+                    if (!item.bridgePoints || item.bridgePoints.length < 2) {
+                        return "";
+                    }
+                    const bridgePairs = item.bridgePoints
+                        .map((point) => `${xForIndex(point.index).toFixed(2)},${item.yForValue(point.value).toFixed(2)}`)
+                        .join(" ");
+                    return `<polyline class="analytics-forecast-projection-bridge ${item.className}" points="${bridgePairs}"></polyline>`;
+                })
+                .join("");
+
+            const dotMarkup = [];
+            plottedSeries.forEach((item, seriesIndex) => {
+                const pointPairs = item.points
+                    .map((point) => `${xForIndex(point.index).toFixed(2)},${item.yForValue(point.value).toFixed(2)}`)
+                    .join(" ");
+
+                if (item.lineElement) {
+                    item.lineElement.setAttribute("points", pointPairs);
+                    if (item.points.length > 1) {
+                        animatePolyline(item.lineElement, {
+                            duration: 720,
+                            delay: seriesIndex * 70,
+                        });
+                    }
+                }
+
+                item.points.forEach((point) => {
+                    const cx = xForIndex(point.index).toFixed(2);
+                    const cy = item.yForValue(point.value).toFixed(2);
+                    const title = `${point.period} ${item.label}: ${formatCurrency(point.value)}`;
+                    dotMarkup.push(`
+                        <circle
+                            class="analytics-forecast-projection-dot ${item.className}"
+                            cx="${cx}"
+                            cy="${cy}"
+                            r="5"
+                            tabindex="0"
+                            role="img"
+                            aria-label="${escapeHtml(title)}"
+                            data-tooltip-title="${escapeHtml(point.period)}"
+                            data-tooltip-label="${escapeHtml(item.label)}"
+                            data-tooltip-value="${escapeHtml(formatCurrency(point.value))}"
+                        >
+                            <title>${escapeHtml(title)}</title>
+                        </circle>
+                    `);
+                });
+            });
+
+            analyticsForecastProjectionDots.innerHTML = dotMarkup.join("");
+
+            if (analyticsForecastProjectionTooltip) {
+                const shellRect = () => analyticsForecastProjectionTooltip.parentElement.getBoundingClientRect();
+                const showTooltip = (event) => {
+                    const target = event.currentTarget;
+                    const period = target.getAttribute("data-tooltip-title") || "";
+                    const label = target.getAttribute("data-tooltip-label") || "";
+                    const value = target.getAttribute("data-tooltip-value") || "";
+                    analyticsForecastProjectionTooltip.innerHTML = `
+                        <strong>${escapeHtml(label)}</strong>
+                        <span>${escapeHtml(period)}</span>
+                        <b>${escapeHtml(value)}</b>
+                    `;
+
+                    const rect = shellRect();
+                    const clientX = event.clientX || (target.getBoundingClientRect().left + target.getBoundingClientRect().width / 2);
+                    const clientY = event.clientY || target.getBoundingClientRect().top;
+                    const left = Math.min(Math.max(clientX - rect.left + 12, 8), rect.width - 152);
+                    const top = Math.min(Math.max(clientY - rect.top - 64, 8), rect.height - 88);
+                    analyticsForecastProjectionTooltip.style.left = `${left}px`;
+                    analyticsForecastProjectionTooltip.style.top = `${top}px`;
+                    analyticsForecastProjectionTooltip.hidden = false;
+                };
+                const hideTooltip = () => {
+                    analyticsForecastProjectionTooltip.hidden = true;
+                };
+
+                analyticsForecastProjectionDots.querySelectorAll(".analytics-forecast-projection-dot").forEach((dot) => {
+                    dot.addEventListener("mouseenter", showTooltip);
+                    dot.addEventListener("mousemove", showTooltip);
+                    dot.addEventListener("focus", showTooltip);
+                    dot.addEventListener("mouseleave", hideTooltip);
+                    dot.addEventListener("blur", hideTooltip);
+                });
+            }
         };
 
         const applyRemarksMeta = (remarksInsight) => {
@@ -1380,6 +1779,7 @@
             applyPredictiveForecast({
                 has_forecast: false,
             });
+            renderForecastProjectionChart([]);
 
         };
 
@@ -1437,8 +1837,12 @@
             renderForecastSparkline(forecast.sparkline || []);
 
             const predictiveForecast = payload && payload.predictive_forecast ? payload.predictive_forecast : {};
+            const forecastProjections = Array.isArray(predictiveForecast.future_projections)
+                ? predictiveForecast.future_projections
+                : [];
             applyPredictiveForecast(predictiveForecast);
-            renderPredictiveForecastReport(predictiveForecast.future_projections || []);
+            renderPredictiveForecastReport(forecastProjections);
+            renderForecastProjectionChart(forecastProjections);
 
 
             const scope = payload && payload.scope ? payload.scope : {};
@@ -1637,6 +2041,7 @@
         const initializeAnalyticsPage = async () => {
             sidebarState.restoreDesktopState();
             renderTrendGrid();
+            bindForecastLegendHighlight();
             populateClientSelector([], null);
             applyAnalyticsFallbackState();
             hydrateHeaderUser();

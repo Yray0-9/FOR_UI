@@ -11,6 +11,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Tailwind CSS (Play CDN) with Prefix & Disabled Preflight for Bootstrap Compatibility -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            prefix: 'tw-',
+            corePlugins: {
+                preflight: false,
+            }
+        }
+    </script>
 
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/animations.css' %}">
@@ -79,6 +89,24 @@
                             <a href="{% url 'home' %}" class="auth-back-link"><i class="bi bi-arrow-left-short"></i>Back to Landing</a>
                             <h2 class="auth-card-title">Create Account</h2>
                             <p class="auth-card-subtitle">Start managing your clients efficiently</p>
+
+                            <!-- Continue with Gmail Option (UI ONLY) -->
+                            <div class="tw-mt-5">
+                                <button type="button" class="btn tw-w-full tw-flex tw-items-center tw-justify-center tw-gap-3 tw-bg-white tw-border tw-border-slate-200 tw-text-slate-700 tw-font-bold tw-py-2.5 tw-px-4 tw-rounded-xl tw-shadow-sm hover:tw-bg-slate-50 hover:tw-shadow-md tw-transition-all tw-duration-200" onclick="alert('Continuing with Gmail... (UI Demo Only)')">
+                                    <svg class="tw-w-5 tw-h-5" viewBox="0 0 24 24" width="20" height="20">
+                                        <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.68 1.54 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.89 3.02C6.2 7.7 8.89 5.04 12 5.04z"/>
+                                        <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.34H12v4.44h6.44c-.28 1.48-1.11 2.73-2.36 3.58l3.66 2.84c2.14-1.98 3.39-4.88 3.39-8.52z"/>
+                                        <path fill="#FBBC05" d="M5.28 14.42c-.25-.74-.39-1.53-.39-2.35s.14-1.61.39-2.35L1.39 6.7C.5 8.49 0 10.49 0 12.6s.5 4.11 1.39 5.9l3.89-3.08z"/>
+                                        <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.66-2.84c-1.01.67-2.3 1.09-4.3 1.09-3.11 0-5.8-2.66-6.72-5.54l-3.89 3.08C3.37 20.33 7.35 23 12 23z"/>
+                                    </svg>
+                                    <span>Continue with Gmail</span>
+                                </button>
+                            </div>
+
+                            <div class="tw-relative tw-my-5 tw-text-center">
+                                <hr class="tw-border-slate-200 tw-m-0">
+                                <span class="tw-absolute tw-left-1/2 tw-top-1/2 tw-transform tw--translate-x-1/2 tw--translate-y-1/2 tw-bg-white tw-px-3 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">or</span>
+                            </div>
 
                             <div class="alert d-none mt-3" id="signupFeedback" role="alert"></div>
 

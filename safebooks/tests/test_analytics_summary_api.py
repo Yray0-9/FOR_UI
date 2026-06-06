@@ -354,36 +354,36 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(forecast.get("frequency_label"), "Mixed Schedule")
         self.assertEqual(forecast.get("next_period_label"), f"Jul {forecast_year}")
         self.assertIn("transaction-aware", forecast.get("basis", ""))
-        self.assertIn("Linear Regression", forecast.get("basis", ""))
+        self.assertIn("Weighted Moving Average", forecast.get("basis", ""))
 
         projections = forecast.get("future_projections", [])
         self.assertEqual(len(projections), 3)
 
         self.assertEqual(projections[0]["period_label"], f"Jul {forecast_year}")
-        self.assertEqual(projections[0]["expected_sales"], 400.0)
+        self.assertEqual(projections[0]["expected_sales"], 230.0)
         self.assertIsNone(projections[0]["expected_expenses"])
         self.assertIsNone(projections[0]["expected_tax"])
         self.assertFalse(projections[0]["expected_expenses_applicable"])
         self.assertFalse(projections[0]["expected_tax_applicable"])
-        self.assertEqual(projections[0]["expected_net"], 400.0)
+        self.assertEqual(projections[0]["expected_net"], 230.0)
 
         self.assertEqual(projections[1]["period_label"], f"Aug {forecast_year}")
-        self.assertEqual(projections[1]["expected_sales"], 500.0)
+        self.assertEqual(projections[1]["expected_sales"], 245.0)
         self.assertIsNone(projections[1]["expected_expenses"])
         self.assertIsNone(projections[1]["expected_tax"])
-        self.assertEqual(projections[1]["expected_net"], 500.0)
+        self.assertEqual(projections[1]["expected_net"], 245.0)
 
         self.assertEqual(projections[2]["period_label"], f"Sep {forecast_year}")
-        self.assertEqual(projections[2]["expected_sales"], 600.0)
-        self.assertIsNone(projections[2]["expected_expenses"])
+        self.assertEqual(projections[2]["expected_sales"], 251.5)
+        self.assertEqual(projections[2]["expected_expenses"], 50.0)
         self.assertTrue(projections[2]["expected_expenses_applicable"])
-        self.assertTrue(projections[2]["expenses_unreliable"])
+        self.assertFalse(projections[2]["expenses_unreliable"])
         self.assertEqual(projections[2]["expected_tax"], 10.0)
-        self.assertEqual(projections[2]["tax_method"], "Linear Regression")
+        self.assertEqual(projections[2]["tax_method"], "Weighted Moving Average")
         self.assertTrue(projections[2]["tax_limited_data"])
         self.assertTrue(projections[2]["expected_net_applicable"])
         self.assertFalse(projections[2]["expected_net_unreliable"])
-        self.assertEqual(projections[2]["expected_net"], 600.0)
+        self.assertEqual(projections[2]["expected_net"], 201.5)
 
     def test_analytics_summary_exposes_tin_for_disambiguation_and_scope(self):
         today = timezone.localdate()
@@ -455,13 +455,13 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(scoped_payload["scope"]["client_id"], client_b.id)
         self.assertEqual(scoped_payload["scope"]["client_tin"], same_tin_b)
 
-    def test_analytics_linear_regression_forecasting_logic(self):
+    def test_analytics_weighted_moving_average_forecasting_logic(self):
         today = timezone.localdate()
 
-        owner = self._create_bookkeeper("owner-lin-reg")
+        owner = self._create_bookkeeper("owner-wma")
         self._login_as(owner)
 
-        client = self._create_client(bookkeeper=owner, suffix="linreg", remarks=Client.REMARK_ACTIVE)
+        client = self._create_client(bookkeeper=owner, suffix="wma", remarks=Client.REMARK_ACTIVE)
 
         # Create three consecutive months of records
         y3, m3 = today.year, today.month
@@ -525,28 +525,30 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(forecast.get("frequency"), FinancialRecord.FREQUENCY_MONTHLY)
         self.assertEqual(forecast.get("data_points"), 3)
 
-        # Assert Linear Regression predictions (index 4)
-        self.assertEqual(forecast.get("expected_sales"), 400.0)
-        self.assertEqual(forecast.get("expected_expenses"), 40.0)
-        self.assertEqual(forecast.get("expected_tax"), 20.0)
-        self.assertEqual(forecast.get("expected_net"), 360.0)
+        self.assertIn("Weighted Moving Average", forecast.get("basis", ""))
+        self.assertEqual(forecast.get("sales_method"), "Weighted Moving Average")
+
+        self.assertEqual(forecast.get("expected_sales"), 230.0)
+        self.assertEqual(forecast.get("expected_expenses"), 23.0)
+        self.assertEqual(forecast.get("expected_tax"), 11.5)
+        self.assertEqual(forecast.get("expected_net"), 207.0)
 
         # Assert 3 future projections
         projections = forecast.get("future_projections", [])
         self.assertEqual(len(projections), 3)
 
-        self.assertEqual(projections[0]["expected_sales"], 400.0)
-        self.assertEqual(projections[0]["expected_expenses"], 40.0)
-        self.assertEqual(projections[0]["expected_tax"], 20.0)
-        self.assertEqual(projections[0]["expected_net"], 360.0)
+        self.assertEqual(projections[0]["expected_sales"], 230.0)
+        self.assertEqual(projections[0]["expected_expenses"], 23.0)
+        self.assertEqual(projections[0]["expected_tax"], 11.5)
+        self.assertEqual(projections[0]["expected_net"], 207.0)
 
-        self.assertEqual(projections[1]["expected_sales"], 500.0)
-        self.assertEqual(projections[1]["expected_expenses"], 50.0)
-        self.assertEqual(projections[1]["expected_tax"], 25.0)
-        self.assertEqual(projections[1]["expected_net"], 450.0)
+        self.assertEqual(projections[1]["expected_sales"], 245.0)
+        self.assertEqual(projections[1]["expected_expenses"], 24.5)
+        self.assertEqual(projections[1]["expected_tax"], 12.25)
+        self.assertEqual(projections[1]["expected_net"], 220.5)
 
-        self.assertEqual(projections[2]["expected_sales"], 600.0)
-        self.assertEqual(projections[2]["expected_expenses"], 60.0)
-        self.assertEqual(projections[2]["expected_tax"], 30.0)
-        self.assertEqual(projections[2]["expected_net"], 540.0)
+        self.assertEqual(projections[2]["expected_sales"], 251.5)
+        self.assertEqual(projections[2]["expected_expenses"], 25.15)
+        self.assertEqual(projections[2]["expected_tax"], 12.58)
+        self.assertEqual(projections[2]["expected_net"], 226.35)
 
