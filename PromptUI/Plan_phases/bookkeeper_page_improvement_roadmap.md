@@ -109,7 +109,7 @@ Checks after implementation:
 - Add custom fields.
 - Search by client name.
 - Search by TIN.
-- Open Client Details from the client list.
+- Open Client Details from the client list.sadasd
 
 ### 3. Reports Page
 
