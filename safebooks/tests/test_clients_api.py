@@ -194,6 +194,91 @@ class ClientsApiTests(TestCase):
         self.assertFalse(payload.get("ok"))
         self.assertEqual(payload.get("message"), "Email format is invalid.")
 
+    def test_clients_api_preserves_custom_fields_from_client_forms(self):
+        owner = self._create_bookkeeper("owner-custom")
+        self._login_as(owner)
+
+        create_payload = self._client_payload("custom")
+        create_payload["custom_fields"] = [
+            {"label": "SSS Number", "value": "12-3456789-0", "type": "text"},
+            {"label": "Portal PIN", "value": "secure-pin", "type": "password"},
+            {"label": "", "value": "", "type": "text"},
+        ]
+
+        create_response = self.client.post(
+            reverse("api_clients"),
+            data=json.dumps(create_payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(create_response.status_code, 201)
+        created_client = create_response.json()["client"]
+        self.assertEqual(
+            created_client["custom_fields"],
+            [
+                {"label": "SSS Number", "value": "12-3456789-0", "type": "text"},
+                {"label": "Portal PIN", "value": "secure-pin", "type": "password"},
+            ],
+        )
+
+        update_payload = self._client_payload("custom-updated", tin=self._build_tin("custom-updated"))
+        update_payload["custom_fields"] = [
+            {"label": "RDO Code", "value": "112", "type": "number"},
+        ]
+
+        update_response = self.client.put(
+            reverse("api_client_detail", kwargs={"client_id": created_client["id"]}),
+            data=json.dumps(update_payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(update_response.status_code, 200)
+        updated_client = update_response.json()["client"]
+        self.assertEqual(
+            updated_client["custom_fields"],
+            [{"label": "RDO Code", "value": "112", "type": "number"}],
+        )
+
+    def test_clients_api_can_restore_closed_client_without_losing_details(self):
+        owner = self._create_bookkeeper("owner-restore")
+        self._login_as(owner)
+
+        closed_client = Client.objects.create(
+            bookkeeper=owner,
+            client_name="Closed Client",
+            tin_number=self._build_tin("restore-001"),
+            trade_name="Closed Trade",
+            location="Panabo",
+            permit_number="PERMIT-RESTORE",
+            email="restore@example.com",
+            remarks=Client.REMARK_CLOSED,
+            custom_fields=[{"label": "Ledger", "value": "Manual Book", "type": "text"}],
+        )
+
+        restore_payload = {
+            "client_name": closed_client.client_name,
+            "tin_number": closed_client.tin_number,
+            "trade_name": closed_client.trade_name,
+            "location": closed_client.location,
+            "permit_number": closed_client.permit_number,
+            "email": closed_client.email,
+            "custom_fields": closed_client.custom_fields,
+            "remarks": Client.REMARK_ACTIVE,
+        }
+
+        response = self.client.put(
+            reverse("api_client_detail", kwargs={"client_id": closed_client.id}),
+            data=json.dumps(restore_payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload.get("ok"))
+        self.assertEqual(payload["client"]["remarks"], Client.REMARK_NEW)
+        self.assertEqual(payload["client"]["client_name"], "Closed Client")
+        self.assertEqual(payload["client"]["custom_fields"], closed_client.custom_fields)
+
     def test_clients_api_rejects_invalid_json_payload(self):
         owner = self._create_bookkeeper("owner-json")
         self._login_as(owner)

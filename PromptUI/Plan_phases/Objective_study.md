@@ -1,26 +1,23 @@
 # Objectives of the Study
 
-The primary objective of this study is to develop **SafeBooks: A Web-Based Client Financial Records Monitoring System with Compliance Tracking and Forecasting Analytics** that centralizes client financial record management, supports compliance monitoring and client remarks tracking, and improves bookkeeping operations through organized recordkeeping, descriptive analytics, and forecasting outputs.
+The primary objective of this study is to develop **SafeBooks: A Web-Based Financial Records and Compliance Monitoring System with Forecasting Analytics** that centralizes client financial records, supports compliance monitoring, and provides financial analytics with an evaluated forecasting model for bookkeeping review and follow-up.
 
-Specifically, the study aims to:
+Specifically, the study aims to achieve the following based on the Input-Process-Output (IPO) framework:
 
-1. **Design and implement a centralized and secure client profile management module** that stores essential business and taxpayer information, supports Taxpayer Identification Number (TIN)-based search, and enforces role-based access control for authorized bookkeeper accounts.
+## Input
 
-2. **Develop a financial records management module** that organizes encoded BIR transactions, period-based financial entries, and generates structured financial totals and summaries for client transaction entry.
+1. Encode client business profiles, historical financial records, tax-related items, compliance deadlines, filing status, remarks, and supporting notes through a web-based workspace.
 
-3. **Develop a Financial Analytics Engine** that summarizes sales, expenses, and tax-related records, presents descriptive financial trends and monthly summaries, and generates forecasting outputs for sales, expenses, and tax based on recorded financial movement.
+## Process
 
-4. **Implement client remarks and compliance monitoring** that tracks client activity status (new, active, separated, closed), highlights filing status (filed, pending, late), and supports follow-up for bookkeepers.
+2. Design and develop a web-based workspace for managing client business profiles, related bookkeeping records, and TIN-based record retrieval.
 
-5. **Create an integrated dashboard and reporting interface** that presents financial summaries, compliance monitoring information, client remarks insights, predictive forecasting indicators, and printable reports to support bookkeeping operations and decision-making.
+3. Organize and validate period-based financial records for sales, expenses, tax-related items, deadlines, and notes.
 
-## Panel Q&A (Objective Clarifications)
+4. Compare Moving Average, Weighted Moving Average, and Linear Regression forecasting models using historical client financial records based on MAE, MAPE, and RMSE.
 
-1. **What are the Predictive Forecasting Indicators, and where are they shown?**
-	- The indicators are the **next-period expected values** (Sales, Expenses, Tax), the **next period label** (monthly/quarterly/annual), the **confidence level**, and the **forecast trend sparkline** shown in the **Analytics page** under Predictive Analytics Forecasting.
+5. Generate financial analytics that summarize recorded financial data, present trends, and apply the selected Weighted Moving Average forecasting model according to monthly, quarterly, or annual transaction schedules.
 
-2. **Objective 5 says the dashboard and reports present predictive forecasting indicators, but I only see them in Analytics. Why?**
-	- In the system, the **predictive indicators are presented in the Analytics module**, which is part of the overall reporting/analytics interface. They are **not displayed on the main dashboard cards**, so the accurate claim is that **predictive indicators appear in Analytics**, not the dashboard summary widgets.
+## Output
 
-3. **Objective 4 says it supports follow-up for bookkeepers. What does that mean?**
-	- The system **tags clients by remarks** (new, active, separated, closed) and **flags compliance status** (filed, pending, late). These labels and counts **help bookkeepers prioritize follow-ups**, especially for clients who are pending or late.
+6. Generate dashboard and report outputs that consolidate financial summaries, compliance status, client remarks, and forecasting results for bookkeeping review and follow-up.

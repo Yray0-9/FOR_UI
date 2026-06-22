@@ -91,6 +91,17 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertFalse(payload.get("ok"))
         self.assertEqual(payload.get("message"), "Authentication required.")
 
+    def test_client_details_forecasting_card_names_weighted_moving_average(self):
+        owner = self._create_bookkeeper("owner-client-details-wma")
+        self._login_as(owner)
+        client = self._create_client(bookkeeper=owner, suffix="client-details-wma", remarks=Client.REMARK_ACTIVE)
+
+        response = self.client.get(reverse("client_details", args=[client.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Generated using Weighted Moving Average Algorithm")
+        self.assertNotContains(response, "Generated using Linear Regression Algorithm")
+
     def test_analytics_summary_all_clients_returns_expected_values(self):
         today = timezone.localdate()
         previous_year = today.year if today.month > 1 else today.year - 1

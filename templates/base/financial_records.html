@@ -96,11 +96,11 @@
             <table class="table table-hover align-middle dashboard-table clients-table mb-0" id="financialClientsTable">
                 <thead>
                     <tr>
-                        <th>Client Name</th>
-                        <th>TIN</th>
-                        <th>Trade Name</th>
+                        <th class="client-name-cell">Client Name</th>
+                        <th class="client-tin-cell">TIN</th>
+                        <th class="client-trade-cell">Trade Name</th>
                         <th>Last Activity</th>
-                        <th>Actions</th>
+                        <th class="clients-actions-cell">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="financialClientsTableBody"></tbody>
@@ -487,9 +487,9 @@
                 }
 
                 row.innerHTML = `
-                    <td>${escapeHtml(client.client_name || "")}</td>
-                    <td>${escapeHtml(formatTin(client.tin_number))}</td>
-                    <td>${escapeHtml(client.trade_name || "")}</td>
+                    <td class="client-name-cell">${escapeHtml(client.client_name || "")}</td>
+                    <td class="client-tin-cell">${escapeHtml(formatTin(client.tin_number))}</td>
+                    <td class="client-trade-cell">${escapeHtml(client.trade_name || "")}</td>
                     <td>
                         <div>${escapeHtml(lastActivity)}</div>
                         ${deadlineBadge}

@@ -60,6 +60,7 @@ class FinancialRecordsApiTests(TestCase):
         day: int,
         amount: Decimal,
         type_code: str = "1701",
+        frequency: str = FinancialRecord.FREQUENCY_MONTHLY,
     ) -> FinancialRecord:
         period, _ = Period.objects.get_or_create(client=client, year=year, month=month)
         record = FinancialRecord.objects.create(
@@ -67,6 +68,7 @@ class FinancialRecordsApiTests(TestCase):
             client=client,
             period=period,
             entry_date=date(year, month, day),
+            frequency=frequency,
             notes="Existing record",
             total_amount=amount,
         )
@@ -496,3 +498,116 @@ class FinancialRecordsApiTests(TestCase):
         self.assertEqual(record.entry_date.isoformat(), "2026-05-01")
         self.assertEqual(record.period.month, 5)
         self.assertEqual(record.period.year, 2026)
+
+    def test_financial_records_all_periods_returns_full_client_history(self):
+        owner = self._create_bookkeeper("owner-all-periods")
+        client = self._create_client(bookkeeper=owner, suffix="all-periods")
+        self._login_as(owner)
+
+        self._create_record(
+            bookkeeper=owner,
+            client=client,
+            year=2026,
+            month=4,
+            day=5,
+            amount=Decimal("1000.00"),
+            type_code="Sales",
+        )
+        self._create_record(
+            bookkeeper=owner,
+            client=client,
+            year=2026,
+            month=5,
+            day=5,
+            amount=Decimal("250.00"),
+            type_code="Expenses",
+        )
+
+        response = self.client.get(
+            reverse("api_financial_records", kwargs={"client_id": client.id}),
+            {"month": "all", "year": "all"},
+            HTTP_ACCEPT="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload.get("ok"))
+        self.assertEqual(payload["period"]["month"], "all")
+        self.assertEqual(payload["period"]["month_label"], "All Periods")
+        self.assertEqual(payload["summary"]["total_amount"], "1250.00")
+        self.assertEqual(payload["summary"]["entry_count"], 2)
+        self.assertEqual(payload["prior_frequencies"], [])
+        self.assertEqual(
+            [record["date"] for record in payload.get("records", [])],
+            ["2026-05-05", "2026-04-05"],
+        )
+
+    def test_last_period_entry_api_uses_selected_frequency(self):
+        owner = self._create_bookkeeper("owner-last-entry")
+        client = self._create_client(bookkeeper=owner, suffix="last-entry")
+        self._login_as(owner)
+
+        self._create_record(
+            bookkeeper=owner,
+            client=client,
+            year=2026,
+            month=2,
+            day=3,
+            amount=Decimal("500.00"),
+            type_code="Expenses",
+            frequency=FinancialRecord.FREQUENCY_QUARTERLY,
+        )
+        self._create_record(
+            bookkeeper=owner,
+            client=client,
+            year=2026,
+            month=3,
+            day=3,
+            amount=Decimal("700.00"),
+            type_code="Sales",
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+        )
+        self._create_record(
+            bookkeeper=owner,
+            client=client,
+            year=2026,
+            month=4,
+            day=3,
+            amount=Decimal("900.00"),
+            type_code="Sales",
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+        )
+
+        monthly_response = self.client.get(
+            reverse("api_financial_records_last_entry", kwargs={"client_id": client.id}),
+            {"month": 5, "year": 2026, "frequency": "monthly"},
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(monthly_response.status_code, 200)
+        monthly_payload = monthly_response.json()
+        self.assertTrue(monthly_payload.get("ok"))
+        self.assertEqual(monthly_payload["record"]["date"], "2026-04-03")
+        self.assertEqual(monthly_payload["record"]["total_amount"], "900.00")
+        self.assertEqual(monthly_payload["record"]["frequency"], "monthly")
+
+        quarterly_response = self.client.get(
+            reverse("api_financial_records_last_entry", kwargs={"client_id": client.id}),
+            {"month": 5, "year": 2026, "frequency": "quarterly"},
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(quarterly_response.status_code, 200)
+        quarterly_payload = quarterly_response.json()
+        self.assertTrue(quarterly_payload.get("ok"))
+        self.assertEqual(quarterly_payload["record"]["date"], "2026-02-03")
+        self.assertEqual(quarterly_payload["record"]["total_amount"], "500.00")
+        self.assertEqual(quarterly_payload["record"]["frequency"], "quarterly")
+
+        annual_response = self.client.get(
+            reverse("api_financial_records_last_entry", kwargs={"client_id": client.id}),
+            {"month": 5, "year": 2026, "frequency": "annually"},
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(annual_response.status_code, 200)
+        annual_payload = annual_response.json()
+        self.assertFalse(annual_payload.get("ok"))
+        self.assertTrue(annual_payload.get("no_record"))

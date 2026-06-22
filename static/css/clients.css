@@ -1,0 +1,259 @@
+.clients-page .dashboard-content {
+    gap: 0.9rem;
+}
+
+.clients-delay-05 {
+    --delay: 0.05s;
+}
+
+.clients-delay-12 {
+    --delay: 0.12s;
+}
+
+.clients-action-card,
+.clients-list-card {
+    border-radius: 12px;
+}
+
+.clients-action-card {
+    padding: 0.8rem 0.95rem;
+}
+
+.clients-action-bar {
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.clients-page-search {
+    flex: 1 1 360px;
+    max-width: none;
+    padding-top: 0.36rem;
+    padding-bottom: 0.36rem;
+}
+
+.clients-page-search input {
+    min-height: 30px;
+}
+
+.clients-action-bar .dashboard-filter-select {
+    flex: 0 1 190px;
+    min-height: 40px;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+}
+
+.clients-add-btn {
+    flex: 0 0 auto;
+    min-height: 40px;
+    border-radius: 999px;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+}
+
+.clients-directory-tabs {
+    margin-top: 0.85rem;
+    margin-bottom: 0 !important;
+    border: 1px solid #d8e5fb;
+    background: #f8fbff;
+}
+
+.directory-tab-btn {
+    min-height: 38px;
+}
+
+.clients-list-card {
+    padding: 1.05rem 1.15rem;
+}
+
+.clients-list-card .dashboard-card-head {
+    margin-bottom: 0.8rem;
+}
+
+.clients-list-card .table-responsive {
+    min-height: 320px;
+}
+
+.clients-table th,
+.clients-table td {
+    vertical-align: middle;
+}
+
+.clients-table .client-name-cell {
+    min-width: 220px;
+}
+
+.clients-table .client-trade-cell,
+.clients-table td:nth-child(4) {
+    min-width: 170px;
+}
+
+.clients-table .client-tin-cell {
+    min-width: 150px;
+}
+
+.clients-empty-state {
+    padding: 1.25rem;
+}
+
+.client-manage-modal .modal-dialog {
+    max-width: 920px;
+}
+
+.client-manage-modal .modal-content {
+    border-radius: 14px;
+}
+
+.client-manage-modal .modal-header,
+.client-manage-modal .modal-footer {
+    padding: 0.95rem 1.15rem;
+}
+
+.client-manage-modal .modal-body {
+    padding: 1rem 1.15rem 1.15rem;
+}
+
+.client-form-section {
+    padding: 0.95rem;
+    border: 1px solid #dce7fc;
+    border-radius: 12px;
+    background: #fbfdff;
+}
+
+.client-form-section + .client-form-section {
+    margin-top: 0.9rem;
+}
+
+.client-form-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.client-form-section-head h3 {
+    margin: 0;
+    color: #173261;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.client-form-label {
+    margin-bottom: 0.34rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.client-form-input {
+    min-height: 43px;
+    border-radius: 9px;
+}
+
+.client-location-summary {
+    margin-top: 0.4rem;
+    font-weight: 700;
+}
+
+.client-password-field {
+    width: 100%;
+}
+
+.client-password-toggle {
+    right: 0.6rem;
+}
+
+.client-custom-fields-block {
+    border-top: 0;
+    padding-top: 0.95rem;
+    margin-top: 0.9rem;
+}
+
+.client-custom-fields-head {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+    margin-bottom: 0.75rem;
+}
+
+.client-custom-fields-title {
+    letter-spacing: 0.03em;
+}
+
+.client-custom-add-btn {
+    border-radius: 999px;
+    min-height: 36px;
+}
+
+.client-custom-field {
+    position: relative;
+}
+
+.clients-delete-note {
+    margin: 0.65rem 0 0;
+    color: #6a7fa8;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+@media (max-width: 992px) {
+    .clients-action-bar .dashboard-filter-select,
+    .clients-add-btn {
+        flex: 1 1 180px;
+    }
+
+    .client-manage-modal .modal-dialog {
+        max-width: calc(100% - 1.5rem);
+    }
+}
+
+@media (max-width: 576px) {
+    .clients-action-card,
+    .clients-list-card {
+        padding: 0.95rem;
+    }
+
+    .clients-action-bar {
+        flex-direction: column;
+    }
+
+    .clients-page-search,
+    .clients-action-bar .dashboard-filter-select,
+    .clients-add-btn {
+        width: 100%;
+    }
+
+    .clients-directory-tabs {
+        width: 100%;
+    }
+
+    .directory-tab-btn {
+        flex: 1 1 0;
+        justify-content: center;
+        padding-inline: 0.65rem;
+    }
+
+    .client-form-section {
+        padding: 0.85rem;
+    }
+
+    .client-custom-fields-head {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
+body.theme-dark .clients-directory-tabs,
+body.theme-dark .client-form-section {
+    background: #0f1c33;
+    border-color: #334155;
+}
+
+body.theme-dark .client-form-section-head h3 {
+    color: #f1f5f9;
+}
+
+body.theme-dark .clients-delete-note,
+body.theme-dark .client-location-summary {
+    color: #a8b7d2;
+}

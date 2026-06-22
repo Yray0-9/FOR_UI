@@ -79,8 +79,13 @@
             <form class="dashboard-card settings-card" id="settingsDefaults" data-settings-section>
                 <div class="settings-card-head">
                     <div>
-                        <h2>Workspace Defaults</h2>
-                        <p class="dashboard-section-hint">Choose default report settings for faster generation.</p>
+                        <h2>
+                            Workspace Defaults
+                            <span class="safebooks-tooltip-wrap">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <span class="safebooks-tooltip-content">Choose default report settings for faster generation.</span>
+                            </span>
+                        </h2>
                     </div>
                 </div>
 
@@ -135,8 +140,13 @@
             <article class="dashboard-card settings-card" id="settingsAppearance" data-settings-section>
                 <div class="settings-card-head">
                     <div>
-                        <h2>Appearance</h2>
-                        <p class="dashboard-section-hint">Choose a theme that fits your workspace.</p>
+                        <h2>
+                            Appearance
+                            <span class="safebooks-tooltip-wrap">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <span class="safebooks-tooltip-content">Choose a theme that fits your workspace.</span>
+                            </span>
+                        </h2>
                     </div>
                 </div>
 
@@ -181,16 +191,26 @@
             <form class="dashboard-card settings-card" id="settingsNotifications" data-settings-section>
                 <div class="settings-card-head">
                     <div>
-                        <h2>Notifications</h2>
-                        <p class="dashboard-section-hint">Adjust alerts to match your workflow.</p>
+                        <h2>
+                            Notifications
+                            <span class="safebooks-tooltip-wrap">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <span class="safebooks-tooltip-content">Adjust alerts to match your workflow.</span>
+                            </span>
+                        </h2>
                     </div>
                 </div>
 
                 <div class="settings-toggle-list">
                     <div class="settings-toggle-row">
                         <div>
-                            <p class="settings-field-label">Email Summary</p>
-                            <p class="settings-field-hint">Weekly summaries sent to your email.</p>
+                            <p class="settings-field-label">
+                                Email Summary
+                                <span class="safebooks-tooltip-wrap">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    <span class="safebooks-tooltip-content">Weekly summaries sent to your email.</span>
+                                </span>
+                            </p>
                         </div>
                         <label class="settings-switch">
                             <input type="checkbox" id="settingsNotifySummary" aria-label="Enable email summary notifications">
@@ -199,8 +219,13 @@
                     </div>
                     <div class="settings-toggle-row">
                         <div>
-                            <p class="settings-field-label">Compliance Alerts</p>
-                            <p class="settings-field-hint">Notify when filings are pending.</p>
+                            <p class="settings-field-label">
+                                Compliance Alerts
+                                <span class="safebooks-tooltip-wrap">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    <span class="safebooks-tooltip-content">Notify when filings are pending.</span>
+                                </span>
+                            </p>
                         </div>
                         <label class="settings-switch">
                             <input type="checkbox" id="settingsNotifyCompliance" aria-label="Enable compliance alerts">
@@ -218,8 +243,13 @@
             <article class="dashboard-card settings-card" id="settingsSecurity" data-settings-section>
                 <div class="settings-card-head">
                     <div>
-                        <h2>Security</h2>
-                        <p class="dashboard-section-hint">Protect your account with a strong password and login alerts.</p>
+                        <h2>
+                            Security
+                            <span class="safebooks-tooltip-wrap">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <span class="safebooks-tooltip-content">Protect your account with a strong password and login alerts.</span>
+                            </span>
+                        </h2>
                     </div>
                 </div>
 
@@ -227,8 +257,13 @@
                     <div class="settings-security-panel" id="settingsPasswordPanel">
                         <div class="settings-security-header">
                             <div>
-                                <p class="settings-field-label">Change Password</p>
-                                <p class="settings-field-hint">Use a unique password to keep your account secure.</p>
+                                <p class="settings-field-label">
+                                    Change Password
+                                    <span class="safebooks-tooltip-wrap">
+                                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                        <span class="safebooks-tooltip-content">Use a unique password to keep your account secure.</span>
+                                    </span>
+                                </p>
                             </div>
                         </div>
 
@@ -248,16 +283,26 @@
                     <div class="settings-security-panel" id="settingsLoginAlertsPanel" data-login-alerts-enabled="{{ login_alerts_enabled|yesno:'true,false' }}">
                         <div class="settings-security-header">
                             <div>
-                                <p class="settings-field-label">Login Alerts</p>
-                                <p class="settings-field-hint">Receive an email each time your account signs in.</p>
+                                <p class="settings-field-label">
+                                    Login Alerts
+                                    <span class="safebooks-tooltip-wrap">
+                                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                        <span class="safebooks-tooltip-content">Receive an email each time your account signs in.</span>
+                                    </span>
+                                </p>
                             </div>
                             <span class="settings-status-pill" id="settingsLoginAlertsStatus">Off</span>
                         </div>
 
                         <div class="settings-toggle-row settings-login-alerts-row">
                             <div>
-                                <p class="settings-field-label">Email alerts</p>
-                                <p class="settings-field-hint">Alerts go to {{ login_alerts_destination|default:"your email" }}.</p>
+                                <p class="settings-field-label">
+                                    Email alerts
+                                    <span class="safebooks-tooltip-wrap">
+                                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                        <span class="safebooks-tooltip-content">Alerts go to {{ login_alerts_destination|default:"your email" }}.</span>
+                                    </span>
+                                </p>
                             </div>
                             <label class="settings-switch">
                                 <input type="checkbox" id="settingsLoginAlertsToggle" aria-label="Enable login alert emails">
@@ -342,16 +387,26 @@
             <article class="dashboard-card settings-card settings-danger-card" id="settingsDanger" data-settings-section>
                 <div class="settings-card-head">
                     <div>
-                        <h2>Danger Zone</h2>
-                        <p class="dashboard-section-hint">Account deactivation requests are reviewed by an admin.</p>
+                        <h2>
+                            Danger Zone
+                            <span class="safebooks-tooltip-wrap">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <span class="safebooks-tooltip-content">Account deactivation requests are reviewed by an admin.</span>
+                            </span>
+                        </h2>
                     </div>
-                    <span class="dashboard-tag">Review Required</span>
+                    <span class="dashboard-tag">
+                        Review Required
+                        <span class="safebooks-tooltip-wrap">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span class="safebooks-tooltip-content">Submit a request to disable this account. Admin approval required.</span>
+                        </span>
+                    </span>
                 </div>
 
                 <div class="settings-planned-row">
                     <div>
                         <p class="settings-field-label">Request account deactivation</p>
-                        <p class="settings-field-hint">Submit a request to disable this account. Admin approval required.</p>
                     </div>
                     <button type="button" class="btn dashboard-action-btn outline settings-planned-btn" data-planned-feature="Request account deactivation">Request Deactivation</button>
                 </div>

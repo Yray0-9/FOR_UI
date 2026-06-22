@@ -435,10 +435,14 @@ def financial_records_client_page_view(request):
 
 @require_bookkeeper_auth
 @ensure_csrf_cookie
-def analytics_page_view(request):
+def client_details_page_view(request, client_id):
+    from django.shortcuts import get_object_or_404
+    from safebooks.models import Client
+    client = get_object_or_404(Client, id=client_id, bookkeeper=request.bookkeeper_account)
     context = _build_user_context(request.bookkeeper_account)
-    context["active_nav"] = "analytics"
-    return render(request, "base/analytics.html", context)
+    context["active_nav"] = "clients"
+    context["client"] = client
+    return render(request, "base/client_details.html", context)
 
 
 @require_bookkeeper_auth
@@ -1076,3 +1080,60 @@ def logout_view(request):
             "redirect_url": reverse("login"),
         }
     )
+
+
+@require_POST
+def forgot_password_send_code_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    email = payload.get("email")
+    from safebooks.services.auth_service import send_password_reset_code
+    result = send_password_reset_code(email)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
+
+
+@require_POST
+def forgot_password_verify_code_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    email = payload.get("email")
+    code = payload.get("code")
+    from safebooks.services.auth_service import verify_password_reset_code
+    result = verify_password_reset_code(email, code)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
+
+
+@require_POST
+def forgot_password_reset_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    email = payload.get("email")
+    new_password = payload.get("new_password")
+    confirm_password = payload.get("confirm_password")
+    from safebooks.services.auth_service import confirm_password_reset
+    result = confirm_password_reset(email, new_password, confirm_password)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)

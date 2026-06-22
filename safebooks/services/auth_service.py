@@ -23,6 +23,16 @@ EMAIL_VERIFICATION_CACHE_PREFIX = "safebooks:email-verification"
 EMAIL_VERIFICATION_CACHE_CODE_SUFFIX = "code"
 EMAIL_VERIFICATION_CACHE_SENT_SUFFIX = "sent"
 
+PASSWORD_RESET_CACHE_PREFIX = "safebooks:password-reset"
+PASSWORD_RESET_CACHE_CODE_SUFFIX = "code"
+PASSWORD_RESET_CACHE_SENT_SUFFIX = "sent"
+PASSWORD_RESET_CACHE_VERIFIED_SUFFIX = "verified"
+
+
+def _password_reset_cache_key(email: str, suffix: str) -> str:
+    normalized = str(email or "").strip().lower()
+    return f"{PASSWORD_RESET_CACHE_PREFIX}:{normalized}:{suffix}"
+
 
 def _get_setting_int(setting_name: str, default_value: int) -> int:
     raw_value = getattr(settings, setting_name, None)
@@ -506,3 +516,196 @@ def login_user_or_admin(data: dict) -> dict:
     if result.get("ok"):
         result["role"] = "bookkeeper"
     return result
+
+
+def send_password_reset_code(email: str) -> dict:
+    normalized_email = str(email or "").strip().lower()
+    if not normalized_email:
+        return {
+            "ok": False,
+            "message": "Email address is required.",
+        }
+
+    account = BookkeeperAccount.objects.filter(email__iexact=normalized_email).first()
+    if account is None:
+        return {
+            "ok": False,
+            "message": "Email address not found.",
+        }
+
+    now = timezone.now()
+    now_ts = int(now.timestamp())
+    cooldown_seconds = _get_verification_resend_cooldown_seconds()
+    sent_key = _password_reset_cache_key(normalized_email, PASSWORD_RESET_CACHE_SENT_SUFFIX)
+    last_sent_ts = cache.get(sent_key)
+    if last_sent_ts is not None:
+        try:
+            last_sent_ts = int(last_sent_ts)
+        except (TypeError, ValueError):
+            last_sent_ts = None
+
+    if last_sent_ts is not None:
+        elapsed = now_ts - last_sent_ts
+        if elapsed < cooldown_seconds:
+            return {
+                "ok": False,
+                "message": "Please wait before requesting another code.",
+                "retry_after_seconds": int(cooldown_seconds - elapsed),
+            }
+
+    ttl_minutes = _get_verification_ttl_minutes()
+    code = _generate_verification_code(EMAIL_VERIFICATION_CODE_LENGTH)
+
+    recipient_name = (account.full_name or "").strip() or "there"
+    subject = "SafeBooks password reset"
+    message = (
+        f"Hi {recipient_name},\n\n"
+        f"Your SafeBooks password reset code is {code}.\n"
+        f"This code expires in {ttl_minutes} minutes.\n\n"
+        "If you did not request a password reset, you can safely ignore this email.\n\n"
+        "SafeBooks"
+    )
+
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [account.email],
+            fail_silently=False,
+        )
+    except Exception:
+        return {
+            "ok": False,
+            "message": "Unable to send password reset email. Please try again later.",
+        }
+
+    ttl_seconds = int(timedelta(minutes=ttl_minutes).total_seconds())
+    code_key = _password_reset_cache_key(normalized_email, PASSWORD_RESET_CACHE_CODE_SUFFIX)
+
+    cache.set(
+        code_key,
+        {"hash": make_password(code), "expires_at": now_ts + ttl_seconds},
+        timeout=ttl_seconds,
+    )
+    cache.set(sent_key, now_ts, timeout=cooldown_seconds)
+
+    result = {
+        "ok": True,
+        "message": "Password reset code sent successfully.",
+        "retry_after_seconds": cooldown_seconds,
+    }
+
+    if _should_expose_debug_code():
+        result["debug_code"] = code
+
+    return result
+
+
+def verify_password_reset_code(email: str, code: str) -> dict:
+    normalized_email = str(email or "").strip().lower()
+    if not normalized_email:
+        return {
+            "ok": False,
+            "message": "Email address is required.",
+        }
+
+    code_value = str(code or "").strip()
+    if not code_value:
+        return {
+            "ok": False,
+            "message": "Verification code is required.",
+        }
+
+    code_key = _password_reset_cache_key(normalized_email, PASSWORD_RESET_CACHE_CODE_SUFFIX)
+    payload = cache.get(code_key)
+    if not isinstance(payload, dict):
+        return {
+            "ok": False,
+            "message": "No password reset code found or code has expired. Request a new one.",
+        }
+
+    code_hash = str(payload.get("hash") or "")
+    expires_ts = payload.get("expires_at")
+    if expires_ts is not None:
+        try:
+            expires_ts = int(expires_ts)
+        except (TypeError, ValueError):
+            expires_ts = None
+
+    now_ts = int(timezone.now().timestamp())
+    if expires_ts is not None and now_ts > expires_ts:
+        cache.delete(code_key)
+        return {
+            "ok": False,
+            "message": "Verification code has expired. Request a new one.",
+        }
+
+    if not code_hash or not check_password(code_value, code_hash):
+        return {
+            "ok": False,
+            "message": "Invalid verification code.",
+        }
+
+    verified_key = _password_reset_cache_key(normalized_email, PASSWORD_RESET_CACHE_VERIFIED_SUFFIX)
+    cache.set(verified_key, True, timeout=300)
+    cache.delete(code_key)
+    cache.delete(_password_reset_cache_key(normalized_email, PASSWORD_RESET_CACHE_SENT_SUFFIX))
+
+    return {
+        "ok": True,
+        "message": "Code verified successfully.",
+    }
+
+
+def confirm_password_reset(email: str, new_password: str, confirm_password: str) -> dict:
+    normalized_email = str(email or "").strip().lower()
+    if not normalized_email:
+        return {
+            "ok": False,
+            "message": "Email address is required.",
+        }
+
+    verified_key = _password_reset_cache_key(normalized_email, PASSWORD_RESET_CACHE_VERIFIED_SUFFIX)
+    is_verified = cache.get(verified_key)
+    if not is_verified:
+        return {
+            "ok": False,
+            "message": "Reset session expired or code not verified. Please verify again.",
+        }
+
+    if not new_password:
+        return {
+            "ok": False,
+            "message": "New password is required.",
+        }
+
+    if new_password != confirm_password:
+        return {
+            "ok": False,
+            "message": "Passwords do not match.",
+        }
+
+    requirement_errors = missing_password_requirements(new_password)
+    if requirement_errors:
+        return {
+            "ok": False,
+            "message": "Password does not meet requirements.",
+            "errors": requirement_errors,
+        }
+
+    account = BookkeeperAccount.objects.filter(email__iexact=normalized_email).first()
+    if account is None:
+        return {
+            "ok": False,
+            "message": "Account not found.",
+        }
+
+    account.password_hash = make_password(new_password)
+    account.save(update_fields=["password_hash"])
+    cache.delete(verified_key)
+
+    return {
+        "ok": True,
+        "message": "Password reset successfully.",
+    }

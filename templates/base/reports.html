@@ -75,8 +75,13 @@
     <article class="dashboard-card dashboard-fade-up reports-filter-card" style="--delay: 0.06s;">
         <div class="reports-filter-head">
             <div>
-                <h2 class="reports-filter-title">Build Report</h2>
-                <p class="dashboard-section-hint">Set report type, scope, and date range, then generate a preview-ready report.</p>
+                <h2 class="reports-filter-title">
+                    Build Report
+                    <span class="safebooks-tooltip-wrap">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                        <span class="safebooks-tooltip-content">Set report type, scope, and date range, then generate a preview-ready report.</span>
+                    </span>
+                </h2>
             </div>
             <span class="dashboard-tag reports-ready-tag" id="reportsGenerationTag">Not generated</span>
         </div>
@@ -172,8 +177,13 @@
         <article class="dashboard-card dashboard-fade-up reports-preview-card mt-3" style="--delay: 0.14s;">
             <div class="dashboard-card-head reports-preview-head">
                 <div>
-                    <h2 id="reportsPreviewTitle">Report Preview</h2>
-                    <p class="dashboard-section-hint" id="reportsPreviewHint">Generated rows will appear here for quick review before download.</p>
+                    <h2 id="reportsPreviewTitle">
+                        Report Preview
+                        <span class="safebooks-tooltip-wrap">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span class="safebooks-tooltip-content" id="reportsPreviewHint">Generated rows will appear here for quick review before download.</span>
+                        </span>
+                    </h2>
                 </div>
                 <span class="dashboard-tag" id="reportsPreviewMetaTag">Preview ready</span>
             </div>
@@ -198,8 +208,13 @@
         <article class="dashboard-card dashboard-fade-up reports-ledger-card mt-3" style="--delay: 0.18s;" id="reportsLedgerCard" hidden>
             <div class="dashboard-card-head reports-preview-head">
                 <div>
-                    <h2>Client Print Layout Preview</h2>
-                    <p class="dashboard-section-hint" id="reportsLedgerHint">Familiar paper-style format for review and future printing.</p>
+                    <h2>
+                        Client Print Layout Preview
+                        <span class="safebooks-tooltip-wrap">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span class="safebooks-tooltip-content" id="reportsLedgerHint">Familiar paper-style format for review and future printing.</span>
+                        </span>
+                    </h2>
                 </div>
                 <span class="dashboard-tag" id="reportsLedgerMetaTag">Print-ready</span>
             </div>
@@ -216,10 +231,15 @@
 
     <article class="dashboard-card dashboard-fade-up reports-history-card mt-3" style="--delay: 0.18s;">
         <div class="dashboard-card-head">
-            <h2>Recent Generated Reports</h2>
+            <h2>
+                Recent Generated Reports
+                <span class="safebooks-tooltip-wrap">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    <span class="safebooks-tooltip-content">Latest reports generated in this browser session.</span>
+                </span>
+            </h2>
             <span class="dashboard-tag" id="reportsHistoryCountTag">0 items</span>
         </div>
-        <p class="dashboard-section-hint">Latest reports generated in this browser session.</p>
 
         <ul class="reports-history-list" id="reportsHistoryList" aria-label="Generated reports history"></ul>
         <div class="dashboard-data-empty reports-history-empty" id="reportsHistoryEmpty">

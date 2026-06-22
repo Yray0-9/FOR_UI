@@ -11,17 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Tailwind CSS (Play CDN) with Prefix & Disabled Preflight for Bootstrap Compatibility -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            prefix: 'tw-',
-            corePlugins: {
-                preflight: false,
-            }
-        }
-    </script>
-
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/animations.css' %}">
     <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
@@ -170,20 +159,20 @@
                                     <p class="hero-overview-subtitle">Monitor financial status and compliance in real time</p>
                                     
                                     <!-- Dynamic controls for the interactive preview -->
-                                    <div class="tw-mt-4 tw-flex tw-flex-col sm:tw-flex-row tw-gap-3">
-                                        <div class="tw-relative tw-flex-1">
-                                            <i class="bi bi-search tw-absolute tw-left-3 tw-top-1/2 tw-transform tw--translate-y-1/2 tw-text-slate-400"></i>
-                                            <input type="text" id="mockSearchInput" class="form-control tw-pl-9 tw-py-2 tw-rounded-lg tw-text-sm tw-border-slate-200 focus:tw-border-blue-500 focus:tw-ring focus:tw-ring-blue-100" placeholder="Search client name or TIN...">
+                                    <div class="hero-preview-controls">
+                                        <div class="hero-search-wrap">
+                                            <i class="bi bi-search hero-search-icon"></i>
+                                            <input type="text" id="mockSearchInput" class="form-control hero-search-input" placeholder="Search client name or TIN...">
                                         </div>
-                                        <div class="tw-flex tw-flex-wrap tw-gap-1.5 tw-items-center" id="mockFilterGroup">
-                                            <button type="button" class="btn btn-sm tw-rounded-full tw-px-3 tw-py-1 tw-text-xs tw-font-semibold tw-bg-blue-600 tw-text-white hover:tw-bg-blue-700" data-filter="all">All</button>
-                                            <button type="button" class="btn btn-sm tw-rounded-full tw-px-3 tw-py-1 tw-text-xs tw-font-semibold tw-bg-slate-100 tw-text-slate-600 hover:tw-bg-slate-200" data-filter="filed">Filed</button>
-                                            <button type="button" class="btn btn-sm tw-rounded-full tw-px-3 tw-py-1 tw-text-xs tw-font-semibold tw-bg-slate-100 tw-text-slate-600 hover:tw-bg-slate-200" data-filter="pending">Pending</button>
-                                            <button type="button" class="btn btn-sm tw-rounded-full tw-px-3 tw-py-1 tw-text-xs tw-font-semibold tw-bg-slate-100 tw-text-slate-600 hover:tw-bg-slate-200" data-filter="late">Late</button>
+                                        <div class="hero-filter-group" id="mockFilterGroup">
+                                            <button type="button" class="btn btn-sm hero-filter-btn is-active" data-filter="all">All</button>
+                                            <button type="button" class="btn btn-sm hero-filter-btn" data-filter="filed">Filed</button>
+                                            <button type="button" class="btn btn-sm hero-filter-btn" data-filter="pending">Pending</button>
+                                            <button type="button" class="btn btn-sm hero-filter-btn" data-filter="late">Late</button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="table-responsive hero-overview-table-wrap tw-mt-2">
+                                <div class="table-responsive hero-overview-table-wrap">
                                     <table class="table table-hover table-sm align-middle mb-0 overview-table">
                                         <thead>
                                             <tr>
@@ -195,21 +184,21 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr class="mock-table-row tw-cursor-pointer tw-transition-colors hover:tw-bg-blue-50/40" data-client-name="ABC Trading" data-tin="123-456-789" data-revenue="₱120,000" data-status="filed" data-risk="low" data-notes="All VAT and Percentage taxes filed successfully for the current month. Stable revenue trends.">
+                                            <tr class="mock-table-row" data-client-name="ABC Trading" data-tin="123-456-789" data-revenue="₱120,000" data-status="filed" data-risk="low" data-notes="All VAT and Percentage taxes filed successfully for the current month. Stable revenue trends.">
                                                 <td>ABC Trading</td>
                                                 <td>123-456-789</td>
                                                 <td>&#8369;120,000</td>
                                                 <td><span class="status-badge status-filed">Filed</span></td>
                                                 <td><span class="status-badge risk-low">Low</span></td>
                                             </tr>
-                                            <tr class="mock-table-row tw-cursor-pointer tw-transition-colors hover:tw-bg-blue-50/40" data-client-name="JMN Store" data-tin="987-654-321" data-revenue="₱80,000" data-status="pending" data-risk="medium" data-notes="Income Tax returns pending review. Needs invoice checks for the current quarter.">
+                                            <tr class="mock-table-row" data-client-name="JMN Store" data-tin="987-654-321" data-revenue="₱80,000" data-status="pending" data-risk="medium" data-notes="Income Tax returns pending review. Needs invoice checks for the current quarter.">
                                                 <td>JMN Store</td>
                                                 <td>987-654-321</td>
                                                 <td>&#8369;80,000</td>
                                                 <td><span class="status-badge status-pending">Pending</span></td>
                                                 <td><span class="status-badge risk-medium">Medium</span></td>
                                             </tr>
-                                            <tr class="mock-table-row tw-cursor-pointer tw-transition-colors hover:tw-bg-blue-50/40" data-client-name="KRL Services" data-tin="456-789-123" data-revenue="₱50,000" data-status="late" data-risk="high" data-notes="VAT return is overdue. Revenue discrepancy detected in ledger. Requires priority auditing.">
+                                            <tr class="mock-table-row" data-client-name="KRL Services" data-tin="456-789-123" data-revenue="₱50,000" data-status="late" data-risk="high" data-notes="VAT return is overdue. Revenue discrepancy detected in ledger. Requires priority auditing.">
                                                 <td>KRL Services</td>
                                                 <td>456-789-123</td>
                                                 <td>&#8369;50,000</td>
@@ -218,7 +207,7 @@
                                             </tr>
                                             <tr id="mockNoResultsRow" class="d-none">
                                                 <td colspan="5" class="text-center py-4 text-muted font-medium">
-                                                    <i class="bi bi-info-circle tw-mr-1.5"></i>No matching clients found
+                                                    <i class="bi bi-info-circle me-1"></i>No matching clients found
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -232,31 +221,31 @@
         </section>
 
         <!-- Trust Banner Section -->
-        <section class="tw-bg-white tw-py-8 tw-border-y tw-border-slate-100 tw-shadow-sm scroll-reveal">
+        <section class="trust-banner-section scroll-reveal">
             <div class="container">
-                <div class="tw-flex tw-flex-col lg:tw-flex-row tw-items-center tw-justify-between tw-gap-6">
-                    <div class="tw-flex tw-items-center tw-gap-4">
-                        <div class="tw-bg-blue-50 tw-text-blue-600 tw-p-3 tw-rounded-2xl tw-text-2xl tw-flex tw-items-center tw-justify-center tw-shadow-inner">
+                <div class="trust-banner-content">
+                    <div class="trust-banner-main">
+                        <div class="trust-banner-icon">
                             <i class="bi bi-award-fill"></i>
                         </div>
                         <div>
-                            <h4 class="tw-font-bold tw-text-slate-800 tw-text-lg tw-mb-0.5">Endorsed Platform</h4>
-                            <p class="tw-text-xs tw-text-slate-500 tw-font-semibold">Cooperative development for professional compliance management</p>
+                            <h4>Endorsed Platform</h4>
+                            <p>Cooperative development for professional compliance management</p>
                         </div>
                     </div>
-                    <div class="tw-h-px lg:tw-h-8 tw-w-full lg:tw-w-px tw-bg-slate-200"></div>
-                    <div class="tw-text-center lg:tw-text-left">
-                        <p class="tw-text-sm tw-text-slate-600 tw-font-semibold">
+                    <div class="trust-banner-divider"></div>
+                    <div class="trust-banner-copy">
+                        <p>
                             Official Compliance Portal of the 
-                            <span class="tw-text-blue-600 tw-font-bold">Bookkeepers Guild of Panabo City Inc.</span>
+                            <span>Bookkeepers Guild of Panabo City Inc.</span>
                         </p>
                     </div>
-                    <div class="tw-h-px lg:tw-h-8 tw-w-full lg:tw-w-px tw-bg-slate-200"></div>
-                    <div class="tw-flex tw-items-center tw-gap-2">
-                        <span class="tw-inline-flex tw-items-center tw-gap-1 tw-px-3 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-bg-green-50 tw-text-green-700 tw-border tw-border-green-150">
+                    <div class="trust-banner-divider"></div>
+                    <div class="trust-banner-badges">
+                        <span class="trust-badge trust-badge-success">
                             <i class="bi bi-shield-check"></i> Verified Security
                         </span>
-                        <span class="tw-inline-flex tw-items-center tw-gap-1 tw-px-3 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-bg-blue-50 tw-text-blue-700 tw-border tw-border-blue-150">
+                        <span class="trust-badge trust-badge-primary">
                             <i class="bi bi-patch-check"></i> Authorized Access
                         </span>
                     </div>
@@ -272,43 +261,43 @@
                 </div>
                 <div class="row g-4">
                     <div class="col-md-6 col-lg-4">
-                        <article class="feature-card scroll-reveal tw-group tw-transition-all tw-duration-300 hover:tw-shadow-xl hover:tw-border-blue-300 hover:tw--translate-y-1.5 tw-cursor-default">
-                            <span class="feature-icon tw-transition-all tw-duration-300 tw-group-hover:tw-bg-blue-600 tw-group-hover:tw-text-white"><i class="bi bi-people"></i></span>
+                        <article class="feature-card card-interactive scroll-reveal">
+                            <span class="feature-icon"><i class="bi bi-people"></i></span>
                             <h3>Centralized Client Management</h3>
                             <p>Organize every client profile and financial file in one secure place.</p>
                         </article>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <article class="feature-card scroll-reveal tw-group tw-transition-all tw-duration-300 hover:tw-shadow-xl hover:tw-border-blue-300 hover:tw--translate-y-1.5 tw-cursor-default">
-                            <span class="feature-icon tw-transition-all tw-duration-300 tw-group-hover:tw-bg-blue-600 tw-group-hover:tw-text-white"><i class="bi bi-search"></i></span>
+                        <article class="feature-card card-interactive scroll-reveal">
+                            <span class="feature-icon"><i class="bi bi-search"></i></span>
                             <h3>TIN-Based Search</h3>
                             <p>Locate taxpayer records instantly with accurate TIN lookup tools.</p>
                         </article>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <article class="feature-card scroll-reveal tw-group tw-transition-all tw-duration-300 hover:tw-shadow-xl hover:tw-border-blue-300 hover:tw--translate-y-1.5 tw-cursor-default">
-                            <span class="feature-icon tw-transition-all tw-duration-300 tw-group-hover:tw-bg-blue-600 tw-group-hover:tw-text-white"><i class="bi bi-graph-up-arrow"></i></span>
+                        <article class="feature-card card-interactive scroll-reveal">
+                            <span class="feature-icon"><i class="bi bi-graph-up-arrow"></i></span>
                             <h3>Financial Analytics</h3>
                             <p>Track trends and evaluate performance using clear visual summaries.</p>
                         </article>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <article class="feature-card scroll-reveal tw-group tw-transition-all tw-duration-300 hover:tw-shadow-xl hover:tw-border-blue-300 hover:tw--translate-y-1.5 tw-cursor-default">
-                            <span class="feature-icon tw-transition-all tw-duration-300 tw-group-hover:tw-bg-blue-600 tw-group-hover:tw-text-white"><i class="bi bi-bar-chart-steps"></i></span>
+                        <article class="feature-card card-interactive scroll-reveal">
+                            <span class="feature-icon"><i class="bi bi-bar-chart-steps"></i></span>
                             <h3>Predictive Forecasting</h3>
                             <p>Anticipate upcoming financial outcomes through data-driven forecasts.</p>
                         </article>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <article class="feature-card scroll-reveal tw-group tw-transition-all tw-duration-300 hover:tw-shadow-xl hover:tw-border-blue-300 hover:tw--translate-y-1.5 tw-cursor-default">
-                            <span class="feature-icon tw-transition-all tw-duration-300 tw-group-hover:tw-bg-blue-600 tw-group-hover:tw-text-white"><i class="bi bi-shield-check"></i></span>
+                        <article class="feature-card card-interactive scroll-reveal">
+                            <span class="feature-icon"><i class="bi bi-shield-check"></i></span>
                             <h3>Risk Classification</h3>
                             <p>Identify high-risk records early and prioritize actions with clarity.</p>
                         </article>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <article class="feature-card scroll-reveal tw-group tw-transition-all tw-duration-300 hover:tw-shadow-xl hover:tw-border-blue-300 hover:tw--translate-y-1.5 tw-cursor-default">
-                            <span class="feature-icon tw-transition-all tw-duration-300 tw-group-hover:tw-bg-blue-600 tw-group-hover:tw-text-white"><i class="bi bi-lock"></i></span>
+                        <article class="feature-card card-interactive scroll-reveal">
+                            <span class="feature-icon"><i class="bi bi-lock"></i></span>
                             <h3>Secure Access</h3>
                             <p>Protect sensitive financial information with controlled user access.</p>
                         </article>
@@ -318,32 +307,32 @@
         </section>
 
         <!-- Stats Counter Section -->
-        <section class="tw-bg-slate-900 tw-text-white tw-py-16 tw-relative tw-overflow-hidden scroll-reveal">
+        <section class="stats-band scroll-reveal">
             <!-- Background glow effect -->
-            <div class="tw-absolute tw-w-96 tw-h-96 tw-bg-blue-600 tw-rounded-full tw-opacity-10 tw-blur-3xl tw--top-20 tw--left-20"></div>
-            <div class="tw-absolute tw-w-96 tw-h-96 tw-bg-indigo-600 tw-rounded-full tw-opacity-10 tw-blur-3xl tw--bottom-20 tw--right-20"></div>
+            <div class="stats-glow stats-glow-blue"></div>
+            <div class="stats-glow stats-glow-indigo"></div>
             
-            <div class="container tw-relative tw-z-10">
+            <div class="container stats-band-content">
                 <div class="row g-4 text-center">
                     <div class="col-md-4">
-                        <div class="tw-p-6">
-                            <h3 class="tw-text-4xl lg:tw-text-5xl tw-font-extrabold tw-text-blue-400 tw-mb-2 tw-font-mono" id="statAccuracy" data-target="99.8">0%</h3>
-                            <p class="tw-text-slate-300 tw-font-bold tw-tracking-wide tw-text-sm tw-uppercase">Filing Compliance Accuracy</p>
-                            <p class="tw-text-xs tw-text-slate-400 tw-mt-1">Verified with BIR form rules</p>
+                        <div class="stats-block">
+                            <h3 class="stats-value stats-value-blue" id="statAccuracy" data-target="99.8">0%</h3>
+                            <p class="stats-label">Filing Compliance Accuracy</p>
+                            <p class="stats-note">Verified with BIR form rules</p>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="tw-p-6 tw-border-y md:tw-border-y-0 md:tw-border-x tw-border-slate-800">
-                            <h3 class="tw-text-4xl lg:tw-text-5xl tw-font-extrabold tw-text-indigo-400 tw-mb-2 tw-font-mono" id="statClients" data-target="500">0</h3>
-                            <p class="tw-text-slate-300 tw-font-bold tw-tracking-wide tw-text-sm tw-uppercase">Monitored Client Accounts</p>
-                            <p class="tw-text-xs tw-text-slate-400 tw-mt-1">Across all registered bookkeepers</p>
+                        <div class="stats-block stats-block-middle">
+                            <h3 class="stats-value stats-value-indigo" id="statClients" data-target="500">0</h3>
+                            <p class="stats-label">Monitored Client Accounts</p>
+                            <p class="stats-note">Across all registered bookkeepers</p>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="tw-p-6">
-                            <h3 class="tw-text-4xl lg:tw-text-5xl tw-font-extrabold tw-text-blue-400 tw-mb-2 tw-font-mono" id="statRevenue" data-target="42">₱0M+</h3>
-                            <p class="tw-text-slate-300 tw-font-bold tw-tracking-wide tw-text-sm tw-uppercase">Total Revenue Analyzed</p>
-                            <p class="tw-text-xs tw-text-slate-400 tw-mt-1">Enabling predictive risk forecasting</p>
+                        <div class="stats-block">
+                            <h3 class="stats-value stats-value-blue" id="statRevenue" data-target="42">₱0M+</h3>
+                            <p class="stats-label">Total Revenue Analyzed</p>
+                            <p class="stats-note">Enabling predictive risk forecasting</p>
                         </div>
                     </div>
                 </div>
@@ -358,25 +347,25 @@
                 </div>
                 <div class="row g-4">
                     <div class="col-lg-4">
-                        <article class="step-card scroll-reveal tw-group tw-transition-all tw-duration-300 hover:tw-shadow-xl hover:tw-border-indigo-300 hover:tw--translate-y-1.5 tw-cursor-default">
-                            <span class="step-number tw-transition-all tw-duration-300 tw-group-hover:tw-bg-indigo-600 tw-group-hover:tw-text-white">1</span>
-                            <span class="step-icon tw-transition-all tw-duration-300 tw-group-hover:tw-bg-indigo-600 tw-group-hover:tw-text-white"><i class="bi bi-person-plus"></i></span>
+                        <article class="step-card step-card-interactive scroll-reveal">
+                            <span class="step-number">1</span>
+                            <span class="step-icon"><i class="bi bi-person-plus"></i></span>
                             <h3>Add Client Information</h3>
                             <p>Register client profiles, tax identifiers, and core business details.</p>
                         </article>
                     </div>
                     <div class="col-lg-4">
-                        <article class="step-card scroll-reveal tw-group tw-transition-all tw-duration-300 hover:tw-shadow-xl hover:tw-border-indigo-300 hover:tw--translate-y-1.5 tw-cursor-default">
-                            <span class="step-number tw-transition-all tw-duration-300 tw-group-hover:tw-bg-indigo-600 tw-group-hover:tw-text-white">2</span>
-                            <span class="step-icon tw-transition-all tw-duration-300 tw-group-hover:tw-bg-indigo-600 tw-group-hover:tw-text-white"><i class="bi bi-journal-text"></i></span>
+                        <article class="step-card step-card-interactive scroll-reveal">
+                            <span class="step-number">2</span>
+                            <span class="step-icon"><i class="bi bi-journal-text"></i></span>
                             <h3>Record Financial Data</h3>
                             <p>Input transactions and compliance records using a structured workflow.</p>
                         </article>
                     </div>
                     <div class="col-lg-4">
-                        <article class="step-card scroll-reveal tw-group tw-transition-all tw-duration-300 hover:tw-shadow-xl hover:tw-border-indigo-300 hover:tw--translate-y-1.5 tw-cursor-default">
-                            <span class="step-number tw-transition-all tw-duration-300 tw-group-hover:tw-bg-indigo-600 tw-group-hover:tw-text-white">3</span>
-                            <span class="step-icon tw-transition-all tw-duration-300 tw-group-hover:tw-bg-indigo-600 tw-group-hover:tw-text-white"><i class="bi bi-pie-chart"></i></span>
+                        <article class="step-card step-card-interactive scroll-reveal">
+                            <span class="step-number">3</span>
+                            <span class="step-icon"><i class="bi bi-pie-chart"></i></span>
                             <h3>View Insights and Reports</h3>
                             <p>Review trends, compliance status, and risk indicators in one view.</p>
                         </article>
@@ -430,54 +419,54 @@
         </section>
 
         <!-- Onboarding & Security FAQ Section -->
-        <section id="faq" class="section-spacing tw-bg-slate-50 tw-border-t tw-border-slate-100 scroll-reveal">
+        <section id="faq" class="section-spacing faq-section scroll-reveal">
             <div class="container">
                 <div class="section-heading text-center">
-                    <h2 class="tw-font-bold">Frequently Asked Questions</h2>
+                    <h2>Frequently Asked Questions</h2>
                     <p>Learn more about onboarding, administrative review, and data privacy safeguards.</p>
                 </div>
                 
                 <div class="row justify-content-center">
                     <div class="col-lg-8">
-                        <div class="accordion accordion-flush tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-slate-100 tw-overflow-hidden" id="faqAccordion">
+                        <div class="accordion accordion-flush faq-accordion" id="faqAccordion">
                             
                             <!-- FAQ Item 1 -->
-                            <div class="accordion-item tw-border-b tw-border-slate-100">
+                            <div class="accordion-item faq-item">
                                 <h2 class="accordion-header" id="faqHeadingOne">
-                                    <button class="accordion-button collapsed tw-font-bold tw-text-slate-800 tw-py-4 tw-px-5 focus:tw-bg-blue-50/20 focus:tw-text-blue-600" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseOne" aria-expanded="false" aria-controls="faqCollapseOne">
+                                    <button class="accordion-button collapsed faq-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseOne" aria-expanded="false" aria-controls="faqCollapseOne">
                                         What is the bookkeeper verification and approval process?
                                     </button>
                                 </h2>
                                 <div id="faqCollapseOne" class="accordion-collapse collapse" aria-labelledby="faqHeadingOne" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body tw-text-sm tw-text-slate-650 tw-leading-relaxed tw-px-5 tw-pb-5">
-                                        To protect client records, SafeBooks enforces a strict onboarding verification. After signing up and confirming your email address, your account status is set to <strong class="tw-text-blue-600">Pending Approval</strong>. The Guild administration console manually reviews each application. Once verified, you will be active and can immediately manage clients.
+                                    <div class="accordion-body faq-body">
+                                        To protect client records, SafeBooks enforces a strict onboarding verification. After signing up and confirming your email address, your account status is set to <strong class="text-primary-emphasis">Pending Approval</strong>. The Guild administration console manually reviews each application. Once verified, you will be active and can immediately manage clients.
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- FAQ Item 2 -->
-                            <div class="accordion-item tw-border-b tw-border-slate-100">
+                            <div class="accordion-item faq-item">
                                 <h2 class="accordion-header" id="faqHeadingTwo">
-                                    <button class="accordion-button collapsed tw-font-bold tw-text-slate-800 tw-py-4 tw-px-5 focus:tw-bg-blue-50/20 focus:tw-text-blue-600" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseTwo" aria-expanded="false" aria-controls="faqCollapseTwo">
+                                    <button class="accordion-button collapsed faq-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseTwo" aria-expanded="false" aria-controls="faqCollapseTwo">
                                         How is sensitive taxpayer and client data protected?
                                     </button>
                                 </h2>
                                 <div id="faqCollapseTwo" class="accordion-collapse collapse" aria-labelledby="faqHeadingTwo" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body tw-text-sm tw-text-slate-650 tw-leading-relaxed tw-px-5 tw-pb-5">
-                                        SafeBooks implements strict schema-level data separation. Every client and tax transaction is scoped exclusively under the bookkeeper who registered them. System administrators can manage and review bookkeeper account active states, but they have <strong class="tw-text-slate-800">no technical access</strong> to view client profiles or financial transactions.
+                                    <div class="accordion-body faq-body">
+                                        SafeBooks implements strict schema-level data separation. Every client and tax transaction is scoped exclusively under the bookkeeper who registered them. System administrators can manage and review bookkeeper account active states, but they have <strong>no technical access</strong> to view client profiles or financial transactions.
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- FAQ Item 3 -->
-                            <div class="accordion-item tw-border-0">
+                            <div class="accordion-item border-0">
                                 <h2 class="accordion-header" id="faqHeadingThree">
-                                    <button class="accordion-button collapsed tw-font-bold tw-text-slate-800 tw-py-4 tw-px-5 focus:tw-bg-blue-50/20 focus:tw-text-blue-600" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseThree" aria-expanded="false" aria-controls="faqCollapseThree">
+                                    <button class="accordion-button collapsed faq-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseThree" aria-expanded="false" aria-controls="faqCollapseThree">
                                         What formats of compliance reports are available for export?
                                     </button>
                                 </h2>
                                 <div id="faqCollapseThree" class="accordion-collapse collapse" aria-labelledby="faqHeadingThree" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body tw-text-sm tw-text-slate-650 tw-leading-relaxed tw-px-5 tw-pb-5">
+                                    <div class="accordion-body faq-body">
                                         Bookkeepers can instantly generate and print audit-ready compliance summaries, risk reports, and monthly financial ledger reports. Export formats include standardized printable PDF worksheets and spreadsheets to match standard bookkeeping documentation procedures.
                                     </div>
                                 </div>
@@ -522,46 +511,46 @@
     <!-- Mock Client Preview Modal -->
     <div class="modal fade" id="heroPreviewModal" tabindex="-1" aria-labelledby="heroPreviewModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content tw-border-0 tw-shadow-2xl tw-rounded-2xl">
-                <div class="modal-header tw-bg-gradient-to-r tw-from-blue-600 tw-to-indigo-600 tw-text-white tw-border-0 tw-rounded-t-2xl tw-p-4">
-                    <h5 class="modal-title tw-font-bold tw-text-lg tw-flex tw-items-center" id="heroPreviewModalLabel">
-                        <i class="bi bi-briefcase-fill tw-mr-2"></i>Client Details
+            <div class="modal-content hero-preview-modal-content">
+                <div class="modal-header hero-preview-modal-header">
+                    <h5 class="modal-title hero-preview-modal-title" id="heroPreviewModalLabel">
+                        <i class="bi bi-briefcase-fill me-2"></i>Client Details
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body tw-p-5">
-                    <div class="tw-space-y-4">
-                        <div class="tw-flex tw-justify-between tw-items-center">
-                            <span class="tw-text-sm tw-text-slate-500 tw-font-semibold">Client Name</span>
-                            <span class="tw-font-bold tw-text-slate-850" id="modalClientName">-</span>
+                <div class="modal-body hero-preview-modal-body">
+                    <div class="modal-detail-stack">
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">Client Name</span>
+                            <span class="modal-detail-value" id="modalClientName">-</span>
                         </div>
-                        <div class="tw-flex tw-justify-between tw-items-center tw-border-t tw-border-slate-100 tw-pt-3">
-                            <span class="tw-text-sm tw-text-slate-500 tw-font-semibold">Taxpayer TIN</span>
-                            <span class="tw-font-mono tw-font-bold tw-text-slate-800" id="modalClientTIN">-</span>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">Taxpayer TIN</span>
+                            <span class="modal-detail-value modal-detail-mono" id="modalClientTIN">-</span>
                         </div>
-                        <div class="tw-flex tw-justify-between tw-items-center tw-border-t tw-border-slate-100 tw-pt-3">
-                            <span class="tw-text-sm tw-text-slate-500 tw-font-semibold">Monthly Revenue</span>
-                            <span class="tw-font-bold tw-text-slate-800" id="modalClientRevenue">-</span>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">Monthly Revenue</span>
+                            <span class="modal-detail-value" id="modalClientRevenue">-</span>
                         </div>
-                        <div class="tw-flex tw-justify-between tw-items-center tw-border-t tw-border-slate-100 tw-pt-3">
-                            <span class="tw-text-sm tw-text-slate-500 tw-font-semibold">Filing Status</span>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">Filing Status</span>
                             <span id="modalClientStatus">-</span>
                         </div>
-                        <div class="tw-flex tw-justify-between tw-items-center tw-border-t tw-border-slate-100 tw-pt-3">
-                            <span class="tw-text-sm tw-text-slate-500 tw-font-semibold">Risk Assessment</span>
+                        <div class="modal-detail-item">
+                            <span class="modal-detail-label">Risk Assessment</span>
                             <span id="modalClientRisk">-</span>
                         </div>
-                        <div class="tw-border-t tw-border-slate-100 tw-pt-3">
-                            <span class="tw-text-sm tw-text-slate-500 tw-font-semibold tw-block tw-mb-1">Audit Advisory Notes</span>
-                            <div class="tw-bg-slate-50 tw-p-3.5 tw-rounded-xl tw-text-sm tw-text-slate-650 tw-italic" id="modalClientNotes">
+                        <div class="modal-detail-notes">
+                            <span class="modal-detail-label">Audit Advisory Notes</span>
+                            <div class="modal-detail-note" id="modalClientNotes">
                                 -
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer tw-border-t tw-border-slate-100 tw-p-3 tw-flex tw-justify-between">
-                    <span class="tw-text-[11px] tw-text-slate-400 tw-font-semibold"><i class="bi bi-shield-lock-fill tw-mr-1"></i>Secure Guild Portal</span>
-                    <button type="button" class="btn btn-sm tw-bg-blue-600 hover:tw-bg-blue-700 tw-text-white tw-font-semibold tw-rounded-lg tw-px-4 tw-py-2 tw-border-0" data-bs-dismiss="modal">Close Preview</button>
+                <div class="modal-footer hero-preview-modal-footer">
+                    <span class="modal-footer-note"><i class="bi bi-shield-lock-fill me-1"></i>Secure Guild Portal</span>
+                    <button type="button" class="btn btn-sm close-preview-btn" data-bs-dismiss="modal">Close Preview</button>
                 </div>
             </div>
         </div>
@@ -654,11 +643,9 @@
                 btn.addEventListener("click", (e) => {
                     e.preventDefault();
                     filterButtons.forEach(b => {
-                        b.classList.remove("tw-bg-blue-600", "tw-text-white");
-                        b.classList.add("tw-bg-slate-100", "tw-text-slate-600");
+                        b.classList.remove("is-active");
                     });
-                    btn.classList.remove("tw-bg-slate-100", "tw-text-slate-600");
-                    btn.classList.add("tw-bg-blue-600", "tw-text-white");
+                    btn.classList.add("is-active");
 
                     activeFilter = btn.dataset.filter;
                     filterTable();

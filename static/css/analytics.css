@@ -282,6 +282,7 @@
 .analytics-forecast-card {
     width: 100%;
     min-height: 0;
+    padding: 1.35rem 1.45rem;
 }
 
 .analytics-predictive-report-card {
@@ -289,26 +290,50 @@
     flex-direction: column;
 }
 
+.analytics-predictive-report-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
+}
+
+.analytics-predictive-report-head h2 {
+    max-width: 22rem;
+    line-height: 1.16;
+}
+
+.analytics-method-tag {
+    flex: 0 0 auto;
+    max-width: 11.5rem;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.2;
+    padding: 0.38rem 0.72rem;
+}
+
 .analytics-predictive-period {
-    margin: -0.1rem 0 0.5rem;
+    margin: 0.3rem 0 0.78rem;
     color: #6c85b0;
-    font-size: 0.74rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    letter-spacing: 0.01em;
 }
 
 .analytics-predictive-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.56rem;
+    grid-template-columns: repeat(auto-fit, minmax(126px, 1fr));
+    gap: 0.68rem;
 }
 
 .analytics-predictive-item {
     border: 1px solid #e2ebfc;
-    border-radius: 12px;
+    border-radius: 10px;
     background: #fbfdff;
-    padding: 0.56rem 0.6rem;
+    padding: 0.72rem 0.75rem;
     min-width: 0;
+    min-height: 108px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .analytics-predictive-label {
@@ -322,37 +347,44 @@
 
 .analytics-predictive-value {
     display: block;
-    margin-top: 0.24rem;
+    margin-top: 0.34rem;
     color: #1f3d71;
-    font-size: 0.92rem;
+    font-size: clamp(0.9rem, 1.15vw, 1.08rem);
     font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
 }
 
 .analytics-predictive-subtext {
     display: block;
-    margin-top: 0.2rem;
+    margin-top: 0.34rem;
     color: #6c85b0;
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.32;
 }
 
 .analytics-predictive-chart {
-    margin-top: 0.62rem;
+    margin-top: 0.82rem;
 }
 
 .analytics-predictive-chart-shell {
     border: 1px dashed #d8e5fb;
     border-radius: 12px;
     background: #f8fbff;
-    padding: 0.48rem 0.55rem;
+    padding: 0.62rem 0.68rem;
     text-align: center;
+    min-height: 136px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .analytics-predictive-spark {
     width: 100%;
-    height: 84px;
+    height: 72px;
     display: block;
-    margin-bottom: 0.32rem;
+    margin-bottom: 0.42rem;
 }
 
 .analytics-predictive-line {
@@ -367,19 +399,22 @@
 .analytics-predictive-placeholder {
     margin: 0;
     color: #6c85b0;
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.38;
 }
 
 .analytics-predictive-report-scroll {
     flex: 1 1 auto;
-    max-height: 260px;
+    margin-top: 0.88rem;
+    max-height: 268px;
     min-height: 0;
     overflow: auto;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: #bdcae0 #eef4ff;
     border-bottom: 1px solid #dfe8f8;
+    border-radius: 0 0 10px 10px;
 }
 
 .analytics-predictive-report-scroll::-webkit-scrollbar {
@@ -411,11 +446,15 @@
 }
 
 .analytics-predictive-report-table th {
-    font-size: 0.76rem;
+    font-size: 0.74rem;
+    padding-left: 0.72rem;
+    padding-right: 0.72rem;
 }
 
 .analytics-predictive-report-table td {
-    font-size: 0.86rem;
+    font-size: 0.84rem;
+    padding-left: 0.72rem;
+    padding-right: 0.72rem;
 }
 
 .analytics-forecast-projection-head {
@@ -671,22 +710,27 @@
 
 .analytics-forecast-projection-shell[data-active-series] .analytics-forecast-projection-line,
 .analytics-forecast-projection-shell[data-active-series] .analytics-forecast-projection-dot,
-.analytics-forecast-projection-shell[data-active-series] .analytics-forecast-projection-bridge {
-    opacity: 0.2;
+.analytics-forecast-projection-shell[data-active-series] .analytics-forecast-projection-bridge,
+.analytics-forecast-projection-shell[data-active-series] .analytics-forecast-projection-area {
+    opacity: 0.15;
 }
 
 .analytics-forecast-projection-shell[data-active-series="sales"] .analytics-forecast-projection-line.sales,
 .analytics-forecast-projection-shell[data-active-series="sales"] .analytics-forecast-projection-dot.sales,
 .analytics-forecast-projection-shell[data-active-series="sales"] .analytics-forecast-projection-bridge.sales,
+.analytics-forecast-projection-shell[data-active-series="sales"] .analytics-forecast-projection-area.sales,
 .analytics-forecast-projection-shell[data-active-series="expenses"] .analytics-forecast-projection-line.expenses,
 .analytics-forecast-projection-shell[data-active-series="expenses"] .analytics-forecast-projection-dot.expenses,
 .analytics-forecast-projection-shell[data-active-series="expenses"] .analytics-forecast-projection-bridge.expenses,
+.analytics-forecast-projection-shell[data-active-series="expenses"] .analytics-forecast-projection-area.expenses,
 .analytics-forecast-projection-shell[data-active-series="tax"] .analytics-forecast-projection-line.tax,
 .analytics-forecast-projection-shell[data-active-series="tax"] .analytics-forecast-projection-dot.tax,
 .analytics-forecast-projection-shell[data-active-series="tax"] .analytics-forecast-projection-bridge.tax,
+.analytics-forecast-projection-shell[data-active-series="tax"] .analytics-forecast-projection-area.tax,
 .analytics-forecast-projection-shell[data-active-series="net"] .analytics-forecast-projection-line.net,
 .analytics-forecast-projection-shell[data-active-series="net"] .analytics-forecast-projection-dot.net,
-.analytics-forecast-projection-shell[data-active-series="net"] .analytics-forecast-projection-bridge.net {
+.analytics-forecast-projection-shell[data-active-series="net"] .analytics-forecast-projection-bridge.net,
+.analytics-forecast-projection-shell[data-active-series="net"] .analytics-forecast-projection-area.net {
     opacity: 1;
 }
 
@@ -1131,4 +1175,86 @@ body.theme-dark .analytics-dropdown-toggle-icon {
 
 body.theme-dark .analytics-dropdown-toggle-icon:hover {
     color: #6aa0ff;
+}
+
+/* New Forecast Graph & Dashboard Area Styles */
+.analytics-forecast-lane-bg {
+    fill: #f4f8ff;
+    stroke: #eef4ff;
+    stroke-width: 1;
+    rx: 8px;
+    ry: 8px;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+}
+
+body.theme-dark .analytics-forecast-lane-bg {
+    fill: #0c172a;
+    stroke: #1e2d4a;
+}
+
+.analytics-forecast-vertical-grid-line {
+    stroke: #e1edf8;
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+}
+
+body.theme-dark .analytics-forecast-vertical-grid-line {
+    stroke: #1a2a47;
+}
+
+.analytics-forecast-lane-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: inherit;
+}
+
+.analytics-forecast-lane-label.sales {
+    fill: #2563d8;
+}
+.analytics-forecast-lane-label.expenses {
+    fill: #e4872a;
+}
+.analytics-forecast-lane-label.tax {
+    fill: #805ad5;
+}
+.analytics-forecast-lane-label.net {
+    fill: #14945b;
+}
+
+body.theme-dark .analytics-forecast-lane-label.sales {
+    fill: #6aa0ff;
+}
+body.theme-dark .analytics-forecast-lane-label.expenses {
+    fill: #f7a24c;
+}
+body.theme-dark .analytics-forecast-lane-label.tax {
+    fill: #a78bfa;
+}
+body.theme-dark .analytics-forecast-lane-label.net {
+    fill: #34d399;
+}
+
+.analytics-forecast-projection-area {
+    opacity: 0.45;
+    transition: opacity 0.2s ease;
+}
+
+.analytics-trend-area {
+    opacity: 0.4;
+    transition: opacity 0.2s ease;
+}
+
+/* Curve smoothing variables and transitions */
+.analytics-forecast-projection-line,
+.analytics-trend-line-sales,
+.analytics-trend-line-expenses {
+    transition: stroke-width 0.2s ease, stroke 0.2s ease;
+}
+
+.analytics-forecast-projection-line:hover,
+.analytics-trend-line-sales:hover,
+.analytics-trend-line-expenses:hover {
+    stroke-width: 4px;
 }

@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/analytics.css' %}">
+<link rel="stylesheet" href="{% static 'css/analytics.css' %}?v=1.2">
 {% endblock %}
 
 {% block skeleton %}
@@ -185,9 +185,20 @@
                     <p class="analytics-timeframe-caption analytics-timeframe-caption-trend" id="analyticsTrendTimeframeCaption">Trend chart window: latest 6 months only.</p>
                     <div class="analytics-trend-chart">
                         <svg class="analytics-line-svg" viewBox="0 0 640 240" preserveAspectRatio="none" role="img" aria-label="Sales and expenses trend chart">
+                            <defs>
+                                <linearGradient id="trendSalesGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#2366dd" stop-opacity="0.18" />
+                                    <stop offset="100%" stop-color="#2366dd" stop-opacity="0.0" />
+                                </linearGradient>
+                                <linearGradient id="trendExpensesGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#e48a2d" stop-opacity="0.18" />
+                                    <stop offset="100%" stop-color="#e48a2d" stop-opacity="0.0" />
+                                </linearGradient>
+                            </defs>
                             <g id="analyticsTrendGrid"></g>
-                            <polyline id="analyticsSalesLine" class="analytics-trend-line-sales" points=""></polyline>
-                            <polyline id="analyticsExpensesLine" class="analytics-trend-line-expenses" points=""></polyline>
+                            <g id="analyticsTrendAreas"></g>
+                            <path id="analyticsSalesLine" class="analytics-trend-line-sales" d=""></path>
+                            <path id="analyticsExpensesLine" class="analytics-trend-line-expenses" d=""></path>
                         </svg>
                         <div class="analytics-month-labels" id="analyticsMonthLabels"></div>
                     </div>
@@ -200,7 +211,7 @@
         <!-- Tab 2: Predictive Forecasting -->
         <div class="tab-pane fade" id="forecasting-tab-pane" role="tabpanel" aria-labelledby="forecasting-tab" tabindex="0">
             <div class="row g-3 analytics-forecasting-row">
-                <div class="col-12 col-lg-6">
+                <div class="col-12 col-xl-5">
                     <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-card" style="--delay: 0.34s;">
                         <div class="dashboard-card-head">
                             <h2>Forecasting Insight</h2>
@@ -235,11 +246,11 @@
                     </article>
                 </div>
 
-                <div class="col-12 col-lg-6">
+                <div class="col-12 col-xl-7">
                     <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-report-card" style="--delay: 0.36s;">
-                        <div class="dashboard-card-head">
+                        <div class="dashboard-card-head analytics-predictive-report-head">
                             <h2>Predictive Forecast Report</h2>
-                            <span class="dashboard-tag">Weighted Moving Average</span>
+                            <span class="dashboard-tag analytics-method-tag">Weighted Moving Average</span>
                         </div>
                         <p class="dashboard-section-hint">Data-driven future projections for the selected forecast horizon.</p>
                         <div class="table-responsive analytics-predictive-report-scroll">
@@ -281,12 +292,31 @@
                         </div>
                         <div class="analytics-forecast-projection-shell">
                             <svg class="analytics-forecast-projection-svg" viewBox="0 0 720 360" preserveAspectRatio="none" role="img" aria-label="Projected sales, expenses, tax, and net value across the forecast horizon">
+                                <defs>
+                                    <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#2563d8" stop-opacity="0.18" />
+                                        <stop offset="100%" stop-color="#2563d8" stop-opacity="0.0" />
+                                    </linearGradient>
+                                    <linearGradient id="expensesGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#e4872a" stop-opacity="0.18" />
+                                        <stop offset="100%" stop-color="#e4872a" stop-opacity="0.0" />
+                                    </linearGradient>
+                                    <linearGradient id="taxGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#805ad5" stop-opacity="0.18" />
+                                        <stop offset="100%" stop-color="#805ad5" stop-opacity="0.0" />
+                                    </linearGradient>
+                                    <linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#14945b" stop-opacity="0.18" />
+                                        <stop offset="100%" stop-color="#14945b" stop-opacity="0.0" />
+                                    </linearGradient>
+                                </defs>
                                 <g id="analyticsForecastProjectionGrid"></g>
+                                <g id="analyticsForecastProjectionAreas"></g>
                                 <g id="analyticsForecastProjectionBridges"></g>
-                                <polyline class="analytics-forecast-projection-line sales" id="analyticsForecastProjectionSalesLine" points=""></polyline>
-                                <polyline class="analytics-forecast-projection-line expenses" id="analyticsForecastProjectionExpensesLine" points=""></polyline>
-                                <polyline class="analytics-forecast-projection-line tax" id="analyticsForecastProjectionTaxLine" points=""></polyline>
-                                <polyline class="analytics-forecast-projection-line net" id="analyticsForecastProjectionNetLine" points=""></polyline>
+                                <path class="analytics-forecast-projection-line sales" id="analyticsForecastProjectionSalesLine" d=""></path>
+                                <path class="analytics-forecast-projection-line expenses" id="analyticsForecastProjectionExpensesLine" d=""></path>
+                                <path class="analytics-forecast-projection-line tax" id="analyticsForecastProjectionTaxLine" d=""></path>
+                                <path class="analytics-forecast-projection-line net" id="analyticsForecastProjectionNetLine" d=""></path>
                                 <g id="analyticsForecastProjectionDots"></g>
                             </svg>
                             <div class="analytics-forecast-projection-tooltip" id="analyticsForecastProjectionTooltip" role="status" hidden></div>
@@ -1121,10 +1151,10 @@
             }
         };
 
-        const buildPolylinePoints = (values, width, height, padding) => {
+        const getXYPoints = (values, width, height, padding) => {
             const safeValues = Array.isArray(values) ? values.map((value) => Number(value || 0)) : [];
             if (!safeValues.length) {
-                return "";
+                return [];
             }
 
             const minValue = Math.min(...safeValues, 0);
@@ -1133,14 +1163,41 @@
             const plotHeight = height - padding.top - padding.bottom;
             const xStep = safeValues.length > 1 ? plotWidth / (safeValues.length - 1) : 0;
 
-            return safeValues
-                .map((value, index) => {
-                    const x = padding.left + (xStep * index);
-                    const normalized = (value - minValue) / (maxValue - minValue || 1);
-                    const y = padding.top + (plotHeight - (normalized * plotHeight));
-                    return `${x.toFixed(2)},${y.toFixed(2)}`;
-                })
-                .join(" ");
+            return safeValues.map((value, index) => {
+                const x = padding.left + (xStep * index);
+                const normalized = (value - minValue) / (maxValue - minValue || 1);
+                const y = padding.top + (plotHeight - (normalized * plotHeight));
+                return { x, y };
+            });
+        };
+
+        const getBezierPath = (points) => {
+            if (!points || points.length === 0) return "";
+            if (points.length === 1) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+            let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[i];
+                const p1 = points[i + 1];
+                const cpX1 = p0.x + (p1.x - p0.x) / 3;
+                const cpY1 = p0.y;
+                const cpX2 = p0.x + 2 * (p1.x - p0.x) / 3;
+                const cpY2 = p1.y;
+                d += ` C ${cpX1.toFixed(2)} ${cpY1.toFixed(2)}, ${cpX2.toFixed(2)} ${cpY2.toFixed(2)}, ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+            }
+            return d;
+        };
+
+        const getAreaBezierPath = (points, baselineY) => {
+            const linePath = getBezierPath(points);
+            if (!linePath) return "";
+            const first = points[0];
+            const last = points[points.length - 1];
+            return `${linePath} L ${last.x.toFixed(2)} ${baselineY.toFixed(2)} L ${first.x.toFixed(2)} ${baselineY.toFixed(2)} Z`;
+        };
+
+        const buildPolylinePoints = (values, width, height, padding) => {
+            const points = getXYPoints(values, width, height, padding);
+            return points.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
         };
 
         const prefersReducedMotion = () => {
@@ -1283,8 +1340,22 @@
                 bottom: 34,
             };
 
-            analyticsSalesLine.setAttribute("points", buildPolylinePoints(salesValues, width, height, padding));
-            analyticsExpensesLine.setAttribute("points", buildPolylinePoints(expenseValues, width, height, padding));
+            const salesPoints = getXYPoints(salesValues, width, height, padding);
+            const expensePoints = getXYPoints(expenseValues, width, height, padding);
+
+            analyticsSalesLine.setAttribute("d", getBezierPath(salesPoints));
+            analyticsExpensesLine.setAttribute("d", getBezierPath(expensePoints));
+
+            const areasContainer = document.getElementById("analyticsTrendAreas");
+            if (areasContainer) {
+                const baselineY = height - padding.bottom;
+                const salesAreaD = getAreaBezierPath(salesPoints, baselineY);
+                const expenseAreaD = getAreaBezierPath(expensePoints, baselineY);
+                areasContainer.innerHTML = `
+                    <path class="analytics-trend-area sales" d="${salesAreaD}" fill="url(#trendSalesGrad)"></path>
+                    <path class="analytics-trend-area expenses" d="${expenseAreaD}" fill="url(#trendExpensesGrad)"></path>
+                `;
+            }
 
             animatePolyline(analyticsSalesLine, { duration: 760, delay: 0 });
             animatePolyline(analyticsExpensesLine, { duration: 760, delay: 80 });
@@ -1329,7 +1400,6 @@
         const applyPredictiveForecast = (forecast) => {
             const safeForecast = forecast && typeof forecast === "object" ? forecast : {};
             const hasForecast = Boolean(safeForecast.has_forecast);
-            const basis = String(safeForecast.basis || "Forecast based on recent entries.");
             const nextPeriodLabel = String(safeForecast.next_period_label || "").trim();
             const frequencyLabel = String(safeForecast.frequency_label || "").trim();
             const periodHasFrequency = /\bQ\d\b/.test(nextPeriodLabel) || /Annual/i.test(nextPeriodLabel);
@@ -1376,7 +1446,7 @@
 
             if (analyticsPredictivePlaceholder) {
                 analyticsPredictivePlaceholder.textContent = hasForecast
-                    ? basis
+                    ? "WMA projection based on available transaction history."
                     : "Forecast visualization will appear after enough data is available.";
             }
 
@@ -1468,10 +1538,14 @@
             const clearChart = () => {
                 series.forEach((item) => {
                     if (item.lineElement) {
-                        item.lineElement.setAttribute("points", "");
+                        item.lineElement.setAttribute("d", "");
                     }
                 });
                 analyticsForecastProjectionGrid.innerHTML = "";
+                const areasContainer = document.getElementById("analyticsForecastProjectionAreas");
+                if (areasContainer) {
+                    areasContainer.innerHTML = "";
+                }
                 analyticsForecastProjectionBridges.innerHTML = "";
                 analyticsForecastProjectionDots.innerHTML = "";
                 analyticsForecastProjectionLabels.innerHTML = "";
@@ -1589,60 +1663,92 @@
                 analyticsForecastProjectionHint.textContent = "Sales, expenses, tax, and net value are shown together with separate scales.";
             }
 
-            const allPlottedValues = plottedSeries.flatMap((item) => item.points.map((point) => point.value));
-            const axisRawMin = Math.min(0, ...allPlottedValues);
-            const axisRawMax = Math.max(...allPlottedValues, 1);
-            const axisRange = axisRawMax - axisRawMin || Math.max(Math.abs(axisRawMax), 1);
-            const axisMin = axisRawMin < 0 ? axisRawMin - axisRange * 0.08 : 0;
-            const axisMax = axisRawMax + axisRange * 0.08;
-            const axisValueRange = axisMax - axisMin || 1;
-            const axisTop = padding.top;
-            const axisBottom = height - padding.bottom;
-            const axisHeight = axisBottom - axisTop;
-            const axisLabelMarkup = Array.from({ length: 5 })
-                .map((_, index) => {
-                    const ratio = index / 4;
-                    const y = axisTop + ratio * axisHeight;
-                    const value = axisMax - ratio * axisValueRange;
-                    return `<text class="analytics-forecast-grid-label" x="${padding.left - 12}" y="${(y + 4).toFixed(2)}" text-anchor="end">${escapeHtml(formatCompactCurrency(value))}</text>`;
-                })
-                .join("");
+            // Draw card background rects, timeline vertical lines, category headers, and scales per lane
+            const rectX = padding.left;
+            const rectWidth = width - padding.left - padding.right;
 
-            analyticsForecastProjectionGrid.innerHTML = axisLabelMarkup + plottedSeries
-                .map((item) => {
-                    const laneCenter = item.laneTop + laneHeight / 2;
-                    return `
-                        <line class="analytics-forecast-grid-line" x1="${padding.left}" y1="${item.laneTop.toFixed(2)}" x2="${width - padding.right}" y2="${item.laneTop.toFixed(2)}"></line>
-                        <line class="analytics-forecast-grid-line" x1="${padding.left}" y1="${laneCenter.toFixed(2)}" x2="${width - padding.right}" y2="${laneCenter.toFixed(2)}"></line>
-                        <line class="analytics-forecast-grid-line baseline" x1="${padding.left}" y1="${item.laneBottom.toFixed(2)}" x2="${width - padding.right}" y2="${item.laneBottom.toFixed(2)}"></line>
-                    `;
-                })
-                .join("");
+            const verticalGridLinesMarkup = rows.map((_, index) => {
+                const x = xForIndex(index);
+                return `<line class="analytics-forecast-vertical-grid-line" stroke="#e1edf8" stroke-width="1" stroke-dasharray="4 4" x1="${x.toFixed(2)}" y1="${padding.top}" x2="${x.toFixed(2)}" y2="${height - padding.bottom}"></line>`;
+            }).join("");
+
+            const gridAndLabelMarkup = plottedSeries.map((item) => {
+                const laneCenter = item.laneTop + laneHeight / 2;
+                const topLabel = formatCompactCurrency(item.maxValue);
+                const midLabel = formatCompactCurrency(item.midValue);
+                const bottomLabel = formatCompactCurrency(item.minValue);
+                
+                // Position watermark header inside the card at X = padding.left + 12 (106)
+                const textY = item.laneTop + 16;
+                const categoryColor = item.className === "sales" ? "#2563d8" :
+                                      item.className === "expenses" ? "#e4872a" :
+                                      item.className === "tax" ? "#805ad5" : "#14945b";
+                const categoryMarkup = `<text class="analytics-forecast-lane-label ${item.className}" fill="${categoryColor}" x="${padding.left + 12}" y="${textY.toFixed(2)}" text-anchor="start">${escapeHtml(item.label)}</text>`;
+
+                return `
+                    <rect class="analytics-forecast-lane-bg" fill="#f4f8ff" stroke="#eef4ff" stroke-width="1" x="${rectX}" y="${item.laneTop.toFixed(2)}" width="${rectWidth}" height="${laneHeight.toFixed(2)}" rx="8" ry="8"></rect>
+                    ${categoryMarkup}
+                    <line class="analytics-forecast-grid-line" stroke="#dce7fa" stroke-width="1" x1="${padding.left}" y1="${item.laneTop.toFixed(2)}" x2="${width - padding.right}" y2="${item.laneTop.toFixed(2)}"></line>
+                    <line class="analytics-forecast-grid-line" stroke="#dce7fa" stroke-width="1" x1="${padding.left}" y1="${laneCenter.toFixed(2)}" x2="${width - padding.right}" y2="${laneCenter.toFixed(2)}"></line>
+                    <line class="analytics-forecast-grid-line baseline" stroke="#cad8f1" stroke-width="1" x1="${padding.left}" y1="${item.laneBottom.toFixed(2)}" x2="${width - padding.right}" y2="${item.laneBottom.toFixed(2)}"></line>
+                    <text class="analytics-forecast-grid-label" fill="#6c85b0" x="${padding.left - 12}" y="${(item.laneTop + 4).toFixed(2)}" text-anchor="end">${escapeHtml(topLabel)}</text>
+                    <text class="analytics-forecast-grid-label" fill="#6c85b0" x="${padding.left - 12}" y="${(laneCenter + 4).toFixed(2)}" text-anchor="end">${escapeHtml(midLabel)}</text>
+                    <text class="analytics-forecast-grid-label" fill="#6c85b0" x="${padding.left - 12}" y="${(item.laneBottom + 4).toFixed(2)}" text-anchor="end">${escapeHtml(bottomLabel)}</text>
+                `;
+            }).join("");
+
+            analyticsForecastProjectionGrid.innerHTML = verticalGridLinesMarkup + gridAndLabelMarkup;
 
             analyticsForecastProjectionLabels.innerHTML = rows
                 .map((row) => `<span title="${escapeHtml(String(row.period_label || "-"))}">${escapeHtml(String(row.period_label || "-"))}</span>`)
                 .join("");
 
+            // Render bridge segments (dashed paths)
             analyticsForecastProjectionBridges.innerHTML = plottedSeries
                 .map((item) => {
                     if (!item.bridgePoints || item.bridgePoints.length < 2) {
                         return "";
                     }
-                    const bridgePairs = item.bridgePoints
-                        .map((point) => `${xForIndex(point.index).toFixed(2)},${item.yForValue(point.value).toFixed(2)}`)
-                        .join(" ");
-                    return `<polyline class="analytics-forecast-projection-bridge ${item.className}" points="${bridgePairs}"></polyline>`;
+                    const bridgeXYs = item.bridgePoints.map((point) => ({
+                        x: xForIndex(point.index),
+                        y: item.yForValue(point.value)
+                    }));
+                    const bridgeD = getBezierPath(bridgeXYs);
+                    return `<path class="analytics-forecast-projection-bridge ${item.className}" d="${bridgeD}"></path>`;
                 })
                 .join("");
 
+            // Render area gradient paths
+            const areasContainer = document.getElementById("analyticsForecastProjectionAreas");
+            if (areasContainer) {
+                areasContainer.innerHTML = plottedSeries
+                    .map((item) => {
+                        if (item.points.length < 2) {
+                            return "";
+                        }
+                        const pointsXY = item.points.map((p) => ({
+                            x: xForIndex(p.index),
+                            y: item.yForValue(p.value)
+                        }));
+                        const areaD = getAreaBezierPath(pointsXY, item.laneBottom);
+                        const gradId = item.className === "sales" ? "salesGrad" :
+                                       item.className === "expenses" ? "expensesGrad" :
+                                       item.className === "tax" ? "taxGrad" : "netGrad";
+                        return `<path class="analytics-forecast-projection-area ${item.className}" d="${areaD}" fill="url(#${gradId})"></path>`;
+                    })
+                    .join("");
+            }
+
             const dotMarkup = [];
             plottedSeries.forEach((item, seriesIndex) => {
-                const pointPairs = item.points
-                    .map((point) => `${xForIndex(point.index).toFixed(2)},${item.yForValue(point.value).toFixed(2)}`)
-                    .join(" ");
+                const pointsXY = item.points.map((p) => ({
+                    x: xForIndex(p.index),
+                    y: item.yForValue(p.value)
+                }));
+                const lineD = getBezierPath(pointsXY);
 
                 if (item.lineElement) {
-                    item.lineElement.setAttribute("points", pointPairs);
+                    item.lineElement.setAttribute("d", lineD);
                     if (item.points.length > 1) {
                         animatePolyline(item.lineElement, {
                             duration: 720,

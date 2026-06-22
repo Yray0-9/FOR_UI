@@ -5,16 +5,12 @@
 {% block body_class %}clients-page{% endblock %}
 {% block page_heading %}Clients{% endblock %}
 {% block page_subtitle %}
-<p class="dashboard-page-subtitle">Manage your clients and access their financial records</p>
+<p class="dashboard-page-subtitle">Client directory and records access</p>
 {% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/reports.css' %}">
-<style>
-    .table-responsive {
-        min-height: 320px;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/clients.css' %}?v=1.0">
 {% endblock %}
 
 {% block skeleton %}
@@ -74,7 +70,7 @@
 
 {% block content %}
 <section class="dashboard-content">
-    <article class="dashboard-card dashboard-fade-up clients-action-card" style="--delay: 0.05s;">
+    <article class="dashboard-card dashboard-fade-up clients-action-card clients-delay-05">
         <div class="clients-action-bar">
             <label class="dashboard-table-search clients-page-search" aria-label="Search clients by name or TIN">
                 <i class="bi bi-search"></i>
@@ -91,10 +87,10 @@
                 <span>Add Client</span>
             </button>
         </div>
-        <p class="dashboard-guidance-text clients-remarks-preview-note" id="clientsRemarksPreviewNote" hidden>Closed client remarks filter is active.</p>
+        <p class="dashboard-guidance-text clients-remarks-preview-note" id="clientsRemarksPreviewNote" hidden>Closed clients filter is active.</p>
     </article>
 
-    <div class="clients-directory-tabs mb-3" aria-label="Directory directory views">
+    <div class="clients-directory-tabs mb-3" aria-label="Client directory views">
         <button type="button" class="btn directory-tab-btn active" id="tabActiveDirectory" aria-selected="true">
             <i class="bi bi-people-fill"></i>
             <span>Active Directory</span>
@@ -105,22 +101,26 @@
         </button>
     </div>
 
-    <article class="dashboard-card dashboard-fade-up mt-3" style="--delay: 0.12s;">
+    <article class="dashboard-card dashboard-fade-up mt-3 clients-list-card clients-delay-12">
         <div class="dashboard-card-head">
-            <h2 id="clientsListHeading">Registered Clients</h2>
+            <h2>
+                <span id="clientsListHeading">Registered Clients</span>
+                <span class="safebooks-tooltip-wrap">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    <span class="safebooks-tooltip-content">Click a client to view details or manage records.</span>
+                </span>
+            </h2>
             <span class="dashboard-tag" id="clientsCountTag">5 Clients</span>
         </div>
-        <p class="dashboard-section-hint">Click a client to view details or manage records</p>
 
         <div class="table-responsive">
             <table class="table table-hover align-middle dashboard-table clients-table mb-0" id="clientsTable">
                 <thead>
                     <tr>
-                        <th>Client Name</th>
-                        <th>TIN</th>
-                        <th>Trade Name</th>
+                        <th class="client-name-cell">Client Name</th>
+                        <th class="client-tin-cell">TIN</th>
+                        <th class="client-trade-cell">Trade Name</th>
                         <th>Location</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="clientsTableBody">
@@ -145,130 +145,120 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="addClientName">Client Name</label>
-                        <input class="form-control client-form-input" id="addClientName" name="client_name" type="text" required>
+                <section class="client-form-section">
+                    <div class="client-form-section-head">
+                        <h3>Client Information</h3>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="addClientTin">TIN</label>
-                        <input class="form-control client-form-input" id="addClientTin" name="tin" type="text" inputmode="numeric" pattern="[0-9-]*" maxlength="15" autocomplete="off" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="addClientTradeName">Trade Name (optional)</label>
-                        <input class="form-control client-form-input" id="addClientTradeName" name="trade_name" type="text">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="addClientLocationSelect">Location</label>
-                        <input id="addClientLocation" name="location" type="hidden">
-                        <div class="client-select-wrap">
-                            <select class="form-select client-form-input client-select-input" id="addClientLocationSelect" aria-label="Select province" required>
-                                <option value="">Select province</option>
-                            </select>
-                            <i class="bi bi-chevron-down client-select-icon" aria-hidden="true"></i>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientName">Client Name</label>
+                            <input class="form-control client-form-input" id="addClientName" name="client_name" type="text" required>
                         </div>
-                        <div class="form-text text-muted" id="addClientLocationSummary" hidden></div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="addClientPermitNumber">Permit Number (optional)</label>
-                        <input class="form-control client-form-input" id="addClientPermitNumber" name="permit_number" type="text">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="addClientBirthday">Birthday (optional)</label>
-                        <input class="form-control client-form-input" id="addClientBirthday" name="birthday" type="date">
-                    </div>
-                     <div class="col-12">
-                        <label class="form-label client-form-label" for="addClientEmail">Email Address (optional)</label>
-                        <input class="form-control client-form-input" id="addClientEmail" name="email" type="email" placeholder="example@company.com">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label client-form-label" for="addClientEmailPassword">Email Password (optional)</label>
-                        <div class="client-password-field">
-                            <input class="form-control client-form-input client-password-input" id="addClientEmailPassword" name="email_password" type="password" autocomplete="new-password">
-                            <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
-                                <i class="bi bi-eye" aria-hidden="true"></i>
-                            </button>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientTin">TIN</label>
+                            <input class="form-control client-form-input" id="addClientTin" name="tin" type="text" inputmode="numeric" pattern="[0-9\-]*" placeholder="000-000-000-000" maxlength="15" autocomplete="off" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientTradeName">Trade Name</label>
+                            <input class="form-control client-form-input" id="addClientTradeName" name="trade_name" type="text" placeholder="Optional">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientLocationSelect">Location</label>
+                            <input id="addClientLocation" name="location" type="hidden">
+                            <div class="client-select-wrap">
+                                <select class="form-select client-form-input client-select-input" id="addClientLocationSelect" aria-label="Select province" required>
+                                    <option value="">Select province</option>
+                                </select>
+                                <i class="bi bi-chevron-down client-select-icon" aria-hidden="true"></i>
+                            </div>
+                            <div class="form-text text-muted client-location-summary" id="addClientLocationSummary" hidden></div>
                         </div>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label client-form-label" for="addClientOrusAccount">ORUS Account (optional)</label>
-                        <input class="form-control client-form-input" id="addClientOrusAccount" name="orus_account" type="text" autocomplete="off">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label client-form-label" for="addClientOrusPassword">ORUS Password (optional)</label>
-                        <div class="client-password-field">
-                            <input class="form-control client-form-input client-password-input" id="addClientOrusPassword" name="orus_password" type="password" autocomplete="new-password">
-                            <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
-                                <i class="bi bi-eye" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                    </div>
+                </section>
 
-                    <div class="col-12 client-custom-fields-block">
-                        <div class="client-custom-fields-head">
-                            <span class="client-custom-fields-title">Custom Fields</span>
-                            <button type="button" class="btn client-custom-add-btn" id="addClientCustomFieldBtn">
-                                <i class="bi bi-plus-lg"></i>
-                                <span>Add New Field</span>
-                            </button>
-                        </div>
-                        <div class="row g-3 client-custom-fields-body" id="addClientCustomFields"></div>
+                <section class="client-form-section">
+                    <div class="client-form-section-head">
+                        <h3>Business Details</h3>
                     </div>
-                </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientPermitNumber">Permit Number</label>
+                            <input class="form-control client-form-input" id="addClientPermitNumber" name="permit_number" type="text" placeholder="Optional">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientBirthday">Birthday</label>
+                            <input class="form-control client-form-input" id="addClientBirthday" name="birthday" type="date">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-form-section">
+                    <div class="client-form-section-head">
+                        <h3>Account Access</h3>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientEmail">Email Address</label>
+                            <input class="form-control client-form-input" id="addClientEmail" name="email" type="email" placeholder="Optional">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientEmailPassword">Email Password</label>
+                            <div class="client-password-field">
+                                <input class="form-control client-form-input client-password-input" id="addClientEmailPassword" name="email_password" type="password" placeholder="Optional" autocomplete="new-password">
+                                <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientOrusAccount">ORUS Account</label>
+                            <input class="form-control client-form-input" id="addClientOrusAccount" name="orus_account" type="text" placeholder="Optional" autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="addClientOrusPassword">ORUS Password</label>
+                            <div class="client-password-field">
+                                <input class="form-control client-form-input client-password-input" id="addClientOrusPassword" name="orus_password" type="password" placeholder="Optional" autocomplete="new-password">
+                                <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-form-section client-custom-fields-block">
+                    <div class="client-custom-fields-head">
+                        <span class="client-custom-fields-title">Custom Fields</span>
+                        <button type="button" class="btn client-custom-add-btn" id="addClientCustomFieldBtn">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Add Field</span>
+                        </button>
+                    </div>
+                    <div class="row g-3 client-custom-fields-body" id="addClientCustomFields"></div>
+                </section>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn dashboard-action-btn primary">Save Client Details</button>
+                <button type="submit" class="btn dashboard-action-btn primary">Save Client</button>
             </div>
         </form>
     </div>
 </div>
 
-<div class="modal fade client-manage-modal" id="viewClientModal" tabindex="-1" aria-labelledby="viewClientModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title h5" id="viewClientModalTitle">Client Details</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="client-details-grid">
-                    <div class="client-details-row"><span class="client-details-key">Client Name</span><strong id="viewClientName">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">TIN</span><strong id="viewClientTin">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Trade Name</span><strong id="viewClientTradeName">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Location</span><strong id="viewClientLocation">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Permit Number</span><strong id="viewClientPermitNumber">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Birthday</span><strong id="viewClientBirthday">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Email</span><strong id="viewClientEmail">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Email Password</span><strong id="viewClientEmailPassword">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">ORUS Account</span><strong id="viewClientOrusAccount">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">ORUS Password</span><strong id="viewClientOrusPassword">-</strong></div>
 
-                    <div class="client-details-row"><span class="client-details-key">Remarks</span><strong id="viewClientRemarks">-</strong></div>
-                </div>
-                <div class="client-details-custom" id="viewClientCustomFields" hidden>
-                    <p class="client-details-custom-title">Custom Fields</p>
-                    <div class="client-details-custom-list" id="viewClientCustomFieldsList"></div>
-                </div>
-                <p class="client-details-note">Manage this client's financial transactions.</p>
-            </div>
-            <div class="modal-footer client-details-actions">
-                <button type="button" class="btn dashboard-action-btn outline" id="viewClientAnalyticsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Analytics for this client">View Analytics</button>
-                <button type="button" class="btn dashboard-action-btn outline" id="viewFinancialRecordsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">View Financial Records</button>
-                <button type="button" class="btn dashboard-action-btn outline" id="viewAddFinancialRecordBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">Add Financial Entry</button>
-                <button type="button" class="btn dashboard-action-btn primary" id="viewClientReportBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Generate a report for this client">Generate Report</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="modal fade client-manage-modal client-report-modal" id="clientReportModal" tabindex="-1" aria-labelledby="clientReportModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <div>
-                    <h2 class="modal-title h5" id="clientReportModalTitle">Client Report</h2>
-                    <p class="dashboard-section-hint mb-0" id="clientReportHint">Paper-style sheet preview for client review and printing.</p>
+                    <h2 class="modal-title h5" id="clientReportModalTitle">
+                        Client Report
+                        <span class="safebooks-tooltip-wrap">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span class="safebooks-tooltip-content" id="clientReportHint">Paper-style sheet preview for client review and printing.</span>
+                        </span>
+                    </h2>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -280,7 +270,6 @@
             </div>
             <div class="modal-footer client-details-actions">
                 <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn dashboard-action-btn outline" id="clientReportOpenPageBtn">Open Reports Page</button>
             </div>
         </div>
     </div>
@@ -295,80 +284,101 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="editClientName">Client Name</label>
-                        <input class="form-control client-form-input" id="editClientName" name="client_name" type="text" required>
+                <section class="client-form-section">
+                    <div class="client-form-section-head">
+                        <h3>Client Information</h3>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="editClientTin">TIN</label>
-                        <input class="form-control client-form-input" id="editClientTin" name="tin" type="text" inputmode="numeric" pattern="[0-9-]*" maxlength="15" autocomplete="off" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="editClientTradeName">Trade Name (optional)</label>
-                        <input class="form-control client-form-input" id="editClientTradeName" name="trade_name" type="text">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="editClientLocationSelect">Location</label>
-                        <input id="editClientLocation" name="location" type="hidden">
-                        <div class="client-select-wrap">
-                            <select class="form-select client-form-input client-select-input" id="editClientLocationSelect" aria-label="Select province" required>
-                                <option value="">Select province</option>
-                            </select>
-                            <i class="bi bi-chevron-down client-select-icon" aria-hidden="true"></i>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientName">Client Name</label>
+                            <input class="form-control client-form-input" id="editClientName" name="client_name" type="text" required>
                         </div>
-                        <div class="form-text text-muted" id="editClientLocationSummary" hidden></div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="editClientPermitNumber">Permit Number (optional)</label>
-                        <input class="form-control client-form-input" id="editClientPermitNumber" name="permit_number" type="text">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label client-form-label" for="editClientBirthday">Birthday (optional)</label>
-                        <input class="form-control client-form-input" id="editClientBirthday" name="birthday" type="date">
-                    </div>
-                     <div class="col-12">
-                        <label class="form-label client-form-label" for="editClientEmail">Email Address (optional)</label>
-                        <input class="form-control client-form-input" id="editClientEmail" name="email" type="email" placeholder="example@company.com">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label client-form-label" for="editClientEmailPassword">Email Password (optional)</label>
-                        <div class="client-password-field">
-                            <input class="form-control client-form-input client-password-input" id="editClientEmailPassword" name="email_password" type="password" autocomplete="new-password">
-                            <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
-                                <i class="bi bi-eye" aria-hidden="true"></i>
-                            </button>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientTin">TIN</label>
+                            <input class="form-control client-form-input" id="editClientTin" name="tin" type="text" inputmode="numeric" pattern="[0-9\-]*" placeholder="000-000-000-000" maxlength="15" autocomplete="off" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientTradeName">Trade Name</label>
+                            <input class="form-control client-form-input" id="editClientTradeName" name="trade_name" type="text" placeholder="Optional">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientLocationSelect">Location</label>
+                            <input id="editClientLocation" name="location" type="hidden">
+                            <div class="client-select-wrap">
+                                <select class="form-select client-form-input client-select-input" id="editClientLocationSelect" aria-label="Select province" required>
+                                    <option value="">Select province</option>
+                                </select>
+                                <i class="bi bi-chevron-down client-select-icon" aria-hidden="true"></i>
+                            </div>
+                            <div class="form-text text-muted client-location-summary" id="editClientLocationSummary" hidden></div>
                         </div>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label client-form-label" for="editClientOrusAccount">ORUS Account (optional)</label>
-                        <input class="form-control client-form-input" id="editClientOrusAccount" name="orus_account" type="text" autocomplete="off">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label client-form-label" for="editClientOrusPassword">ORUS Password (optional)</label>
-                        <div class="client-password-field">
-                            <input class="form-control client-form-input client-password-input" id="editClientOrusPassword" name="orus_password" type="password" autocomplete="new-password">
-                            <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
-                                <i class="bi bi-eye" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                    </div>
+                </section>
 
-                    <div class="col-12 client-custom-fields-block">
-                        <div class="client-custom-fields-head">
-                            <span class="client-custom-fields-title">Custom Fields</span>
-                            <button type="button" class="btn client-custom-add-btn" id="editClientCustomFieldBtn">
-                                <i class="bi bi-plus-lg"></i>
-                                <span>Add New Field</span>
-                            </button>
-                        </div>
-                        <div class="row g-3 client-custom-fields-body" id="editClientCustomFields"></div>
+                <section class="client-form-section">
+                    <div class="client-form-section-head">
+                        <h3>Business Details</h3>
                     </div>
-                </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientPermitNumber">Permit Number</label>
+                            <input class="form-control client-form-input" id="editClientPermitNumber" name="permit_number" type="text" placeholder="Optional">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientBirthday">Birthday</label>
+                            <input class="form-control client-form-input" id="editClientBirthday" name="birthday" type="date">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-form-section">
+                    <div class="client-form-section-head">
+                        <h3>Account Access</h3>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientEmail">Email Address</label>
+                            <input class="form-control client-form-input" id="editClientEmail" name="email" type="email" placeholder="Optional">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientEmailPassword">Email Password</label>
+                            <div class="client-password-field">
+                                <input class="form-control client-form-input client-password-input" id="editClientEmailPassword" name="email_password" type="password" placeholder="Optional" autocomplete="new-password">
+                                <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientOrusAccount">ORUS Account</label>
+                            <input class="form-control client-form-input" id="editClientOrusAccount" name="orus_account" type="text" placeholder="Optional" autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label client-form-label" for="editClientOrusPassword">ORUS Password</label>
+                            <div class="client-password-field">
+                                <input class="form-control client-form-input client-password-input" id="editClientOrusPassword" name="orus_password" type="password" placeholder="Optional" autocomplete="new-password">
+                                <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-form-section client-custom-fields-block">
+                    <div class="client-custom-fields-head">
+                        <span class="client-custom-fields-title">Custom Fields</span>
+                        <button type="button" class="btn client-custom-add-btn" id="editClientCustomFieldBtn">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Add Field</span>
+                        </button>
+                    </div>
+                    <div class="row g-3 client-custom-fields-body" id="editClientCustomFields"></div>
+                </section>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn dashboard-action-btn primary">Update Client Details</button>
+                <button type="submit" class="btn dashboard-action-btn primary">Update Client</button>
             </div>
         </form>
     </div>
@@ -384,7 +394,7 @@
             <div class="modal-body">
                 <p class="clients-delete-text">Are you sure you want to close the business for this client?</p>
                 <p class="clients-delete-name" id="deleteClientName">-</p>
-                <p class="text-muted mt-2" style="font-size: 0.8rem;">This will mark their status as "Closed" and move them to the Closed section of your directory.</p>
+                <p class="clients-delete-note">This will mark their status as "Closed" and move them to the Closed section.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
@@ -474,29 +484,14 @@
         const editClientCustomFields = document.getElementById("editClientCustomFields");
         const editClientCustomFieldBtn = document.getElementById("editClientCustomFieldBtn");
 
-        const viewClientName = document.getElementById("viewClientName");
-        const viewClientTin = document.getElementById("viewClientTin");
-        const viewClientTradeName = document.getElementById("viewClientTradeName");
-        const viewClientLocation = document.getElementById("viewClientLocation");
-        const viewClientPermitNumber = document.getElementById("viewClientPermitNumber");
-        const viewClientBirthday = document.getElementById("viewClientBirthday");
-        const viewClientEmail = document.getElementById("viewClientEmail");
-        const viewClientEmailPassword = document.getElementById("viewClientEmailPassword");
-        const viewClientOrusAccount = document.getElementById("viewClientOrusAccount");
-        const viewClientOrusPassword = document.getElementById("viewClientOrusPassword");
 
-        const viewClientRemarks = document.getElementById("viewClientRemarks");
-        const viewClientCustomFields = document.getElementById("viewClientCustomFields");
-        const viewClientCustomFieldsList = document.getElementById("viewClientCustomFieldsList");
 
         const addClientModalElement = document.getElementById("addClientModal");
-        const viewClientModalElement = document.getElementById("viewClientModal");
         const clientReportModalElement = document.getElementById("clientReportModal");
         const editClientModalElement = document.getElementById("editClientModal");
         const deleteClientModalElement = document.getElementById("deleteClientModal");
 
         const addClientModal = addClientModalElement && window.bootstrap ? new window.bootstrap.Modal(addClientModalElement) : null;
-        const viewClientModal = viewClientModalElement && window.bootstrap ? new window.bootstrap.Modal(viewClientModalElement) : null;
         const clientReportModal = clientReportModalElement && window.bootstrap ? new window.bootstrap.Modal(clientReportModalElement) : null;
         const editClientModal = editClientModalElement && window.bootstrap ? new window.bootstrap.Modal(editClientModalElement) : null;
         const deleteClientModal = deleteClientModalElement && window.bootstrap ? new window.bootstrap.Modal(deleteClientModalElement) : null;
@@ -504,12 +499,9 @@
         const clientReportWrapper = document.getElementById("clientReportWrapper");
         const clientReportSheet = document.getElementById("clientReportSheet");
         const clientReportStatus = document.getElementById("clientReportStatus");
-        const clientReportOpenPageBtn = document.getElementById("clientReportOpenPageBtn");
 
         const CLIENTS_API_URL = "{% url 'api_clients' %}";
         const FINANCIAL_RECORDS_BASE_URL = "{% url 'financial_records_client' %}";
-        const ANALYTICS_PAGE_URL = "{% url 'analytics' %}";
-        const REPORTS_PAGE_URL = "{% url 'reports' %}";
         const ANALYTICS_SUMMARY_API_URL = "{% url 'api_analytics_summary' %}";
 
         let editingRow = null;
@@ -1271,7 +1263,7 @@
             text: {
                 label: "Text",
                 inputType: "text",
-                placeholder: "Enter text for custom field...",
+                placeholder: "Value",
             },
             email: {
                 label: "Email",
@@ -1282,7 +1274,7 @@
             password: {
                 label: "Password",
                 inputType: "password",
-                placeholder: "Enter password...",
+                placeholder: "Password",
             },
             number: {
                 label: "Number",
@@ -1301,7 +1293,7 @@
                 inputType: "text",
                 placeholder: "000-000-000-000",
                 inputMode: "numeric",
-                pattern: "[0-9-]*",
+                pattern: "[0-9\-]*",
                 maxLength: 15,
             },
         };
@@ -1414,7 +1406,7 @@
             const labelInput = document.createElement("input");
             labelInput.type = "text";
             labelInput.className = "client-custom-label-input";
-            labelInput.placeholder = `New Custom Label ${index} (editable)`;
+            labelInput.placeholder = `Field Label ${index}`;
             if (fieldLabel) {
                 labelInput.value = fieldLabel;
             }
@@ -1731,81 +1723,11 @@
         };
 
         const renderClientRowHtml = (data) => {
-            const isClosed = normalize(data.remarks) === "closed";
-            
-            let menuHtml = "";
-            if (isClosed) {
-                // For closed clients: ONLY View Details, Edit Client, Restore Client
-                menuHtml = `
-                    <li>
-                        <button type="button" class="dropdown-item client-action-btn view" data-client-action="view">
-                            <i class="bi bi-eye"></i><span>View Details</span>
-                        </button>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <button type="button" class="dropdown-item client-action-btn edit" data-client-action="edit">
-                            <i class="bi bi-pencil-square"></i><span>Edit Client</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button type="button" class="dropdown-item client-action-btn restore text-success" data-client-action="restore">
-                            <i class="bi bi-arrow-counterclockwise"></i><span>Restore Client</span>
-                        </button>
-                    </li>
-                `;
-            } else {
-                // For active/open clients: View Details, Analytics, Financial Records, Generate Report, Edit Client, Close Client
-                menuHtml = `
-                    <li>
-                        <button type="button" class="dropdown-item client-action-btn view" data-client-action="view">
-                            <i class="bi bi-eye"></i><span>View Details</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button type="button" class="dropdown-item client-action-btn analytics" data-client-action="analytics">
-                            <i class="bi bi-bar-chart-line"></i><span>Analytics</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button type="button" class="dropdown-item client-action-btn" data-client-action="add-record">
-                            <i class="bi bi-journal-plus"></i><span>Financial Records</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button type="button" class="dropdown-item client-action-btn report primary" data-client-action="report">
-                            <i class="bi bi-file-earmark-text"></i><span>Generate Report</span>
-                        </button>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <button type="button" class="dropdown-item client-action-btn edit" data-client-action="edit">
-                            <i class="bi bi-pencil-square"></i><span>Edit Client</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button type="button" class="dropdown-item client-action-btn delete text-danger" data-client-action="delete">
-                            <i class="bi bi-x-circle"></i><span>Close Client</span>
-                        </button>
-                    </li>
-                `;
-            }
-
             return `
-                <td>${escapeHtml(data.clientName)}</td>
-                <td>${escapeHtml(data.tin)}</td>
-                <td>${escapeHtml(data.tradeName)}</td>
+                <td class="client-name-cell">${escapeHtml(data.clientName)}</td>
+                <td class="client-tin-cell">${escapeHtml(data.tin)}</td>
+                <td class="client-trade-cell">${escapeHtml(data.tradeName)}</td>
                 <td>${escapeHtml(data.location)}</td>
-                <td class="clients-actions-cell">
-                    <div class="dropdown">
-                        <button type="button" class="btn client-menu-toggle-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Client actions menu">
-                            <i class="bi bi-three-dots"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end clients-actions-menu">
-                            ${menuHtml}
-                        </ul>
-                    </div>
-                </td>
             `;
         };
 
@@ -1873,9 +1795,40 @@
             applyClientsSearch();
         };
 
-        const toDisplayValue = (value) => {
-            const trimmedValue = String(value || "").trim();
-            return trimmedValue ? trimmedValue : "Not provided";
+        const handleDetailsPasswordToggle = (event) => {
+            const button = event.target.closest(".client-details-toggle-btn");
+            if (!button) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const wrapper = button.closest(".client-details-value-wrapper");
+            if (!wrapper) {
+                return;
+            }
+
+            const passwordElem = wrapper.querySelector(".client-details-password");
+            const icon = button.querySelector("i");
+            if (!passwordElem || !icon) {
+                return;
+            }
+
+            const rawPassword = passwordElem.dataset.rawPassword || "";
+            const isMasked = passwordElem.textContent === "••••••••";
+
+            if (isMasked) {
+                passwordElem.textContent = rawPassword;
+                icon.classList.remove("bi-eye");
+                icon.classList.add("bi-eye-slash");
+                button.setAttribute("aria-label", "Hide password");
+            } else {
+                passwordElem.textContent = "••••••••";
+                icon.classList.remove("bi-eye-slash");
+                icon.classList.add("bi-eye");
+                button.setAttribute("aria-label", "Show password");
+            }
         };
 
         const renderClientCustomFields = (fields) => {
@@ -1895,8 +1848,23 @@
                 .map((field) => {
                     const label = field && typeof field.label === "string" ? field.label.trim() : "";
                     const value = field && typeof field.value === "string" ? field.value.trim() : "";
+                    const type = field && typeof field.type === "string" ? field.type.trim().toLowerCase() : "";
                     const safeLabel = label || "Custom Field";
                     const safeValue = value || "Not provided";
+
+                    if (type === "password" && value) {
+                        return `
+                            <div class="client-details-row">
+                                <span class="client-details-key">${escapeHtml(safeLabel)}</span>
+                                <div class="client-details-value-wrapper">
+                                    <strong class="client-details-password" data-raw-password="${escapeHtml(value)}">••••••••</strong>
+                                    <button type="button" class="btn client-details-toggle-btn" aria-label="Show password">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
 
                     return `
                         <div class="client-details-row">
@@ -1923,13 +1891,8 @@
         };
 
         const buildClientAnalyticsUrl = (clientData) => {
-            const params = new URLSearchParams();
-            params.set("client_id", String(clientData.clientId || ""));
-            params.set("client", clientData.clientName || "");
-            params.set("tin", normalizeDigits(clientData.tinRaw || clientData.tin));
-            params.set("trade", clientData.tradeName || "");
-            params.set("force_scope", "1");
-            return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
+            if (!clientData || !clientData.clientId) return "";
+            return `/clients/${clientData.clientId}/`;
         };
 
         const toDateInputValue = (value) => {
@@ -1964,18 +1927,6 @@
                 dateFrom: toDateInputValue(yearStart),
                 dateTo: toDateInputValue(now),
             };
-        };
-
-        const buildClientReportUrl = (clientData) => {
-            const range = getDefaultReportRange();
-
-            const params = new URLSearchParams();
-            params.set("report_type", "financial_summary");
-            params.set("client_id", String(clientData.clientId || ""));
-            params.set("date_from", range.dateFrom);
-            params.set("date_to", range.dateTo);
-            params.set("auto_generate", "1");
-            return `${REPORTS_PAGE_URL}?${params.toString()}`;
         };
 
         const isTrendMonthWithinRange = (yearValue, monthValue, filters) => {
@@ -2175,16 +2126,12 @@
 
             activeViewedClient = clientData;
 
-            if (viewClientModal) {
-                viewClientModal.hide();
-            }
-
             if (clientReportModal) {
                 clientReportModal.show();
             }
 
             if (!clientReportSheet || !clientReportWrapper || !clientReportStatus) {
-                window.location.assign(buildClientReportUrl(clientData));
+                showToast("Client report preview is not available right now.");
                 return;
             }
 
@@ -2201,60 +2148,6 @@
                 setClientReportState("error", message);
                 showToast(message);
             }
-        };
-
-        const goToClientReportPage = (clientData) => {
-            if (!clientData || !Number.isFinite(clientData.clientId) || clientData.clientId <= 0) {
-                showToast("Select a valid client first.");
-                return;
-            }
-
-            window.location.assign(buildClientReportUrl(clientData));
-        };
-
-        const setViewModalData = (data) => {
-            if (viewClientName) {
-                viewClientName.textContent = toDisplayValue(data.clientName);
-            }
-            if (viewClientTin) {
-                viewClientTin.textContent = toDisplayValue(data.tin);
-            }
-            if (viewClientTradeName) {
-                viewClientTradeName.textContent = toDisplayValue(data.tradeName);
-            }
-            if (viewClientLocation) {
-                viewClientLocation.textContent = toDisplayValue(data.location);
-            }
-            if (viewClientPermitNumber) {
-                viewClientPermitNumber.textContent = toDisplayValue(data.permitNumber);
-            }
-            if (viewClientBirthday) {
-                viewClientBirthday.textContent = toDisplayValue(data.birthday);
-            }
-            if (viewClientEmail) {
-                viewClientEmail.textContent = toDisplayValue(data.email);
-            }
-            if (viewClientEmailPassword) {
-                viewClientEmailPassword.textContent = toDisplayValue(data.emailPassword);
-            }
-            if (viewClientOrusAccount) {
-                viewClientOrusAccount.textContent = toDisplayValue(data.orusAccount);
-            }
-            if (viewClientOrusPassword) {
-                viewClientOrusPassword.textContent = toDisplayValue(data.orusPassword);
-            }
-
-            if (viewClientRemarks) {
-                const remarksLabels = {
-                    "new": "New",
-                    "active": "Active",
-                    "separated": "Separated",
-                    "closed": "Closed"
-                };
-                const val = normalize(data.remarks);
-                viewClientRemarks.textContent = remarksLabels[val] || val || "-";
-            }
-            renderClientCustomFields(data.customFields);
         };
 
         const setEditFormData = (row, data) => {
@@ -2308,14 +2201,14 @@
 
         };
 
-        const openViewModal = (row) => {
-            if (!row || !viewClientModal) {
+        const navigateToClientDetails = (row) => {
+            if (!row) {
                 return;
             }
             const clientData = getClientDataFromRow(row);
-            activeViewedClient = clientData;
-            setViewModalData(clientData);
-            viewClientModal.show();
+            if (clientData && clientData.clientId) {
+                window.location.assign(`/clients/${clientData.clientId}/`);
+            }
         };
 
         const openEditModal = (row) => {
@@ -2517,36 +2410,7 @@
                     return;
                 }
 
-                const actionButton = event.target.closest("[data-client-action]");
-                if (actionButton) {
-                    event.preventDefault();
-                    event.stopPropagation();
-
-                    const action = actionButton.getAttribute("data-client-action");
-                    if (action === "view") {
-                        openViewModal(row);
-                    } else if (action === "analytics") {
-                        goToClientAnalytics(getClientDataFromRow(row));
-                    } else if (action === "report") {
-                        openClientReportModal(getClientDataFromRow(row));
-                    } else if (action === "edit") {
-                        openEditModal(row);
-                    } else if (action === "delete") {
-                        openDeleteModal(row);
-                    } else if (action === "restore") {
-                        handleRestoreClient(row);
-                    } else if (action === "add-record") {
-                        goToFinancialRecords(getClientDataFromRow(row));
-                    }
-                    return;
-                }
-
-                const actionsCell = event.target.closest(".clients-actions-cell");
-                if (actionsCell) {
-                    return;
-                }
-
-                openViewModal(row);
+                navigateToClientDetails(row);
             });
 
             clientsTableBody.addEventListener("keydown", (event) => {
@@ -2558,7 +2422,7 @@
 
                     if (event.target === row) {
                         event.preventDefault();
-                        openViewModal(row);
+                        navigateToClientDetails(row);
                     }
                 }
             });
@@ -2846,42 +2710,6 @@
             });
         }
 
-        const viewFinancialRecordsBtn = document.getElementById("viewFinancialRecordsBtn");
-        const viewAddFinancialRecordBtn = document.getElementById("viewAddFinancialRecordBtn");
-        const viewClientAnalyticsBtn = document.getElementById("viewClientAnalyticsBtn");
-        const viewClientReportBtn = document.getElementById("viewClientReportBtn");
-        if (viewClientAnalyticsBtn) {
-            viewClientAnalyticsBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                goToClientAnalytics(activeViewedClient);
-            });
-        }
-        if (viewClientReportBtn) {
-            viewClientReportBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                openClientReportModal(activeViewedClient);
-            });
-        }
-        if (viewFinancialRecordsBtn) {
-            viewFinancialRecordsBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                goToFinancialRecords(activeViewedClient);
-            });
-        }
-        if (viewAddFinancialRecordBtn) {
-            viewAddFinancialRecordBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                goToFinancialRecords(activeViewedClient);
-            });
-        }
-
-        if (clientReportOpenPageBtn) {
-            clientReportOpenPageBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                goToClientReportPage(activeViewedClient);
-            });
-        }
-
         if (clientReportModalElement) {
             clientReportModalElement.addEventListener("hidden.bs.modal", () => {
                 if (clientReportSheet) {
@@ -2977,7 +2805,7 @@
             }
             if (clientsRemarksPreviewNote) {
                 const displayValue = requestedRemarksFilter.charAt(0).toUpperCase() + requestedRemarksFilter.slice(1);
-                clientsRemarksPreviewNote.textContent = `${displayValue} client remarks filter is active.`;
+                clientsRemarksPreviewNote.textContent = `${displayValue} clients filter is active.`;
                 clientsRemarksPreviewNote.hidden = false;
             }
         }

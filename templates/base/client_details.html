@@ -1,0 +1,1793 @@
+{% extends 'base/bookkeeper_base.html' %}
+{% load static %}
+
+{% block page_title %}Client Details | {{ client.client_name }}{% endblock %}
+{% block body_class %}client-details-page{% endblock %}
+{% block page_heading %}Client Details{% endblock %}
+
+{% block page_subtitle %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'clients' %}" class="client-details-breadcrumb-link">Clients</a></li>
+        <li class="breadcrumb-item active client-details-breadcrumb-current" aria-current="page">{{ client.client_name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/analytics.css' %}?v=1.2">
+<link rel="stylesheet" href="{% static 'css/reports.css' %}?v=1.2">
+<link rel="stylesheet" href="{% static 'css/client_details.css' %}?v=1.5">
+{% endblock %}
+
+{% block skeleton %}
+<!-- Page skeleton structure matches the base skeleton design -->
+<div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+        <div class="dash-sk-layout">
+            <aside class="dash-sk-sidebar">
+                <div class="skeleton-shimmer dash-sk-logo"></div>
+                <div class="dash-sk-nav">
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                </div>
+            </aside>
+            <section class="dash-sk-main">
+                <div class="dash-sk-topbar">
+                    <div class="skeleton-shimmer dash-sk-title"></div>
+                    <div class="skeleton-shimmer dash-sk-profile"></div>
+                </div>
+                <div class="dash-sk-content">
+                    <div class="dash-sk-left">
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="skeleton-shimmer dash-sk-line"></div>
+                            <div class="skeleton-shimmer dash-sk-line"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-content client-details-container">
+    <!-- Quick Actions Top Bar -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-1 animate-fade-in">
+        <div class="d-flex align-items-center gap-3">
+            <h2 class="h4 mb-0 font-weight-bold client-details-page-title">{{ client.client_name }}</h2>
+            {% if client.remarks == 'new' %}
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1-5 client-details-status-badge">New</span>
+            {% elif client.remarks == 'active' %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1-5 client-details-status-badge">Active</span>
+            {% elif client.remarks == 'separated' %}
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1-5 client-details-status-badge">Separated</span>
+            {% elif client.remarks == 'closed' %}
+            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-1-5 client-details-status-badge">Closed</span>
+            {% endif %}
+        </div>
+        <div class="client-details-actions-panel">
+            <a href="{% url 'financial_records_client' %}?client_id={{ client.id }}&client={{ client.client_name|urlencode }}&tin={{ client.tin_number|urlencode }}&trade={{ client.trade_name|urlencode }}" class="btn dashboard-action-btn outline">
+                <i class="bi bi-journal-text me-1"></i> Records
+            </a>
+            <a href="{% url 'reports' %}?report_type=financial_summary&client_id={{ client.id }}&auto_generate=1" id="generateReportActionBtn" data-no-skeleton onclick="event.preventDefault(); if (window.SafeBooksClientDetails) { window.SafeBooksClientDetails.showReportModal(); }" class="btn dashboard-action-btn outline">
+                <i class="bi bi-printer me-1"></i> Report
+            </a>
+            <a href="{% url 'financial_records_client' %}?client_id={{ client.id }}&client={{ client.client_name|urlencode }}&tin={{ client.tin_number|urlencode }}&trade={{ client.trade_name|urlencode }}&action=add" class="btn dashboard-action-btn primary">
+                <i class="bi bi-plus-lg me-1"></i> Add Entry
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="client-info-grid">
+        <!-- Left Column: Credentials & Info Card -->
+        <article class="client-card dashboard-fade-up client-overview-card client-delay-05">
+            <div class="client-details-header">
+                <div class="client-details-title-wrap">
+                    <i class="bi bi-person-badge text-primary client-details-title-icon"></i>
+                    <h2 class="client-details-name">Client Overview</h2>
+                </div>
+            </div>
+            
+            <div class="client-details-grid">
+                <div class="client-details-row">
+                    <span class="client-details-key">Client Name</span>
+                    <strong class="client-details-val">{{ client.client_name }}</strong>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">TIN Number</span>
+                    <strong class="client-details-val tin-format">{{ client.tin_number }}</strong>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">Trade Name</span>
+                    <strong class="client-details-val">{{ client.trade_name|default:"Not provided" }}</strong>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">Location</span>
+                    <strong class="client-details-val">{{ client.location }}</strong>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">Permit Number</span>
+                    <strong class="client-details-val">{{ client.permit_number|default:"Not provided" }}</strong>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">Birthday</span>
+                    <strong class="client-details-val">{{ client.birthday|date:"Y-m-d"|default:"Not provided" }}</strong>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">Email Address</span>
+                    <strong class="client-details-val">{{ client.email|default:"Not provided" }}</strong>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">Email Password</span>
+                    <div class="client-details-value-wrapper">
+                        <strong class="client-details-password" data-raw-password="{{ client.email_password }}">{% if client.email_password %}&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;{% else %}Not provided{% endif %}</strong>
+                        {% if client.email_password %}
+                        <button type="button" class="btn client-details-toggle-btn" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">ORUS Account</span>
+                    <strong class="client-details-val">{{ client.orus_account|default:"Not provided" }}</strong>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">ORUS Password</span>
+                    <div class="client-details-value-wrapper">
+                        <strong class="client-details-password" data-raw-password="{{ client.orus_password }}">{% if client.orus_password %}&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;{% else %}Not provided{% endif %}</strong>
+                        {% if client.orus_password %}
+                        <button type="button" class="btn client-details-toggle-btn" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="client-details-row">
+                    <span class="client-details-key">Status / Remarks</span>
+                    <strong class="client-details-val">
+                        {% if client.remarks == 'new' %}New
+                        {% elif client.remarks == 'active' %}Active
+                        {% elif client.remarks == 'separated' %}Separated
+                        {% elif client.remarks == 'closed' %}Closed
+                        {% else %}{{ client.remarks }}{% endif %}
+                    </strong>
+                </div>
+            </div>
+
+            <!-- Custom Fields Section -->
+            {% if client.custom_fields %}
+            <div class="client-details-custom">
+                <h3 class="client-details-custom-title">Custom Fields</h3>
+                <div class="client-details-grid">
+                    {% for field in client.custom_fields %}
+                    <div class="client-details-row">
+                        <span class="client-details-key">{{ field.label }}</span>
+                        {% if field.type == 'password' and field.value %}
+                        <div class="client-details-value-wrapper">
+                            <strong class="client-details-password" data-raw-password="{{ field.value }}">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</strong>
+                            <button type="button" class="btn client-details-toggle-btn" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        {% else %}
+                        <strong class="client-details-val">{{ field.value|default:"Not provided" }}</strong>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </article>
+
+        <!-- Analytics Dashboard & Charts -->
+        <div class="d-flex flex-column gap-3 client-projections-panel">
+            <!-- Analytics Filter & Header Card -->
+            <article class="client-card dashboard-fade-up client-projections-header-card client-delay-08">
+                <div class="client-projections-header">
+                    <div>
+                        <h2 class="client-details-name client-projections-title">Analytics</h2>
+                        <span class="visually-hidden" id="analyticsScopeHint">Loading scope...</span>
+                    </div>
+                    <div class="client-projections-controls">
+                        <div class="analytics-control-item client-projections-control">
+                            <label class="analytics-control-label" for="analyticsYearFilter">Year Range</label>
+                            <select id="analyticsYearFilter" class="form-select analytics-select">
+                                <option value="all">All Time</option>
+                                <option value="2026">2026</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                            </select>
+                        </div>
+                        <div class="analytics-control-item client-projections-control">
+                            <label class="analytics-control-label" for="analyticsHorizonFilter">Horizon</label>
+                            <select id="analyticsHorizonFilter" class="form-select analytics-select">
+                                <option value="3">3 Months</option>
+                                <option value="6">6 Months</option>
+                                <option value="12">12 Months</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Tabs Navigation -->
+            <div class="analytics-tabs-container dashboard-fade-up client-analytics-tabs client-delay-10">
+                <ul class="nav nav-tabs analytics-nav-tabs" id="analyticsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard-tab-pane" type="button" role="tab" aria-controls="dashboard-tab-pane" aria-selected="true">
+                            <i class="bi bi-grid"></i> Dashboard
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="forecasting-tab" data-bs-toggle="tab" data-bs-target="#forecasting-tab-pane" type="button" role="tab" aria-controls="forecasting-tab-pane" aria-selected="false">
+                            <i class="bi bi-graph-up"></i> Forecast
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="analyticsDataPanels" class="tab-content client-analytics-panels">
+                <!-- Tab 1: Dashboard -->
+                <div class="tab-pane fade show active" id="dashboard-tab-pane" role="tabpanel" aria-labelledby="dashboard-tab" tabindex="0">
+                    <div class="row g-3 dashboard-stats-row mt-1">
+                        <div class="col-sm-6 col-xl-3 d-flex">
+                            <article class="dashboard-stat-card dashboard-fade-up w-100 h-100 client-stat-card client-delay-12">
+                                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                                <div>
+                                    <p class="stat-label">Total Sales</p>
+                                    <h3 id="analyticsTotalSalesValue" class="client-stat-value">PHP 0.00</h3>
+                                </div>
+                            </article>
+                        </div>
+                        <div class="col-sm-6 col-xl-3 d-flex">
+                            <article class="dashboard-stat-card dashboard-fade-up w-100 h-100 client-stat-card client-delay-14">
+                                <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
+                                <div>
+                                    <p class="stat-label">Total Expenses</p>
+                                    <h3 id="analyticsTotalExpensesValue" class="client-stat-value">PHP 0.00</h3>
+                                </div>
+                            </article>
+                        </div>
+                        <div class="col-sm-6 col-xl-3 d-flex">
+                            <article class="dashboard-stat-card dashboard-fade-up w-100 h-100 client-stat-card client-delay-16">
+                                <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+                                <div>
+                                    <p class="stat-label">Total Tax</p>
+                                    <h3 id="analyticsTotalTaxValue" class="client-stat-value">PHP 0.00</h3>
+                                </div>
+                            </article>
+                        </div>
+                        <div class="col-sm-6 col-xl-3 d-flex">
+                            <article class="dashboard-stat-card dashboard-fade-up w-100 h-100 client-stat-card client-delay-18">
+                                <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                                <div>
+                                    <p class="stat-label">Net Value</p>
+                                    <h3 id="analyticsNetValueValue" class="client-stat-value">PHP 0.00</h3>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Trend Chart -->
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <article class="dashboard-card dashboard-fade-up client-analytics-card client-delay-22">
+                                <div class="dashboard-card-head">
+                                    <h2>Monthly Trend</h2>
+                                </div>
+                                <div class="analytics-trend-legend client-trend-legend" id="analyticsTrendLegend" aria-label="Trend legend">
+                                    <span class="analytics-legend-item"><i class="analytics-legend-dot sales"></i>Sales</span>
+                                    <span class="analytics-legend-item"><i class="analytics-legend-dot expenses"></i>Expenses</span>
+                                </div>
+                                <p class="visually-hidden" id="analyticsTrendTimeframeCaption">Trend chart window: latest 6 months only.</p>
+                                <div class="analytics-trend-chart client-trend-chart">
+                                    <svg class="analytics-line-svg" viewBox="0 0 640 240" preserveAspectRatio="none" role="img" aria-label="Sales and expenses trend chart">
+                                        <defs>
+                                            <linearGradient id="trendSalesGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="#2366dd" stop-opacity="0.18" />
+                                                <stop offset="100%" stop-color="#2366dd" stop-opacity="0.0" />
+                                            </linearGradient>
+                                            <linearGradient id="trendExpensesGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="#e48a2d" stop-opacity="0.18" />
+                                                <stop offset="100%" stop-color="#e48a2d" stop-opacity="0.0" />
+                                            </linearGradient>
+                                        </defs>
+                                        <g id="analyticsTrendGrid"></g>
+                                        <g id="analyticsTrendAreas"></g>
+                                        <path id="analyticsSalesLine" class="analytics-trend-line-sales" d=""></path>
+                                        <path id="analyticsExpensesLine" class="analytics-trend-line-expenses" d=""></path>
+                                    </svg>
+                                    <div class="analytics-month-labels" id="analyticsMonthLabels"></div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Forecast -->
+                <div class="tab-pane fade" id="forecasting-tab-pane" role="tabpanel" aria-labelledby="forecasting-tab" tabindex="0">
+                    <div class="row g-3 analytics-forecasting-row mt-1">
+                        <div class="col-12 col-xl-5">
+                            <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-card client-delay-25">
+                                <div class="dashboard-card-head">
+                                    <h2>Forecasting Insight</h2>
+                                </div>
+                                <p class="analytics-predictive-period" id="analyticsPredictivePeriod">Next period: --</p>
+                                <div class="analytics-predictive-grid" aria-label="Predictive analytics forecast summary">
+                                    <div class="analytics-predictive-item">
+                                        <span class="analytics-predictive-label">Projected Sales</span>
+                                        <strong class="analytics-predictive-value" id="analyticsPredictiveSalesValue">PHP --</strong>
+                                        <span class="analytics-predictive-subtext" id="analyticsPredictiveSalesNote">Needs historical data</span>
+                                    </div>
+                                    <div class="analytics-predictive-item">
+                                        <span class="analytics-predictive-label">Projected Expenses</span>
+                                        <strong class="analytics-predictive-value" id="analyticsPredictiveExpensesValue">PHP --</strong>
+                                        <span class="analytics-predictive-subtext" id="analyticsPredictiveExpensesNote">Needs historical data</span>
+                                    </div>
+                                    <div class="analytics-predictive-item">
+                                        <span class="analytics-predictive-label">Projected Tax</span>
+                                        <strong class="analytics-predictive-value" id="analyticsPredictiveTaxValue">PHP --</strong>
+                                        <span class="analytics-predictive-subtext" id="analyticsPredictiveTaxNote">Needs historical data</span>
+                                    </div>
+                                </div>
+                                <div class="analytics-predictive-chart">
+                                    <div class="analytics-predictive-chart-shell" aria-hidden="true">
+                                        <svg class="analytics-predictive-spark" viewBox="0 0 240 84" preserveAspectRatio="none">
+                                            <polyline class="analytics-predictive-line" id="analyticsPredictiveLine" points=""></polyline>
+                                        </svg>
+                                        <p class="analytics-predictive-placeholder" id="analyticsPredictivePlaceholder">Forecast visualization will appear after enough data is available.</p>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+
+                        <div class="col-12 col-xl-7">
+                            <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-report-card client-delay-28">
+                                <div class="dashboard-card-head analytics-predictive-report-head">
+                                    <h2>Forecast Report</h2>
+                                    <span class="dashboard-tag analytics-method-tag">Weighted Moving Average</span>
+                                </div>
+                                <div class="table-responsive analytics-predictive-report-scroll">
+                                    <table class="table table-hover align-middle dashboard-table analytics-predictive-report-table mb-0" id="predictiveForecastTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Period</th>
+                                                <th>Projected Sales</th>
+                                                <th>Projected Expenses</th>
+                                                <th>Projected Tax</th>
+                                                <th>Projected Net Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="predictiveForecastTableBody">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted py-4">Needs historical data to compute forecasts.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+
+                    <!-- Forecast Projection Graph -->
+                    <div class="row g-3 mt-3">
+                        <div class="col-12">
+                            <article class="dashboard-card dashboard-fade-up analytics-forecast-projection-card client-analytics-card client-delay-32">
+                                <div class="dashboard-card-head analytics-forecast-projection-head">
+                                    <div>
+                                        <h2>Projection Graph</h2>
+                                        <span class="visually-hidden" id="analyticsForecastProjectionHint">Sales, expenses, tax, and net value are shown together with separate scales.</span>
+                                    </div>
+                                </div>
+                                <div class="analytics-forecast-projection-legend client-forecast-legend" aria-label="Forecast projection graph legend">
+                                    <span class="analytics-forecast-legend-item sales" data-forecast-series="sales"><i></i>Sales</span>
+                                    <span class="analytics-forecast-legend-item expenses" data-forecast-series="expenses"><i></i>Expenses</span>
+                                    <span class="analytics-forecast-legend-item tax" data-forecast-series="tax"><i></i>Tax</span>
+                                    <span class="analytics-forecast-legend-item net" data-forecast-series="net"><i></i>Net Value</span>
+                                </div>
+                                <div class="analytics-forecast-projection-shell client-forecast-shell">
+                                    <svg class="analytics-forecast-projection-svg" viewBox="0 0 720 360" preserveAspectRatio="none" role="img" aria-label="Projected sales, expenses, tax, and net value across the forecast horizon">
+                                        <defs>
+                                            <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="#2563d8" stop-opacity="0.18" />
+                                                <stop offset="100%" stop-color="#2563d8" stop-opacity="0.0" />
+                                            </linearGradient>
+                                            <linearGradient id="expensesGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="#e4872a" stop-opacity="0.18" />
+                                                <stop offset="100%" stop-color="#e4872a" stop-opacity="0.0" />
+                                            </linearGradient>
+                                            <linearGradient id="taxGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="#805ad5" stop-opacity="0.18" />
+                                                <stop offset="100%" stop-color="#805ad5" stop-opacity="0.0" />
+                                            </linearGradient>
+                                            <linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="#14945b" stop-opacity="0.18" />
+                                                <stop offset="100%" stop-color="#14945b" stop-opacity="0.0" />
+                                            </linearGradient>
+                                        </defs>
+                                        <g id="analyticsForecastProjectionGrid"></g>
+                                        <g id="analyticsForecastProjectionAreas"></g>
+                                        <g id="analyticsForecastProjectionBridges"></g>
+                                        <path class="analytics-forecast-projection-line sales" id="analyticsForecastProjectionSalesLine" d=""></path>
+                                        <path class="analytics-forecast-projection-line expenses" id="analyticsForecastProjectionExpensesLine" d=""></path>
+                                        <path class="analytics-forecast-projection-line tax" id="analyticsForecastProjectionTaxLine" d=""></path>
+                                        <path class="analytics-forecast-projection-line net" id="analyticsForecastProjectionNetLine" d=""></path>
+                                        <g id="analyticsForecastProjectionDots"></g>
+                                    </svg>
+                                    <div class="analytics-forecast-projection-tooltip" id="analyticsForecastProjectionTooltip" role="status" hidden></div>
+                                    <p class="analytics-forecast-projection-empty" id="analyticsForecastProjectionEmpty">Needs forecast data to draw the projection graph.</p>
+                                </div>
+                                <div class="analytics-forecast-projection-labels" id="analyticsForecastProjectionLabels"></div>
+
+                                <!-- Forecast metadata -->
+                                <div class="client-panel-defense-labels">
+                                    <span>
+                                        <i class="bi bi-cpu text-primary"></i>
+                                        <span>Predictive Analytics</span>
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-calculator text-primary"></i>
+                                        <span aria-label="Generated using Weighted Moving Average Algorithm">Weighted Moving Average</span>
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-clock-history text-primary"></i>
+                                        <span>Historical movement</span>
+                                    </span>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State Card -->
+            <article class="client-card analytics-empty-state" id="analyticsEmptyState" hidden>
+                <div class="dashboard-data-empty text-center py-5">
+                    <i class="bi bi-file-earmark-bar-graph text-muted mb-3 client-details-empty-icon"></i>
+                    <p class="text-muted mb-3">No financial data available yet for this client.</p>
+                    <div class="dashboard-empty-actions">
+                        <a href="{% url 'financial_records_client' %}?client_id={{ client.id }}&client={{ client.client_name|urlencode }}&tin={{ client.tin_number|urlencode }}&trade={{ client.trade_name|urlencode }}&action=add" class="btn dashboard-action-btn primary">Add Financial Records</a>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Formatted Report Modal -->
+    <div class="modal fade" id="formattedReportModal" tabindex="-1" aria-labelledby="formattedReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="modal-title font-weight-bold" id="formattedReportModalLabel">Client Financial Report Preview</h5>
+                        <p class="text-muted mb-0 client-report-modal-subtitle">Formatted print-ready layout for quick review and print handover</p>
+                    </div>
+                    <button type="button" class="btn-close client-report-modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body client-report-modal-body">
+                    <!-- Loading state -->
+                    <div id="modalReportLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary client-report-spinner" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3 text-muted client-report-loading-text">Generating report preview...</p>
+                    </div>
+                    <!-- Error state -->
+                    <div id="modalReportError" class="text-center py-5" hidden>
+                        <i class="bi bi-exclamation-octagon text-danger client-report-error-icon"></i>
+                        <p class="mt-3 text-danger font-weight-semibold client-report-error-text" id="modalReportErrorMsg"></p>
+                    </div>
+                    <!-- Report content -->
+                    <div class="reports-ledger-wrapper client-report-wrapper" id="modalReportWrapper" hidden>
+                        <div class="reports-ledger-sheet client-report-sheet" id="modalReportSheet">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn dashboard-action-btn outline client-report-modal-btn" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn dashboard-action-btn primary client-report-print-btn" id="modalPrintReportBtn">
+                        <i class="bi bi-printer"></i> Print / Save PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/reports_shared.js' %}"></script>
+<script id="clientCustomFieldsData" type="application/json">
+    [
+        {% for field in client.custom_fields %}
+            {
+                "label": "{{ field.label|escapejs }}",
+                "value": "{{ field.value|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+</script>
+<script>
+    (() => {
+        const CLIENT_ID = Number("{{ client.id }}");
+        const ANALYTICS_SUMMARY_API_URL = "{% url 'api_analytics_summary' %}";
+        const body = document.body;
+        const uiToastContainer = document.getElementById("uiToastContainer");
+        const shared = window.SafeBooksShared || null;
+
+        const analyticsDataPanels = document.getElementById("analyticsDataPanels");
+        const analyticsEmptyState = document.getElementById("analyticsEmptyState");
+
+        const analyticsTotalSalesValue = document.getElementById("analyticsTotalSalesValue");
+        const analyticsTotalExpensesValue = document.getElementById("analyticsTotalExpensesValue");
+        const analyticsTotalTaxValue = document.getElementById("analyticsTotalTaxValue");
+        const analyticsNetValueValue = document.getElementById("analyticsNetValueValue");
+
+        const analyticsTrendGrid = document.getElementById("analyticsTrendGrid");
+        const analyticsSalesLine = document.getElementById("analyticsSalesLine");
+        const analyticsExpensesLine = document.getElementById("analyticsExpensesLine");
+        const analyticsMonthLabels = document.getElementById("analyticsMonthLabels");
+
+        const analyticsPredictivePeriod = document.getElementById("analyticsPredictivePeriod");
+        const analyticsPredictiveSalesValue = document.getElementById("analyticsPredictiveSalesValue");
+        const analyticsPredictiveExpensesValue = document.getElementById("analyticsPredictiveExpensesValue");
+        const analyticsPredictiveTaxValue = document.getElementById("analyticsPredictiveTaxValue");
+        const analyticsPredictiveSalesNote = document.getElementById("analyticsPredictiveSalesNote");
+        const analyticsPredictiveExpensesNote = document.getElementById("analyticsPredictiveExpensesNote");
+        const analyticsPredictiveTaxNote = document.getElementById("analyticsPredictiveTaxNote");
+        const analyticsPredictiveLine = document.getElementById("analyticsPredictiveLine");
+        const analyticsPredictivePlaceholder = document.getElementById("analyticsPredictivePlaceholder");
+        
+        const analyticsForecastProjectionGrid = document.getElementById("analyticsForecastProjectionGrid");
+        const analyticsForecastProjectionBridges = document.getElementById("analyticsForecastProjectionBridges");
+        const analyticsForecastProjectionSalesLine = document.getElementById("analyticsForecastProjectionSalesLine");
+        const analyticsForecastProjectionExpensesLine = document.getElementById("analyticsForecastProjectionExpensesLine");
+        const analyticsForecastProjectionTaxLine = document.getElementById("analyticsForecastProjectionTaxLine");
+        const analyticsForecastProjectionNetLine = document.getElementById("analyticsForecastProjectionNetLine");
+        const analyticsForecastProjectionDots = document.getElementById("analyticsForecastProjectionDots");
+        const analyticsForecastProjectionLabels = document.getElementById("analyticsForecastProjectionLabels");
+        const analyticsForecastProjectionEmpty = document.getElementById("analyticsForecastProjectionEmpty");
+        const analyticsForecastProjectionTooltip = document.getElementById("analyticsForecastProjectionTooltip");
+        const analyticsForecastProjectionHint = document.getElementById("analyticsForecastProjectionHint");
+        const analyticsForecastProjectionShell = document.querySelector(".analytics-forecast-projection-shell");
+        const analyticsForecastLegendItems = Array.from(document.querySelectorAll(".analytics-forecast-legend-item"));
+
+        const analyticsScopeHint = document.getElementById("analyticsScopeHint");
+        const analyticsSummaryTimeframeCaption = document.getElementById("analyticsSummaryTimeframeCaption");
+        const analyticsTrendTimeframeCaption = document.getElementById("analyticsTrendTimeframeCaption");
+
+        const analyticsYearFilter = document.getElementById("analyticsYearFilter");
+        const analyticsHorizonFilter = document.getElementById("analyticsHorizonFilter");
+
+        let isLoadingAnalytics = false;
+        let analyticsRequestToken = 0;
+        let analyticsAbortController = null;
+
+        // Formatter functions
+        const currencyFormatter = new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+        const compactCurrencyFormatter = new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+            notation: "compact",
+            maximumFractionDigits: 1,
+        });
+
+        const escapeHtml = (value) => {
+            return String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        };
+
+        const showToast = (message, variantClass = "") => {
+            if (shared && typeof shared.showToast === "function") {
+                shared.showToast(uiToastContainer, message, variantClass, { delay: 2800 });
+            }
+        };
+
+        const formatCurrency = (value) => currencyFormatter.format(Number(value || 0));
+        const formatCompactCurrency = (value) => compactCurrencyFormatter.format(Number(value || 0));
+
+        const formatTin = (value) => {
+            const digits = String(value || "").replace(/\D+/g, "").slice(0, 12);
+            if (!digits) return "";
+            const groups = digits.match(/.{1,3}/g) || [];
+            return groups.join("-");
+        };
+
+        // Format TIN fields on page load
+        document.querySelectorAll(".tin-format").forEach(el => {
+            el.textContent = formatTin(el.textContent);
+        });
+
+        // Setup Password Visibility Toggles
+        const maskedPasswordText = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
+        document.querySelectorAll(".client-details-toggle-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const wrapper = btn.closest(".client-details-value-wrapper");
+                if (!wrapper) return;
+                const passwordElem = wrapper.querySelector(".client-details-password");
+                const icon = btn.querySelector("i");
+                if (!passwordElem || !icon) return;
+
+                const rawPassword = passwordElem.dataset.rawPassword || "";
+                const isMasked = passwordElem.textContent.includes(maskedPasswordText);
+
+                if (isMasked) {
+                    passwordElem.textContent = rawPassword;
+                    icon.className = "bi bi-eye-slash";
+                    btn.setAttribute("aria-label", "Hide password");
+                } else {
+                    passwordElem.textContent = maskedPasswordText;
+                    icon.className = "bi bi-eye";
+                    btn.setAttribute("aria-label", "Show password");
+                }
+            });
+        });
+
+        // Set dynamic href dates for Generate Report btn
+        const generateReportActionBtn = document.getElementById("generateReportActionBtn");
+        if (generateReportActionBtn) {
+            const now = new Date();
+            const yearStart = new Date(now.getFullYear(), 0, 1);
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, "0");
+                const day = String(d.getDate()).padStart(2, "0");
+                return `${year}-${month}-${day}`;
+            };
+            const currentHref = generateReportActionBtn.getAttribute("href");
+            generateReportActionBtn.setAttribute("href", `${currentHref}&date_from=${formatDate(yearStart)}&date_to=${formatDate(now)}`);
+        }
+
+        // Analytics drawing and data population helpers
+        const projectionHasValue = (source, valueKey) => {
+            if (!source || typeof source !== "object") return false;
+            const applicabilityKey = `${valueKey}_applicable`;
+            if (source[applicabilityKey] === false) return false;
+            return source[valueKey] !== null && typeof source[valueKey] !== "undefined";
+        };
+
+        const getProjectionCategoryKey = (valueKey) => {
+            if (valueKey === "expected_sales") return "sales";
+            if (valueKey === "expected_expenses") return "expenses";
+            if (valueKey === "expected_tax") return "tax";
+            if (valueKey === "expected_net") return "expected_net";
+            return "";
+        };
+
+        const projectionCannotForecast = (source, valueKey) => {
+            if (!source || typeof source !== "object") return false;
+            const categoryKey = getProjectionCategoryKey(valueKey);
+            if (categoryKey === "expected_net") return Boolean(source.expected_net_unreliable);
+            const applicabilityKey = `${valueKey}_applicable`;
+            const unreliableKey = `${categoryKey}_unreliable`;
+            return source[applicabilityKey] === true && Boolean(source[unreliableKey]);
+        };
+
+        const formatProjectionCurrency = (source, valueKey) => {
+            if (projectionHasValue(source, valueKey)) return formatCurrency(source[valueKey]);
+            return projectionCannotForecast(source, valueKey) ? "Cannot forecast" : "N/A";
+        };
+
+        const getProjectionMethodLabel = (source, categoryKey, valueKey) => {
+            if (!projectionHasValue(source, valueKey)) {
+                return projectionCannotForecast(source, valueKey) ? "Insufficient stable data" : "Not scheduled this period";
+            }
+            return String(source[`${categoryKey}_method`] || "Weighted Moving Average");
+        };
+
+        const setAnalyticsLoadingState = (isLoading) => {
+            isLoadingAnalytics = Boolean(isLoading);
+            if (analyticsDataPanels) {
+                analyticsDataPanels.setAttribute("aria-busy", String(isLoadingAnalytics));
+                analyticsDataPanels.classList.toggle("is-loading", isLoadingAnalytics);
+            }
+            if (analyticsScopeHint && isLoadingAnalytics) {
+                analyticsScopeHint.textContent = "Loading...";
+            }
+        };
+
+        const formatTrendEdgeLabel = (row) => {
+            if (!row || typeof row !== "object") return "";
+            const monthLabel = String(row.month_label || row.month || "").trim();
+            const yearValue = Number.parseInt(String(row.year || ""), 10);
+            if (!monthLabel && !Number.isFinite(yearValue)) return "";
+            if (!monthLabel) return String(yearValue);
+            if (!Number.isFinite(yearValue)) return monthLabel;
+            return `${monthLabel} ${yearValue}`;
+        };
+
+        const applyTimeframeCaptions = (scope, trendRows) => {
+            const rows = Array.isArray(trendRows) ? trendRows : [];
+            const clientName = "{{ client.client_name }}";
+            if (analyticsSummaryTimeframeCaption) {
+                analyticsSummaryTimeframeCaption.textContent = `Totals use all recorded entries for ${clientName}.`;
+            }
+            if (!analyticsTrendTimeframeCaption) return;
+            if (!rows.length) {
+                analyticsTrendTimeframeCaption.textContent = "Trend chart window: latest 6 months only.";
+                return;
+            }
+            const startLabel = formatTrendEdgeLabel(rows[0]);
+            const endLabel = formatTrendEdgeLabel(rows[rows.length - 1]);
+            if (startLabel && endLabel && startLabel !== endLabel) {
+                analyticsTrendTimeframeCaption.textContent = `Trend chart window: ${startLabel} to ${endLabel} (latest 6 months).`;
+                return;
+            }
+            if (endLabel) {
+                analyticsTrendTimeframeCaption.textContent = `Trend chart window: ${endLabel} (latest 6 months).`;
+                return;
+            }
+            analyticsTrendTimeframeCaption.textContent = "Trend chart window: latest 6 months only.";
+        };
+
+        const getXYPoints = (values, width, height, padding) => {
+            const safeValues = Array.isArray(values) ? values.map((value) => Number(value || 0)) : [];
+            if (!safeValues.length) return [];
+            const minValue = Math.min(...safeValues, 0);
+            const maxValue = Math.max(...safeValues, 1);
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+            const xStep = safeValues.length > 1 ? plotWidth / (safeValues.length - 1) : 0;
+            return safeValues.map((value, index) => {
+                const x = padding.left + (xStep * index);
+                const normalized = (value - minValue) / (maxValue - minValue || 1);
+                const y = padding.top + (plotHeight - (normalized * plotHeight));
+                return { x, y };
+            });
+        };
+
+        const getBezierPath = (points) => {
+            if (!points || points.length === 0) return "";
+            if (points.length === 1) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+            let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[i];
+                const p1 = points[i + 1];
+                const cpX1 = p0.x + (p1.x - p0.x) / 3;
+                const cpY1 = p0.y;
+                const cpX2 = p0.x + 2 * (p1.x - p0.x) / 3;
+                const cpY2 = p1.y;
+                d += ` C ${cpX1.toFixed(2)} ${cpY1.toFixed(2)}, ${cpX2.toFixed(2)} ${cpY2.toFixed(2)}, ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+            }
+            return d;
+        };
+
+        const getAreaBezierPath = (points, baselineY) => {
+            const linePath = getBezierPath(points);
+            if (!linePath) return "";
+            const first = points[0];
+            const last = points[points.length - 1];
+            return `${linePath} L ${last.x.toFixed(2)} ${baselineY.toFixed(2)} L ${first.x.toFixed(2)} ${baselineY.toFixed(2)} Z`;
+        };
+
+        const buildPolylinePoints = (values, width, height, padding) => {
+            const points = getXYPoints(values, width, height, padding);
+            return points.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+        };
+
+        const prefersReducedMotion = () => {
+            return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+        };
+
+        const resetPolylineAnimation = (polyline) => {
+            if (!polyline) return;
+            polyline.style.transition = "none";
+            polyline.style.strokeDasharray = "none";
+            polyline.style.strokeDashoffset = "0";
+        };
+
+        const animatePolyline = (polyline, options = {}) => {
+            if (!polyline) return;
+            if (prefersReducedMotion()) {
+                resetPolylineAnimation(polyline);
+                return;
+            }
+            const length = typeof polyline.getTotalLength === "function" ? polyline.getTotalLength() : 0;
+            if (!Number.isFinite(length) || length <= 0) {
+                resetPolylineAnimation(polyline);
+                return;
+            }
+            const duration = Number.isFinite(options.duration) ? options.duration : 720;
+            const delay = Number.isFinite(options.delay) ? options.delay : 0;
+            polyline.style.transition = "none";
+            polyline.style.strokeDasharray = `${length}`;
+            polyline.style.strokeDashoffset = `${length}`;
+            polyline.getBoundingClientRect();
+            polyline.style.transition = `stroke-dashoffset ${duration}ms ease ${delay}ms`;
+            window.requestAnimationFrame(() => {
+                polyline.style.strokeDashoffset = "0";
+            });
+        };
+
+        const fillSeriesGaps = (values) => {
+            const filled = Array.isArray(values) ? values.slice() : [];
+            let lastValid = null;
+            filled.forEach((value, index) => {
+                if (Number.isFinite(value)) {
+                    lastValid = value;
+                    return;
+                }
+                if (Number.isFinite(lastValid)) {
+                    filled[index] = lastValid;
+                }
+            });
+            let nextValid = null;
+            for (let index = filled.length - 1; index >= 0; index -= 1) {
+                const originalValue = values[index];
+                if (Number.isFinite(originalValue)) {
+                    nextValid = originalValue;
+                } else if (!Number.isFinite(filled[index]) && Number.isFinite(nextValid)) {
+                    filled[index] = nextValid;
+                }
+            }
+            return filled;
+        };
+
+        const setForecastSeriesHighlight = (seriesKey) => {
+            if (!analyticsForecastProjectionShell) return;
+            if (seriesKey) {
+                analyticsForecastProjectionShell.dataset.activeSeries = seriesKey;
+            } else {
+                delete analyticsForecastProjectionShell.dataset.activeSeries;
+            }
+            analyticsForecastLegendItems.forEach((item) => {
+                item.classList.toggle("is-active", item.dataset.forecastSeries === seriesKey);
+            });
+        };
+
+        const bindForecastLegendHighlight = () => {
+            if (!analyticsForecastLegendItems.length) return;
+            analyticsForecastLegendItems.forEach((item) => {
+                const seriesKey = item.dataset.forecastSeries;
+                if (!seriesKey) return;
+                item.addEventListener("mouseenter", () => setForecastSeriesHighlight(seriesKey));
+                item.addEventListener("mouseleave", () => setForecastSeriesHighlight(""));
+            });
+        };
+
+        const renderTrendGrid = () => {
+            if (!analyticsTrendGrid) return;
+            const gridLines = [36, 82, 128, 174];
+            analyticsTrendGrid.innerHTML = gridLines
+                .map((positionY) => `<line class="analytics-trend-grid-line" x1="34" y1="${positionY}" x2="622" y2="${positionY}"></line>`)
+                .join("");
+        };
+
+        const renderTrend = (trendRows) => {
+            if (!analyticsSalesLine || !analyticsExpensesLine || !analyticsMonthLabels) return;
+            const rows = Array.isArray(trendRows) ? trendRows : [];
+            const salesValues = rows.map((row) => Number(row.sales || 0));
+            const expenseValues = rows.map((row) => Number(row.expenses || 0));
+
+            const width = 640;
+            const height = 240;
+            const padding = { left: 34, right: 18, top: 16, bottom: 34 };
+
+            const salesPoints = getXYPoints(salesValues, width, height, padding);
+            const expensePoints = getXYPoints(expenseValues, width, height, padding);
+
+            analyticsSalesLine.setAttribute("d", getBezierPath(salesPoints));
+            analyticsExpensesLine.setAttribute("d", getBezierPath(expensePoints));
+
+            const areasContainer = document.getElementById("analyticsTrendAreas");
+            if (areasContainer) {
+                const baselineY = height - padding.bottom;
+                const salesAreaD = getAreaBezierPath(salesPoints, baselineY);
+                const expenseAreaD = getAreaBezierPath(expensePoints, baselineY);
+                areasContainer.innerHTML = `
+                    <path class="analytics-trend-area sales" d="${salesAreaD}" fill="url(#trendSalesGrad)"></path>
+                    <path class="analytics-trend-area expenses" d="${expenseAreaD}" fill="url(#trendExpensesGrad)"></path>
+                `;
+            }
+
+            animatePolyline(analyticsSalesLine, { duration: 760, delay: 0 });
+            animatePolyline(analyticsExpensesLine, { duration: 760, delay: 80 });
+
+            analyticsMonthLabels.innerHTML = rows
+                .map((row) => `<span>${escapeHtml(row.month_label || row.month || "-")}</span>`)
+                .join("");
+        };
+
+        const renderPredictiveSparkline = (values) => {
+            if (!analyticsPredictiveLine) return;
+            const points = buildPolylinePoints(values, 240, 84, { left: 8, right: 8, top: 8, bottom: 10 });
+            analyticsPredictiveLine.setAttribute("points", points);
+            animatePolyline(analyticsPredictiveLine, { duration: 640, delay: 0 });
+        };
+
+        const applyPredictiveForecast = (forecast) => {
+            const safeForecast = forecast && typeof forecast === "object" ? forecast : {};
+            const hasForecast = Boolean(safeForecast.has_forecast);
+            const nextPeriodLabel = String(safeForecast.next_period_label || "").trim();
+            const frequencyLabel = String(safeForecast.frequency_label || "").trim();
+            const periodHasFrequency = /\bQ\d\b/.test(nextPeriodLabel) || /Annual/i.test(nextPeriodLabel);
+            const frequencySuffix = frequencyLabel && !periodHasFrequency ? ` • ${frequencyLabel}` : "";
+
+            if (analyticsPredictivePeriod) {
+                analyticsPredictivePeriod.textContent = nextPeriodLabel
+                    ? `Next period: ${nextPeriodLabel}${frequencySuffix}`
+                    : "Next period: --";
+            }
+
+            if (analyticsPredictiveSalesValue) {
+                analyticsPredictiveSalesValue.textContent = hasForecast
+                    ? formatProjectionCurrency(safeForecast, "expected_sales")
+                    : "PHP --";
+            }
+            if (analyticsPredictiveExpensesValue) {
+                analyticsPredictiveExpensesValue.textContent = hasForecast
+                    ? formatProjectionCurrency(safeForecast, "expected_expenses")
+                    : "PHP --";
+            }
+            if (analyticsPredictiveTaxValue) {
+                analyticsPredictiveTaxValue.textContent = hasForecast
+                    ? formatProjectionCurrency(safeForecast, "expected_tax")
+                    : "PHP --";
+            }
+
+            const pendingLabel = "Needs historical data";
+            if (analyticsPredictiveSalesNote) {
+                analyticsPredictiveSalesNote.textContent = hasForecast
+                    ? getProjectionMethodLabel(safeForecast, "sales", "expected_sales")
+                    : pendingLabel;
+            }
+            if (analyticsPredictiveExpensesNote) {
+                analyticsPredictiveExpensesNote.textContent = hasForecast
+                    ? getProjectionMethodLabel(safeForecast, "expenses", "expected_expenses")
+                    : pendingLabel;
+            }
+            if (analyticsPredictiveTaxNote) {
+                analyticsPredictiveTaxNote.textContent = hasForecast
+                    ? getProjectionMethodLabel(safeForecast, "tax", "expected_tax")
+                    : pendingLabel;
+            }
+
+            if (analyticsPredictivePlaceholder) {
+                analyticsPredictivePlaceholder.textContent = hasForecast
+                    ? "WMA projection based on available transaction history."
+                    : "Forecast visualization will appear after enough data is available.";
+            }
+
+            renderPredictiveSparkline(hasForecast ? (safeForecast.sparkline || []) : []);
+        };
+
+        const predictiveForecastTableBody = document.getElementById("predictiveForecastTableBody");
+
+        const renderPredictiveForecastReport = (futureProjections) => {
+            if (!predictiveForecastTableBody) return;
+            const safeProjections = Array.isArray(futureProjections) ? futureProjections : [];
+            if (!safeProjections.length) {
+                predictiveForecastTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Needs historical data to compute forecasts.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            predictiveForecastTableBody.innerHTML = safeProjections
+                .map((proj) => {
+                    const period = String(proj.period_label || "-");
+                    const sales = formatProjectionCurrency(proj, "expected_sales");
+                    const expenses = formatProjectionCurrency(proj, "expected_expenses");
+                    const tax = formatProjectionCurrency(proj, "expected_tax");
+                    const net = formatProjectionCurrency(proj, "expected_net");
+
+                    const netNum = Number(proj.expected_net || 0);
+                    const netClass = projectionHasValue(proj, "expected_net")
+                        ? (netNum > 0 ? "text-success" : (netNum < 0 ? "text-danger" : "text-muted"))
+                        : "text-muted";
+
+                    return `
+                        <tr>
+                            <td><strong>${escapeHtml(period)}</strong></td>
+                            <td>${escapeHtml(sales)}</td>
+                            <td>${escapeHtml(expenses)}</td>
+                            <td>${escapeHtml(tax)}</td>
+                            <td><strong class="${netClass}">${escapeHtml(net)}</strong></td>
+                        </tr>
+                    `;
+                })
+                .join("");
+        };
+
+        const renderForecastProjectionChart = (futureProjections) => {
+            if (!analyticsForecastProjectionGrid || !analyticsForecastProjectionBridges || !analyticsForecastProjectionDots || !analyticsForecastProjectionLabels || !analyticsForecastProjectionEmpty) return;
+
+            const rows = Array.isArray(futureProjections) ? futureProjections : [];
+            const series = [
+                { key: "expected_sales", label: "Sales", className: "sales", lineElement: analyticsForecastProjectionSalesLine },
+                { key: "expected_expenses", label: "Expenses", className: "expenses", lineElement: analyticsForecastProjectionExpensesLine },
+                { key: "expected_tax", label: "Tax", className: "tax", lineElement: analyticsForecastProjectionTaxLine },
+                { key: "expected_net", label: "Net Value", className: "net", lineElement: analyticsForecastProjectionNetLine },
+            ];
+
+            const clearChart = () => {
+                series.forEach((item) => {
+                    if (item.lineElement) item.lineElement.setAttribute("d", "");
+                });
+                analyticsForecastProjectionGrid.innerHTML = "";
+                const areasContainer = document.getElementById("analyticsForecastProjectionAreas");
+                if (areasContainer) areasContainer.innerHTML = "";
+                analyticsForecastProjectionBridges.innerHTML = "";
+                analyticsForecastProjectionDots.innerHTML = "";
+                analyticsForecastProjectionLabels.innerHTML = "";
+                if (analyticsForecastProjectionTooltip) analyticsForecastProjectionTooltip.hidden = true;
+                analyticsForecastProjectionEmpty.textContent = "Needs forecast data to draw the projection graph.";
+                analyticsForecastProjectionEmpty.hidden = false;
+            };
+
+            if (!rows.length) {
+                clearChart();
+                return;
+            }
+
+            const width = 720;
+            const height = 360;
+            const padding = { left: 94, right: 24, top: 20, bottom: 20 };
+            const laneGap = 16;
+            const laneCount = series.length;
+            const laneHeight = (height - padding.top - padding.bottom - laneGap * (laneCount - 1)) / laneCount;
+            const chartWidth = width - padding.left - padding.right;
+            const xForIndex = (index) => {
+                if (rows.length <= 1) return padding.left + chartWidth / 2;
+                return padding.left + (index / (rows.length - 1)) * chartWidth;
+            };
+
+            const plottedSeries = series.map((item, laneIndex) => {
+                const laneTop = padding.top + laneIndex * (laneHeight + laneGap);
+                const laneBottom = laneTop + laneHeight;
+                const rawValues = rows.map((row) => {
+                    if (!projectionHasValue(row, item.key) || projectionCannotForecast(row, item.key)) return null;
+                    const value = Number(row[item.key]);
+                    return Number.isFinite(value) ? value : null;
+                });
+                let firstIndex = -1;
+                let lastIndex = -1;
+                rawValues.forEach((value, index) => {
+                    if (!Number.isFinite(value)) return;
+                    if (firstIndex === -1) firstIndex = index;
+                    lastIndex = index;
+                });
+
+                const points = rawValues
+                    .map((value, index) => {
+                        if (!Number.isFinite(value)) return null;
+                        return { index, value, period: String(rows[index].period_label || "-") };
+                    })
+                    .filter(Boolean);
+                const values = points.map((point) => point.value);
+                const rawMin = values.length ? Math.min(0, ...values) : 0;
+                const rawMax = values.length ? Math.max(...values, 1) : 1;
+                const rawRange = rawMax - rawMin || Math.max(Math.abs(rawMax), 1);
+                const minValue = rawMin < 0 ? rawMin - rawRange * 0.08 : 0;
+                const maxValue = rawMax + rawRange * 0.08;
+                const valueRange = maxValue - minValue || 1;
+                const yForValue = (value) => laneTop + ((maxValue - value) / valueRange) * laneHeight;
+                const filledValues = firstIndex === -1 ? [] : fillSeriesGaps(rawValues);
+                const bridgePoints = firstIndex === -1 ? [] : filledValues
+                    .map((value, index) => {
+                        if (index < firstIndex || index > lastIndex) return null;
+                        if (!Number.isFinite(value)) return null;
+                        return { index, value };
+                    })
+                    .filter(Boolean);
+
+                return { ...item, laneTop, laneBottom, points, bridgePoints, minValue, maxValue, midValue: minValue + valueRange / 2, yForValue };
+            });
+
+            if (!plottedSeries.some((item) => item.points.length > 0)) {
+                clearChart();
+                return;
+            }
+
+            analyticsForecastProjectionEmpty.hidden = true;
+            if (analyticsForecastProjectionHint) {
+                analyticsForecastProjectionHint.textContent = "Sales, expenses, tax, and net value are shown together with separate scales.";
+            }
+
+            const rectX = padding.left;
+            const rectWidth = width - padding.left - padding.right;
+
+            const verticalGridLinesMarkup = rows.map((_, index) => {
+                const x = xForIndex(index);
+                return `<line class="analytics-forecast-vertical-grid-line" stroke="#e1edf8" stroke-width="1" stroke-dasharray="4 4" x1="${x.toFixed(2)}" y1="${padding.top}" x2="${x.toFixed(2)}" y2="${height - padding.bottom}"></line>`;
+            }).join("");
+
+            const gridAndLabelMarkup = plottedSeries.map((item) => {
+                const laneCenter = item.laneTop + laneHeight / 2;
+                const topLabel = formatCompactCurrency(item.maxValue);
+                const midLabel = formatCompactCurrency(item.midValue);
+                const bottomLabel = formatCompactCurrency(item.minValue);
+                const textY = item.laneTop + 16;
+                const categoryColor = item.className === "sales" ? "#2563d8" :
+                                      item.className === "expenses" ? "#e4872a" :
+                                      item.className === "tax" ? "#805ad5" : "#14945b";
+                const categoryMarkup = `<text class="analytics-forecast-lane-label ${item.className}" fill="${categoryColor}" x="${padding.left + 12}" y="${textY.toFixed(2)}" text-anchor="start">${escapeHtml(item.label)}</text>`;
+
+                return `
+                    <rect class="analytics-forecast-lane-bg" fill="#f4f8ff" stroke="#eef4ff" stroke-width="1" x="${rectX}" y="${item.laneTop.toFixed(2)}" width="${rectWidth}" height="${laneHeight.toFixed(2)}" rx="8" ry="8"></rect>
+                    ${categoryMarkup}
+                    <line class="analytics-forecast-grid-line" stroke="#dce7fa" stroke-width="1" x1="${padding.left}" y1="${item.laneTop.toFixed(2)}" x2="${width - padding.right}" y2="${item.laneTop.toFixed(2)}"></line>
+                    <line class="analytics-forecast-grid-line" stroke="#dce7fa" stroke-width="1" x1="${padding.left}" y1="${laneCenter.toFixed(2)}" x2="${width - padding.right}" y2="${laneCenter.toFixed(2)}"></line>
+                    <line class="analytics-forecast-grid-line baseline" stroke="#cad8f1" stroke-width="1" x1="${padding.left}" y1="${item.laneBottom.toFixed(2)}" x2="${width - padding.right}" y2="${item.laneBottom.toFixed(2)}"></line>
+                    <text class="analytics-forecast-grid-label" fill="#6c85b0" x="${padding.left - 12}" y="${(item.laneTop + 4).toFixed(2)}" text-anchor="end">${escapeHtml(topLabel)}</text>
+                    <text class="analytics-forecast-grid-label" fill="#6c85b0" x="${padding.left - 12}" y="${(laneCenter + 4).toFixed(2)}" text-anchor="end">${escapeHtml(midLabel)}</text>
+                    <text class="analytics-forecast-grid-label" fill="#6c85b0" x="${padding.left - 12}" y="${(item.laneBottom + 4).toFixed(2)}" text-anchor="end">${escapeHtml(bottomLabel)}</text>
+                `;
+            }).join("");
+
+            analyticsForecastProjectionGrid.innerHTML = verticalGridLinesMarkup + gridAndLabelMarkup;
+
+            analyticsForecastProjectionLabels.innerHTML = rows
+                .map((row) => `<span title="${escapeHtml(String(row.period_label || "-"))}">${escapeHtml(String(row.period_label || "-"))}</span>`)
+                .join("");
+
+            analyticsForecastProjectionBridges.innerHTML = plottedSeries
+                .map((item) => {
+                    if (!item.bridgePoints || item.bridgePoints.length < 2) return "";
+                    const bridgeXYs = item.bridgePoints.map((point) => ({ x: xForIndex(point.index), y: item.yForValue(point.value) }));
+                    const bridgeD = getBezierPath(bridgeXYs);
+                    return `<path class="analytics-forecast-projection-bridge ${item.className}" d="${bridgeD}"></path>`;
+                })
+                .join("");
+
+            const areasContainer = document.getElementById("analyticsForecastProjectionAreas");
+            if (areasContainer) {
+                areasContainer.innerHTML = plottedSeries
+                    .map((item) => {
+                        if (item.points.length < 2) return "";
+                        const pointsXY = item.points.map((p) => ({ x: xForIndex(p.index), y: item.yForValue(p.value) }));
+                        const areaD = getAreaBezierPath(pointsXY, item.laneBottom);
+                        const gradId = item.className === "sales" ? "salesGrad" :
+                                       item.className === "expenses" ? "expensesGrad" :
+                                       item.className === "tax" ? "taxGrad" : "netGrad";
+                        return `<path class="analytics-forecast-projection-area ${item.className}" d="${areaD}" fill="url(#${gradId})"></path>`;
+                    })
+                    .join("");
+            }
+
+            const dotMarkup = [];
+            plottedSeries.forEach((item, seriesIndex) => {
+                const pointsXY = item.points.map((p) => ({ x: xForIndex(p.index), y: item.yForValue(p.value) }));
+                const lineD = getBezierPath(pointsXY);
+
+                if (item.lineElement) {
+                    item.lineElement.setAttribute("d", lineD);
+                    if (item.points.length > 1) {
+                        animatePolyline(item.lineElement, { duration: 720, delay: seriesIndex * 70 });
+                    }
+                }
+
+                item.points.forEach((point) => {
+                    const cx = xForIndex(point.index).toFixed(2);
+                    const cy = item.yForValue(point.value).toFixed(2);
+                    const title = `${point.period} ${item.label}: ${formatCurrency(point.value)}`;
+                    dotMarkup.push(`
+                        <circle
+                            class="analytics-forecast-projection-dot ${item.className}"
+                            cx="${cx}"
+                            cy="${cy}"
+                            r="5"
+                            tabindex="0"
+                            role="img"
+                            aria-label="${escapeHtml(title)}"
+                            data-tooltip-title="${escapeHtml(point.period)}"
+                            data-tooltip-label="${escapeHtml(item.label)}"
+                            data-tooltip-value="${escapeHtml(formatCurrency(point.value))}"
+                        >
+                            <title>${escapeHtml(title)}</title>
+                        </circle>
+                    `);
+                });
+            });
+
+            analyticsForecastProjectionDots.innerHTML = dotMarkup.join("");
+
+            if (analyticsForecastProjectionTooltip) {
+                const shellRect = () => analyticsForecastProjectionTooltip.parentElement.getBoundingClientRect();
+                const showTooltip = (event) => {
+                    const target = event.currentTarget;
+                    const period = target.getAttribute("data-tooltip-title") || "";
+                    const label = target.getAttribute("data-tooltip-label") || "";
+                    const value = target.getAttribute("data-tooltip-value") || "";
+                    analyticsForecastProjectionTooltip.innerHTML = `
+                        <strong>${escapeHtml(label)}</strong>
+                        <span>${escapeHtml(period)}</span>
+                        <b>${escapeHtml(value)}</b>
+                    `;
+
+                    const rect = shellRect();
+                    const clientX = event.clientX || (target.getBoundingClientRect().left + target.getBoundingClientRect().width / 2);
+                    const clientY = event.clientY || target.getBoundingClientRect().top;
+                    const left = Math.min(Math.max(clientX - rect.left + 12, 8), rect.width - 152);
+                    const top = Math.min(Math.max(clientY - rect.top - 64, 8), rect.height - 88);
+                    analyticsForecastProjectionTooltip.style.left = `${left}px`;
+                    analyticsForecastProjectionTooltip.style.top = `${top}px`;
+                    analyticsForecastProjectionTooltip.hidden = false;
+                };
+                const hideTooltip = () => {
+                    analyticsForecastProjectionTooltip.hidden = true;
+                };
+
+                analyticsForecastProjectionDots.querySelectorAll(".analytics-forecast-projection-dot").forEach((dot) => {
+                    dot.addEventListener("mouseenter", showTooltip);
+                    dot.addEventListener("mousemove", showTooltip);
+                    dot.addEventListener("focus", showTooltip);
+                    dot.addEventListener("mouseleave", hideTooltip);
+                    dot.addEventListener("blur", hideTooltip);
+                });
+            }
+        };
+
+        const applyAnalyticsFallbackState = () => {
+            if (analyticsDataPanels) analyticsDataPanels.hidden = true;
+            if (analyticsEmptyState) analyticsEmptyState.hidden = false;
+            if (analyticsScopeHint) analyticsScopeHint.textContent = "Viewing: {{ client.client_name }}";
+            applyTimeframeCaptions({}, []);
+
+            if (analyticsTotalSalesValue) analyticsTotalSalesValue.textContent = formatCurrency(0);
+            if (analyticsTotalExpensesValue) analyticsTotalExpensesValue.textContent = formatCurrency(0);
+            if (analyticsTotalTaxValue) analyticsTotalTaxValue.textContent = formatCurrency(0);
+            if (analyticsNetValueValue) analyticsNetValueValue.textContent = formatCurrency(0);
+
+            renderTrend([]);
+            applyPredictiveForecast({ has_forecast: false });
+            renderForecastProjectionChart([]);
+        };
+
+        const applyAnalyticsPayload = (payload) => {
+            const hasData = Boolean(payload && payload.has_data);
+
+            if (!hasData) {
+                if (analyticsDataPanels) analyticsDataPanels.hidden = true;
+                if (analyticsEmptyState) analyticsEmptyState.hidden = false;
+            } else {
+                if (analyticsDataPanels) analyticsDataPanels.hidden = false;
+                if (analyticsEmptyState) analyticsEmptyState.hidden = true;
+            }
+
+            const summary = payload && payload.summary ? payload.summary : {};
+            const totalSalesValue = Number(summary.total_sales || 0);
+            const totalExpensesValue = Number(summary.total_expenses || 0);
+            const netValue = totalSalesValue - totalExpensesValue;
+            
+            if (analyticsTotalSalesValue) analyticsTotalSalesValue.textContent = formatCurrency(totalSalesValue);
+            if (analyticsTotalExpensesValue) analyticsTotalExpensesValue.textContent = formatCurrency(totalExpensesValue);
+            if (analyticsTotalTaxValue) analyticsTotalTaxValue.textContent = formatCurrency(summary.total_tax || 0);
+            if (analyticsNetValueValue) analyticsNetValueValue.textContent = formatCurrency(netValue);
+
+            const trendRows = payload && Array.isArray(payload.monthly_trend) ? payload.monthly_trend : [];
+            renderTrend(trendRows);
+
+            const predictiveForecast = payload && payload.predictive_forecast ? payload.predictive_forecast : {};
+            const forecastProjections = Array.isArray(predictiveForecast.future_projections) ? predictiveForecast.future_projections : [];
+            applyPredictiveForecast(predictiveForecast);
+            renderPredictiveForecastReport(forecastProjections);
+            renderForecastProjectionChart(forecastProjections);
+
+            const scope = payload && payload.scope ? payload.scope : {};
+            applyTimeframeCaptions(scope, trendRows);
+            if (analyticsScopeHint) {
+                const clientTin = "{{ client.tin_number }}";
+                analyticsScopeHint.textContent = `Viewing: {{ client.client_name }}${clientTin ? ` (TIN: ${formatTin(clientTin)})` : ""}`;
+            }
+        };
+
+        const buildAnalyticsSummaryApiUrl = () => {
+            const params = new URLSearchParams();
+            params.set("client_id", String(CLIENT_ID));
+            
+            if (analyticsYearFilter && analyticsYearFilter.value !== "all") {
+                params.set("year", analyticsYearFilter.value);
+            }
+            
+            if (analyticsHorizonFilter) {
+                params.set("horizon", analyticsHorizonFilter.value);
+            }
+
+            return `${ANALYTICS_SUMMARY_API_URL}?${params.toString()}`;
+        };
+
+        const loadAnalyticsSummaryFromApi = async () => {
+            const requestToken = ++analyticsRequestToken;
+            if (analyticsAbortController) {
+                analyticsAbortController.abort();
+            }
+            analyticsAbortController = new AbortController();
+            setAnalyticsLoadingState(true);
+
+            try {
+                const response = await fetch(buildAnalyticsSummaryApiUrl(), {
+                    method: "GET",
+                    headers: { "Accept": "application/json" },
+                    credentials: "same-origin",
+                    signal: analyticsAbortController.signal,
+                });
+
+                if (requestToken !== analyticsRequestToken) return;
+
+                if (response.status === 401) {
+                    setAnalyticsLoadingState(false);
+                    const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                    return;
+                }
+
+                if (shared && typeof shared.parseJsonSafe === "function") {
+                    const result = await shared.parseJsonSafe(response);
+                    if (!response.ok || !result || !result.ok) {
+                        setAnalyticsLoadingState(false);
+                        applyAnalyticsFallbackState();
+                        showToast("Unable to load analytics right now. Please try again.", "danger");
+                        return;
+                    }
+
+                    setAnalyticsLoadingState(false);
+                    applyAnalyticsPayload(result);
+                }
+            } catch (requestError) {
+                if (requestError && requestError.name === "AbortError") return;
+                if (requestToken !== analyticsRequestToken) return;
+
+                setAnalyticsLoadingState(false);
+                applyAnalyticsFallbackState();
+                showToast("Network issue detected while loading analytics.", "warning");
+            }
+        };
+
+        const initializeClientDetailsPage = () => {
+            // Remove skeleton loading classes after timeout
+            window.setTimeout(() => {
+                if (body.classList.contains("skeleton-active") && !body.classList.contains("skeleton-loaded")) {
+                    body.classList.remove("skeleton-active");
+                    body.classList.add("skeleton-loaded");
+                }
+            }, 1000);
+
+            renderTrendGrid();
+            bindForecastLegendHighlight();
+            applyAnalyticsFallbackState();
+
+            loadAnalyticsSummaryFromApi();
+
+            if (analyticsYearFilter) {
+                analyticsYearFilter.addEventListener("change", loadAnalyticsSummaryFromApi);
+            }
+            if (analyticsHorizonFilter) {
+                analyticsHorizonFilter.addEventListener("change", loadAnalyticsSummaryFromApi);
+            }
+
+            setupModalReportEvents();
+        };
+
+        // Modal report generation state and logic
+        const modalReportLoading = document.getElementById("modalReportLoading");
+        const modalReportError = document.getElementById("modalReportError");
+        const modalReportErrorMsg = document.getElementById("modalReportErrorMsg");
+        const modalReportWrapper = document.getElementById("modalReportWrapper");
+        const modalReportSheet = document.getElementById("modalReportSheet");
+        const modalPrintReportBtn = document.getElementById("modalPrintReportBtn");
+        
+        let modalLatestReport = null;
+
+        const buildModalReportData = (payload, yearFilterVal) => {
+            const summary = payload && payload.summary ? payload.summary : {};
+            const trendRows = payload && Array.isArray(payload.monthly_trend) ? payload.monthly_trend : [];
+            const scope = payload && payload.scope ? payload.scope : {};
+
+            const rawTypeColumns = Array.isArray(payload && payload.type_columns)
+                ? payload.type_columns.filter((value) => String(value || "").trim())
+                : [];
+            
+            const typeColumns = window.SafeBooksReportsShared && typeof window.SafeBooksReportsShared.normalizeFinancialSummaryColumns === "function"
+                ? window.SafeBooksReportsShared.normalizeFinancialSummaryColumns(rawTypeColumns)
+                : rawTypeColumns;
+                
+            const typeColumnMeta = typeColumns.map((label, index) => ({
+                key: `type_${index}`,
+                label: String(label),
+            }));
+            const useTypeColumns = typeColumnMeta.length > 0;
+
+            const getTypeAmount = (typeBreakdown, label) => {
+                const normalizedLabel = String(label || "").trim().toLowerCase();
+                if (!normalizedLabel) return 0;
+                const directMatch = typeBreakdown && Object.prototype.hasOwnProperty.call(typeBreakdown, label)
+                    ? Number(typeBreakdown[label] || 0)
+                    : null;
+                if (Number.isFinite(directMatch)) return directMatch;
+                const fallbackKey = Object.keys(typeBreakdown || {}).find((key) => String(key || "").trim().toLowerCase() === normalizedLabel);
+                return Number(typeBreakdown && fallbackKey ? typeBreakdown[fallbackKey] : 0);
+            };
+
+            const rows = trendRows.map((row) => {
+                const periodLabel = `${row.month_label || row.month || "-"} ${row.year || ""}`.trim();
+                const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
+                const salesValue = useTypeColumns
+                    ? getTypeAmount(typeBreakdown, "Sales")
+                    : Number(row.sales || 0);
+                const expensesValue = useTypeColumns
+                    ? getTypeAmount(typeBreakdown, "Expenses")
+                    : Number(row.expenses || 0);
+                const netValue = salesValue - expensesValue;
+
+                if (!useTypeColumns) {
+                    return {
+                        period: periodLabel,
+                        sales: formatCurrency(salesValue),
+                        expenses: formatCurrency(expensesValue),
+                        tax: formatCurrency(row.tax),
+                        net_value: formatCurrency(netValue),
+                    };
+                }
+
+                const typeValues = {};
+                typeColumnMeta.forEach((column) => {
+                    typeValues[column.key] = formatCurrency(typeBreakdown[column.label]);
+                });
+
+                return {
+                    period: periodLabel,
+                    ...typeValues,
+                    net_value: formatCurrency(netValue),
+                };
+            });
+
+            const dateFrom = scope.date_from || (yearFilterVal !== "all" ? `${yearFilterVal}-01-01` : "2024-01-01");
+            const dateTo = scope.date_to || new Date().toISOString().split('T')[0];
+
+            return {
+                reportType: "financial_summary",
+                reportLabel: "Financial Summary Report",
+                dateFrom: dateFrom,
+                dateTo: dateTo,
+                generatedAt: new Date().toISOString(),
+                clientId: CLIENT_ID,
+                scopeLabel: "{{ client.client_name }}",
+                columns: useTypeColumns
+                    ? [
+                        { key: "period", label: "Period" },
+                        ...typeColumnMeta,
+                        { key: "net_value", label: "Net Value" },
+                    ]
+                    : [
+                        { key: "period", label: "Period" },
+                        { key: "sales", label: "Sales" },
+                        { key: "expenses", label: "Expenses" },
+                        { key: "tax", label: "Tax" },
+                        { key: "net_value", label: "Net Value" },
+                    ],
+                rows,
+            };
+        };
+
+        const buildModalLedgerSheetHtml = (report) => {
+            if (!window.SafeBooksReportsShared || typeof window.SafeBooksReportsShared.buildReportSheetHtml !== "function") {
+                return "";
+            }
+
+            const clientName = "{{ client.client_name }}";
+            const clientTin = formatTin("{{ client.tin_number }}");
+            const tradeName = "{{ client.trade_name|default:'' }}";
+            const location = "{{ client.location }}";
+            const permitNumber = "{{ client.permit_number|default:'' }}";
+            const birthday = "{{ client.birthday|date:'Y-m-d'|default:'' }}";
+            const email = "{{ client.email|default:'' }}";
+            const emailPassword = "{{ client.email_password|default:'' }}";
+            const orusAccount = "{{ client.orus_account|default:'' }}";
+            const orusPassword = "{{ client.orus_password|default:'' }}";
+
+            const customFields = [];
+            const customFieldsEl = document.getElementById("clientCustomFieldsData");
+            if (customFieldsEl) {
+                try {
+                    const parsed = JSON.parse(customFieldsEl.textContent);
+                    if (Array.isArray(parsed)) {
+                        customFields.push(...parsed);
+                    }
+                } catch (e) {
+                    console.error("Error parsing custom fields:", e);
+                }
+            }
+
+            const reportTypeLabel = "Financial Summary Report";
+            const generatedLabel = new Intl.DateTimeFormat("en-PH", {
+                year: "numeric", month: "short", day: "numeric",
+                hour: "2-digit", minute: "2-digit"
+            }).format(new Date());
+            const dateRangeLabel = `${report.dateFrom} to ${report.dateTo}`;
+
+            const columns = report.columns.map((c) => c.label.toUpperCase());
+            const rows = report.rows.map((r) => {
+                return report.columns.map((c) => r[c.key]);
+            });
+
+            return window.SafeBooksReportsShared.buildReportSheetHtml({
+                reportTitle: "SafeBooks Client Report Sheet",
+                reportSubtitle: "Client-facing format for quick review and print handover",
+                meta: {
+                    reportTypeLabel,
+                    dateRangeLabel,
+                    generatedLabel,
+                },
+                client: {
+                    clientName,
+                    tin: clientTin,
+                    tradeName,
+                    location,
+                    permitNumber,
+                    birthday,
+                    email,
+                    emailPassword,
+                    orusAccount,
+                    orusPassword,
+                    customFields,
+                },
+                table: {
+                    columns,
+                    rows,
+                    minRows: 14,
+                },
+                rowHint: rows.length
+                    ? "Prepared from generated report values."
+                    : "No rows matched the selected date range. Blank lines are available for manual notes.",
+            });
+        };
+
+        const printModalLedgerLayout = () => {
+            if (!modalLatestReport) return;
+            const sheetMarkup = String(modalReportSheet.innerHTML || "").trim();
+            if (!sheetMarkup) return;
+
+            const reportLabel = "Financial Summary Report";
+            const documentMarkup = `
+                <!doctype html>
+                <html lang="en">
+                    <head>
+                        <meta charset="utf-8">
+                        <title>${reportLabel} - Print</title>
+                        <style>
+                            @page {
+                                size: A4 portrait;
+                                margin: 10mm;
+                            }
+                            * {
+                                box-sizing: border-box;
+                            }
+                            html, body {
+                                margin: 0;
+                                padding: 0;
+                                background: #ffffff;
+                                color: #1f3f74;
+                                font-family: Arial, "Helvetica Neue", sans-serif;
+                            }
+                            .reports-print-root {
+                                width: 100%;
+                            }
+                            .reports-ledger-sheet {
+                                border: 1px solid #c7d8f6;
+                                padding: 8px;
+                                width: 100%;
+                            }
+                            .reports-ledger-title {
+                                margin: 0;
+                                color: #183365;
+                                font-size: 13px;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 0.04em;
+                            }
+                            .reports-ledger-subtitle {
+                                margin: 2px 0 0;
+                                color: #607ca9;
+                                font-size: 10px;
+                                font-weight: 700;
+                            }
+                            .reports-ledger-meta-row {
+                                margin: 6px 0;
+                            }
+                            .reports-ledger-meta-pill {
+                                display: inline-block;
+                                border: 1px solid #d8e4f8;
+                                border-radius: 999px;
+                                padding: 2px 8px;
+                                margin-right: 4px;
+                                margin-bottom: 4px;
+                                background: #f8fbff;
+                                color: #3f5e92;
+                                font-size: 10px;
+                                font-weight: 700;
+                            }
+                            .reports-ledger-client-table,
+                            .reports-ledger-grid-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                table-layout: fixed;
+                            }
+                            .reports-ledger-client-table th,
+                            .reports-ledger-client-table td,
+                            .reports-ledger-grid-table th,
+                            .reports-ledger-grid-table td {
+                                border: 1px solid #ccd9f0;
+                                padding: 4px 6px;
+                                color: #1f3f74;
+                                font-size: 10px;
+                            }
+                            .reports-ledger-client-table th,
+                            .reports-ledger-grid-table th {
+                                background: #f7fafe;
+                                color: #4d6896;
+                                text-transform: uppercase;
+                                letter-spacing: 0.04em;
+                                font-weight: 700;
+                            }
+                            .reports-ledger-grid-wrap {
+                                margin-top: 8px;
+                            }
+                            .reports-ledger-grid-table td {
+                                height: 24px;
+                                font-weight: 700;
+                            }
+                            .reports-ledger-note {
+                                margin-top: 6px;
+                                color: #607ca9;
+                                font-size: 10px;
+                                font-weight: 700;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <main class="reports-print-root">${sheetMarkup}</main>
+                    </body>
+                </html>
+            `;
+
+            const existingFrame = document.getElementById("reportsPrintFrame");
+            if (existingFrame) {
+                existingFrame.remove();
+            }
+
+            const printFrame = document.createElement("iframe");
+            printFrame.id = "reportsPrintFrame";
+            printFrame.setAttribute("title", "Reports Print Layout");
+            printFrame.setAttribute("aria-hidden", "true");
+            printFrame.style.position = "fixed";
+            printFrame.style.right = "0";
+            printFrame.style.bottom = "0";
+            printFrame.style.width = "0";
+            printFrame.style.height = "0";
+            printFrame.style.border = "0";
+            printFrame.style.opacity = "0";
+            printFrame.style.pointerEvents = "none";
+            document.body.appendChild(printFrame);
+
+            const frameWindow = printFrame.contentWindow;
+            const frameDocument = frameWindow ? frameWindow.document : null;
+            if (!frameDocument) {
+                showToast("Print preview could not be prepared.", "warning");
+                printFrame.remove();
+                return;
+            }
+
+            try {
+                frameDocument.open();
+                frameDocument.write(documentMarkup);
+                frameDocument.close();
+            } catch (error) {
+                showToast("Print preview could not be prepared.", "warning");
+                printFrame.remove();
+                return;
+            }
+
+            const triggerPrint = () => {
+                frameWindow.focus();
+                frameWindow.print();
+                window.setTimeout(() => {
+                    printFrame.remove();
+                }, 800);
+            };
+
+            if (frameDocument.readyState === "complete") {
+                window.setTimeout(triggerPrint, 60);
+            } else {
+                printFrame.addEventListener("load", () => {
+                    window.setTimeout(triggerPrint, 60);
+                }, { once: true });
+            }
+        };
+
+        const loadModalReport = async () => {
+            if (modalReportLoading) modalReportLoading.hidden = false;
+            if (modalReportError) modalReportError.hidden = true;
+            if (modalReportWrapper) modalReportWrapper.hidden = true;
+            if (modalPrintReportBtn) modalPrintReportBtn.disabled = true;
+
+            const yearVal = analyticsYearFilter ? analyticsYearFilter.value : "all";
+
+            try {
+                const url = buildAnalyticsSummaryApiUrl();
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: { "Accept": "application/json" },
+                    credentials: "same-origin",
+                });
+
+                if (response.status === 401) {
+                    const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                    return;
+                }
+
+                if (shared && typeof shared.parseJsonSafe === "function") {
+                    const result = await shared.parseJsonSafe(response);
+                    if (!response.ok || !result || !result.ok) {
+                        throw new Error(result && result.message ? result.message : "Unable to generate report data.");
+                    }
+
+                    modalLatestReport = buildModalReportData(result, yearVal);
+                    modalReportSheet.innerHTML = buildModalLedgerSheetHtml(modalLatestReport);
+                    
+                    if (modalReportLoading) modalReportLoading.hidden = true;
+                    if (modalReportWrapper) modalReportWrapper.hidden = false;
+                    if (modalPrintReportBtn) modalPrintReportBtn.disabled = false;
+                }
+            } catch (err) {
+                if (modalReportLoading) modalReportLoading.hidden = true;
+                if (modalReportError) modalReportError.hidden = false;
+                if (modalReportErrorMsg) modalReportErrorMsg.textContent = err.message || "Failed to prepare report preview.";
+            }
+        };
+
+        const showReportModal = () => {
+            const modalEl = document.getElementById("formattedReportModal");
+            if (modalEl) {
+                const reportModal = new bootstrap.Modal(modalEl);
+                reportModal.show();
+                loadModalReport();
+            }
+        };
+
+        const setupModalReportEvents = () => {
+            const generateReportActionBtn = document.getElementById("generateReportActionBtn");
+            if (generateReportActionBtn) {
+                generateReportActionBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    showReportModal();
+                });
+            }
+
+            if (modalPrintReportBtn) {
+                modalPrintReportBtn.addEventListener("click", () => {
+                    printModalLedgerLayout();
+                });
+            }
+        };
+
+        // Export globally for the inline click intercept handler
+        window.SafeBooksClientDetails = {
+            showReportModal: showReportModal
+        };
+
+        initializeClientDetailsPage();
+    })();
+</script>
+{% endblock %}

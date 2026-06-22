@@ -1,0 +1,125 @@
+body.dashboard-page .dashboard-delay-05 {
+    --delay: 0.05s;
+}
+
+body.dashboard-page .dashboard-delay-10 {
+    --delay: 0.1s;
+}
+
+body.dashboard-page .dashboard-delay-15 {
+    --delay: 0.15s;
+}
+
+body.dashboard-page .dashboard-delay-20 {
+    --delay: 0.2s;
+}
+
+body.dashboard-page .dashboard-delay-25 {
+    --delay: 0.25s;
+}
+
+body.dashboard-page .dashboard-delay-30 {
+    --delay: 0.3s;
+}
+
+body.dashboard-page .dashboard-delay-35 {
+    --delay: 0.35s;
+}
+
+body.dashboard-page .dashboard-delay-40 {
+    --delay: 0.4s;
+}
+
+body.dashboard-page .dashboard-delay-45 {
+    --delay: 0.45s;
+}
+
+body.dashboard-page .dashboard-progress-zero {
+    width: 0%;
+}
+
+body.dashboard-page .dashboard-deadline-count {
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.25rem 0.56rem;
+}
+
+body.dashboard-page .dashboard-deadline-list {
+    display: grid;
+    gap: 0.68rem;
+    margin-top: 0.78rem;
+}
+
+body.dashboard-page .dashboard-recent-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: 1px solid rgba(31, 94, 217, 0.08);
+    padding: 0.54rem 0;
+}
+
+body.dashboard-page .dashboard-recent-row:last-child {
+    border-bottom: 0;
+}
+
+body.dashboard-page .dashboard-recent-row-title {
+    display: block;
+    color: #173261;
+    font-size: 0.9rem;
+}
+
+body.dashboard-page .dashboard-recent-row-meta {
+    color: #6f86b0;
+    font-size: 0.75rem;
+}
+
+body.dashboard-page .dashboard-deadline-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.5rem;
+    white-space: nowrap;
+}
+
+body.dashboard-page .dashboard-status-extra {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 0.28rem;
+    text-align: left;
+    width: max-content;
+}
+
+body.dashboard-page .dashboard-filter-summary {
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+
+body.dashboard-page .dashboard-actions .dashboard-action-btn {
+    min-height: 44px;
+}
+
+@media (max-width: 767.98px) {
+    body.dashboard-page .dashboard-utility-strip {
+        gap: 0.4rem;
+    }
+
+    body.dashboard-page .dashboard-utility-item {
+        white-space: normal;
+    }
+
+    body.dashboard-page .dashboard-recent-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+body.theme-dark.dashboard-page .dashboard-recent-row-title {
+    color: #eaf1ff;
+}
+
+body.theme-dark.dashboard-page .dashboard-recent-row-meta {
+    color: #aabbe0;
+}

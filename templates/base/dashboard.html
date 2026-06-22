@@ -4,16 +4,15 @@
 {% block page_title %}Dashboard{% endblock %}
 {% block page_heading %}Dashboard{% endblock %}
 {% block page_subtitle %}
-<p class="dashboard-page-subtitle">Overview of your clients and recent financial activity</p>
+<p class="dashboard-page-subtitle">Bookkeeper workspace for client records and follow-ups</p>
 {% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/reports.css' %}">
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=1.0">
 {% endblock %}
 {% block topbar_meta %}
 <div class="dashboard-utility-strip" aria-label="Dashboard context">
-    <span class="dashboard-utility-item"><i class="bi bi-calendar3"></i> Current period: <strong>April 2026</strong></span>
-    <span class="dashboard-utility-item"><i class="bi bi-clock"></i> Last updated: <strong>Just now</strong></span>
-    <a href="{% url 'reports' %}" class="dashboard-utility-link" aria-label="Open Reports page">Open Reports</a>
+    <span class="dashboard-utility-item"><i class="bi bi-calendar3"></i> Period: <strong id="dashboardCurrentPeriod">Loading...</strong></span>
+    <span class="dashboard-utility-item"><i class="bi bi-clock"></i> Updated: <strong id="dashboardLastUpdated">Loading...</strong></span>
 </div>
 {% endblock %}
 
@@ -105,66 +104,65 @@
 <section class="dashboard-content">
     <div class="row g-3 dashboard-stats-row">
         <div class="col-sm-6 col-xl-3">
-            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.05s;" data-nav-target="{% url 'clients' %}" tabindex="0" role="button" aria-label="Open Clients page">
+            <article class="dashboard-stat-card dashboard-fade-up is-clickable dashboard-delay-05" data-nav-target="{% url 'clients' %}" tabindex="0" role="button" aria-label="Open Clients page">
                 <div class="stat-icon"><i class="bi bi-people"></i></div>
                 <div>
                     <p class="stat-label">Total Clients</p>
                     <h3 id="totalClientsValue">0</h3>
-                    <p class="stat-note">Clients currently managed</p>
-                    <span class="stat-trend-chip">vs last month</span>
+                    <p class="stat-note">Managed client records</p>
                 </div>
             </article>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.1s;" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page">
+            <article class="dashboard-stat-card dashboard-fade-up is-clickable dashboard-delay-10" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page">
                 <div class="stat-icon"><i class="bi bi-journal-check"></i></div>
                 <div>
-                    <p class="stat-label">Total Entries This Month</p>
+                    <p class="stat-label">Entries This Period</p>
                     <h3 id="totalEntriesMonthValue">0</h3>
-                    <p class="stat-note">Entries recorded this month</p>
-                    <span class="stat-trend-chip">vs last month</span>
+                    <p class="stat-note">Recorded for the current period</p>
                 </div>
             </article>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.15s;" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page for compliance follow-up">
+            <article class="dashboard-stat-card dashboard-fade-up is-clickable dashboard-delay-15" data-nav-target="{% url 'financial_records' %}" tabindex="0" role="button" aria-label="Open Financial Records page for compliance follow-up">
                 <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
                 <div>
-                    <p class="stat-label">Pending Compliance</p>
+                    <p class="stat-label">Needs Follow-up</p>
                     <h3 id="pendingComplianceValue">0</h3>
-                    <p class="stat-note">Requires attention</p>
-                    <span class="stat-trend-chip">vs last month</span>
+                    <p class="stat-note">Clients needing record attention</p>
                 </div>
             </article>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <article class="dashboard-stat-card dashboard-fade-up is-clickable" style="--delay: 0.2s;" data-nav-target="{% url 'clients' %}?remark=new" tabindex="0" role="button" aria-label="Open Clients page with new remarks filter preview">
+            <article class="dashboard-stat-card dashboard-fade-up is-clickable dashboard-delay-20" data-nav-target="{% url 'clients' %}?remark=new" tabindex="0" role="button" aria-label="Open Clients page with new remarks filter preview">
                 <div class="stat-icon"><i class="bi bi-person-plus"></i></div>
                 <div>
                     <p class="stat-label">New Clients</p>
                     <h3 id="newClientsValue">0</h3>
-                    <p class="stat-note">Onboarding phase</p>
-                    <span class="stat-trend-chip">vs last month</span>
+                    <p class="stat-note">Newly registered clients</p>
                 </div>
             </article>
         </div>
     </div>
 
-    <!-- <p class="dashboard-overview-note">Overview of your clients and recent financial activity</p> -->
-
     <div class="row g-3 mt-1 align-items-start">
         <div class="col-12 col-xl-8 d-grid gap-3">
-            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.25s;">
+            <article class="dashboard-card dashboard-fade-up dashboard-delay-25">
                 <div class="dashboard-card-head">
-                    <h2>Recent Client Activity</h2>
+                    <h2>
+                        Client Work Queue
+                        <span class="safebooks-tooltip-wrap">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span class="safebooks-tooltip-content">Clients shown by latest record status.</span>
+                        </span>
+                    </h2>
                     <button type="button" class="btn dashboard-link-muted" id="clientFiltersReset">View All</button>
                 </div>
-                <p class="dashboard-section-hint">Latest updates from your clients.</p>
                 <div class="dashboard-table-toolbar" aria-label="Recent client activity controls">
                     <div class="dashboard-table-left-controls">
                         <label class="dashboard-table-search" aria-label="Search clients by name or TIN">
                             <i class="bi bi-search"></i>
-                            <input type="search" id="clientTableSearch" placeholder="Search by client name or TIN" autocomplete="off">
+                            <input type="search" id="clientTableSearch" placeholder="Search client or TIN" autocomplete="off">
                         </label>
                         <select id="clientSortSelect" class="form-select dashboard-filter-select" aria-label="Sort recent client activity">
                             <option value="newest">Newest First</option>
@@ -176,21 +174,21 @@
                     <div class="dashboard-table-filters">
                         <div class="dashboard-filter-chips" role="group" aria-label="Filter recent client activity">
                             <button type="button" class="dashboard-filter-chip is-active" data-filter="all" aria-pressed="true">All</button>
-                            <button type="button" class="dashboard-filter-chip" data-filter="updated" aria-pressed="false">Updated</button>
+                            <button type="button" class="dashboard-filter-chip" data-filter="updated" aria-pressed="false">Filed</button>
                             <button type="button" class="dashboard-filter-chip" data-filter="no-entries" aria-pressed="false">No Entries</button>
-                            <button type="button" class="dashboard-filter-chip" data-filter="needs-attention" aria-pressed="false">Needs Attention</button>
+                            <button type="button" class="dashboard-filter-chip" data-filter="needs-attention" aria-pressed="false">Follow-up</button>
                         </div>
                     </div>
                 </div>
-                <p class="dashboard-filter-summary" id="clientFilterSummary">Active filter: All (0 results)</p>
+                <p class="dashboard-filter-summary" id="clientFilterSummary">Showing all clients</p>
                 <div class="table-responsive" id="clientTableWrap">
                     <table class="table table-hover align-middle dashboard-table mb-0" id="clientTable">
                         <thead>
                             <tr>
-                                <th>Client Name</th>
-                                <th>TIN</th>
+                                <th class="client-name-cell">Client Name</th>
+                                <th class="client-tin-cell">TIN</th>
                                 <th>Last Entry Date</th>
-                                <th>Current Period</th>
+                                <th>Last Period</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -206,13 +204,18 @@
                 </div>
             </article>
 
-            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.3s;">
+            <article class="dashboard-card dashboard-fade-up dashboard-delay-30">
                 <div class="dashboard-card-head">
-                    <h2>Recent Entries</h2>
+                    <h2>
+                        Recent Entries
+                        <span class="safebooks-tooltip-wrap">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span class="safebooks-tooltip-content">Most recent financial records added to the system.</span>
+                        </span>
+                    </h2>
                     <span class="dashboard-tag" id="recentEntriesCountTag">0 Entries</span>
                 </div>
-                <p class="dashboard-section-hint">Latest updates from your clients.</p>
-                <p class="dashboard-table-label">Last 5 entries</p>
+                <p class="dashboard-table-label">Latest encoded records</p>
                 <div class="table-responsive" id="recentEntriesWrap">
                     <table class="table table-hover align-middle dashboard-table mb-0" id="recentEntriesTable">
                         <thead>
@@ -220,9 +223,6 @@
                                 <th>Client Name</th>
                                 <th>Entry Date</th>
                                 <th>Total Amount</th>
-                            </tr>
-                            <tr class="dashboard-table-summary">
-                                <th colspan="3">Total amount: --</th>
                             </tr>
                         </thead>
                         <tbody id="recentEntriesBody"></tbody>
@@ -239,104 +239,96 @@
         </div>
 
         <div class="col-12 col-xl-4 d-grid gap-3">
-            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.35s;">
+            <article class="dashboard-card dashboard-fade-up dashboard-delay-35">
                 <div class="dashboard-card-head">
-                    <h2>Client Remarks Summary</h2>
+                    <h2>
+                        Client Status
+                        <span class="safebooks-tooltip-wrap">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span class="safebooks-tooltip-content">Counts by current client status.</span>
+                        </span>
+                    </h2>
                 </div>
-                <p class="dashboard-panel-hint">Based on client behavior and filing status.</p>
                 <ul class="insight-list">
                     <li class="insight-item remark-new-item">
                         <span class="insight-dot"></span>
-                        <div>
-                            <strong>New</strong>
-                            <small>Newly registered clients</small>
-                        </div>
+                        <strong>New</strong>
                         <span class="insight-value" id="remarkNewCount">0</span>
                     </li>
                     <li class="insight-item remark-active-item">
                         <span class="insight-dot"></span>
-                        <div>
-                            <strong>Active</strong>
-                            <small>Filing entries regularly</small>
-                        </div>
+                        <strong>Active</strong>
                         <span class="insight-value" id="remarkActiveCount">0</span>
                     </li>
                     <li class="insight-item remark-separated-item">
                         <span class="insight-dot"></span>
-                        <div>
-                            <strong>Separated</strong>
-                            <small>Inactive for one year</small>
-                        </div>
+                        <strong>Separated</strong>
                         <span class="insight-value" id="remarkSeparatedCount">0</span>
                     </li>
                     <li class="insight-item remark-closed-item">
                         <span class="insight-dot"></span>
-                        <div>
-                            <strong>Closed</strong>
-                            <small>Business closed</small>
-                        </div>
+                        <strong>Closed</strong>
                         <span class="insight-value" id="remarkClosedCount">0</span>
                     </li>
                 </ul>
                 <div class="dashboard-card-footer">
-                    <a href="{% url 'reports' %}" class="dashboard-card-link">View Details</a>
+                    <a href="{% url 'clients' %}" class="dashboard-card-link">Open Clients</a>
                 </div>
             </article>
 
-            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.4s;">
+            <article class="dashboard-card dashboard-fade-up dashboard-delay-40">
                 <div class="dashboard-card-head">
-                    <h2>Compliance Status Overview</h2>
+                    <h2>
+                        Record Status
+                        <span class="safebooks-tooltip-wrap">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span class="safebooks-tooltip-content">Based on latest client record activity.</span>
+                        </span>
+                    </h2>
                 </div>
-                <p class="dashboard-panel-hint">Status based on record completeness and recent entry activity.</p>
                 <div class="compliance-meters">
                     <div class="compliance-row">
                         <div class="compliance-meta">
-                            <div>
-                                <span>Filed</span>
-                                <small>Complete records</small>
-                            </div>
+                            <span>Filed</span>
                             <strong id="complianceFiledPct">0%</strong>
                         </div>
-                        <div class="progress"><div class="progress-bar filed" id="complianceFiledBar" style="width: 0%;"></div></div>
+                        <div class="progress"><div class="progress-bar filed dashboard-progress-zero" id="complianceFiledBar"></div></div>
                     </div>
                     <div class="compliance-row">
                         <div class="compliance-meta">
-                            <div>
-                                <span>Pending</span>
-                                <small>Missing entries</small>
-                            </div>
+                            <span>Pending</span>
                             <strong id="compliancePendingPct">0%</strong>
                         </div>
-                        <div class="progress"><div class="progress-bar pending" id="compliancePendingBar" style="width: 0%;"></div></div>
+                        <div class="progress"><div class="progress-bar pending dashboard-progress-zero" id="compliancePendingBar"></div></div>
                     </div>
                     <div class="compliance-row">
                         <div class="compliance-meta">
-                            <div>
-                                <span>Late</span>
-                                <small>No recent activity</small>
-                            </div>
+                            <span>Late</span>
                             <strong id="complianceLatePct">0%</strong>
                         </div>
-                        <div class="progress"><div class="progress-bar late" id="complianceLateBar" style="width: 0%;"></div></div>
+                        <div class="progress"><div class="progress-bar late dashboard-progress-zero" id="complianceLateBar"></div></div>
                     </div>
                 </div>
                 <div class="dashboard-card-footer">
-                    <a href="{% url 'reports' %}" class="dashboard-card-link">View Details</a>
+                    <a href="{% url 'financial_records' %}" class="dashboard-card-link">Open Records</a>
                 </div>
             </article>
 
-            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.4s;" id="upcomingDeadlinesCard" hidden>
-                <div class="dashboard-card-head" style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2>Upcoming Deadlines</h2>
-                    <span class="badge bg-warning text-dark" id="upcomingDeadlinesCount" style="font-size: 0.8rem; font-weight: 600; border-radius: 20px; padding: 0.25rem 0.5rem;">0</span>
+            <article class="dashboard-card dashboard-fade-up dashboard-delay-40" id="upcomingDeadlinesCard" hidden>
+                <div class="dashboard-card-head">
+                    <h2>
+                        Upcoming Deadlines
+                        <span class="safebooks-tooltip-wrap">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span class="safebooks-tooltip-content">Alerts for clients with compliance deadlines within 5 days.</span>
+                        </span>
+                    </h2>
+                    <span class="badge bg-warning text-dark dashboard-deadline-count" id="upcomingDeadlinesCount">0</span>
                 </div>
-                <p class="dashboard-panel-hint">Alerts for clients with compliance deadlines within 5 days.</p>
-                <div class="dashboard-recent-list" id="upcomingDeadlinesList" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                    <!-- Dynamically populated -->
-                </div>
+                <div class="dashboard-recent-list dashboard-deadline-list" id="upcomingDeadlinesList"></div>
             </article>
 
-            <article class="dashboard-card dashboard-fade-up" style="--delay: 0.45s;">
+            <article class="dashboard-card dashboard-fade-up dashboard-delay-45">
                 <div class="dashboard-card-head">
                     <h2>Quick Actions</h2>
                 </div>
@@ -351,70 +343,7 @@
 </section>
 {% endblock %}
 
-{% block after_layout %}
-<div class="modal fade client-manage-modal" id="viewClientModal" tabindex="-1" aria-labelledby="viewClientModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title h5" id="viewClientModalTitle">Client Details</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="client-details-grid">
-                    <div class="client-details-row"><span class="client-details-key">Client Name</span><strong id="viewClientName">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">TIN</span><strong id="viewClientTin">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Trade Name</span><strong id="viewClientTradeName">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Location</span><strong id="viewClientLocation">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Permit Number</span><strong id="viewClientPermitNumber">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Birthday</span><strong id="viewClientBirthday">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Email</span><strong id="viewClientEmail">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Email Password</span><strong id="viewClientEmailPassword">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">ORUS Account</span><strong id="viewClientOrusAccount">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">ORUS Password</span><strong id="viewClientOrusPassword">-</strong></div>
-                    <div class="client-details-row"><span class="client-details-key">Remarks</span><strong id="viewClientRemarks">-</strong></div>
-                </div>
-                <div class="client-details-custom" id="viewClientCustomFields" hidden>
-                    <p class="client-details-custom-title">Custom Fields</p>
-                    <div class="client-details-custom-list" id="viewClientCustomFieldsList"></div>
-                </div>
-                <p class="client-details-note">Manage this client's financial transactions.</p>
-            </div>
-            <div class="modal-footer client-details-actions">
-                <button type="button" class="btn dashboard-action-btn outline" id="viewClientAnalyticsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Analytics for this client">View Analytics</button>
-                <button type="button" class="btn dashboard-action-btn outline" id="viewFinancialRecordsBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">View Financial Records</button>
-                <button type="button" class="btn dashboard-action-btn outline" id="viewAddFinancialRecordBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Open Financial Records for this client">Add Financial Entry</button>
-                <button type="button" class="btn dashboard-action-btn primary" id="viewClientReportBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Generate a report for this client">Generate Report</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade client-manage-modal client-report-modal" id="clientReportModal" tabindex="-1" aria-labelledby="clientReportModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div>
-                    <h2 class="modal-title h5" id="clientReportModalTitle">Client Report</h2>
-                    <p class="dashboard-section-hint mb-0" id="clientReportHint">Paper-style sheet preview for client review and printing.</p>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="reports-ledger-wrapper" id="clientReportWrapper" hidden>
-                    <div class="reports-ledger-sheet" id="clientReportSheet" aria-live="polite"></div>
-                </div>
-                <p class="dashboard-section-hint mt-3" id="clientReportStatus" role="status" aria-live="polite" hidden></p>
-            </div>
-            <div class="modal-footer client-details-actions">
-                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn dashboard-action-btn outline" id="clientReportOpenPageBtn">Open Reports Page</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
 {% block extra_js %}
-<script src="{% static 'js/reports_shared.js' %}?v=1.0.5"></script>
 <script>
     (() => {
         const SIDEBAR_STATE_KEY = "safebooks.sidebarCollapsed";
@@ -434,7 +363,6 @@
         const dashboardLogoutAction = document.getElementById("dashboardLogoutAction");
         const plannedFeatureButtons = Array.from(document.querySelectorAll(".dashboard-nav-item[data-planned-feature]"));
         const shared = window.SafeBooksShared || null;
-        const reportsShared = window.SafeBooksReportsShared || null;
 
         if (!body) {
             return;
@@ -472,38 +400,14 @@
         const clientSortSelect = document.getElementById("clientSortSelect");
         const clientActivityEmpty = document.getElementById("clientActivityEmpty");
 
-        const viewClientName = document.getElementById("viewClientName");
-        const viewClientTin = document.getElementById("viewClientTin");
-        const viewClientTradeName = document.getElementById("viewClientTradeName");
-        const viewClientLocation = document.getElementById("viewClientLocation");
-        const viewClientPermitNumber = document.getElementById("viewClientPermitNumber");
-        const viewClientBirthday = document.getElementById("viewClientBirthday");
-        const viewClientEmail = document.getElementById("viewClientEmail");
-        const viewClientEmailPassword = document.getElementById("viewClientEmailPassword");
-        const viewClientOrusAccount = document.getElementById("viewClientOrusAccount");
-        const viewClientOrusPassword = document.getElementById("viewClientOrusPassword");
-        const viewClientCustomFields = document.getElementById("viewClientCustomFields");
-        const viewClientCustomFieldsList = document.getElementById("viewClientCustomFieldsList");
 
-        const viewClientModalElement = document.getElementById("viewClientModal");
-        const viewClientModal = viewClientModalElement && window.bootstrap ? new window.bootstrap.Modal(viewClientModalElement) : null;
-
-        const clientReportModalElement = document.getElementById("clientReportModal");
-        const clientReportModal = clientReportModalElement && window.bootstrap ? new window.bootstrap.Modal(clientReportModalElement) : null;
-        const clientReportWrapper = document.getElementById("clientReportWrapper");
-        const clientReportSheet = document.getElementById("clientReportSheet");
-        const clientReportStatus = document.getElementById("clientReportStatus");
-        const clientReportOpenPageBtn = document.getElementById("clientReportOpenPageBtn");
-
-        const viewClientAnalyticsBtn = document.getElementById("viewClientAnalyticsBtn");
-        const viewClientReportBtn = document.getElementById("viewClientReportBtn");
-        const viewFinancialRecordsBtn = document.getElementById("viewFinancialRecordsBtn");
-        const viewAddFinancialRecordBtn = document.getElementById("viewAddFinancialRecordBtn");
 
         const recentEntriesWrap = document.getElementById("recentEntriesWrap");
         const recentEntriesBody = document.getElementById("recentEntriesBody");
         const recentEntriesEmpty = document.getElementById("recentEntriesEmpty");
         const recentEntriesCountTag = document.getElementById("recentEntriesCountTag");
+        const dashboardCurrentPeriod = document.getElementById("dashboardCurrentPeriod");
+        const dashboardLastUpdated = document.getElementById("dashboardLastUpdated");
 
         const totalClientsValue = document.getElementById("totalClientsValue");
         const totalEntriesMonthValue = document.getElementById("totalEntriesMonthValue");
@@ -514,7 +418,7 @@
         const remarkActiveCount = document.getElementById("remarkActiveCount");
         const remarkSeparatedCount = document.getElementById("remarkSeparatedCount");
         const remarkClosedCount = document.getElementById("remarkClosedCount");
-        const viewClientRemarks = document.getElementById("viewClientRemarks");
+
 
         const complianceFiledPct = document.getElementById("complianceFiledPct");
         const compliancePendingPct = document.getElementById("compliancePendingPct");
@@ -525,16 +429,9 @@
 
         const CLIENTS_API_URL = "{% url 'api_clients' %}";
         const FINANCIAL_RECORDS_BASE_URL = "{% url 'financial_records_client' %}";
-        const ANALYTICS_PAGE_URL = "{% url 'analytics' %}";
-        const REPORTS_PAGE_URL = "{% url 'reports' %}";
-        const ANALYTICS_SUMMARY_API_URL = "{% url 'api_analytics_summary' %}";
         const DASHBOARD_SUMMARY_API_URL = "{% url 'api_dashboard_summary' %}";
 
         let CURRENT_PERIOD_LABEL = "";
-        let activeViewedClient = null;
-        let cachedClientDetails = new Map();
-        let clientDetailsLoaded = false;
-        let clientDetailsLoading = false;
         let CLIENT_ACTIVITY_DATA = [];
         let RECENT_ENTRIES_DATA = [];
         let DASHBOARD_METRICS = {
@@ -685,46 +582,6 @@
             });
         };
 
-        const toDisplayValue = (value) => {
-            const trimmedValue = String(value || "").trim();
-            return trimmedValue ? trimmedValue : "Not provided";
-        };
-
-        const renderClientCustomFields = (fields) => {
-            if (!viewClientCustomFields || !viewClientCustomFieldsList) {
-                return;
-            }
-
-            const safeFields = Array.isArray(fields) ? fields : [];
-            if (!safeFields.length) {
-                viewClientCustomFields.hidden = true;
-                viewClientCustomFieldsList.innerHTML = "";
-                return;
-            }
-
-            viewClientCustomFields.hidden = false;
-            viewClientCustomFieldsList.innerHTML = safeFields
-                .map((field) => {
-                    const label = field && typeof field.label === "string" ? field.label.trim() : "";
-                    const value = field && typeof field.value === "string" ? field.value.trim() : "";
-                    const safeLabel = label || "Custom Field";
-                    const safeValue = value || "Not provided";
-
-                    return `
-                        <div class="client-details-row">
-                            <span class="client-details-key">${escapeHtml(safeLabel)}</span>
-                            <strong>${escapeHtml(safeValue)}</strong>
-                        </div>
-                    `;
-                })
-                .join("");
-        };
-
-        const toReportValue = (value, fallback = "-") => {
-            const trimmedValue = String(value || "").trim();
-            return trimmedValue ? trimmedValue : fallback;
-        };
-
         const getActiveClientFilter = () => {
             const activeChip = clientFilterChips.find((chip) => chip.classList.contains("is-active"));
             return activeChip ? String(activeChip.dataset.filter || "all") : "all";
@@ -746,8 +603,8 @@
             }
 
             const label = CLIENT_FILTER_LABELS[statusFilter] || CLIENT_FILTER_LABELS.all;
-            const countLabel = resultCount === 1 ? "result" : "results";
-            clientFilterSummary.textContent = `Active filter: ${label} (${resultCount} ${countLabel})`;
+            const clientLabel = resultCount === 1 ? "client" : "clients";
+            clientFilterSummary.textContent = `Showing ${label.toLowerCase()} (${resultCount} ${clientLabel})`;
         };
 
         const currencyFormatter = new Intl.NumberFormat("en-PH", {
@@ -755,14 +612,6 @@
             currency: "PHP",
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
-        });
-
-        const displayDateTimeFormatter = new Intl.DateTimeFormat("en-PH", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
         });
 
         let filterTransitionTimer = null;
@@ -783,14 +632,6 @@
 
         const formatCurrency = (value) => currencyFormatter.format(value || 0);
 
-        const formatGeneratedDateTime = (value) => {
-            const parsed = new Date(String(value || ""));
-            if (Number.isNaN(parsed.getTime())) {
-                return "-";
-            }
-            return displayDateTimeFormatter.format(parsed);
-        };
-
         const formatEntryDate = (value) => {
             if (!value) {
                 return "No entries";
@@ -806,312 +647,6 @@
                 day: "2-digit",
                 year: "numeric"
             });
-        };
-
-        const buildFinancialRecordsUrl = (clientData) => {
-            const params = new URLSearchParams();
-            params.set("client_id", String(clientData.clientId || ""));
-            params.set("client", clientData.clientName || "");
-            params.set("tin", normalizeDigits(clientData.tinRaw || clientData.tin));
-            params.set("trade", clientData.tradeName || "");
-            return `${FINANCIAL_RECORDS_BASE_URL}?${params.toString()}`;
-        };
-
-        const buildClientAnalyticsUrl = (clientData) => {
-            const params = new URLSearchParams();
-            params.set("client_id", String(clientData.clientId || ""));
-            params.set("client", clientData.clientName || "");
-            params.set("tin", normalizeDigits(clientData.tinRaw || clientData.tin));
-            params.set("trade", clientData.tradeName || "");
-            params.set("force_scope", "1");
-            return `${ANALYTICS_PAGE_URL}?${params.toString()}`;
-        };
-
-        const toDateInputValue = (value) => {
-            if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
-                return "";
-            }
-
-            const year = value.getFullYear();
-            const month = String(value.getMonth() + 1).padStart(2, "0");
-            const day = String(value.getDate()).padStart(2, "0");
-            return `${year}-${month}-${day}`;
-        };
-
-        const parseDateInput = (value) => {
-            const cleaned = String(value || "").trim();
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
-                return null;
-            }
-
-            const parsed = new Date(`${cleaned}T00:00:00`);
-            if (Number.isNaN(parsed.getTime())) {
-                return null;
-            }
-
-            return parsed;
-        };
-
-        const getDefaultReportRange = () => {
-            const now = new Date();
-            const yearStart = new Date(now.getFullYear(), 0, 1);
-            return {
-                dateFrom: toDateInputValue(yearStart),
-                dateTo: toDateInputValue(now),
-            };
-        };
-
-        const buildClientReportUrl = (clientData) => {
-            const range = getDefaultReportRange();
-
-            const params = new URLSearchParams();
-            params.set("report_type", "financial_summary");
-            params.set("client_id", String(clientData.clientId || ""));
-            params.set("date_from", range.dateFrom);
-            params.set("date_to", range.dateTo);
-            params.set("auto_generate", "1");
-            return `${REPORTS_PAGE_URL}?${params.toString()}`;
-        };
-
-        const isTrendMonthWithinRange = (yearValue, monthValue, filters) => {
-            const year = safeNumber(yearValue);
-            const month = safeNumber(monthValue);
-            const rangeFrom = parseDateInput(filters.dateFrom);
-            const rangeTo = parseDateInput(filters.dateTo);
-
-            if (!year || !month || !rangeFrom || !rangeTo) {
-                return true;
-            }
-
-            const monthStart = new Date(year, month - 1, 1);
-            const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
-            return monthEnd.getTime() >= rangeFrom.getTime() && monthStart.getTime() <= rangeTo.getTime();
-        };
-
-        const buildClientReportRows = (trendRows, filters, typeColumns = []) => {
-            const rows = Array.isArray(trendRows) ? trendRows : [];
-            const cleanedTypeColumns = Array.isArray(typeColumns)
-                ? typeColumns.filter((value) => String(value || "").trim())
-                : [];
-            const orderedTypeColumns = reportsShared && typeof reportsShared.normalizeFinancialSummaryColumns === "function"
-                ? reportsShared.normalizeFinancialSummaryColumns(cleanedTypeColumns)
-                : cleanedTypeColumns;
-            const useTypeColumns = orderedTypeColumns.length > 0;
-
-            const reportColumns = useTypeColumns
-                ? ["Period", ...orderedTypeColumns, "Net Value"]
-                : ["Period", "Sales", "Expenses", "Tax", "Net Value"];
-
-            const reportRows = rows
-                .filter((row) => isTrendMonthWithinRange(row.year, row.month, filters))
-                .map((row) => {
-                    const periodLabel = `${row.month_label || row.month || "-"} ${row.year || ""}`.trim();
-                    const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
-                    const salesValue = Number(row.sales || 0);
-                    const expensesValue = Number(row.expenses || 0);
-                    const netValue = salesValue - expensesValue;
-                    if (!useTypeColumns) {
-                        return [
-                            periodLabel,
-                            formatCurrency(salesValue),
-                            formatCurrency(expensesValue),
-                            formatCurrency(row.tax),
-                            formatCurrency(netValue),
-                        ];
-                    }
-
-                    const typeValues = orderedTypeColumns.map((label) => formatCurrency(typeBreakdown[label]));
-                    return [periodLabel, ...typeValues, formatCurrency(netValue)];
-                });
-
-            return {
-                columns: reportColumns,
-                rows: reportRows,
-                useTypeColumns,
-            };
-        };
-
-        const buildClientReportSheetHtml = (clientData, reportData, filters) => {
-            if (!reportsShared || typeof reportsShared.buildReportSheetHtml !== "function") {
-                return "";
-            }
-
-            const generatedAt = new Date().toISOString();
-
-            const clientName = toReportValue(clientData.clientName, "Selected client");
-            const clientTin = toReportValue(formatTin(clientData.tinRaw || clientData.tin));
-            const tradeName = toReportValue(clientData.tradeName);
-            const location = toReportValue(clientData.location);
-            const permitNumber = toReportValue(clientData.permitNumber);
-            const birthday = toReportValue(clientData.birthday);
-            const email = toReportValue(clientData.email);
-            const emailPassword = toReportValue(clientData.emailPassword);
-            const orusAccount = toReportValue(clientData.orusAccount);
-            const orusPassword = toReportValue(clientData.orusPassword);
-            const customFields = Array.isArray(clientData.customFields) ? clientData.customFields : [];
-
-            const reportTypeLabel = "Financial Summary Report";
-            const dateRangeLabel = `${toReportValue(filters.dateFrom)} to ${toReportValue(filters.dateTo)}`;
-            const generatedLabel = formatGeneratedDateTime(generatedAt);
-
-            const columns = reportData && Array.isArray(reportData.columns)
-                ? reportData.columns
-                : ["Period", "Sales", "Expenses", "Tax", "Net Value"];
-            const rows = reportData && Array.isArray(reportData.rows)
-                ? reportData.rows
-                : [];
-
-            const rowHint = rows.length
-                ? "Prepared from generated report values."
-                : "No rows matched the selected date range. Blank lines are available for manual notes.";
-
-            return reportsShared.buildReportSheetHtml({
-                reportTitle: "SafeBooks Client Report Sheet",
-                reportSubtitle: "Client-facing format for quick review and print handover",
-                meta: {
-                    reportTypeLabel,
-                    dateRangeLabel,
-                    generatedLabel,
-                },
-                client: {
-                    clientName,
-                    tin: clientTin,
-                    tradeName,
-                    location,
-                    permitNumber,
-                    birthday,
-                    email,
-                    emailPassword,
-                    orusAccount,
-                    orusPassword,
-                    customFields,
-                },
-                table: {
-                    columns,
-                    rows,
-                    minRows: 14,
-                },
-                rowHint,
-            });
-        };
-
-        const setClientReportState = (state, message = "") => {
-            if (!clientReportWrapper || !clientReportStatus) {
-                return;
-            }
-
-            const normalizedState = String(state || "ready").toLowerCase();
-            if (normalizedState === "loading") {
-                clientReportWrapper.hidden = true;
-                clientReportStatus.hidden = false;
-                clientReportStatus.textContent = message || "Generating report...";
-                return;
-            }
-
-            if (normalizedState === "error") {
-                clientReportWrapper.hidden = true;
-                clientReportStatus.hidden = false;
-                clientReportStatus.textContent = message || "Unable to generate report.";
-                return;
-            }
-
-            clientReportWrapper.hidden = false;
-            clientReportStatus.hidden = true;
-        };
-
-        const fetchClientReportData = async (clientId) => {
-            const query = new URLSearchParams();
-            query.set("client_id", String(clientId));
-
-            const response = await fetch(`${ANALYTICS_SUMMARY_API_URL}?${query.toString()}`, {
-                method: "GET",
-                headers: {
-                    "Accept": "application/json",
-                },
-                credentials: "same-origin",
-            });
-
-            if (response.status === 401) {
-                const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
-                window.location.assign(`{% url 'login' %}?next=${nextPath}`);
-                throw new Error("Authentication required.");
-            }
-
-            const result = await parseJsonSafe(response);
-            if (!response.ok || !result || !result.ok) {
-                const message = result && result.message ? result.message : "Unable to load report data.";
-                throw new Error(message);
-            }
-
-            return result;
-        };
-
-        const openClientFinancialRecords = (clientData) => {
-            if (!clientData) {
-                window.location.assign(FINANCIAL_RECORDS_BASE_URL);
-                return;
-            }
-
-            window.location.assign(buildFinancialRecordsUrl(clientData));
-        };
-
-        const openClientAnalytics = (clientData) => {
-            if (!clientData || !Number.isFinite(clientData.clientId) || clientData.clientId <= 0) {
-                showToast("Select a valid client first.");
-                return;
-            }
-
-            window.location.assign(buildClientAnalyticsUrl(clientData));
-        };
-
-        const openClientReportModal = async (clientData) => {
-            if (!clientData || !Number.isFinite(clientData.clientId) || clientData.clientId <= 0) {
-                showToast("Select a valid client first.");
-                return;
-            }
-
-            activeViewedClient = clientData;
-
-            await loadClientDetailsCache();
-            const detailData = cachedClientDetails.get(clientData.clientId);
-            const mergedClient = mergeClientDetails(clientData, detailData);
-            activeViewedClient = mergedClient;
-
-            if (viewClientModal) {
-                viewClientModal.hide();
-            }
-
-            if (clientReportModal) {
-                clientReportModal.show();
-            }
-
-            if (!clientReportSheet || !clientReportWrapper || !clientReportStatus) {
-                window.location.assign(buildClientReportUrl(clientData));
-                return;
-            }
-
-            setClientReportState("loading");
-
-            try {
-                const reportRange = getDefaultReportRange();
-                const payload = await fetchClientReportData(mergedClient.clientId);
-                const reportData = buildClientReportRows(payload.monthly_trend, reportRange, payload.type_columns);
-                clientReportSheet.innerHTML = buildClientReportSheetHtml(mergedClient, reportData, reportRange);
-                setClientReportState("ready");
-            } catch (error) {
-                const message = error && error.message ? String(error.message) : "Unable to generate report.";
-                setClientReportState("error", message);
-                showToast(message);
-            }
-        };
-
-        const openClientReportPage = (clientData) => {
-            if (!clientData || !Number.isFinite(clientData.clientId) || clientData.clientId <= 0) {
-                showToast("Select a valid client first.");
-                return;
-            }
-
-            window.location.assign(buildClientReportUrl(clientData));
         };
 
         const getClientDataFromRow = (row) => {
@@ -1135,154 +670,11 @@
             };
         };
 
-        const mapClientDetailsFromApi = (client) => {
-            const tinRaw = normalizeDigits(client.tin_number || "");
-            return {
-                clientId: Number.parseInt(client.id || "", 10) || null,
-                clientName: client.client_name || "",
-                tin: formatTin(tinRaw) || client.tin_number || "",
-                tinRaw,
-                tradeName: client.trade_name || "",
-                location: client.location || "",
-                permitNumber: client.permit_number || "",
-                birthday: client.birthday || "",
-                email: client.email || "",
-                emailPassword: client.email_password || "",
-                orusAccount: client.orus_account || "",
-                orusPassword: client.orus_password || "",
-                remarks: client.remarks || "new",
-                customFields: Array.isArray(client.custom_fields) ? client.custom_fields : [],
-            };
-        };
-
-        const loadClientDetailsCache = async () => {
-            if (clientDetailsLoaded || clientDetailsLoading) {
-                return;
+        const buildClientDetailsUrl = (clientData) => {
+            if (!clientData || !Number.isFinite(clientData.clientId)) {
+                return "";
             }
-
-            clientDetailsLoading = true;
-
-            try {
-                const response = await fetch(CLIENTS_API_URL, {
-                    method: "GET",
-                    headers: {
-                        "Accept": "application/json",
-                    },
-                    credentials: "same-origin",
-                });
-
-                if (response.status === 401) {
-                    const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
-                    window.location.assign(`{% url 'login' %}?next=${nextPath}`);
-                    return;
-                }
-
-                const result = await parseJsonSafe(response);
-                if (!response.ok || !result || !result.ok) {
-                    return;
-                }
-
-                const clients = Array.isArray(result.clients) ? result.clients : [];
-                cachedClientDetails = new Map();
-                clients.forEach((client) => {
-                    const mapped = mapClientDetailsFromApi(client);
-                    if (Number.isFinite(mapped.clientId)) {
-                        cachedClientDetails.set(mapped.clientId, mapped);
-                    }
-                });
-
-                clientDetailsLoaded = true;
-            } catch (error) {
-                // Keep modal usable even if details lookup fails.
-            } finally {
-                clientDetailsLoading = false;
-            }
-        };
-
-        const mergeClientDetails = (baseData, detailData) => {
-            if (!detailData) {
-                return baseData;
-            }
-
-            return {
-                clientId: baseData.clientId || detailData.clientId,
-                clientName: detailData.clientName || baseData.clientName,
-                tin: detailData.tin || baseData.tin || formatTin(detailData.tinRaw || baseData.tinRaw),
-                tinRaw: detailData.tinRaw || baseData.tinRaw,
-                tradeName: detailData.tradeName || baseData.tradeName,
-                location: detailData.location || baseData.location,
-                permitNumber: detailData.permitNumber || baseData.permitNumber,
-                birthday: detailData.birthday || baseData.birthday,
-                email: detailData.email || baseData.email,
-                emailPassword: detailData.emailPassword || baseData.emailPassword,
-                orusAccount: detailData.orusAccount || baseData.orusAccount,
-                orusPassword: detailData.orusPassword || baseData.orusPassword,
-                remarks: detailData.remarks || baseData.remarks,
-                customFields: detailData.customFields && detailData.customFields.length
-                    ? detailData.customFields
-                    : baseData.customFields,
-            };
-        };
-
-        const setViewModalData = (clientData) => {
-            if (viewClientName) {
-                viewClientName.textContent = toDisplayValue(clientData.clientName);
-            }
-            if (viewClientTin) {
-                const tinDisplay = formatTin(clientData.tinRaw || clientData.tin) || clientData.tin;
-                viewClientTin.textContent = toDisplayValue(tinDisplay);
-            }
-            if (viewClientTradeName) {
-                viewClientTradeName.textContent = toDisplayValue(clientData.tradeName);
-            }
-            if (viewClientLocation) {
-                viewClientLocation.textContent = toDisplayValue(clientData.location);
-            }
-            if (viewClientPermitNumber) {
-                viewClientPermitNumber.textContent = toDisplayValue(clientData.permitNumber);
-            }
-            if (viewClientBirthday) {
-                viewClientBirthday.textContent = toDisplayValue(clientData.birthday);
-            }
-            if (viewClientEmail) {
-                viewClientEmail.textContent = toDisplayValue(clientData.email);
-            }
-            if (viewClientEmailPassword) {
-                viewClientEmailPassword.textContent = toDisplayValue(clientData.emailPassword);
-            }
-            if (viewClientOrusAccount) {
-                viewClientOrusAccount.textContent = toDisplayValue(clientData.orusAccount);
-            }
-            if (viewClientOrusPassword) {
-                viewClientOrusPassword.textContent = toDisplayValue(clientData.orusPassword);
-            }
-            if (viewClientRemarks) {
-                const remarksMap = { new: "New", active: "Active", separated: "Separated", closed: "Closed" };
-                viewClientRemarks.textContent = remarksMap[clientData.remarks] || toDisplayValue(clientData.remarks);
-            }
-            renderClientCustomFields(clientData.customFields);
-        };
-
-        const openClientDetailsModal = async (clientData) => {
-            if (!viewClientModal || !clientData) {
-                return;
-            }
-
-            activeViewedClient = clientData;
-            setViewModalData(clientData);
-            viewClientModal.show();
-
-            if (!Number.isFinite(clientData.clientId)) {
-                return;
-            }
-
-            await loadClientDetailsCache();
-            const detailData = cachedClientDetails.get(clientData.clientId);
-            if (detailData) {
-                const mergedData = mergeClientDetails(clientData, detailData);
-                activeViewedClient = mergedData;
-                setViewModalData(mergedData);
-            }
+            return `/clients/${clientData.clientId}/`;
         };
 
         const renderUpcomingDeadlines = () => {
@@ -1323,12 +715,12 @@
                     }
 
                     return `
-                        <div class="dashboard-recent-row" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(0, 0, 0, 0.05);">
+                        <div class="dashboard-recent-row">
                             <div>
-                                <strong style="font-size: 0.9rem; display: block; color: var(--text-color);">${escapeHtml(client.clientName)}</strong>
-                                <small style="font-size: 0.75rem; color: var(--text-color-muted);">${escapeHtml(client.tradeName || client.tin)}</small>
+                                <strong class="dashboard-recent-row-title">${escapeHtml(client.clientName)}</strong>
+                                <small class="dashboard-recent-row-meta">${escapeHtml(client.tradeName || client.tin)}</small>
                             </div>
-                            <span class="badge ${badgeClass}" style="font-size: 0.75rem; padding: 0.35rem 0.5rem; font-weight: 500;">
+                            <span class="badge dashboard-deadline-badge ${badgeClass}">
                                 <i class="bi ${iconClass} me-1"></i>${badgeText}
                             </span>
                         </div>
@@ -1354,23 +746,23 @@
                     let deadlineBadge = "";
                     if (row.daysRemaining !== null) {
                         if (row.deadlineCompleted) {
-                            deadlineBadge = `<span class="badge bg-success ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>`;
+                            deadlineBadge = `<span class="badge bg-success dashboard-status-extra"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>`;
                         } else {
                             const diffDays = row.daysRemaining;
                             if (diffDays < 0) {
-                                deadlineBadge = `<span class="badge bg-danger ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-exclamation-octagon-fill me-1"></i>Overdue (${Math.abs(diffDays)}d)</span>`;
+                                deadlineBadge = `<span class="badge bg-danger dashboard-status-extra"><i class="bi bi-exclamation-octagon-fill me-1"></i>Overdue (${Math.abs(diffDays)}d)</span>`;
                             } else if (diffDays <= 5) {
-                                deadlineBadge = `<span class="badge bg-warning text-dark ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-clock-fill me-1"></i>${diffDays}d left</span>`;
+                                deadlineBadge = `<span class="badge bg-warning text-dark dashboard-status-extra"><i class="bi bi-clock-fill me-1"></i>${diffDays}d left</span>`;
                             } else {
-                                deadlineBadge = `<span class="badge bg-secondary ms-1 mt-1 d-block text-start" style="font-size: 0.7rem; font-weight: 500; width: max-content;"><i class="bi bi-calendar-event me-1"></i>Deadline: ${row.deadlineDate}</span>`;
+                                deadlineBadge = `<span class="badge bg-secondary dashboard-status-extra"><i class="bi bi-calendar-event me-1"></i>Deadline: ${row.deadlineDate}</span>`;
                             }
                         }
                     }
 
                     return `
                         <tr class="dashboard-client-row" data-client-id="${escapeHtml(String(rowClientId))}" data-client-name="${escapeHtml(row.clientName)}" data-tin="${escapeHtml(tinDisplay)}" data-tin-raw="${escapeHtml(tinRaw)}" data-trade="${escapeHtml(row.tradeName)}" data-remarks="${escapeHtml(row.remarks)}" tabindex="0" role="button" aria-label="View details for ${escapeHtml(row.clientName)}">
-                            <td>${escapeHtml(row.clientName)}</td>
-                            <td>${escapeHtml(tinDisplay)}</td>
+                            <td class="client-name-cell">${escapeHtml(row.clientName)}</td>
+                            <td class="client-tin-cell">${escapeHtml(tinDisplay)}</td>
                             <td>${escapeHtml(formatEntryDate(row.lastEntryDate))}</td>
                             <td>${escapeHtml(row.currentPeriod)}</td>
                             <td>
@@ -1588,6 +980,7 @@
                 compliance: row.compliance || "pending",
                 deadlineDate: row.deadline_date || "",
                 daysRemaining: row.days_remaining !== undefined && row.days_remaining !== null ? Number.parseInt(row.days_remaining, 10) : null,
+                deadlineCompleted: Boolean(row.deadline_completed),
             };
         };
 
@@ -1628,6 +1021,18 @@
             };
         };
 
+        const updateDashboardContext = () => {
+            if (dashboardCurrentPeriod) {
+                dashboardCurrentPeriod.textContent = CURRENT_PERIOD_LABEL || "No period yet";
+            }
+            if (dashboardLastUpdated) {
+                dashboardLastUpdated.textContent = new Date().toLocaleTimeString("en-PH", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+            }
+        };
+
         const loadDashboardSummaryFromApi = async () => {
             try {
                 const response = await fetch(DASHBOARD_SUMMARY_API_URL, {
@@ -1648,6 +1053,7 @@
                 if (!response.ok || !result || !result.ok) {
                     const message = result && result.message ? result.message : "Unable to load dashboard data.";
                     setDashboardFallbackState();
+                    updateDashboardContext();
                     updateSummaryCards();
                     updateRemarksSummary();
                     updateComplianceSummary();
@@ -1658,6 +1064,7 @@
                 }
 
                 CURRENT_PERIOD_LABEL = result.current_period_label || "";
+                updateDashboardContext();
 
                 const metrics = result.metrics || {};
                 const remarksSummary = result.remarks_summary || {};
@@ -1697,6 +1104,7 @@
                 renderUpcomingDeadlines();
             } catch (requestError) {
                 setDashboardFallbackState();
+                updateDashboardContext();
                 updateSummaryCards();
                 updateRemarksSummary();
                 updateComplianceSummary();
@@ -1799,7 +1207,11 @@
                     return;
                 }
 
-                openClientDetailsModal(getClientDataFromRow(row));
+                const clientData = getClientDataFromRow(row);
+                const url = buildClientDetailsUrl(clientData);
+                if (url) {
+                    window.location.assign(url);
+                }
             });
 
             clientTableBody.addEventListener("keydown", (event) => {
@@ -1810,7 +1222,11 @@
 
                 if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    openClientDetailsModal(getClientDataFromRow(row));
+                    const clientData = getClientDataFromRow(row);
+                    const url = buildClientDetailsUrl(clientData);
+                    if (url) {
+                        window.location.assign(url);
+                    }
                 }
             });
         }
@@ -1842,56 +1258,6 @@
 
         if (clientSortSelect) {
             clientSortSelect.addEventListener("change", applyClientFilters);
-        }
-
-        if (viewClientAnalyticsBtn) {
-            viewClientAnalyticsBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                openClientAnalytics(activeViewedClient);
-            });
-        }
-
-        if (viewClientReportBtn) {
-            viewClientReportBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                openClientReportModal(activeViewedClient);
-            });
-        }
-
-        if (viewFinancialRecordsBtn) {
-            viewFinancialRecordsBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                openClientFinancialRecords(activeViewedClient);
-            });
-        }
-
-        if (viewAddFinancialRecordBtn) {
-            viewAddFinancialRecordBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                openClientFinancialRecords(activeViewedClient);
-            });
-        }
-
-        if (clientReportOpenPageBtn) {
-            clientReportOpenPageBtn.addEventListener("click", (event) => {
-                event.preventDefault();
-                openClientReportPage(activeViewedClient);
-            });
-        }
-
-        if (clientReportModalElement) {
-            clientReportModalElement.addEventListener("hidden.bs.modal", () => {
-                if (clientReportSheet) {
-                    clientReportSheet.innerHTML = "";
-                }
-                if (clientReportWrapper) {
-                    clientReportWrapper.hidden = true;
-                }
-                if (clientReportStatus) {
-                    clientReportStatus.textContent = "";
-                    clientReportStatus.hidden = true;
-                }
-            });
         }
 
         if (dashboardProfileAction) {
@@ -1927,6 +1293,7 @@
 
         hydrateHeaderUser();
         setDashboardFallbackState();
+        updateDashboardContext();
         updateSummaryCards();
         updateRemarksSummary();
         updateComplianceSummary();
