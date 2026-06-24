@@ -314,6 +314,54 @@
                             <span class="settings-inline-status" id="settingsLoginAlertsFeedback" aria-live="polite"></span>
                         </div>
                     </div>
+
+                    <div class="settings-security-panel" id="settingsClientDetailsLockPanel" data-client-details-lock-enabled="{{ client_details_password_required|yesno:'true,false' }}">
+                        <div class="settings-security-header">
+                            <div>
+                                <p class="settings-field-label">
+                                    Client Details Lock
+                                    <span class="safebooks-tooltip-wrap">
+                                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                        <span class="safebooks-tooltip-content">Ask for your password before opening sensitive client details.</span>
+                                    </span>
+                                </p>
+                            </div>
+                            <span class="settings-status-pill" id="settingsClientDetailsLockStatus">Off</span>
+                        </div>
+
+                        <div class="settings-toggle-row settings-client-lock-row">
+                            <div>
+                                <p class="settings-field-label">
+                                    Require password before Client Details
+                                    <span class="safebooks-tooltip-wrap">
+                                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                        <span class="safebooks-tooltip-content">After confirming once, access remains verified for a short time.</span>
+                                    </span>
+                                </p>
+                            </div>
+                            <label class="settings-switch">
+                                <input type="checkbox" id="settingsClientDetailsLockToggle" aria-label="Require password before opening client details">
+                                <span class="settings-switch-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="settings-client-lock-confirm">
+                            <label class="settings-field-label" for="settingsClientDetailsLockPassword">Current Password</label>
+                            <div class="auth-password-field">
+                                <div class="auth-password-wrap">
+                                    <input type="password" id="settingsClientDetailsLockPassword" class="form-control auth-input" autocomplete="current-password" placeholder="Enter current password">
+                                    <button type="button" class="auth-password-toggle" data-password-toggle-target="settingsClientDetailsLockPassword" aria-label="Show password">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-security-footer">
+                            <span class="settings-inline-status" id="settingsClientDetailsLockFeedback" aria-live="polite"></span>
+                            <button type="button" class="btn dashboard-action-btn primary settings-save-btn" id="settingsClientDetailsLockSaveButton">Save Lock Setting</button>
+                        </div>
+                    </div>
                 </div>
             </article>
 
@@ -427,7 +475,8 @@
             profilePage: "{% url 'profile' %}",
             workspaceDefaultsApi: "{% url 'api_workspace_defaults' %}",
             securityChangePasswordApi: "{% url 'api_security_change_password' %}",
-            securityLoginAlertsApi: "{% url 'api_security_login_alerts' %}"
+            securityLoginAlertsApi: "{% url 'api_security_login_alerts' %}",
+            securityClientDetailsAccessPreferenceApi: "{% url 'api_security_client_details_access_preference' %}"
         },
         sidebarStateKey: "safebooks.sidebarCollapsed",
         desktopQuery: "(min-width: 992px)",

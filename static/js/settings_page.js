@@ -46,6 +46,7 @@
     const workspaceDefaultsUrl = String(urls.workspaceDefaultsApi || "");
     const securityChangePasswordUrl = String(urls.securityChangePasswordApi || "");
     const securityLoginAlertsUrl = String(urls.securityLoginAlertsApi || "");
+    const securityClientDetailsAccessPreferenceUrl = String(urls.securityClientDetailsAccessPreferenceApi || "");
 
     const changePasswordForm = document.getElementById("settingsChangePasswordForm");
     const changePasswordStatus = document.getElementById("settingsChangePasswordStatus");
@@ -59,6 +60,12 @@
     const loginAlertsToggle = document.getElementById("settingsLoginAlertsToggle");
     const loginAlertsStatus = document.getElementById("settingsLoginAlertsStatus");
     const loginAlertsFeedback = document.getElementById("settingsLoginAlertsFeedback");
+    const clientDetailsLockPanel = document.getElementById("settingsClientDetailsLockPanel");
+    const clientDetailsLockToggle = document.getElementById("settingsClientDetailsLockToggle");
+    const clientDetailsLockStatus = document.getElementById("settingsClientDetailsLockStatus");
+    const clientDetailsLockFeedback = document.getElementById("settingsClientDetailsLockFeedback");
+    const clientDetailsLockPasswordInput = document.getElementById("settingsClientDetailsLockPassword");
+    const clientDetailsLockSaveButton = document.getElementById("settingsClientDetailsLockSaveButton");
 
     if (!body || !uiToastContainer || !settingsSections.length) {
         return;
@@ -733,6 +740,97 @@
         }
     };
 
+    const isClientDetailsLockEnabled = () => {
+        if (!clientDetailsLockPanel) {
+            return false;
+        }
+
+        return String(clientDetailsLockPanel.dataset.clientDetailsLockEnabled || "false") === "true";
+    };
+
+    const updateClientDetailsLockUiState = (isEnabled) => {
+        if (clientDetailsLockPanel) {
+            clientDetailsLockPanel.dataset.clientDetailsLockEnabled = isEnabled ? "true" : "false";
+        }
+
+        if (clientDetailsLockStatus) {
+            clientDetailsLockStatus.textContent = isEnabled ? "On" : "Off";
+            clientDetailsLockStatus.classList.toggle("is-enabled", isEnabled);
+        }
+
+        if (clientDetailsLockToggle) {
+            clientDetailsLockToggle.checked = isEnabled;
+        }
+    };
+
+    const setClientDetailsLockLoading = (isLoading) => {
+        if (clientDetailsLockToggle) {
+            clientDetailsLockToggle.disabled = isLoading;
+        }
+        if (clientDetailsLockPasswordInput) {
+            clientDetailsLockPasswordInput.disabled = isLoading;
+        }
+        if (clientDetailsLockSaveButton) {
+            clientDetailsLockSaveButton.disabled = isLoading;
+        }
+    };
+
+    const handleClientDetailsLockSave = async () => {
+        if (!securityClientDetailsAccessPreferenceUrl) {
+            showToast("Client details lock settings are unavailable.", "warning");
+            updateClientDetailsLockUiState(isClientDetailsLockEnabled());
+            return;
+        }
+
+        const currentPassword = clientDetailsLockPasswordInput ? clientDetailsLockPasswordInput.value : "";
+        if (!currentPassword) {
+            setInlineStatus(clientDetailsLockFeedback, "Current password is required.", "danger");
+            showToast("Enter your current password to save this setting.", "warning");
+            if (clientDetailsLockPasswordInput) {
+                clientDetailsLockPasswordInput.focus();
+            }
+            return;
+        }
+
+        const previousValue = isClientDetailsLockEnabled();
+        const nextValue = clientDetailsLockToggle ? clientDetailsLockToggle.checked : previousValue;
+        setClientDetailsLockLoading(true);
+        setInlineStatus(clientDetailsLockFeedback, "Saving...", "warning");
+
+        try {
+            const response = await postJson(securityClientDetailsAccessPreferenceUrl, {
+                enabled: Boolean(nextValue),
+                current_password: currentPassword,
+            });
+
+            if (response.status === 401) {
+                window.location.assign(String(urls.loginPage || "/login/"));
+                return;
+            }
+
+            const result = await parseJsonSafe(response);
+            if (!response.ok || !result || !result.ok) {
+                const message = result && result.message
+                    ? String(result.message)
+                    : "Unable to update client details lock.";
+                throw new Error(message);
+            }
+
+            updateClientDetailsLockUiState(Boolean(result.client_details_password_required));
+            if (clientDetailsLockPasswordInput) {
+                clientDetailsLockPasswordInput.value = "";
+            }
+            setInlineStatus(clientDetailsLockFeedback, "Updated", "success");
+            showToast("Client details lock updated.", "success");
+        } catch (error) {
+            updateClientDetailsLockUiState(previousValue);
+            setInlineStatus(clientDetailsLockFeedback, "Update failed", "danger");
+            showToast(error && error.message ? String(error.message) : "Unable to update client details lock.", "danger");
+        } finally {
+            setClientDetailsLockLoading(false);
+        }
+    };
+
     const resetChangePasswordInputs = () => {
         if (currentPasswordInput) {
             currentPasswordInput.value = "";
@@ -867,9 +965,29 @@
             });
         }
 
+        if (clientDetailsLockToggle) {
+            clientDetailsLockToggle.addEventListener("change", () => {
+                clearInlineStatus(clientDetailsLockFeedback);
+            });
+        }
+
+        if (clientDetailsLockPasswordInput) {
+            clientDetailsLockPasswordInput.addEventListener("input", () => {
+                clearInlineStatus(clientDetailsLockFeedback);
+            });
+        }
+
+        if (clientDetailsLockSaveButton) {
+            clientDetailsLockSaveButton.addEventListener("click", () => {
+                handleClientDetailsLockSave();
+            });
+        }
+
         updateLoginAlertsUiState(isLoginAlertsEnabled());
+        updateClientDetailsLockUiState(isClientDetailsLockEnabled());
         clearInlineStatus(changePasswordStatus);
         clearInlineStatus(loginAlertsFeedback);
+        clearInlineStatus(clientDetailsLockFeedback);
         updatePasswordRequirementsUi();
     };
 

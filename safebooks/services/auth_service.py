@@ -1,5 +1,9 @@
 from datetime import timedelta
+import json
 import secrets
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
@@ -13,6 +17,10 @@ from safebooks.validators.password_validator import missing_password_requirement
 
 
 AUTH_FAILURE_MESSAGE = "Invalid credentials."
+GOOGLE_AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+GOOGLE_OAUTH_TIMEOUT_SECONDS = 10
 
 EMAIL_VERIFICATION_CODE_LENGTH = 6
 DEFAULT_VERIFICATION_TTL_MINUTES = 10
@@ -27,6 +35,287 @@ PASSWORD_RESET_CACHE_PREFIX = "safebooks:password-reset"
 PASSWORD_RESET_CACHE_CODE_SUFFIX = "code"
 PASSWORD_RESET_CACHE_SENT_SUFFIX = "sent"
 PASSWORD_RESET_CACHE_VERIFIED_SUFFIX = "verified"
+
+
+def _get_google_client_id() -> str:
+    return str(getattr(settings, "SAFEBOOKS_GOOGLE_OAUTH_CLIENT_ID", "") or "").strip()
+
+
+def _get_google_client_secret() -> str:
+    return str(getattr(settings, "SAFEBOOKS_GOOGLE_OAUTH_CLIENT_SECRET", "") or "").strip()
+
+
+def is_google_oauth_configured() -> bool:
+    return bool(_get_google_client_id() and _get_google_client_secret())
+
+
+def build_google_oauth_authorization_url(redirect_uri: str, state: str) -> str:
+    params = {
+        "client_id": _get_google_client_id(),
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "online",
+        "prompt": "select_account",
+    }
+    return f"{GOOGLE_AUTHORIZATION_URL}?{urlencode(params)}"
+
+
+def _post_google_token_request(code: str, redirect_uri: str) -> dict:
+    payload = urlencode({
+        "code": code,
+        "client_id": _get_google_client_id(),
+        "client_secret": _get_google_client_secret(),
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }).encode("utf-8")
+
+    request = Request(
+        GOOGLE_TOKEN_URL,
+        data=payload,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+
+    with urlopen(request, timeout=GOOGLE_OAUTH_TIMEOUT_SECONDS) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def _get_google_tokeninfo(id_token: str) -> dict:
+    request = Request(
+        f"{GOOGLE_TOKENINFO_URL}?{urlencode({'id_token': id_token})}",
+        method="GET",
+    )
+    with urlopen(request, timeout=GOOGLE_OAUTH_TIMEOUT_SECONDS) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def exchange_google_oauth_code(code: str, redirect_uri: str) -> dict:
+    if not is_google_oauth_configured():
+        return {
+            "ok": False,
+            "message": "Google sign-in is not configured yet.",
+        }
+
+    code_value = str(code or "").strip()
+    if not code_value:
+        return {
+            "ok": False,
+            "message": "Google sign-in was cancelled or incomplete.",
+        }
+
+    try:
+        token_payload = _post_google_token_request(code_value, redirect_uri)
+        id_token = str(token_payload.get("id_token") or "").strip()
+        if not id_token:
+            return {
+                "ok": False,
+                "message": "Google did not return a valid identity token.",
+            }
+
+        tokeninfo = _get_google_tokeninfo(id_token)
+    except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError):
+        return {
+            "ok": False,
+            "message": "Unable to verify Google sign-in. Please try again.",
+        }
+
+    audience = str(tokeninfo.get("aud") or "").strip()
+    issuer = str(tokeninfo.get("iss") or "").strip()
+    email = str(tokeninfo.get("email") or "").strip().lower()
+    email_verified = str(tokeninfo.get("email_verified") or "").lower() == "true"
+    google_sub = str(tokeninfo.get("sub") or "").strip()
+    full_name = str(tokeninfo.get("name") or "").strip()
+
+    if audience != _get_google_client_id() or issuer not in {"accounts.google.com", "https://accounts.google.com"}:
+        return {
+            "ok": False,
+            "message": "Google sign-in could not be verified.",
+        }
+
+    if not google_sub or not email:
+        return {
+            "ok": False,
+            "message": "Google did not return the required account details.",
+        }
+
+    if not email_verified:
+        return {
+            "ok": False,
+            "message": "Your Google email must be verified before using SafeBooks.",
+        }
+
+    return {
+        "ok": True,
+        "profile": {
+            "google_sub": google_sub,
+            "email": email,
+            "full_name": full_name,
+            "email_verified": True,
+        },
+    }
+
+
+def _build_bookkeeper_payload(account: BookkeeperAccount) -> dict:
+    return {
+        "id": account.id,
+        "full_name": account.full_name,
+        "email": account.email,
+        "username": account.username,
+        "status": account.status or BookkeeperAccount.STATUS_PENDING,
+        "email_verified": bool(account.email_verified),
+        "login_alerts_enabled": bool(getattr(account, "login_alerts_enabled", False)),
+    }
+
+
+def authenticate_google_bookkeeper(profile: dict) -> dict:
+    google_sub = str(profile.get("google_sub") or "").strip()
+    email = str(profile.get("email") or "").strip().lower()
+
+    if not google_sub or not email:
+        return {
+            "ok": False,
+            "message": "Google account details are incomplete.",
+        }
+
+    account = BookkeeperAccount.objects.filter(google_sub=google_sub).first()
+    if account is None:
+        account = BookkeeperAccount.objects.filter(email__iexact=email).first()
+
+    if account is None:
+        return {
+            "ok": True,
+            "requires_signup_completion": True,
+            "message": "Complete your SafeBooks account setup.",
+            "profile": {
+                "email": email,
+                "full_name": str(profile.get("full_name") or "").strip(),
+            },
+        }
+
+    if account.google_sub and account.google_sub != google_sub:
+        return {
+            "ok": False,
+            "message": "This email is already linked to another Google account.",
+        }
+
+    update_fields: list[str] = []
+    if not account.google_sub:
+        account.google_sub = google_sub
+        update_fields.append("google_sub")
+
+    if not account.email_verified:
+        account.email_verified = True
+        update_fields.append("email_verified")
+
+    status = account.status or BookkeeperAccount.STATUS_PENDING
+    if status == BookkeeperAccount.STATUS_REJECTED:
+        return {
+            "ok": False,
+            "message": "Account was not approved. Contact support for help.",
+            "status": status,
+        }
+
+    if status == BookkeeperAccount.STATUS_SUSPENDED:
+        return {
+            "ok": False,
+            "message": "Account is suspended. Contact support for help.",
+            "status": status,
+        }
+
+    if status == BookkeeperAccount.STATUS_PENDING:
+        if update_fields:
+            account.save(update_fields=update_fields)
+        return {
+            "ok": True,
+            "message": "Account pending approval. You will get access once approved.",
+            "user": _build_bookkeeper_payload(account),
+            "role": "bookkeeper",
+        }
+
+    account.last_login = timezone.now()
+    update_fields.append("last_login")
+    account.save(update_fields=update_fields)
+    _maybe_send_login_alert(account)
+
+    return {
+        "ok": True,
+        "message": "Google sign-in successful.",
+        "user": _build_bookkeeper_payload(account),
+        "role": "bookkeeper",
+    }
+
+
+def complete_google_signup(profile: dict, data: dict) -> dict:
+    google_sub = str(profile.get("google_sub") or "").strip()
+    email = str(profile.get("email") or "").strip().lower()
+    full_name = str(data.get("full_name") or profile.get("full_name") or "").strip()
+    username = str(data.get("username") or "").strip()
+    password = str(data.get("password") or "")
+    confirm_password = str(data.get("confirm_password") or "")
+
+    errors: list[str] = []
+    if not google_sub or not email:
+        errors.append("Google signup session expired. Please continue with Google again.")
+    if not full_name:
+        errors.append("Full name is required.")
+    if not username:
+        errors.append("Username is required.")
+    if not password:
+        errors.append("Password is required.")
+    if password and password != confirm_password:
+        errors.append("Passwords do not match.")
+
+    password_requirement_errors = missing_password_requirements(password)
+    if password and password_requirement_errors:
+        errors.append("Password does not meet requirements.")
+
+    if errors:
+        return {
+            "ok": False,
+            "message": errors[0],
+            "errors": errors,
+            "password_requirements": password_requirement_errors,
+        }
+
+    if BookkeeperAccount.objects.filter(email__iexact=email).exists():
+        return {
+            "ok": False,
+            "message": "Email already exists. Please sign in with Google instead.",
+            "errors": ["Email already exists."],
+        }
+
+    if BookkeeperAccount.objects.filter(username__iexact=username).exists():
+        return {
+            "ok": False,
+            "message": "Username already exists.",
+            "errors": ["Username already exists."],
+        }
+
+    if BookkeeperAccount.objects.filter(google_sub=google_sub).exists():
+        return {
+            "ok": False,
+            "message": "This Google account is already linked to SafeBooks.",
+            "errors": ["This Google account is already linked to SafeBooks."],
+        }
+
+    account = BookkeeperAccount.objects.create(
+        full_name=full_name,
+        email=email,
+        username=username,
+        google_sub=google_sub,
+        password_hash=make_password(password),
+        status=BookkeeperAccount.STATUS_PENDING,
+        email_verified=True,
+    )
+
+    return {
+        "ok": True,
+        "message": "SafeBooks account created. Your account is pending admin approval.",
+        "user": _build_bookkeeper_payload(account),
+        "role": "bookkeeper",
+    }
 
 
 def _password_reset_cache_key(email: str, suffix: str) -> str:

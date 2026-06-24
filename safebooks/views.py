@@ -1,5 +1,6 @@
 import json
 from functools import wraps
+import secrets
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -13,6 +14,11 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 from safebooks.models import AdminAccount, BookkeeperAccount
 from safebooks.services.auth_service import (
+    authenticate_google_bookkeeper,
+    build_google_oauth_authorization_url,
+    complete_google_signup,
+    exchange_google_oauth_code,
+    is_google_oauth_configured,
     login_user_or_admin,
     register_user,
     send_email_verification_code,
@@ -41,6 +47,8 @@ from safebooks.services.settings_service import (
 )
 from safebooks.services.security_service import (
     change_bookkeeper_password,
+    confirm_client_details_access,
+    update_client_details_access_preference,
     update_login_alerts_preference,
 )
 from safebooks.services.profile_service import (
@@ -63,6 +71,10 @@ from safebooks.services.admin_dashboard_service import get_admin_dashboard_summa
 
 SESSION_BOOKKEEPER_ID_KEY = "safebooks_bookkeeper_id"
 SESSION_ADMIN_ID_KEY = "safebooks_admin_id"
+SESSION_CLIENT_DETAILS_VERIFIED_UNTIL_KEY = "safebooks_client_details_verified_until"
+SESSION_GOOGLE_OAUTH_STATE_KEY = "safebooks_google_oauth_state"
+SESSION_GOOGLE_SIGNUP_PROFILE_KEY = "safebooks_google_signup_profile"
+CLIENT_DETAILS_CONFIRMATION_WINDOW_SECONDS = 15 * 60
 
 
 def _decode_request_data(request):
@@ -143,6 +155,35 @@ def _build_user_context(account):
     }
 
 
+def _client_details_lock_enabled(account) -> bool:
+    return bool(getattr(account, "client_details_password_required", False))
+
+
+def _get_client_details_verified_until(request) -> int:
+    raw_value = request.session.get(SESSION_CLIENT_DETAILS_VERIFIED_UNTIL_KEY)
+    try:
+        return int(raw_value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _is_client_details_access_verified(request) -> bool:
+    return _get_client_details_verified_until(request) > int(timezone.now().timestamp())
+
+
+def _set_client_details_access_verified(request) -> int:
+    verified_until = int(timezone.now().timestamp()) + CLIENT_DETAILS_CONFIRMATION_WINDOW_SECONDS
+    request.session[SESSION_CLIENT_DETAILS_VERIFIED_UNTIL_KEY] = verified_until
+    request.session.modified = True
+    return verified_until
+
+
+def _clear_client_details_access_verified(request) -> None:
+    if SESSION_CLIENT_DETAILS_VERIFIED_UNTIL_KEY in request.session:
+        request.session.pop(SESSION_CLIENT_DETAILS_VERIFIED_UNTIL_KEY, None)
+        request.session.modified = True
+
+
 def _mask_email_address(email: str) -> str:
     normalized = str(email or "").strip()
     if not normalized or "@" not in normalized:
@@ -174,6 +215,56 @@ def _resolve_post_login_redirect(request, payload):
         return default_redirect
 
     return candidate
+
+
+def _build_google_callback_uri(request) -> str:
+    configured_uri = str(getattr(settings, "SAFEBOOKS_GOOGLE_OAUTH_REDIRECT_URI", "") or "").strip()
+    if configured_uri:
+        return configured_uri
+    return request.build_absolute_uri(reverse("auth_google_callback"))
+
+
+def _redirect_auth_feedback(route_name: str, message: str, level: str = "error"):
+    query_string = urlencode({
+        "auth_message": message,
+        "auth_level": level,
+    })
+    return redirect(f"{reverse(route_name)}?{query_string}")
+
+
+def _build_auth_page_context(request, extra_context: dict | None = None) -> dict:
+    context = {
+        "google_oauth_configured": is_google_oauth_configured(),
+        "auth_feedback_message": str(request.GET.get("auth_message") or "").strip(),
+        "auth_feedback_level": str(request.GET.get("auth_level") or "info").strip(),
+    }
+    if extra_context:
+        context.update(extra_context)
+    return context
+
+
+def _set_bookkeeper_session(request, account_id: int) -> None:
+    request.session[SESSION_BOOKKEEPER_ID_KEY] = account_id
+    request.session.pop(SESSION_ADMIN_ID_KEY, None)
+    request.session.modified = True
+
+
+def _redirect_after_bookkeeper_auth(request, result: dict, next_url: str = ""):
+    user_payload = result.get("user") or {}
+    account_id = user_payload.get("id")
+    if account_id:
+        _set_bookkeeper_session(request, account_id)
+
+    status = user_payload.get("status") or BookkeeperAccount.STATUS_APPROVED
+    email_verified = bool(user_payload.get("email_verified", True))
+
+    if not email_verified:
+        return redirect("verify_email")
+    if status == BookkeeperAccount.STATUS_PENDING:
+        return redirect("pending_approval")
+
+    payload = {"next_url": next_url}
+    return redirect(_resolve_post_login_redirect(request, payload))
 
 
 def _build_admin_context(account):
@@ -375,10 +466,10 @@ def login_page_view(request):
         if status in {BookkeeperAccount.STATUS_REJECTED, BookkeeperAccount.STATUS_SUSPENDED}:
             request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
             request.session.modified = True
-            return render(request, "authentication/login.html")
+            return render(request, "authentication/login.html", _build_auth_page_context(request))
         return redirect("dashboard")
 
-    return render(request, "authentication/login.html")
+    return render(request, "authentication/login.html", _build_auth_page_context(request))
 
 
 def signup_page_view(request):
@@ -395,10 +486,82 @@ def signup_page_view(request):
         if status in {BookkeeperAccount.STATUS_REJECTED, BookkeeperAccount.STATUS_SUSPENDED}:
             request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
             request.session.modified = True
-            return render(request, "authentication/signup.html")
+            return render(request, "authentication/signup.html", _build_auth_page_context(request))
         return redirect("dashboard")
 
-    return render(request, "authentication/signup.html")
+    google_profile = request.session.get(SESSION_GOOGLE_SIGNUP_PROFILE_KEY)
+    context = _build_auth_page_context(request, {
+        "google_signup_profile": google_profile if isinstance(google_profile, dict) else None,
+    })
+    return render(request, "authentication/signup.html", context)
+
+
+def auth_google_start_view(request):
+    if not is_google_oauth_configured():
+        return _redirect_auth_feedback(
+            "login",
+            "Google sign-in is not configured yet. Add the Google OAuth client ID and secret in your environment settings.",
+        )
+
+    state = secrets.token_urlsafe(32)
+    next_url = str(request.GET.get("next") or "").strip()
+    mode = str(request.GET.get("mode") or "login").strip().lower()
+    if mode not in {"login", "signup"}:
+        mode = "login"
+
+    request.session[SESSION_GOOGLE_OAUTH_STATE_KEY] = {
+        "state": state,
+        "next_url": next_url,
+        "mode": mode,
+    }
+    request.session.modified = True
+
+    authorization_url = build_google_oauth_authorization_url(
+        redirect_uri=_build_google_callback_uri(request),
+        state=state,
+    )
+    return redirect(authorization_url)
+
+
+def auth_google_callback_view(request):
+    error = str(request.GET.get("error") or "").strip()
+    if error:
+        return _redirect_auth_feedback("login", "Google sign-in was cancelled or denied.")
+
+    state = str(request.GET.get("state") or "").strip()
+    stored_state = request.session.get(SESSION_GOOGLE_OAUTH_STATE_KEY)
+    if not isinstance(stored_state, dict) or state != stored_state.get("state"):
+        request.session.pop(SESSION_GOOGLE_OAUTH_STATE_KEY, None)
+        request.session.modified = True
+        return _redirect_auth_feedback("login", "Google sign-in session expired. Please try again.")
+
+    code = str(request.GET.get("code") or "").strip()
+    token_result = exchange_google_oauth_code(code, _build_google_callback_uri(request))
+    request.session.pop(SESSION_GOOGLE_OAUTH_STATE_KEY, None)
+    request.session.modified = True
+
+    if not token_result.get("ok"):
+        return _redirect_auth_feedback("login", token_result.get("message", "Unable to verify Google sign-in."))
+
+    auth_result = authenticate_google_bookkeeper(token_result.get("profile") or {})
+    if not auth_result.get("ok"):
+        return _redirect_auth_feedback("login", auth_result.get("message", "Unable to continue with Google."))
+
+    if auth_result.get("requires_signup_completion"):
+        profile = token_result.get("profile") or {}
+        request.session[SESSION_GOOGLE_SIGNUP_PROFILE_KEY] = {
+            "google_sub": profile.get("google_sub"),
+            "email": profile.get("email"),
+            "full_name": profile.get("full_name"),
+        }
+        request.session.modified = True
+        return redirect(f"{reverse('signup')}?google_setup=1")
+
+    return _redirect_after_bookkeeper_auth(
+        request,
+        auth_result,
+        next_url=str(stored_state.get("next_url") or ""),
+    )
 
 
 @require_bookkeeper_auth
@@ -414,6 +577,9 @@ def dashboard_page_view(request):
 def clients_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
     context["active_nav"] = "clients"
+    context["client_details_password_required"] = _client_details_lock_enabled(request.bookkeeper_account)
+    context["client_details_access_verified"] = _is_client_details_access_verified(request)
+    context["client_details_verified_until"] = _get_client_details_verified_until(request)
     return render(request, "base/clients.html", context)
 
 
@@ -439,6 +605,13 @@ def client_details_page_view(request, client_id):
     from django.shortcuts import get_object_or_404
     from safebooks.models import Client
     client = get_object_or_404(Client, id=client_id, bookkeeper=request.bookkeeper_account)
+    if _client_details_lock_enabled(request.bookkeeper_account) and not _is_client_details_access_verified(request):
+        query = urlencode({
+            "client_access_required": "1",
+            "next": request.get_full_path(),
+        })
+        return redirect(f"{reverse('clients')}?{query}")
+
     context = _build_user_context(request.bookkeeper_account)
     context["active_nav"] = "clients"
     context["client"] = client
@@ -495,6 +668,7 @@ def settings_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
     context["active_nav"] = "settings"
     context["login_alerts_enabled"] = bool(getattr(request.bookkeeper_account, "login_alerts_enabled", False))
+    context["client_details_password_required"] = _client_details_lock_enabled(request.bookkeeper_account)
     context["login_alerts_destination"] = _mask_email_address(request.bookkeeper_account.email)
     return render(request, "base/settings.html", context)
 
@@ -640,6 +814,45 @@ def security_login_alerts_api_view(request):
 
     result = update_login_alerts_preference(request.bookkeeper_account, payload)
     if result.get("ok"):
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
+
+
+@require_POST
+@require_bookkeeper_auth
+def security_client_details_access_confirm_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = confirm_client_details_access(request.bookkeeper_account, payload)
+    if result.get("ok"):
+        verified_until = _set_client_details_access_verified(request)
+        result["verified_until"] = verified_until
+        result["verified_for_seconds"] = CLIENT_DETAILS_CONFIRMATION_WINDOW_SECONDS
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
+
+
+@require_POST
+@require_bookkeeper_auth
+def security_client_details_access_preference_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = update_client_details_access_preference(request.bookkeeper_account, payload)
+    if result.get("ok"):
+        if not result.get("client_details_password_required"):
+            _clear_client_details_access_verified(request)
         return JsonResponse(result)
 
     return JsonResponse(result, status=400)
@@ -976,6 +1189,47 @@ def register_view(request):
 
     error_message = result.get("message", "Unable to register account.")
     if error_message in {"Email already exists.", "Username already exists."}:
+        return JsonResponse(result, status=409)
+
+    return JsonResponse(result, status=400)
+
+
+@require_POST
+def google_complete_signup_view(request):
+    google_profile = request.session.get(SESSION_GOOGLE_SIGNUP_PROFILE_KEY)
+    if not isinstance(google_profile, dict):
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Google signup session expired. Please continue with Google again.",
+            },
+            status=400,
+        )
+
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = complete_google_signup(google_profile, payload)
+    if result.get("ok"):
+        user_payload = result.get("user") or {}
+        account_id = user_payload.get("id")
+        if account_id:
+            _set_bookkeeper_session(request, account_id)
+        request.session.pop(SESSION_GOOGLE_SIGNUP_PROFILE_KEY, None)
+        request.session.modified = True
+        result["redirect_url"] = reverse("pending_approval")
+        return JsonResponse(result, status=201)
+
+    error_message = result.get("message", "Unable to create account.")
+    if error_message in {
+        "Email already exists. Please sign in with Google instead.",
+        "Username already exists.",
+        "This Google account is already linked to SafeBooks.",
+    }:
         return JsonResponse(result, status=409)
 
     return JsonResponse(result, status=400)

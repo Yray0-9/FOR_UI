@@ -1471,6 +1471,12 @@ body.auth-page {
     box-shadow: 0 0 0 0.2rem rgba(39, 103, 225, 0.16);
 }
 
+.auth-input[readonly] {
+    background: #eef4ff;
+    color: #23477f;
+    cursor: not-allowed;
+}
+
 .auth-password-field {
     border: 1px solid #c6d8fd;
     border-radius: 12px;

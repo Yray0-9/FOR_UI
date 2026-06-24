@@ -17,6 +17,7 @@ class AnalyticsSummaryApiTests(TestCase):
             email=f"analytics_{suffix}@example.com",
             password_hash="not-used-in-test",
             status=BookkeeperAccount.STATUS_APPROVED,
+            client_details_password_required=False,
         )
 
     def _login_as(self, account: BookkeeperAccount) -> None:

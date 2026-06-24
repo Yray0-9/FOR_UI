@@ -135,6 +135,76 @@ def update_login_alerts_preference(bookkeeper, payload: dict) -> dict:
     }
 
 
+def confirm_client_details_access(bookkeeper, payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        return {
+            "ok": False,
+            "message": "Invalid request payload.",
+            "errors": ["Invalid request payload."],
+        }
+
+    current_password = str(payload.get("current_password", ""))
+    if not current_password:
+        return {
+            "ok": False,
+            "message": "Password is required.",
+            "errors": ["Password is required."],
+        }
+
+    if not _verify_current_password(bookkeeper, current_password):
+        return {
+            "ok": False,
+            "message": "Password is incorrect.",
+            "errors": ["Password is incorrect."],
+        }
+
+    return {
+        "ok": True,
+        "message": "Client details access confirmed.",
+    }
+
+
+def update_client_details_access_preference(bookkeeper, payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        return {
+            "ok": False,
+            "message": "Invalid request payload.",
+            "errors": ["Invalid request payload."],
+        }
+
+    enabled_value = _normalize_bool(payload.get("enabled"))
+    if enabled_value is None:
+        return {
+            "ok": False,
+            "message": "Client details lock setting is required.",
+            "errors": ["Client details lock setting is required."],
+        }
+
+    current_password = str(payload.get("current_password", ""))
+    if not current_password:
+        return {
+            "ok": False,
+            "message": "Current password is required.",
+            "errors": ["Current password is required."],
+        }
+
+    if not _verify_current_password(bookkeeper, current_password):
+        return {
+            "ok": False,
+            "message": "Current password is incorrect.",
+            "errors": ["Current password is incorrect."],
+        }
+
+    bookkeeper.client_details_password_required = enabled_value
+    bookkeeper.save(update_fields=["client_details_password_required"])
+
+    return {
+        "ok": True,
+        "message": "Client details lock preference updated.",
+        "client_details_password_required": enabled_value,
+    }
+
+
 def _build_totp_secret() -> str:
     return pyotp.random_base32()
 

@@ -403,6 +403,35 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade client-manage-modal" id="clientAccessConfirmModal" tabindex="-1" aria-labelledby="clientAccessConfirmModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="clientAccessConfirmForm" novalidate>
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title h5" id="clientAccessConfirmModalTitle">Confirm Client Access</h2>
+                    <p class="clients-access-modal-subtitle" id="clientAccessConfirmClientName">Client details are protected.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label client-form-label" for="clientAccessConfirmPassword">Bookkeeper Password</label>
+                <div class="client-password-field">
+                    <input class="form-control client-form-input client-password-input" id="clientAccessConfirmPassword" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+                    <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                        <i class="bi bi-eye" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <p class="clients-access-modal-note">After confirmation, Client Details stays unlocked for a short time.</p>
+                <span class="clients-access-status" id="clientAccessConfirmStatus" aria-live="polite"></span>
+            </div>
+            <div class="modal-footer client-details-actions">
+                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn dashboard-action-btn primary" id="clientAccessConfirmButton">Continue</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block toast_container %}
@@ -490,11 +519,18 @@
         const clientReportModalElement = document.getElementById("clientReportModal");
         const editClientModalElement = document.getElementById("editClientModal");
         const deleteClientModalElement = document.getElementById("deleteClientModal");
+        const clientAccessConfirmModalElement = document.getElementById("clientAccessConfirmModal");
+        const clientAccessConfirmForm = document.getElementById("clientAccessConfirmForm");
+        const clientAccessConfirmPassword = document.getElementById("clientAccessConfirmPassword");
+        const clientAccessConfirmButton = document.getElementById("clientAccessConfirmButton");
+        const clientAccessConfirmStatus = document.getElementById("clientAccessConfirmStatus");
+        const clientAccessConfirmClientName = document.getElementById("clientAccessConfirmClientName");
 
         const addClientModal = addClientModalElement && window.bootstrap ? new window.bootstrap.Modal(addClientModalElement) : null;
         const clientReportModal = clientReportModalElement && window.bootstrap ? new window.bootstrap.Modal(clientReportModalElement) : null;
         const editClientModal = editClientModalElement && window.bootstrap ? new window.bootstrap.Modal(editClientModalElement) : null;
         const deleteClientModal = deleteClientModalElement && window.bootstrap ? new window.bootstrap.Modal(deleteClientModalElement) : null;
+        const clientAccessConfirmModal = clientAccessConfirmModalElement && window.bootstrap ? new window.bootstrap.Modal(clientAccessConfirmModalElement) : null;
 
         const clientReportWrapper = document.getElementById("clientReportWrapper");
         const clientReportSheet = document.getElementById("clientReportSheet");
@@ -503,6 +539,8 @@
         const CLIENTS_API_URL = "{% url 'api_clients' %}";
         const FINANCIAL_RECORDS_BASE_URL = "{% url 'financial_records_client' %}";
         const ANALYTICS_SUMMARY_API_URL = "{% url 'api_analytics_summary' %}";
+        const CLIENT_DETAILS_ACCESS_CONFIRM_URL = "{% url 'api_security_client_details_access_confirm' %}";
+        const CLIENT_DETAILS_PASSWORD_REQUIRED = "{{ client_details_password_required|yesno:'true,false' }}" === "true";
 
         let editingRow = null;
         let pendingDeleteRow = null;
@@ -517,6 +555,8 @@
         let isClientsLoading = false;
         let addClientFormDirty = false;
         let editClientFormDirty = false;
+        let clientDetailsVerifiedUntil = Number("{{ client_details_verified_until|default:0 }}") || 0;
+        let pendingClientDetailsTarget = null;
 
         const normalize = (value) => String(value || "").trim().toLowerCase();
         const normalizeDigits = (value) => String(value || "").replace(/\D+/g, "");
@@ -1649,7 +1689,7 @@
             if (clientsTableBody) {
                 clientsTableBody.setAttribute("aria-busy", String(isClientsLoading));
                 if (isClientsLoading) {
-                    clientsTableBody.innerHTML = `<tr class="clients-loading-row"><td colspan="5" class="text-center py-4">${escapeHtml(message)}</td></tr>`;
+                    clientsTableBody.innerHTML = `<tr class="clients-loading-row"><td colspan="4" class="text-center py-4">${escapeHtml(message)}</td></tr>`;
                 }
             }
 
@@ -2201,13 +2241,120 @@
 
         };
 
+        const isClientAccessRecentlyVerified = () => {
+            return clientDetailsVerifiedUntil > Math.floor(Date.now() / 1000);
+        };
+
+        const setClientAccessStatus = (message, variant) => {
+            if (!clientAccessConfirmStatus) {
+                return;
+            }
+            clientAccessConfirmStatus.textContent = message || "";
+            clientAccessConfirmStatus.classList.remove("is-success", "is-danger");
+            if (variant) {
+                clientAccessConfirmStatus.classList.add(`is-${variant}`);
+            }
+        };
+
+        const setClientAccessLoading = (isLoading) => {
+            if (clientAccessConfirmButton) {
+                clientAccessConfirmButton.disabled = isLoading;
+                clientAccessConfirmButton.textContent = isLoading ? "Checking..." : "Continue";
+            }
+            if (clientAccessConfirmPassword) {
+                clientAccessConfirmPassword.disabled = isLoading;
+            }
+        };
+
+        const openClientAccessConfirmModal = (clientData, targetUrl) => {
+            pendingClientDetailsTarget = {
+                url: targetUrl,
+                clientName: clientData && clientData.clientName ? clientData.clientName : "selected client",
+            };
+
+            if (clientAccessConfirmClientName) {
+                clientAccessConfirmClientName.textContent = `Confirm access to ${pendingClientDetailsTarget.clientName}.`;
+            }
+            if (clientAccessConfirmPassword) {
+                clientAccessConfirmPassword.value = "";
+            }
+            setClientAccessStatus("", "");
+
+            if (clientAccessConfirmModal) {
+                clientAccessConfirmModal.show();
+            } else {
+                showToast("Confirm your password before opening Client Details.");
+            }
+        };
+
+        const confirmClientDetailsAccess = async () => {
+            if (!pendingClientDetailsTarget || !pendingClientDetailsTarget.url) {
+                return;
+            }
+
+            const currentPassword = clientAccessConfirmPassword ? clientAccessConfirmPassword.value : "";
+            if (!currentPassword) {
+                setClientAccessStatus("Password is required.", "danger");
+                if (clientAccessConfirmPassword) {
+                    clientAccessConfirmPassword.focus();
+                }
+                return;
+            }
+
+            setClientAccessLoading(true);
+            setClientAccessStatus("Checking password...", "success");
+
+            try {
+                const csrfToken = getCookieValue("csrftoken");
+                const headers = {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                };
+                if (csrfToken) {
+                    headers["X-CSRFToken"] = csrfToken;
+                }
+
+                const response = await fetch(CLIENT_DETAILS_ACCESS_CONFIRM_URL, {
+                    method: "POST",
+                    headers,
+                    credentials: "same-origin",
+                    body: JSON.stringify({ current_password: currentPassword }),
+                });
+
+                if (response.status === 401) {
+                    redirectToLogin();
+                    return;
+                }
+
+                const result = await parseJsonSafe(response);
+                if (!response.ok || !result || !result.ok) {
+                    const message = result && result.message ? String(result.message) : "Unable to confirm access.";
+                    throw new Error(message);
+                }
+
+                clientDetailsVerifiedUntil = Number(result.verified_until || 0) || 0;
+                setClientAccessStatus("Access confirmed.", "success");
+                window.location.assign(pendingClientDetailsTarget.url);
+            } catch (error) {
+                setClientAccessStatus(error && error.message ? String(error.message) : "Unable to confirm access.", "danger");
+                showToast(error && error.message ? String(error.message) : "Unable to confirm access.");
+            } finally {
+                setClientAccessLoading(false);
+            }
+        };
+
         const navigateToClientDetails = (row) => {
             if (!row) {
                 return;
             }
             const clientData = getClientDataFromRow(row);
             if (clientData && clientData.clientId) {
-                window.location.assign(`/clients/${clientData.clientId}/`);
+                const targetUrl = `/clients/${clientData.clientId}/`;
+                if (!CLIENT_DETAILS_PASSWORD_REQUIRED || isClientAccessRecentlyVerified()) {
+                    window.location.assign(targetUrl);
+                    return;
+                }
+                openClientAccessConfirmModal(clientData, targetUrl);
             }
         };
 
@@ -2707,6 +2854,30 @@
         if (deleteClientModalElement) {
             deleteClientModalElement.addEventListener("hidden.bs.modal", () => {
                 pendingDeleteRow = null;
+            });
+        }
+
+        if (clientAccessConfirmForm) {
+            clientAccessConfirmForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                confirmClientDetailsAccess();
+            });
+        }
+
+        if (clientAccessConfirmModalElement) {
+            clientAccessConfirmModalElement.addEventListener("shown.bs.modal", () => {
+                if (clientAccessConfirmPassword) {
+                    clientAccessConfirmPassword.focus();
+                }
+            });
+            clientAccessConfirmModalElement.addEventListener("hidden.bs.modal", () => {
+                pendingClientDetailsTarget = null;
+                if (clientAccessConfirmPassword) {
+                    clientAccessConfirmPassword.value = "";
+                    clientAccessConfirmPassword.disabled = false;
+                }
+                setClientAccessLoading(false);
+                setClientAccessStatus("", "");
             });
         }
 
