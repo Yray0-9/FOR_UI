@@ -1,9 +1,12 @@
 import json
+from datetime import date, timedelta
+from decimal import Decimal
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
-from safebooks.models import BookkeeperAccount, Client
+from safebooks.models import BookkeeperAccount, Client, FinancialRecord, FinancialRecordLine, Period
 from safebooks.views import SESSION_BOOKKEEPER_ID_KEY
 
 
@@ -152,6 +155,45 @@ class ClientsApiTests(TestCase):
         )
         self.assertEqual(delete_response.status_code, 404)
         self.assertEqual(delete_response.json().get("message"), "Client not found.")
+
+    def test_clients_api_includes_recent_activity_timestamp_for_sorting(self):
+        owner = self._create_bookkeeper("owner-activity-sort")
+        client = Client.objects.create(
+            bookkeeper=owner,
+            client_name="Activity Client",
+            tin_number=self._build_tin("activity-sort"),
+            trade_name="Activity Trade",
+            location="Panabo",
+            remarks=Client.REMARK_ACTIVE,
+        )
+        period, _ = Period.objects.get_or_create(client=client, year=2026, month=6)
+        record = FinancialRecord.objects.create(
+            bookkeeper=owner,
+            client=client,
+            period=period,
+            entry_date=date(2026, 6, 3),
+            total_amount=Decimal("1000.00"),
+        )
+        FinancialRecordLine.objects.create(
+            record=record,
+            type_code="Sales",
+            description="Sale",
+            amount=Decimal("1000.00"),
+            sort_order=1,
+        )
+        recent_time = timezone.now() + timedelta(minutes=5)
+        FinancialRecord.objects.filter(id=record.id).update(updated_at=recent_time)
+
+        self._login_as(owner)
+        response = self.client.get(reverse("api_clients"), HTTP_ACCEPT="application/json")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        row = next(item for item in payload["clients"] if item["id"] == client.id)
+        self.assertIn("latest_record_updated_at", row)
+        self.assertIn("recent_activity_at", row)
+        self.assertEqual(row["latest_record_updated_at"], recent_time.isoformat())
+        self.assertEqual(row["recent_activity_at"], recent_time.isoformat())
 
     def test_clients_api_rejects_duplicate_tin(self):
         owner = self._create_bookkeeper("owner-dup")

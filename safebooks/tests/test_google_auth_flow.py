@@ -53,6 +53,32 @@ class GoogleAuthFlowTests(TestCase):
         self.assertEqual(session.get(SESSION_BOOKKEEPER_ID_KEY), account.id)
         self.assertNotIn(SESSION_GOOGLE_SIGNUP_PROFILE_KEY, session)
 
+    def test_complete_google_signup_validation_does_not_log_bad_request(self):
+        session = self.client.session
+        session[SESSION_GOOGLE_SIGNUP_PROFILE_KEY] = {
+            "google_sub": "google-sub-validation",
+            "email": "google-validation@example.com",
+            "full_name": "Google Validation User",
+        }
+        session.save()
+
+        response = self.client.post(
+            reverse("api_google_complete_signup"),
+            data=json.dumps({
+                "full_name": "Google Validation User",
+                "username": "",
+                "password": "",
+                "confirm_password": "",
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertFalse(payload.get("ok"))
+        self.assertIn("Username is required.", payload.get("errors", []))
+        self.assertFalse(BookkeeperAccount.objects.filter(email="google-validation@example.com").exists())
+
     def test_google_auth_links_existing_verified_email(self):
         account = BookkeeperAccount.objects.create(
             full_name="Existing User",

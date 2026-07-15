@@ -214,6 +214,16 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(payload["summary"]["total_expenses"], 250.0)
         self.assertEqual(payload["summary"]["total_tax"], 70.0)
         self.assertEqual(payload["summary"]["net_value"], 450.0)
+        self.assertEqual(payload["client_workflow"]["period_label"], today.strftime("%b %Y"))
+        self.assertEqual(payload["client_workflow"]["frequency"], FinancialRecord.FREQUENCY_MONTHLY)
+        self.assertEqual(payload["client_workflow"]["frequency_label"], "Monthly")
+        self.assertTrue(payload["client_workflow"]["has_current_period_record"])
+        self.assertEqual(payload["client_workflow"]["current_period_entry_count"], 1)
+        self.assertEqual(payload["client_workflow"]["current_period_transaction_detail_count"], 3)
+        self.assertTrue(payload["client_workflow"]["report_ready"])
+        self.assertEqual(payload["client_workflow"]["overall_status"], "ready")
+        self.assertEqual(len(payload["client_workflow"]["schedule_items"]), 1)
+        self.assertEqual(payload["client_workflow"]["schedule_items"][0]["status"], "ready")
 
         forbidden_response = self.client.get(
             reverse("api_analytics_summary"),
@@ -248,9 +258,207 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(payload["summary"]["total_expenses"], 0.0)
         self.assertEqual(payload["summary"]["total_tax"], 0.0)
         self.assertEqual(payload["summary"]["net_value"], 0.0)
+        self.assertEqual(payload["client_workflow"]["period_label"], timezone.localdate().strftime("%b %Y"))
+        self.assertEqual(payload["client_workflow"]["frequency"], FinancialRecord.FREQUENCY_MONTHLY)
+        self.assertFalse(payload["client_workflow"]["has_current_period_record"])
+        self.assertEqual(payload["client_workflow"]["current_period_entry_count"], 0)
+        self.assertEqual(payload["client_workflow"]["current_period_transaction_detail_count"], 0)
+        self.assertFalse(payload["client_workflow"]["report_ready"])
+        self.assertEqual(payload["client_workflow"]["overall_status"], "missing")
+        self.assertEqual(len(payload["client_workflow"]["schedule_items"]), 1)
+        self.assertEqual(payload["client_workflow"]["schedule_items"][0]["status"], "missing")
         self.assertEqual(payload["comparison"], [])
         self.assertEqual(payload["forecast"]["sparkline"], [])
         self.assertEqual(len(payload.get("monthly_trend", [])), 6)
+
+    def test_client_workflow_uses_quarterly_schedule_when_latest_record_is_quarterly(self):
+        today = timezone.localdate()
+        current_quarter_end_month = (((today.month - 1) // 3) + 1) * 3
+        previous_quarter_end_month = current_quarter_end_month - 3
+        previous_quarter_year = today.year
+        if previous_quarter_end_month <= 0:
+            previous_quarter_end_month += 12
+            previous_quarter_year -= 1
+
+        owner = self._create_bookkeeper("owner-quarterly-workflow")
+        client = self._create_client(
+            bookkeeper=owner,
+            suffix="quarterly-workflow",
+            remarks=Client.REMARK_ACTIVE,
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(previous_quarter_year, previous_quarter_end_month, 1),
+            frequency=FinancialRecord.FREQUENCY_QUARTERLY,
+            lines=[
+                ("Expenses", "Quarterly expense", Decimal("4200.00")),
+                ("2551Q", "Quarterly tax", Decimal("800.00")),
+            ],
+        )
+
+        self._login_as(owner)
+        response = self.client.get(
+            reverse("api_analytics_summary"),
+            {"client_id": client.id},
+            HTTP_ACCEPT="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        workflow = response.json()["client_workflow"]
+        self.assertEqual(workflow["frequency"], FinancialRecord.FREQUENCY_QUARTERLY)
+        self.assertEqual(workflow["frequency_label"], "Quarterly")
+        self.assertEqual(workflow["period_month"], current_quarter_end_month)
+        self.assertEqual(workflow["period_year"], today.year)
+        self.assertIn("(Q", workflow["period_label"])
+        self.assertFalse(workflow["has_current_period_record"])
+        self.assertEqual(workflow["current_period_entry_count"], 0)
+        expected_status = "missing" if today.month == current_quarter_end_month else "upcoming"
+        self.assertEqual(workflow["overall_status"], expected_status)
+        self.assertEqual(len(workflow["schedule_items"]), 1)
+        self.assertEqual(workflow["schedule_items"][0]["status"], expected_status)
+
+    def test_client_workflow_marks_current_quarter_ready_when_quarterly_record_exists(self):
+        today = timezone.localdate()
+        current_quarter_end_month = (((today.month - 1) // 3) + 1) * 3
+
+        owner = self._create_bookkeeper("owner-quarter-ready")
+        client = self._create_client(
+            bookkeeper=owner,
+            suffix="quarter-ready",
+            remarks=Client.REMARK_ACTIVE,
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(today.year, current_quarter_end_month, 1),
+            frequency=FinancialRecord.FREQUENCY_QUARTERLY,
+            lines=[
+                ("Expenses", "Quarterly expense", Decimal("4200.00")),
+                ("2551Q", "Quarterly tax", Decimal("800.00")),
+            ],
+        )
+
+        self._login_as(owner)
+        response = self.client.get(
+            reverse("api_analytics_summary"),
+            {"client_id": client.id},
+            HTTP_ACCEPT="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        workflow = response.json()["client_workflow"]
+        self.assertEqual(workflow["frequency"], FinancialRecord.FREQUENCY_QUARTERLY)
+        self.assertEqual(workflow["period_month"], current_quarter_end_month)
+        self.assertTrue(workflow["has_current_period_record"])
+        self.assertEqual(workflow["current_period_entry_count"], 1)
+        self.assertEqual(workflow["current_period_transaction_detail_count"], 2)
+        self.assertEqual(workflow["overall_status"], "ready")
+        self.assertEqual(workflow["schedule_items"][0]["status"], "ready")
+
+    def test_client_workflow_tracks_monthly_and_quarterly_records_separately(self):
+        today = timezone.localdate()
+        current_quarter_end_month = (((today.month - 1) // 3) + 1) * 3
+        previous_quarter_end_month = current_quarter_end_month - 3
+        previous_quarter_year = today.year
+        if previous_quarter_end_month <= 0:
+            previous_quarter_end_month += 12
+            previous_quarter_year -= 1
+
+        owner = self._create_bookkeeper("owner-mixed-workflow")
+        client = self._create_client(
+            bookkeeper=owner,
+            suffix="mixed-workflow",
+            remarks=Client.REMARK_ACTIVE,
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(today.year, today.month, 1),
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+            lines=[
+                ("Sales", "Monthly sales", Decimal("9000.00")),
+            ],
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(previous_quarter_year, previous_quarter_end_month, 1),
+            frequency=FinancialRecord.FREQUENCY_QUARTERLY,
+            lines=[
+                ("Expenses", "Quarterly expense", Decimal("4200.00")),
+                ("2551Q", "Quarterly tax", Decimal("800.00")),
+            ],
+        )
+
+        self._login_as(owner)
+        response = self.client.get(
+            reverse("api_analytics_summary"),
+            {"client_id": client.id},
+            HTTP_ACCEPT="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        workflow = response.json()["client_workflow"]
+        items_by_frequency = {
+            item["frequency"]: item
+            for item in workflow["schedule_items"]
+        }
+
+        self.assertEqual(len(items_by_frequency), 2)
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_MONTHLY]["status"], "ready")
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_MONTHLY]["period_month"], today.month)
+        expected_quarterly_status = "missing" if today.month == current_quarter_end_month else "upcoming"
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_QUARTERLY]["status"], expected_quarterly_status)
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_QUARTERLY]["period_month"], current_quarter_end_month)
+
+    def test_client_workflow_uses_next_missing_period_after_saved_history(self):
+        owner = self._create_bookkeeper("owner-backlog-workflow")
+        client = self._create_client(
+            bookkeeper=owner,
+            suffix="backlog-workflow",
+            remarks=Client.REMARK_NEW,
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(2026, 1, 1),
+            frequency=FinancialRecord.FREQUENCY_MONTHLY,
+            lines=[
+                ("Sales", "January monthly sales", Decimal("700.00")),
+            ],
+        )
+        self._create_record_with_lines(
+            bookkeeper=owner,
+            client=client,
+            entry_date=date(2026, 1, 1),
+            frequency=FinancialRecord.FREQUENCY_QUARTERLY,
+            lines=[
+                ("2551Q", "January quarterly tax", Decimal("200.00")),
+            ],
+        )
+
+        self._login_as(owner)
+        response = self.client.get(
+            reverse("api_analytics_summary"),
+            {"client_id": client.id},
+            HTTP_ACCEPT="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        workflow = response.json()["client_workflow"]
+        items_by_frequency = {
+            item["frequency"]: item
+            for item in workflow["schedule_items"]
+        }
+
+        self.assertEqual(workflow["overall_status"], "missing")
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_MONTHLY]["period_year"], 2026)
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_MONTHLY]["period_month"], 2)
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_MONTHLY]["status"], "missing")
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_QUARTERLY]["period_year"], 2026)
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_QUARTERLY]["period_month"], 3)
+        self.assertEqual(items_by_frequency[FinancialRecord.FREQUENCY_QUARTERLY]["status"], "missing")
 
     def test_analytics_summary_includes_historical_totals_and_numeric_tax_codes(self):
         today = timezone.localdate()

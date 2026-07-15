@@ -175,3 +175,43 @@ def update_workspace_defaults_for_bookkeeper(bookkeeper, data: dict) -> dict:
         "message": "Workspace defaults updated.",
         "defaults": _serialize_defaults(defaults),
     }
+
+
+def _normalize_bool(value):
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return None
+
+    cleaned = str(value).strip().lower()
+    if cleaned in {"true", "1", "yes", "on"}:
+        return True
+    if cleaned in {"false", "0", "no", "off"}:
+        return False
+    return None
+
+
+def update_client_record_email_notifications_preference(bookkeeper, data: dict) -> dict:
+    if not isinstance(data, dict):
+        return {
+            "ok": False,
+            "message": "Invalid request payload.",
+            "errors": ["Invalid request payload."],
+        }
+
+    enabled_value = _normalize_bool(data.get("enabled"))
+    if enabled_value is None:
+        return {
+            "ok": False,
+            "message": "Client email notification setting is required.",
+            "errors": ["Client email notification setting is required."],
+        }
+
+    bookkeeper.client_record_email_notifications_enabled = enabled_value
+    bookkeeper.save(update_fields=["client_record_email_notifications_enabled"])
+
+    return {
+        "ok": True,
+        "message": "Client email notification preference updated.",
+        "client_record_email_notifications_enabled": enabled_value,
+    }

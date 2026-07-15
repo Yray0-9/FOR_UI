@@ -77,6 +77,7 @@
                 <input type="search" id="clientsSearchInput" placeholder="Search by client name or TIN" autocomplete="off">
             </label>
             <select id="clientsSortSelect" class="form-select dashboard-filter-select" aria-label="Sort clients list">
+                <option value="recent-activity">Recent Activity</option>
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
                 <option value="name-asc">Alphabetical (A-Z)</option>
@@ -129,8 +130,8 @@
         </div>
 
         <div class="clients-empty-state" id="clientsEmptyState" hidden>
-            <p>No clients added yet</p>
-            <button type="button" class="btn dashboard-action-btn primary" id="openAddClientFromEmpty" data-bs-toggle="modal" data-bs-target="#addClientModal">Add Your First Client</button>
+            <p>No clients in this list yet. Add a client when their record is ready.</p>
+            <button type="button" class="btn dashboard-action-btn primary" id="openAddClientFromEmpty" data-bs-toggle="modal" data-bs-target="#addClientModal">Add Client</button>
         </div>
     </article>
 </section>
@@ -210,32 +211,48 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label client-form-label" for="addClientOrusAccount">ORUS Account</label>
-                            <input class="form-control client-form-input" id="addClientOrusAccount" name="orus_account" type="text" placeholder="Optional" autocomplete="off">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label client-form-label" for="addClientOrusPassword">ORUS Password</label>
-                            <div class="client-password-field">
-                                <input class="form-control client-form-input client-password-input" id="addClientOrusPassword" name="orus_password" type="password" placeholder="Optional" autocomplete="new-password">
-                                <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </section>
 
-                <section class="client-form-section client-custom-fields-block">
-                    <div class="client-custom-fields-head">
-                        <span class="client-custom-fields-title">Custom Fields</span>
-                        <button type="button" class="btn client-custom-add-btn" id="addClientCustomFieldBtn">
-                            <i class="bi bi-plus-lg"></i>
-                            <span>Add Field</span>
-                        </button>
+                <details class="client-form-optional">
+                    <summary>
+                        <span>More optional details</span>
+                        <small>ORUS access and custom fields</small>
+                    </summary>
+                    <div class="client-form-optional-body">
+                        <section class="client-form-section">
+                            <div class="client-form-section-head">
+                                <h3>ORUS Access</h3>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label client-form-label" for="addClientOrusAccount">ORUS Account</label>
+                                    <input class="form-control client-form-input" id="addClientOrusAccount" name="orus_account" type="text" placeholder="Optional" autocomplete="off">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label client-form-label" for="addClientOrusPassword">ORUS Password</label>
+                                    <div class="client-password-field">
+                                        <input class="form-control client-form-input client-password-input" id="addClientOrusPassword" name="orus_password" type="password" placeholder="Optional" autocomplete="new-password">
+                                        <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="client-form-section client-custom-fields-block">
+                            <div class="client-custom-fields-head">
+                                <span class="client-custom-fields-title">Custom Fields</span>
+                                <button type="button" class="btn client-custom-add-btn" id="addClientCustomFieldBtn">
+                                    <i class="bi bi-plus-lg"></i>
+                                    <span>Add Field</span>
+                                </button>
+                            </div>
+                            <div class="row g-3 client-custom-fields-body" id="addClientCustomFields"></div>
+                        </section>
                     </div>
-                    <div class="row g-3 client-custom-fields-body" id="addClientCustomFields"></div>
-                </section>
+                </details>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
@@ -349,32 +366,48 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label client-form-label" for="editClientOrusAccount">ORUS Account</label>
-                            <input class="form-control client-form-input" id="editClientOrusAccount" name="orus_account" type="text" placeholder="Optional" autocomplete="off">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label client-form-label" for="editClientOrusPassword">ORUS Password</label>
-                            <div class="client-password-field">
-                                <input class="form-control client-form-input client-password-input" id="editClientOrusPassword" name="orus_password" type="password" placeholder="Optional" autocomplete="new-password">
-                                <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </section>
 
-                <section class="client-form-section client-custom-fields-block">
-                    <div class="client-custom-fields-head">
-                        <span class="client-custom-fields-title">Custom Fields</span>
-                        <button type="button" class="btn client-custom-add-btn" id="editClientCustomFieldBtn">
-                            <i class="bi bi-plus-lg"></i>
-                            <span>Add Field</span>
-                        </button>
+                <details class="client-form-optional">
+                    <summary>
+                        <span>More optional details</span>
+                        <small>ORUS access and custom fields</small>
+                    </summary>
+                    <div class="client-form-optional-body">
+                        <section class="client-form-section">
+                            <div class="client-form-section-head">
+                                <h3>ORUS Access</h3>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label client-form-label" for="editClientOrusAccount">ORUS Account</label>
+                                    <input class="form-control client-form-input" id="editClientOrusAccount" name="orus_account" type="text" placeholder="Optional" autocomplete="off">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label client-form-label" for="editClientOrusPassword">ORUS Password</label>
+                                    <div class="client-password-field">
+                                        <input class="form-control client-form-input client-password-input" id="editClientOrusPassword" name="orus_password" type="password" placeholder="Optional" autocomplete="new-password">
+                                        <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="client-form-section client-custom-fields-block">
+                            <div class="client-custom-fields-head">
+                                <span class="client-custom-fields-title">Custom Fields</span>
+                                <button type="button" class="btn client-custom-add-btn" id="editClientCustomFieldBtn">
+                                    <i class="bi bi-plus-lg"></i>
+                                    <span>Add Field</span>
+                                </button>
+                            </div>
+                            <div class="row g-3 client-custom-fields-body" id="editClientCustomFields"></div>
+                        </section>
                     </div>
-                    <div class="row g-3 client-custom-fields-body" id="editClientCustomFields"></div>
-                </section>
+                </details>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
@@ -1622,8 +1655,8 @@
                 avatarElement: dashboardUserAvatar,
                 nameElement: dashboardUserName,
                 authUserKey: AUTH_USER_KEY,
-                defaultName: "Bookkeeper User",
-                defaultInitials: "SB",
+                defaultName: "{{ current_user_name|default:'Bookkeeper User'|escapejs }}",
+                defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}",
             });
         };
 
@@ -1798,6 +1831,17 @@
                     const bId = Number(b && b.id ? b.id : 0);
                     return aId - bId;
                 });
+            } else if (sortBy === "recent-activity") {
+                safeClients.sort((a, b) => {
+                    const aActivityTime = toTimestamp(a && (a.recent_activity_at || a.updated_at || a.created_at));
+                    const bActivityTime = toTimestamp(b && (b.recent_activity_at || b.updated_at || b.created_at));
+                    if (bActivityTime !== aActivityTime) {
+                        return bActivityTime - aActivityTime;
+                    }
+                    const aId = Number(a && a.id ? a.id : 0);
+                    const bId = Number(b && b.id ? b.id : 0);
+                    return bId - aId;
+                });
             } else {
                 // "newest"
                 safeClients.sort((a, b) => {
@@ -1815,7 +1859,7 @@
         };
 
         const syncSortedClients = () => {
-            const sortBy = clientsSortSelect ? clientsSortSelect.value : "newest";
+            const sortBy = clientsSortSelect ? clientsSortSelect.value : "recent-activity";
             const sorted = sortClients(CLIENTS_DATA, sortBy);
             syncClientRowsFromApi(sorted);
         };
@@ -2962,6 +3006,10 @@
         }
 
         const urlParams = new URLSearchParams(window.location.search);
+        if (normalize(urlParams.get("report_scope")) === "client") {
+            showToast("Reports are prepared from each client page. Open a client, then use Preview Report.");
+        }
+
         const requestedRemarksFilter = normalize(urlParams.get("remark") || "all");
         if (requestedRemarksFilter === "new" || requestedRemarksFilter === "active" || requestedRemarksFilter === "separated" || requestedRemarksFilter === "closed") {
             activeRemarksFilter = requestedRemarksFilter;

@@ -151,6 +151,8 @@ class DashboardSummaryApiTests(TestCase):
         }
         self.assertEqual(activity_by_client_id[client_updated.id]["status"], "updated")
         self.assertEqual(activity_by_client_id[client_updated.id]["compliance"], "filed")
+        self.assertIn("recent_activity_at", activity_by_client_id[client_updated.id])
+        self.assertTrue(activity_by_client_id[client_updated.id]["recent_activity_at"])
         self.assertEqual(activity_by_client_id[client_pending.id]["status"], "needs-attention")
         self.assertEqual(activity_by_client_id[client_pending.id]["compliance"], "pending")
         self.assertNotIn(client_late.id, activity_by_client_id)
@@ -276,6 +278,12 @@ class DashboardSummaryApiTests(TestCase):
 
     def test_dashboard_summary_keeps_quarterly_clients_out_of_attention_until_next_cycle(self):
         today = timezone.localdate()
+        entry_month = today.month - 2
+        entry_year = today.year
+        if entry_month <= 0:
+            entry_month += 12
+            entry_year -= 1
+
         owner = self._create_bookkeeper("owner-quarterly")
         self._login_as(owner)
         client = self._create_client(
@@ -287,7 +295,7 @@ class DashboardSummaryApiTests(TestCase):
         record = self._create_record(
             bookkeeper=owner,
             client=client,
-            entry_date=date(today.year, 3, 1),
+            entry_date=date(entry_year, entry_month, 1),
             amount=Decimal("500.00"),
         )
         record.frequency = FinancialRecord.FREQUENCY_QUARTERLY

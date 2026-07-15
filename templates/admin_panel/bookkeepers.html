@@ -7,6 +7,117 @@
 <!--   <p class="dashboard-page-subtitle">Monitor account health and access status for your bookkeeper team.</p> -->
 {% endblock %}
 
+{% block skeleton %}
+<div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+        <div class="dash-sk-layout">
+            <aside class="dash-sk-sidebar">
+                <div class="skeleton-shimmer dash-sk-logo"></div>
+                <div class="dash-sk-nav">
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                </div>
+            </aside>
+            <section class="dash-sk-main">
+                <div class="dash-sk-topbar">
+                    <div class="skeleton-shimmer dash-sk-title"></div>
+                    <div class="skeleton-shimmer dash-sk-search"></div>
+                    <div class="skeleton-shimmer dash-sk-profile"></div>
+                </div>
+                <div class="dash-sk-metrics" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                </div>
+                <div class="dash-sk-content">
+                    <div class="dash-sk-left">
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                            </div>
+                            <div class="dash-sk-table-row" style="margin-top: 10px;">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dash-sk-right">
+                        <div class="dash-sk-card" style="margin-bottom: 12px;">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="skeleton-shimmer dash-sk-line" style="margin-bottom: 8px;"></div>
+                            <div class="skeleton-shimmer dash-sk-line" style="margin-bottom: 8px;"></div>
+                            <div class="skeleton-shimmer dash-sk-line"></div>
+                        </div>
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="skeleton-shimmer dash-sk-line" style="margin-bottom: 8px;"></div>
+                            <div class="skeleton-shimmer dash-sk-line" style="margin-bottom: 8px;"></div>
+                            <div class="skeleton-shimmer dash-sk-line"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deactivationRequestModal" tabindex="-1" aria-labelledby="deactivationRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deactivationRequestModalLabel"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Deactivation Request Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="text-muted small fw-bold d-block mb-1">Bookkeeper</label>
+                    <div class="fw-bold fs-6" id="deactivationRequestModalName">--</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small fw-bold d-block mb-1">Requested On</label>
+                    <div id="deactivationRequestModalDate">--</div>
+                </div>
+                <div class="mb-0">
+                    <label class="text-muted small fw-bold d-block mb-1">Reason for Deactivation</label>
+                    <div class="p-3 bg-light rounded border-start border-3 border-warning small text-secondary" style="white-space: pre-wrap; font-style: italic; font-weight: 500;" id="deactivationRequestModalReason">--</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn dashboard-action-btn reject" id="deactivationRequestModalDeclineBtn">Decline Request</button>
+                <button type="button" class="btn dashboard-action-btn deactivate" id="deactivationRequestModalApproveBtn">Approve Request</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
 {% block content %}
 <section class="dashboard-content admin-dashboard">
     <div class="row g-3">
@@ -40,6 +151,16 @@
                 </div>
             </article>
         </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-inbox"></i></span>
+                <div>
+                    <p class="stat-label">Deactivate requests</p>
+                    <h3 id="bookkeepersDeactivationRequestCount">0</h3>
+                    <p class="stat-note">Waiting for admin review</p>
+                </div>
+            </article>
+        </div>
     </div>
 
     <div class="row g-3 mt-1">
@@ -63,10 +184,12 @@
                         </select>
                     </div>
                     <div class="dashboard-filter-chips" role="group" aria-label="Filter bookkeepers by status or client load">
+
+
                         <button type="button" class="dashboard-filter-chip is-active" aria-pressed="true" data-bookkeeper-status="all">All</button>
                         <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-status="approved">Approved</button>
                         <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-status="deactivated">Deactivated</button>
-                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-status="inactive">Inactive</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-status="rejected">Rejected</button>
                         <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-clients="0-15">0-15</button>
                         <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-bookkeeper-clients="16+">16+</button>
                     </div>
@@ -78,19 +201,28 @@
                             <tr>
                                 <th scope="col">Bookkeeper</th>
                                 <th scope="col">Email</th>
-                                <th scope="col">Status</th>
                                 <th scope="col">Clients</th>
+                                <th scope="col">Created</th>
                                 <th scope="col">Last login</th>
+                                <th scope="col">Status</th>
                                 <th scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="bookkeepersTableBody">
                             <tr class="admin-table-empty">
-                                <td colspan="6">No bookkeepers available yet.</td>
+                                <td colspan="7">No bookkeepers available yet.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+                <nav class="admin-bookkeeper-pagination" id="bookkeepersPagination" aria-label="Bookkeeper directory pages" hidden>
+                    <span id="bookkeepersPageRange">0 bookkeepers</span>
+                    <div class="admin-bookkeeper-page-actions">
+                        <button type="button" class="btn admin-audit-page-button" id="bookkeepersPreviousPage">Previous</button>
+                        <span id="bookkeepersPageStatus">Page 1 of 1</span>
+                        <button type="button" class="btn admin-audit-page-button" id="bookkeepersNextPage">Next</button>
+                    </div>
+                </nav>
             </article>
         </div>
         <div class="col-lg-4 d-grid gap-3">
@@ -102,7 +234,7 @@
                 <ul class="admin-status-list">
                     <li class="admin-status-item"><span>Approved</span><span class="admin-status-chip approved" id="bookkeepersApprovedCount">0</span></li>
                     <li class="admin-status-item"><span>Deactivated</span><span class="admin-status-chip suspended" id="bookkeepersDeactivatedSummary">0</span></li>
-                    <li class="admin-status-item"><span>Inactive</span><span class="admin-status-chip inactive" id="bookkeepersInactiveCount">0</span></li>
+                    <li class="admin-status-item"><span>Rejected</span><span class="admin-status-chip inactive" id="bookkeepersRejectedCount">0</span></li>
                 </ul>
             </article>
             <article class="dashboard-card admin-card">
@@ -118,7 +250,6 @@
             </article>
         </div>
     </div>
-
 </section>
 
 <div class="modal fade" id="bookkeeperActionModal" tabindex="-1" aria-labelledby="bookkeeperActionModalLabel" aria-hidden="true">
@@ -131,6 +262,12 @@
             <div class="modal-body">
                 <p class="mb-3" id="bookkeeperActionModalMessage">Confirm this action.</p>
                 <div class="alert alert-warning mb-0" id="bookkeeperActionModalWarning" hidden></div>
+                <div class="mt-3">
+                    <label class="form-label" for="bookkeeperActionPasswordInput">Admin password</label>
+                    <input type="password" class="form-control" id="bookkeeperActionPasswordInput" autocomplete="current-password" placeholder="Enter your admin password">
+                    <div class="form-text">Required for account access changes.</div>
+                    <div class="invalid-feedback">Please enter your admin password.</div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
@@ -147,9 +284,10 @@
         urls: {
             bookkeepersApi: "{% url 'api_admin_bookkeepers' %}",
             bookkeepersBaseApi: "{% url 'api_admin_bookkeepers' %}",
+            deactivationRequestsBaseApi: "/api/admin/bookkeepers/deactivation-requests/",
             loginPage: "{% url 'login' %}",
         },
     };
 </script>
-<script src="{% static 'js/admin_bookkeepers_page.js' %}"></script>
+<script src="{% static 'js/admin_bookkeepers_page.js' %}?v=20260714-pagination"></script>
 {% endblock %}

@@ -68,7 +68,6 @@
 <section class="dashboard-content">
     <div class="settings-layout">
         <nav class="settings-nav" aria-label="Settings sections">
-            <a class="settings-nav-link" href="#settingsDefaults">Workspace Defaults</a>
             <a class="settings-nav-link" href="#settingsAppearance">Appearance</a>
             <a class="settings-nav-link" href="#settingsNotifications">Notifications</a>
             <a class="settings-nav-link" href="#settingsSecurity">Security</a>
@@ -76,67 +75,6 @@
         </nav>
 
         <div class="settings-panels">
-            <form class="dashboard-card settings-card" id="settingsDefaults" data-settings-section>
-                <div class="settings-card-head">
-                    <div>
-                        <h2>
-                            Workspace Defaults
-                            <span class="safebooks-tooltip-wrap">
-                                <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                <span class="safebooks-tooltip-content">Choose default report settings for faster generation.</span>
-                            </span>
-                        </h2>
-                    </div>
-                </div>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="settings-field-label" for="settingsDefaultScope">Default Client Scope</label>
-                        <select id="settingsDefaultScope" class="form-select settings-select">
-                            <option value="all">All clients</option>
-                            <option value="last">Last used client</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="settings-field-label" for="settingsDefaultReport">Default Report Type</label>
-                        <select id="settingsDefaultReport" class="form-select settings-select">
-                            <option value="financial_summary">Financial Summary</option>
-                            <option value="compliance_snapshot">Compliance Snapshot</option>
-                            <option value="client_remarks_overview">Client Remarks Overview</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="settings-field-label" for="settingsDefaultRange">Default Report Date Range</label>
-                        <select id="settingsDefaultRange" class="form-select settings-select">
-                            <option value="ytd">Year-to-date</option>
-                            <option value="30">Last 30 days</option>
-                            <option value="90">Last 90 days</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6" data-custom-range-field hidden>
-                        <label class="settings-field-label" for="settingsDefaultRangeFrom">Custom Range From</label>
-                        <input type="date" id="settingsDefaultRangeFrom" class="form-control settings-input" placeholder="YYYY-MM-DD">
-                    </div>
-                    <div class="col-md-6" data-custom-range-field hidden>
-                        <label class="settings-field-label" for="settingsDefaultRangeTo">Custom Range To</label>
-                        <input type="date" id="settingsDefaultRangeTo" class="form-control settings-input" placeholder="YYYY-MM-DD">
-                    </div>
-                </div>
-
-                <div class="settings-section-footer">
-                    <span class="settings-save-status" data-settings-status>Saved</span>
-                    <button
-                        type="button"
-                        class="btn dashboard-action-btn primary settings-save-btn"
-                        data-settings-save
-                        data-settings-defaults-save
-                    >
-                        Save Defaults
-                    </button>
-                </div>
-            </form>
-
             <article class="dashboard-card settings-card" id="settingsAppearance" data-settings-section>
                 <div class="settings-card-head">
                     <div>
@@ -188,7 +126,12 @@
                 </div>
             </article>
 
-            <form class="dashboard-card settings-card" id="settingsNotifications" data-settings-section>
+            <article
+                class="dashboard-card settings-card"
+                id="settingsNotifications"
+                data-settings-section
+                data-client-record-email-notifications-enabled="{{ client_record_email_notifications_enabled|yesno:'true,false' }}"
+            >
                 <div class="settings-card-head">
                     <div>
                         <h2>
@@ -205,40 +148,26 @@
                     <div class="settings-toggle-row">
                         <div>
                             <p class="settings-field-label">
-                                Email Summary
+                                Client Record Emails
                                 <span class="safebooks-tooltip-wrap">
                                     <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                    <span class="safebooks-tooltip-content">Weekly summaries sent to your email.</span>
+                                    <span class="safebooks-tooltip-content">Send an email to the client's saved email address after a new record is added.</span>
                                 </span>
                             </p>
+                            <p class="settings-field-hint">Applies only when the client has an email address saved.</p>
                         </div>
                         <label class="settings-switch">
-                            <input type="checkbox" id="settingsNotifySummary" aria-label="Enable email summary notifications">
-                            <span class="settings-switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="settings-toggle-row">
-                        <div>
-                            <p class="settings-field-label">
-                                Compliance Alerts
-                                <span class="safebooks-tooltip-wrap">
-                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                    <span class="safebooks-tooltip-content">Notify when filings are pending.</span>
-                                </span>
-                            </p>
-                        </div>
-                        <label class="settings-switch">
-                            <input type="checkbox" id="settingsNotifyCompliance" aria-label="Enable compliance alerts">
+                            <input type="checkbox" id="settingsClientRecordEmailsToggle" aria-label="Email client after a new record is added">
                             <span class="settings-switch-slider"></span>
                         </label>
                     </div>
                 </div>
 
                 <div class="settings-section-footer">
-                    <span class="settings-save-status" data-settings-status>Preview only</span>
-                    <button type="button" class="btn dashboard-action-btn primary settings-save-btn" data-planned-feature="Save notifications">Save Notifications</button>
+                    <span class="settings-inline-status" id="settingsClientRecordEmailsFeedback" aria-live="polite"></span>
+                    <span class="settings-status-pill" id="settingsClientRecordEmailsStatus">On</span>
                 </div>
-            </form>
+            </article>
 
             <article class="dashboard-card settings-card" id="settingsSecurity" data-settings-section>
                 <div class="settings-card-head">
@@ -455,10 +384,68 @@
                 <div class="settings-planned-row">
                     <div>
                         <p class="settings-field-label">Request account deactivation</p>
+                        <p class="settings-field-hint" id="settingsDeactivationRequestHint">
+                            {% if deactivation_request_pending %}
+                            Request pending admin review.
+                            {% else %}
+                            Submit a request for admin review before this account is disabled.
+                            {% endif %}
+                        </p>
                     </div>
-                    <button type="button" class="btn dashboard-action-btn outline settings-planned-btn" data-planned-feature="Request account deactivation">Request Deactivation</button>
+                    <button
+                        type="button"
+                        class="btn dashboard-action-btn outline settings-planned-btn"
+                        id="settingsOpenDeactivationRequestModal"
+                        data-bs-toggle="modal"
+                        data-bs-target="#settingsDeactivationRequestModal"
+                        {% if deactivation_request_pending %}disabled aria-disabled="true"{% endif %}
+                    >
+                        {% if deactivation_request_pending %}Request Pending{% else %}Request Deactivation{% endif %}
+                    </button>
                 </div>
             </article>
+
+            <div class="modal fade settings-manage-modal" id="settingsDeactivationRequestModal" tabindex="-1" aria-labelledby="settingsDeactivationRequestModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content" id="settingsDeactivationRequestForm" novalidate>
+                        <div class="modal-header">
+                            <h2 class="modal-title h5" id="settingsDeactivationRequestModalLabel">Request Account Deactivation</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="settings-field-hint mb-3">
+                                Your account stays active until a system admin reviews this request.
+                            </p>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="settings-field-label" for="settingsDeactivationReason">Reason</label>
+                                    <textarea id="settingsDeactivationReason" class="form-control settings-input" rows="3" maxlength="255" placeholder="Optional note for the admin"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="settings-field-label" for="settingsDeactivationPassword">Current Password</label>
+                                    <div class="auth-password-field">
+                                        <div class="auth-password-wrap">
+                                            <input type="password" id="settingsDeactivationPassword" class="form-control auth-input" autocomplete="current-password" placeholder="Enter current password" required>
+                                            <button type="button" class="auth-password-toggle" data-password-toggle-target="settingsDeactivationPassword" aria-label="Show password">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <span class="settings-inline-status settings-password-status" id="settingsDeactivationRequestStatus" role="status" aria-live="polite"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="settings-security-buttons">
+                                <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn dashboard-action-btn primary" id="settingsDeactivationRequestButton">Submit Request</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -473,10 +460,11 @@
             loginPage: "{% url 'login' %}",
             settingsPage: "{% url 'settings' %}",
             profilePage: "{% url 'profile' %}",
-            workspaceDefaultsApi: "{% url 'api_workspace_defaults' %}",
             securityChangePasswordApi: "{% url 'api_security_change_password' %}",
             securityLoginAlertsApi: "{% url 'api_security_login_alerts' %}",
-            securityClientDetailsAccessPreferenceApi: "{% url 'api_security_client_details_access_preference' %}"
+            clientRecordEmailNotificationsApi: "{% url 'api_settings_client_record_email_notifications' %}",
+            securityClientDetailsAccessPreferenceApi: "{% url 'api_security_client_details_access_preference' %}",
+            deactivationRequestApi: "{% url 'api_settings_deactivation_request' %}"
         },
         sidebarStateKey: "safebooks.sidebarCollapsed",
         desktopQuery: "(min-width: 992px)",

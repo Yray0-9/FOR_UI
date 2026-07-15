@@ -9,6 +9,11 @@
     const approvalsStatusFilters = Array.from(document.querySelectorAll("[data-approval-status]"));
     const approvalsCountTag = document.getElementById("approvalsCountTag");
     const approvalsRefreshButton = document.getElementById("approvalsRefreshButton");
+    const approvalsPagination = document.getElementById("approvalsPagination");
+    const approvalsPageRange = document.getElementById("approvalsPageRange");
+    const approvalsPageStatus = document.getElementById("approvalsPageStatus");
+    const approvalsPreviousPage = document.getElementById("approvalsPreviousPage");
+    const approvalsNextPage = document.getElementById("approvalsNextPage");
 
     const approvalsPendingCount = document.getElementById("approvalsPendingCount");
     const approvalsApprovedCount = document.getElementById("approvalsApprovedCount");
@@ -17,6 +22,7 @@
     const approvalsRejectedToday = document.getElementById("approvalsRejectedToday");
 
     const approvalsActionModal = document.getElementById("approvalsActionModal");
+    const approvalDetailsModal = document.getElementById("approvalDetailsModal");
     const approvalsActionModalLabel = document.getElementById("approvalsActionModalLabel");
     const approvalsActionModalMessage = document.getElementById("approvalsActionModalMessage");
     const approvalsActionConfirm = document.getElementById("approvalsActionConfirm");
@@ -24,11 +30,24 @@
     const approvalsActionReasonInput = document.getElementById("approvalsActionReasonInput");
 
     const approvalDetailEmpty = document.getElementById("approvalDetailEmpty");
-    const approvalDetailList = document.getElementById("approvalDetailList");
+    const approvalDetailPanel = document.getElementById("approvalDetailPanel");
+    const approvalDetailInitials = document.getElementById("approvalDetailInitials");
     const approvalDetailName = document.getElementById("approvalDetailName");
     const approvalDetailEmail = document.getElementById("approvalDetailEmail");
+    const approvalDetailUsername = document.getElementById("approvalDetailUsername");
     const approvalDetailDate = document.getElementById("approvalDetailDate");
     const approvalDetailStatus = document.getElementById("approvalDetailStatus");
+    const approvalDetailVerified = document.getElementById("approvalDetailVerified");
+    const approvalDetailGoogle = document.getElementById("approvalDetailGoogle");
+    const approvalDetailLastLogin = document.getElementById("approvalDetailLastLogin");
+    const approvalDetailApprovedBy = document.getElementById("approvalDetailApprovedBy");
+    const approvalDetailReasonRow = document.getElementById("approvalDetailReasonRow");
+    const approvalDetailReason = document.getElementById("approvalDetailReason");
+    const approvalNotificationPreview = document.getElementById("approvalNotificationPreview");
+    const approvalNotificationText = document.getElementById("approvalNotificationText");
+    const approvalEmailDeliveryRow = document.getElementById("approvalEmailDeliveryRow");
+    const approvalEmailDeliveryStatus = document.getElementById("approvalEmailDeliveryStatus");
+    const approvalEmailRetryButton = document.getElementById("approvalEmailRetryButton");
 
     const uiToastContainer = document.getElementById("uiToastContainer");
 
@@ -67,6 +86,27 @@
         return dateFormatter.format(parsed);
     };
 
+    const getInitials = (name, fallback) => {
+        const source = String(name || fallback || "").trim();
+        if (!source) {
+            return "--";
+        }
+
+        const parts = source.split(/\s+/).filter(Boolean);
+        if (parts.length === 1) {
+            return parts[0].slice(0, 2).toUpperCase();
+        }
+        return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+    };
+
+    const setChip = (element, label, className) => {
+        if (!element) {
+            return;
+        }
+        element.textContent = label;
+        element.className = `admin-status-chip ${className}`;
+    };
+
     const resolveStatusMeta = (statusValue) => {
         const status = String(statusValue || "").toLowerCase();
         if (status === "pending") {
@@ -89,8 +129,14 @@
             if (approvalDetailEmpty) {
                 approvalDetailEmpty.hidden = false;
             }
-            if (approvalDetailList) {
-                approvalDetailList.hidden = true;
+            if (approvalDetailPanel) {
+                approvalDetailPanel.hidden = true;
+            }
+            if (approvalNotificationPreview) {
+                approvalNotificationPreview.hidden = true;
+            }
+            if (approvalEmailDeliveryRow) {
+                approvalEmailDeliveryRow.hidden = true;
             }
             return;
         }
@@ -99,8 +145,11 @@
         if (approvalDetailEmpty) {
             approvalDetailEmpty.hidden = true;
         }
-        if (approvalDetailList) {
-            approvalDetailList.hidden = false;
+        if (approvalDetailPanel) {
+            approvalDetailPanel.hidden = false;
+        }
+        if (approvalDetailInitials) {
+            approvalDetailInitials.textContent = getInitials(approval.full_name, approval.email);
         }
         if (approvalDetailName) {
             approvalDetailName.textContent = approval.full_name || "-";
@@ -108,26 +157,76 @@
         if (approvalDetailEmail) {
             approvalDetailEmail.textContent = approval.email || "-";
         }
+        if (approvalDetailUsername) {
+            approvalDetailUsername.textContent = approval.username || "-";
+        }
         if (approvalDetailDate) {
             approvalDetailDate.textContent = formatDate(approval.created_at);
         }
-        if (approvalDetailStatus) {
-            approvalDetailStatus.textContent = statusMeta.label;
-            approvalDetailStatus.className = `admin-status-chip ${statusMeta.className}`;
+        setChip(approvalDetailStatus, statusMeta.label, statusMeta.className);
+
+        if (approvalDetailVerified) {
+            const verified = Boolean(approval.email_verified);
+            setChip(approvalDetailVerified, verified ? "Email verified" : "Email unverified", verified ? "approved" : "pending");
+        }
+        if (approvalDetailGoogle) {
+            const linked = Boolean(approval.google_linked);
+            setChip(approvalDetailGoogle, linked ? "Google linked" : "Manual account", linked ? "approved" : "inactive");
+        }
+        if (approvalDetailLastLogin) {
+            approvalDetailLastLogin.textContent = approval.last_login ? formatDate(approval.last_login) : "Never";
+        }
+        if (approvalDetailApprovedBy) {
+            approvalDetailApprovedBy.textContent = approval.approved_by || "-";
+        }
+        if (approvalDetailReasonRow && approvalDetailReason) {
+            const reason = String(approval.rejection_reason || "").trim();
+            approvalDetailReasonRow.hidden = !reason;
+            approvalDetailReason.textContent = reason || "-";
+        }
+        if (approvalNotificationPreview) {
+            approvalNotificationPreview.hidden = false;
+        }
+        if (approvalNotificationText) {
+            approvalNotificationText.textContent = approval.notification_preview || "No notification prepared.";
+        }
+
+        const delivery = approval.email_delivery || {};
+        const deliveryStatus = String(delivery.status || "").toLowerCase();
+        if (approvalEmailDeliveryRow) {
+            approvalEmailDeliveryRow.hidden = !deliveryStatus;
+        }
+        if (approvalEmailDeliveryStatus && deliveryStatus) {
+            const deliveryMeta = {
+                sent: { label: "Sent", className: "approved" },
+                skipped: { label: "Skipped", className: "suspended" },
+                failed: { label: "Failed", className: "rejected" },
+            }[deliveryStatus] || { label: "Not sent", className: "inactive" };
+            setChip(approvalEmailDeliveryStatus, deliveryMeta.label, deliveryMeta.className);
+            approvalEmailDeliveryStatus.title = delivery.reason || deliveryMeta.label;
+        }
+        if (approvalEmailRetryButton) {
+            approvalEmailRetryButton.hidden = deliveryStatus !== "failed";
+            approvalEmailRetryButton.dataset.approvalId = String(approval.id || "");
         }
     };
 
     const setCounts = (counts, total) => {
-        if (!approvalsCountTag) {
-            return;
-        }
-
         const totalValue = Number.isFinite(total) ? total : 0;
-        approvalsCountTag.textContent = `${totalValue} request${totalValue === 1 ? "" : "s"}`;
+
+        const approvalsTotalCount = document.getElementById("approvalsTotalCount");
+        if (approvalsTotalCount) {
+            approvalsTotalCount.textContent = String(totalValue);
+        }
 
         if (approvalsPendingCount) {
             approvalsPendingCount.textContent = String((counts && counts.pending) || 0);
         }
+        const summaryPendingCount = document.getElementById("summaryPendingCount");
+        if (summaryPendingCount) {
+            summaryPendingCount.textContent = String((counts && counts.pending) || 0);
+        }
+
         if (approvalsApprovedCount) {
             approvalsApprovedCount.textContent = String((counts && counts.approved) || 0);
         }
@@ -142,24 +241,41 @@
         }
     };
 
+    const renderPagination = (pagination) => {
+        const totalCount = Number(pagination && pagination.total_count) || 0;
+        const page = Number(pagination && pagination.page) || 1;
+        const totalPages = Number(pagination && pagination.total_pages) || 1;
+        const startIndex = Number(pagination && pagination.start_index) || 0;
+        const endIndex = Number(pagination && pagination.end_index) || 0;
+
+        state.page = page;
+        if (approvalsCountTag) {
+            approvalsCountTag.textContent = `${totalCount} request${totalCount === 1 ? "" : "s"}`;
+        }
+        if (approvalsPagination) {
+            approvalsPagination.hidden = totalCount === 0 || totalPages <= 1;
+        }
+        if (approvalsPageRange) {
+            approvalsPageRange.textContent = totalCount
+                ? `Showing ${startIndex}-${endIndex} of ${totalCount}`
+                : "No matching requests";
+        }
+        if (approvalsPageStatus) {
+            approvalsPageStatus.textContent = `Page ${page} of ${totalPages}`;
+        }
+        if (approvalsPreviousPage) {
+            approvalsPreviousPage.disabled = !Boolean(pagination && pagination.has_previous);
+        }
+        if (approvalsNextPage) {
+            approvalsNextPage.disabled = !Boolean(pagination && pagination.has_next);
+        }
+    };
+
     const renderEmptyRow = (message) => {
         approvalsTableBody.innerHTML = `
             <tr class="admin-table-empty">
-                <td colspan="5">${escapeHtml(message || "No approval requests yet.")}</td>
+                <td colspan="4">${escapeHtml(message || "No approval requests yet.")}</td>
             </tr>
-        `;
-    };
-
-    const buildActionButton = (label, action, approvalId, enabled, extraClass) => {
-        const classes = ["admin-action-btn", extraClass];
-        if (enabled) {
-            classes.push("is-enabled");
-        }
-
-        return `
-            <button type="button" class="${classes.filter(Boolean).join(" ")}" data-action="${action}" data-approval-id="${approvalId}" ${enabled ? "" : "disabled"}>
-                ${escapeHtml(label)}
-            </button>
         `;
     };
 
@@ -173,22 +289,13 @@
         approvalsTableBody.innerHTML = approvals
             .map((approval) => {
                 const statusMeta = resolveStatusMeta(approval.status);
-                const canApprove = approval.status === "pending" || approval.status === "rejected";
-                const canReject = approval.status === "pending";
 
                 return `
-                    <tr data-approval-id="${approval.id}">
-                        <td>${escapeHtml(approval.full_name || "-")}</td>
-                        <td>${escapeHtml(approval.email || "-")}</td>
+                    <tr data-approval-id="${approval.id}" tabindex="0" style="cursor: pointer;" aria-label="Select approval request for ${escapeHtml(approval.full_name || approval.email || "bookkeeper")}">
+                        <td title="${escapeHtml(approval.full_name || "-")}">${escapeHtml(approval.full_name || "-")}</td>
+                        <td title="${escapeHtml(approval.email || "-")}">${escapeHtml(approval.email || "-")}</td>
                         <td>${escapeHtml(formatDate(approval.created_at))}</td>
                         <td><span class="admin-status-chip ${statusMeta.className}">${escapeHtml(statusMeta.label)}</span></td>
-                        <td>
-                            <div class="admin-table-actions">
-                                ${buildActionButton("Approve", "approve", approval.id, canApprove, "approve")}
-                                ${buildActionButton("Reject", "reject", approval.id, canReject, "reject")}
-                                ${buildActionButton("View details", "detail", approval.id, true, "detail")}
-                            </div>
-                        </td>
                     </tr>
                 `;
             })
@@ -221,6 +328,7 @@
 
         if (approvalsActionReasonInput) {
             approvalsActionReasonInput.value = "";
+            approvalsActionReasonInput.classList.remove("is-invalid");
         }
 
         if (action === "approve") {
@@ -228,7 +336,7 @@
                 approvalsActionModalLabel.textContent = "Approve bookkeeper account";
             }
             if (approvalsActionModalMessage) {
-                approvalsActionModalMessage.textContent = `Approve ${name}?`;
+                approvalsActionModalMessage.textContent = `Approve ${name}? This will allow the bookkeeper to access the SafeBooks workspace.`;
             }
             if (approvalsActionReasonWrap) {
                 approvalsActionReasonWrap.hidden = true;
@@ -243,7 +351,7 @@
                 approvalsActionModalLabel.textContent = "Reject bookkeeper account";
             }
             if (approvalsActionModalMessage) {
-                approvalsActionModalMessage.textContent = `Reject ${name}?`;
+                approvalsActionModalMessage.textContent = `Reject ${name}? Add a clear reason before confirming this decision.`;
             }
             if (approvalsActionReasonWrap) {
                 approvalsActionReasonWrap.hidden = false;
@@ -274,6 +382,8 @@
         if (state.sort) {
             searchParams.set("sort", state.sort);
         }
+        searchParams.set("page", String(state.page));
+        searchParams.set("page_size", String(state.pageSize));
 
         return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
     };
@@ -325,6 +435,7 @@
             approvalsCache = Array.isArray(payload.approvals) ? payload.approvals : [];
             renderApprovals(approvalsCache);
             setCounts(payload.counts, payload.total_count);
+            renderPagination(payload.pagination || {});
 
             if (approvalsCache.length > 0 && !selectedApprovalId) {
                 selectedApprovalId = approvalsCache[0].id;
@@ -338,6 +449,7 @@
                     selectedApprovalId = null;
                 }
             }
+            markSelectedRow();
         } catch (error) {
             renderEmptyRow("Unable to load approvals right now.");
         }
@@ -347,7 +459,7 @@
         const url = buildActionUrl(approvalId, action);
         if (!url) {
             showToast("Approval action is unavailable.", "warning");
-            return;
+            return false;
         }
 
         let payload = {};
@@ -377,14 +489,118 @@
 
             if (!response.ok || !result || !result.ok) {
                 showToast(result && result.message ? result.message : "Action failed.", "warning");
-                return;
+                if (result && result.refresh_required) {
+                    await fetchApprovals();
+                    return true;
+                }
+                return false;
             }
 
             showToast(result.message || "Action completed.", "success");
             await fetchApprovals();
+            return true;
         } catch (error) {
             showToast("Unable to complete action right now.", "warning");
+            return false;
         }
+    };
+
+    const retryDecisionEmail = async (approvalId) => {
+        const url = buildActionUrl(approvalId, "retry-email");
+        if (!url) {
+            showToast("Email retry is unavailable.", "warning");
+            return;
+        }
+
+        const csrfToken = shared && typeof shared.getCookieValue === "function"
+            ? shared.getCookieValue("csrftoken")
+            : "";
+
+        if (approvalEmailRetryButton) {
+            approvalEmailRetryButton.disabled = true;
+        }
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+                credentials: "same-origin",
+            });
+            const result = shared && typeof shared.parseJsonSafe === "function"
+                ? await shared.parseJsonSafe(response)
+                : await response.json();
+
+            if (!response.ok || !result || !result.ok) {
+                showToast(result && result.message ? result.message : "Unable to retry decision email.", "warning");
+                return;
+            }
+
+            showToast(result.message || "Decision email retry completed.", result.email_delivery && result.email_delivery.status === "sent" ? "success" : "warning");
+            await fetchApprovals();
+        } catch (error) {
+            showToast("Unable to retry decision email right now.", "warning");
+        } finally {
+            if (approvalEmailRetryButton) {
+                approvalEmailRetryButton.disabled = false;
+            }
+        }
+    };
+
+    const markSelectedRow = () => {
+        approvalsTableBody.querySelectorAll("tr[data-approval-id]").forEach((row) => {
+            const rowId = Number(row.dataset.approvalId || 0);
+            row.classList.toggle("is-selected", Boolean(selectedApprovalId && rowId === selectedApprovalId));
+        });
+    };
+
+    let detailsModalInstance = null;
+    if (approvalDetailsModal && window.bootstrap && window.bootstrap.Modal) {
+        detailsModalInstance = new window.bootstrap.Modal(approvalDetailsModal);
+    }
+
+    const openApprovalDetails = (approval) => {
+        if (!approval || !detailsModalInstance) {
+            return;
+        }
+
+        setDetailState(approval);
+
+        const approveBtn = document.getElementById("approvalDetailApproveBtn");
+        const rejectBtn = document.getElementById("approvalDetailRejectBtn");
+
+        if (approveBtn) {
+            const canApprove = approval.status === "pending" || approval.status === "rejected";
+            approveBtn.disabled = !canApprove;
+            approveBtn.onclick = () => {
+                detailsModalInstance.hide();
+                openActionModal(approval, "approve");
+            };
+        }
+
+        if (rejectBtn) {
+            const canReject = approval.status === "pending";
+            rejectBtn.disabled = !canReject;
+            rejectBtn.onclick = () => {
+                detailsModalInstance.hide();
+                openActionModal(approval, "reject");
+            };
+        }
+
+        detailsModalInstance.show();
+    };
+
+    const selectApprovalRow = (approvalId) => {
+        const selected = getApprovalById(approvalId);
+        if (!selected) {
+            return;
+        }
+
+        selectedApprovalId = approvalId;
+        setDetailState(selected);
+        markSelectedRow();
+        openApprovalDetails(selected);
     };
 
     const setActiveFilter = (nextStatus) => {
@@ -404,6 +620,8 @@
         }
         searchDebounceId = window.setTimeout(() => {
             state.search = approvalsSearchInput.value.trim();
+            state.page = 1;
+            selectedApprovalId = null;
             fetchApprovals();
         }, 320);
     };
@@ -412,6 +630,8 @@
         status: "all",
         search: "",
         sort: "newest",
+        page: 1,
+        pageSize: 10,
     };
 
     let approvalsCache = [];
@@ -422,12 +642,16 @@
         button.addEventListener("click", () => {
             const nextStatus = String(button.dataset.approvalStatus || "all");
             setActiveFilter(nextStatus);
+            state.page = 1;
+            selectedApprovalId = null;
             fetchApprovals();
         });
     });
 
     approvalsSortSelect.addEventListener("change", () => {
         state.sort = String(approvalsSortSelect.value || "newest");
+        state.page = 1;
+        selectedApprovalId = null;
         fetchApprovals();
     });
 
@@ -439,48 +663,43 @@
         });
     }
 
+    if (approvalsPreviousPage) {
+        approvalsPreviousPage.addEventListener("click", () => {
+            if (state.page <= 1) {
+                return;
+            }
+            state.page -= 1;
+            selectedApprovalId = null;
+            fetchApprovals();
+        });
+    }
+
+    if (approvalsNextPage) {
+        approvalsNextPage.addEventListener("click", () => {
+            state.page += 1;
+            selectedApprovalId = null;
+            fetchApprovals();
+        });
+    }
+
     approvalsTableBody.addEventListener("click", (event) => {
-        const actionButton = event.target.closest("button[data-action]");
         const row = event.target.closest("tr[data-approval-id]");
-
-        if (actionButton) {
-            const action = String(actionButton.dataset.action || "");
-            const approvalId = Number(actionButton.dataset.approvalId || 0);
-            if (!approvalId || !action) {
-                return;
-            }
-
-            if (action === "detail") {
-                const selected = getApprovalById(approvalId);
-                selectedApprovalId = approvalId;
-                setDetailState(selected);
-                return;
-            }
-
-            if (action === "approve") {
-                const selected = getApprovalById(approvalId);
-                selectedApprovalId = approvalId;
-                setDetailState(selected);
-                openActionModal(selected, "approve");
-                return;
-            }
-
-            if (action === "reject") {
-                const selected = getApprovalById(approvalId);
-                selectedApprovalId = approvalId;
-                setDetailState(selected);
-                openActionModal(selected, "reject");
-                return;
-            }
-        }
-
         if (row) {
             const approvalId = Number(row.dataset.approvalId || 0);
-            const selected = getApprovalById(approvalId);
-            if (selected) {
-                selectedApprovalId = approvalId;
-                setDetailState(selected);
-            }
+            selectApprovalRow(approvalId);
+        }
+    });
+
+    approvalsTableBody.addEventListener("keydown", (event) => {
+        const row = event.target.closest("tr[data-approval-id]");
+        if (!row || !["Enter", " "].includes(event.key)) {
+            return;
+        }
+
+        event.preventDefault();
+        const approvalId = Number(row.dataset.approvalId || 0);
+        if (approvalId) {
+            selectApprovalRow(approvalId);
         }
     });
 
@@ -495,13 +714,40 @@
                 ? approvalsActionReasonInput.value.trim()
                 : "";
 
-            approvalsActionConfirm.disabled = true;
-            await runApprovalAction(id, action, rejectionReason);
-            approvalsActionConfirm.disabled = false;
-            pendingAction = null;
+            if (action === "reject" && !rejectionReason) {
+                if (approvalsActionReasonInput) {
+                    approvalsActionReasonInput.classList.add("is-invalid");
+                    approvalsActionReasonInput.focus();
+                }
+                showToast("Add a rejection reason before confirming.", "warning");
+                return;
+            }
 
-            if (actionModalInstance) {
+            approvalsActionConfirm.disabled = true;
+            const completed = await runApprovalAction(id, action, rejectionReason);
+            approvalsActionConfirm.disabled = false;
+
+            if (completed) {
+                pendingAction = null;
+            }
+
+            if (completed && actionModalInstance) {
                 actionModalInstance.hide();
+            }
+        });
+    }
+
+    if (approvalsActionReasonInput) {
+        approvalsActionReasonInput.addEventListener("input", () => {
+            approvalsActionReasonInput.classList.remove("is-invalid");
+        });
+    }
+
+    if (approvalEmailRetryButton) {
+        approvalEmailRetryButton.addEventListener("click", () => {
+            const approvalId = Number(approvalEmailRetryButton.dataset.approvalId || selectedApprovalId || 0);
+            if (approvalId) {
+                retryDecisionEmail(approvalId);
             }
         });
     }

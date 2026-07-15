@@ -4,19 +4,133 @@
 {% block page_title %}Approvals{% endblock %}
 {% block page_heading %}Approvals{% endblock %}
 {% block page_subtitle %}
-<!-- <p class="dashboard-page-subtitle">Review bookkeeper access requests and track approval outcomes.</p> -->
+<p class="dashboard-page-subtitle">Review bookkeeper access requests and track approval outcomes.</p>
+{% endblock %}
+
+{% block skeleton %}
+<div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+        <div class="dash-sk-layout">
+            <aside class="dash-sk-sidebar">
+                <div class="skeleton-shimmer dash-sk-logo"></div>
+                <div class="dash-sk-nav">
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                </div>
+            </aside>
+            <section class="dash-sk-main">
+                <div class="dash-sk-topbar">
+                    <div class="skeleton-shimmer dash-sk-title"></div>
+                    <div class="skeleton-shimmer dash-sk-search"></div>
+                    <div class="skeleton-shimmer dash-sk-profile"></div>
+                </div>
+                <div class="dash-sk-content">
+                    <div class="dash-sk-left">
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                                <span class="skeleton-shimmer" style="height: 14px;"></span>
+                            </div>
+                            <div class="dash-sk-table-row" style="margin-top: 10px;">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                            <div class="dash-sk-table-row">
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                                <span class="skeleton-shimmer"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dash-sk-right">
+                        <div class="dash-sk-card">
+                            <div class="skeleton-shimmer dash-sk-card-head"></div>
+                            <div class="skeleton-shimmer dash-sk-line" style="margin-bottom: 8px;"></div>
+                            <div class="skeleton-shimmer dash-sk-line" style="margin-bottom: 8px;"></div>
+                            <div class="skeleton-shimmer dash-sk-line"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block content %}
 <section class="dashboard-content admin-dashboard">
-    <div class="row g-3 mt-1">
+    <!-- Top KPI Row -->
+    <div class="row g-3">
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-clock-history"></i></span>
+                <div>
+                    <p class="stat-label">Pending requests</p>
+                    <h3 id="approvalsPendingCount">0</h3>
+                    <p class="stat-note">Awaiting admin review</p>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-person-check"></i></span>
+                <div>
+                    <p class="stat-label">Approved today</p>
+                    <h3 id="approvalsApprovedToday">0</h3>
+                    <p class="stat-note">Restoring workspace access</p>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-person-x"></i></span>
+                <div>
+                    <p class="stat-label">Rejected today</p>
+                    <h3 id="approvalsRejectedToday">0</h3>
+                    <p class="stat-note">Decision history recorded</p>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-journal-text"></i></span>
+                <div>
+                    <p class="stat-label">Total requests</p>
+                    <h3 id="approvalsTotalCount">0</h3>
+                    <p class="stat-note">Cumulative review volume</p>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="row g-3 mt-1 align-items-start">
         <div class="col-lg-8">
-            <article class="dashboard-card admin-card h-100">
+            <article class="dashboard-card admin-card admin-approval-queue-card">
                 <div class="dashboard-card-head">
                     <h2>Approval queue</h2>
                     <span class="dashboard-tag" id="approvalsCountTag">0 requests</span>
                 </div>
-            <!--    <p class="dashboard-section-hint">Review incoming bookkeeper access requests before approval.</p> -->
                 <div class="dashboard-table-toolbar" aria-label="Approval queue controls">
                     <div class="admin-approvals-toolbar-row d-flex align-items-center gap-2 w-100">
                         <label class="dashboard-table-search admin-approvals-search" aria-label="Search approvals by name or email">
@@ -36,7 +150,7 @@
                         <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-approval-status="rejected">Rejected</button>
                     </div>
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive admin-approvals-table-wrap">
                     <table class="table admin-table">
                         <thead>
                             <tr>
@@ -44,57 +158,115 @@
                                 <th scope="col">Email</th>
                                 <th scope="col">Request date</th>
                                 <th scope="col">Status</th>
-                                <th scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="approvalsTableBody">
                             <tr class="admin-table-empty">
-                                <td colspan="5">No approval requests yet.</td>
+                                <td colspan="4">No approval requests yet.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+                <nav class="admin-approval-pagination" id="approvalsPagination" aria-label="Approval queue pages" hidden>
+                    <span id="approvalsPageRange">0 requests</span>
+                    <div class="admin-approval-page-actions">
+                        <button type="button" class="btn admin-audit-page-button" id="approvalsPreviousPage">Previous</button>
+                        <span id="approvalsPageStatus">Page 1 of 1</span>
+                        <button type="button" class="btn admin-audit-page-button" id="approvalsNextPage">Next</button>
+                    </div>
+                </nav>
             </article>
         </div>
-        <div class="col-lg-4 d-grid gap-3">
+
+        <div class="col-lg-4">
             <article class="dashboard-card admin-card">
                 <div class="dashboard-card-head">
                     <h2>Approval summary</h2>
                 </div>
                 <ul class="admin-status-list">
-                    <li class="admin-status-item"><span>Pending</span><span class="admin-status-chip pending" id="approvalsPendingCount">0</span></li>
-                    <li class="admin-status-item"><span>Approved</span><span class="admin-status-chip approved" id="approvalsApprovedCount">0</span></li>
-                    <li class="admin-status-item"><span>Rejected</span><span class="admin-status-chip rejected" id="approvalsRejectedCount">0</span></li>
+                    <li class="admin-status-item"><span>Pending requests</span><span class="admin-status-chip pending" id="summaryPendingCount">0</span></li>
+                    <li class="admin-status-item"><span>Approved requests</span><span class="admin-status-chip approved" id="approvalsApprovedCount">0</span></li>
+                    <li class="admin-status-item"><span>Rejected requests</span><span class="admin-status-chip rejected" id="approvalsRejectedCount">0</span></li>
                 </ul>
-                <ul class="admin-status-list mt-3">
-                    <li class="admin-status-item"><span>Approved today</span><span id="approvalsApprovedToday">0</span></li>
-                    <li class="admin-status-item"><span>Rejected today</span><span id="approvalsRejectedToday">0</span></li>
-                </ul>
-            </article>
-            <article class="dashboard-card admin-card">
-                <div class="dashboard-card-head">
-                    <h2>Approval details</h2>
-                </div>
-             <!--   <p class="dashboard-panel-hint">Select a request to see reviewer details.</p> -->
-                <div class="admin-empty-state" id="approvalDetailEmpty">No approval selected yet.</div>
-                <ul class="admin-status-list mt-3" id="approvalDetailList" hidden>
-                    <li class="admin-status-item"><span>Bookkeeper</span><span id="approvalDetailName">--</span></li>
-                    <li class="admin-status-item"><span>Email</span><span id="approvalDetailEmail">--</span></li>
-                    <li class="admin-status-item"><span>Request date</span><span id="approvalDetailDate">--</span></li>
-                    <li class="admin-status-item"><span>Status</span><span class="admin-status-chip inactive" id="approvalDetailStatus">N/A</span></li>
-                </ul>
-            </article>
-            <article class="dashboard-card admin-card">
-                <div class="dashboard-card-head">
-                    <h2>Notification preview</h2>
-                </div>
-               <!-- <p class="dashboard-panel-hint">Approvals and rejections notify bookkeepers.</p> -->
-                <div class="admin-empty-state">No notification activity yet.</div>
             </article>
         </div>
     </div>
-
 </section>
+
+<div class="modal fade" id="approvalDetailsModal" tabindex="-1" aria-labelledby="approvalDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalDetailsModalLabel"><i class="bi bi-person-badge-fill text-primary me-2"></i>Approval Request Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-4">
+                    <!-- Left Column: User details -->
+                    <div class="col-md-6 border-end">
+                        <div class="admin-approval-person mb-3 d-flex align-items-center gap-3">
+                            <span class="admin-approval-avatar bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" id="approvalDetailInitials" style="width: 50px; height: 50px; font-size: 1.2rem;">--</span>
+                            <div>
+                                <h6 class="fw-bold mb-0" id="approvalDetailName">--</h6>
+                                <small class="text-muted d-block text-truncate" style="max-width: 220px;" id="approvalDetailEmail">--</small>
+                            </div>
+                        </div>
+                        <div class="admin-approval-signals d-flex gap-2 flex-wrap mb-4" aria-label="Selected account signals">
+                            <span class="admin-status-chip inactive" id="approvalDetailStatus">N/A</span>
+                            <span class="admin-status-chip inactive" id="approvalDetailVerified">Email unverified</span>
+                            <span class="admin-status-chip inactive" id="approvalDetailGoogle">Manual account</span>
+                        </div>
+                        <dl class="admin-detail-list">
+                            <div class="mb-2">
+                                <dt class="text-muted small fw-bold">Username</dt>
+                                <dd class="fw-semibold text-secondary" id="approvalDetailUsername">--</dd>
+                            </div>
+                            <div class="mb-2">
+                                <dt class="text-muted small fw-bold">Requested</dt>
+                                <dd class="fw-semibold text-secondary" id="approvalDetailDate">--</dd>
+                            </div>
+                            <div class="mb-2">
+                                <dt class="text-muted small fw-bold">Last login</dt>
+                                <dd class="fw-semibold text-secondary" id="approvalDetailLastLogin">Never</dd>
+                            </div>
+                            <div class="mb-2">
+                                <dt class="text-muted small fw-bold">Approved by</dt>
+                                <dd class="fw-semibold text-secondary" id="approvalDetailApprovedBy">--</dd>
+                            </div>
+                            <div class="mb-0" id="approvalDetailReasonRow" hidden>
+                                <dt class="text-muted small fw-bold">Rejection reason</dt>
+                                <dd class="p-2 bg-light rounded border-start border-3 border-danger font-monospace small" id="approvalDetailReason">--</dd>
+                            </div>
+                        </dl>
+                    </div>
+                    <!-- Right Column: Email preview -->
+                    <div class="col-md-6">
+                        <div class="d-flex flex-column h-100">
+                            <h6 class="text-muted small fw-bold mb-2">Notification Decision Message</h6>
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2" id="approvalEmailDeliveryRow" hidden>
+                                <span class="admin-status-chip inactive" id="approvalEmailDeliveryStatus">Not sent</span>
+                                <button type="button" class="btn dashboard-action-btn outline" id="approvalEmailRetryButton" hidden>
+                                    <i class="bi bi-arrow-clockwise"></i> Retry Email
+                                </button>
+                            </div>
+                            <div class="flex-grow-1 p-3 bg-light rounded border border-secondary-subtle" id="approvalNotificationPreview" hidden style="min-height: 150px;">
+                                <div class="d-flex align-items-center gap-2 mb-2 text-primary small fw-semibold">
+                                    <i class="bi bi-envelope-check-fill"></i>
+                                    <span>Decision email preview</span>
+                                </div>
+                                <p class="mb-0 text-secondary small" style="white-space: pre-wrap;" id="approvalNotificationText">No notification prepared.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn dashboard-action-btn outline" id="approvalDetailRejectBtn">Reject Request</button>
+                <button type="button" class="btn dashboard-action-btn primary" id="approvalDetailApproveBtn">Approve Request</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="approvalsActionModal" tabindex="-1" aria-labelledby="approvalsActionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -106,8 +278,10 @@
             <div class="modal-body">
                 <p class="mb-3" id="approvalsActionModalMessage">Confirm this action.</p>
                 <div id="approvalsActionReasonWrap" hidden>
-                    <label class="form-label" for="approvalsActionReasonInput">Optional rejection reason (admin only)</label>
-                    <textarea class="form-control" id="approvalsActionReasonInput" rows="3" placeholder="Add a short internal note (optional)"></textarea>
+                    <label class="form-label" for="approvalsActionReasonInput">Rejection reason</label>
+                    <textarea class="form-control" id="approvalsActionReasonInput" rows="3" maxlength="255" placeholder="Example: Missing required identity details"></textarea>
+                    <div class="form-text">Required before rejecting. Keep it short and clear for review history.</div>
+                    <div class="invalid-feedback">Please enter a rejection reason.</div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -129,5 +303,5 @@
         },
     };
 </script>
-<script src="{% static 'js/admin_approvals_page.js' %}"></script>
+<script src="{% static 'js/admin_approvals_page.js' %}?v=20260714-pagination"></script>
 {% endblock %}

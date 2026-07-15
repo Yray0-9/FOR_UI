@@ -9,11 +9,14 @@
     const highLoad = document.getElementById("adminDashboardHighLoad");
 
     const loadTableBody = document.getElementById("adminDashboardLoadTableBody");
+    const needsReviewList = document.getElementById("adminDashboardNeedsReviewList");
+    const needsReviewCount = document.getElementById("adminDashboardNeedsReviewCount");
+    const refreshButton = document.getElementById("adminDashboardRefreshButton");
 
     const statusPending = document.getElementById("adminDashboardStatusPending");
     const statusApproved = document.getElementById("adminDashboardStatusApproved");
     const statusDeactivated = document.getElementById("adminDashboardStatusDeactivated");
-    const statusInactive = document.getElementById("adminDashboardStatusInactive");
+    const statusRejected = document.getElementById("adminDashboardStatusRejected");
 
     const approvalNew = document.getElementById("adminDashboardApprovalNew");
     const approvalWaiting = document.getElementById("adminDashboardApprovalWaiting");
@@ -21,7 +24,7 @@
 
     const uiToastContainer = document.getElementById("uiToastContainer");
 
-    if (!totalBookkeepers || !pendingApprovals || !activeAccounts || !highLoad || !loadTableBody) {
+    if (!totalBookkeepers || !pendingApprovals || !activeAccounts || !highLoad || !loadTableBody || !needsReviewList) {
         return;
     }
 
@@ -51,12 +54,21 @@
             return { label: "Deactivated", className: "suspended" };
         }
         if (status === "rejected") {
-            return { label: "Inactive", className: "inactive" };
+            return { label: "Rejected", className: "inactive" };
         }
         if (status === "pending") {
             return { label: "Pending", className: "pending" };
         }
-        return { label: "Inactive", className: "inactive" };
+        return { label: "Unknown", className: "inactive" };
+    };
+
+    const getNumber = (value) => {
+        const numberValue = Number(value || 0);
+        return Number.isFinite(numberValue) ? numberValue : 0;
+    };
+
+    const pluralize = (count, singular, plural) => {
+        return `${count} ${count === 1 ? singular : plural || `${singular}s`}`;
     };
 
     const renderEmptyRow = (message) => {
@@ -65,6 +77,83 @@
                 <td colspan="3">${escapeHtml(message || "No load data available yet.")}</td>
             </tr>
         `;
+    };
+
+    const renderReviewEmpty = () => {
+        needsReviewList.innerHTML = `
+            <div class="admin-empty-state admin-review-empty">
+                No admin review items right now.
+            </div>
+        `;
+    };
+
+    const buildReviewCard = (options) => {
+        const config = options || {};
+        const className = String(config.className || "pending");
+        const iconClass = String(config.iconClass || "bi-info-circle");
+        const title = String(config.title || "Review item");
+        const meta = String(config.meta || "");
+        const href = String(config.href || "#");
+        const actionLabel = String(config.actionLabel || "Review");
+
+        return `
+            <a class="admin-review-card ${className}" href="${escapeHtml(href)}">
+                <span class="admin-review-icon"><i class="bi ${escapeHtml(iconClass)}"></i></span>
+                <span class="admin-review-copy">
+                    <strong>${escapeHtml(title)}</strong>
+                    <small>${escapeHtml(meta)}</small>
+                </span>
+                <span class="admin-review-action">${escapeHtml(actionLabel)}</span>
+            </a>
+        `;
+    };
+
+    const renderNeedsReview = (payload) => {
+        const review = payload.needs_review || {};
+        const pendingItems = Array.isArray(review.pending_approvals) ? review.pending_approvals : [];
+        const deactivationRequests = Array.isArray(review.deactivation_requests) ? review.deactivation_requests : [];
+        const totalAttention = getNumber(review.total_attention);
+
+        if (needsReviewCount) {
+            needsReviewCount.textContent = pluralize(totalAttention, "item");
+        }
+
+        const cards = [];
+
+        pendingItems.slice(0, 3).forEach((item) => {
+            const waitingDays = getNumber(item.waiting_days);
+            const meta = waitingDays > 0
+                ? `Waiting ${pluralize(waitingDays, "day")}`
+                : "New access request";
+            cards.push(buildReviewCard({
+                className: waitingDays >= 7 ? "overdue" : "pending",
+                iconClass: waitingDays >= 7 ? "bi-exclamation-triangle" : "bi-hourglass-split",
+                title: item.full_name || item.email || "Pending bookkeeper",
+                meta,
+                href: String(urls.approvalsPage || "#"),
+                actionLabel: "Open approvals",
+            }));
+        });
+
+        deactivationRequests.slice(0, 4).forEach((item) => {
+            const waitingDays = getNumber(item.waiting_days);
+            const clientCount = getNumber(item.client_count);
+            cards.push(buildReviewCard({
+                className: "pending",
+                iconClass: "bi-person-dash",
+                title: item.full_name || item.email || "Deactivation request",
+                meta: `${waitingDays > 0 ? `Waiting ${pluralize(waitingDays, "day")} - ` : ""}${pluralize(clientCount, "client")} assigned`,
+                href: String(urls.bookkeepersPage || "#"),
+                actionLabel: "Review request",
+            }));
+        });
+
+        if (!cards.length) {
+            renderReviewEmpty();
+            return;
+        }
+
+        needsReviewList.innerHTML = cards.join("");
     };
 
     const renderLoadSnapshot = (items) => {
@@ -76,9 +165,7 @@
         loadTableBody.innerHTML = items
             .map((item) => {
                 const statusMeta = resolveStatusMeta(item.status);
-                const countValue = Number.isFinite(item.client_count)
-                    ? item.client_count
-                    : Number(item.client_count || 0);
+                const countValue = getNumber(item.client_count);
 
                 return `
                     <tr>
@@ -93,38 +180,39 @@
 
     const setCounts = (payload) => {
         const kpis = payload.kpis || {};
-        totalBookkeepers.textContent = String(kpis.total_bookkeepers || 0);
-        pendingApprovals.textContent = String(kpis.pending_approvals || 0);
-        activeAccounts.textContent = String(kpis.active_accounts || 0);
-        highLoad.textContent = String(kpis.high_client_load || 0);
+        totalBookkeepers.textContent = String(getNumber(kpis.total_bookkeepers));
+        pendingApprovals.textContent = String(getNumber(kpis.pending_approvals));
+        activeAccounts.textContent = String(getNumber(kpis.active_accounts));
+        highLoad.textContent = String(getNumber(kpis.high_client_load));
 
         const statusOverview = payload.status_overview || {};
         if (statusPending) {
-            statusPending.textContent = String(statusOverview.pending || 0);
+            statusPending.textContent = String(getNumber(statusOverview.pending));
         }
         if (statusApproved) {
-            statusApproved.textContent = String(statusOverview.approved || 0);
+            statusApproved.textContent = String(getNumber(statusOverview.approved));
         }
         if (statusDeactivated) {
-            statusDeactivated.textContent = String(statusOverview.deactivated || 0);
+            statusDeactivated.textContent = String(getNumber(statusOverview.deactivated));
         }
-        if (statusInactive) {
-            statusInactive.textContent = String(statusOverview.inactive || 0);
+        if (statusRejected) {
+            statusRejected.textContent = String(getNumber(statusOverview.rejected));
         }
 
         const readiness = payload.approval_readiness || {};
         if (approvalNew) {
-            approvalNew.textContent = String(readiness.new || 0);
+            approvalNew.textContent = String(getNumber(readiness.new));
         }
         if (approvalWaiting) {
-            approvalWaiting.textContent = String(readiness.waiting || 0);
+            approvalWaiting.textContent = String(getNumber(readiness.waiting));
         }
         if (approvalOverdue) {
-            approvalOverdue.textContent = String(readiness.overdue || 0);
+            approvalOverdue.textContent = String(getNumber(readiness.overdue));
         }
     };
 
-    const fetchDashboardSummary = async () => {
+    const fetchDashboardSummary = async (options = {}) => {
+        const shouldNotify = Boolean(options.notify);
         const url = String(urls.dashboardSummaryApi || "");
         if (!url) {
             renderEmptyRow("Dashboard summary API is not configured.");
@@ -132,6 +220,7 @@
         }
 
         renderEmptyRow("Loading summary...");
+        needsReviewList.innerHTML = '<div class="admin-empty-state admin-review-empty">Loading admin review items...</div>';
 
         try {
             const response = await fetch(url, {
@@ -159,11 +248,22 @@
             }
 
             setCounts(payload);
+            renderNeedsReview(payload);
             renderLoadSnapshot(payload.load_snapshot || []);
+            if (shouldNotify) {
+                showToast("Admin dashboard updated.", "success");
+            }
         } catch (error) {
             renderEmptyRow("Unable to load dashboard summary right now.");
+            renderReviewEmpty();
         }
     };
+
+    if (refreshButton) {
+        refreshButton.addEventListener("click", () => {
+            fetchDashboardSummary({ notify: true });
+        });
+    }
 
     fetchDashboardSummary();
 })();

@@ -40,9 +40,13 @@
         }
     };
 
+    const isGenericBookkeeperName = (value) => {
+        return String(value || "").trim().toLowerCase() === "bookkeeper user";
+    };
+
     const resolveDisplayName = (user, fallbackName = "Bookkeeper User") => {
         const fullName = user && typeof user.full_name === "string" ? user.full_name.trim() : "";
-        if (fullName) {
+        if (fullName && !(isGenericBookkeeperName(fullName) && !isGenericBookkeeperName(fallbackName))) {
             return fullName;
         }
 

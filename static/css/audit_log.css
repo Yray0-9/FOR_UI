@@ -1,0 +1,194 @@
+.audit-log-content {
+    display: block;
+}
+
+.audit-log-card {
+    padding: 1.25rem;
+}
+
+.audit-log-head p {
+    margin: 0.25rem 0 0;
+    color: #6c83ad;
+    font-weight: 600;
+}
+
+.audit-log-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.audit-log-search {
+    min-width: 0;
+}
+
+.audit-log-sort {
+    width: 100%;
+}
+
+.audit-log-filters {
+    margin: 0.75rem 0 0.5rem;
+}
+
+.audit-log-table-wrap {
+    overflow: hidden;
+    border: 1px solid #dbe6f8;
+    border-radius: 8px;
+}
+
+.audit-log-table {
+    table-layout: fixed;
+    margin: 0;
+}
+
+.audit-log-table th:nth-child(1) { width: 19%; }
+.audit-log-table th:nth-child(2) { width: 22%; }
+.audit-log-table th:nth-child(3) { width: 22%; }
+.audit-log-table th:nth-child(4) { width: 37%; }
+
+.audit-log-table td {
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+.audit-action-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid #cfe0ff;
+    border-radius: 999px;
+    background: #f2f7ff;
+    color: #245bbd;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.audit-action-badge.records {
+    border-color: #c8eadf;
+    background: #eefaf6;
+    color: #167a58;
+}
+
+.audit-action-badge.security {
+    border-color: #eedab9;
+    background: #fff8ed;
+    color: #a56013;
+}
+
+.audit-log-client {
+    font-weight: 700;
+    color: #2e4e82;
+}
+
+.audit-log-empty td {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: #6d84ad;
+}
+
+.audit-log-note {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0.85rem 0 0;
+    color: #6d84ad;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+    .audit-log-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .audit-log-table-wrap {
+        border: 0;
+        overflow: visible;
+    }
+
+    .audit-log-table,
+    .audit-log-table tbody,
+    .audit-log-table tr,
+    .audit-log-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .audit-log-table thead {
+        display: none;
+    }
+
+    .audit-log-table tr {
+        margin-bottom: 0.75rem;
+        padding: 0.8rem;
+        border: 1px solid #dbe6f8;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .audit-log-table td {
+        display: grid;
+        grid-template-columns: 112px minmax(0, 1fr);
+        gap: 0.65rem;
+        padding: 0.4rem 0;
+        border: 0;
+    }
+
+    .audit-log-table td::before {
+        content: attr(data-label);
+        color: #6b82aa;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .audit-log-empty td {
+        display: block;
+        padding: 1.25rem;
+    }
+
+    .audit-log-empty td::before {
+        content: none;
+    }
+}
+
+body.theme-dark .audit-log-head p,
+body.theme-dark .audit-log-note,
+body.theme-dark .audit-log-empty td {
+    color: #94aad0;
+}
+
+body.theme-dark .audit-log-table-wrap,
+body.theme-dark .audit-log-table tr {
+    border-color: #263956;
+}
+
+body.theme-dark .audit-log-client {
+    color: #c6d8f3;
+}
+
+body.theme-dark .audit-action-badge {
+    border-color: #31517e;
+    background: #172b49;
+    color: #a9caff;
+}
+
+body.theme-dark .audit-action-badge.records {
+    border-color: #285849;
+    background: #132f29;
+    color: #8bd5ba;
+}
+
+body.theme-dark .audit-action-badge.security {
+    border-color: #604b2c;
+    background: #322817;
+    color: #efc47f;
+}
+
+@media (max-width: 767.98px) {
+    body.theme-dark .audit-log-table tr {
+        background: #0f1c33;
+    }
+}

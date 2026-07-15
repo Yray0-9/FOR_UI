@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db.models import Max
 
 from safebooks.models import Client
 
@@ -91,6 +92,18 @@ def _normalize_custom_fields(value):
 
 
 def _serialize_client(client: Client) -> dict:
+    latest_record_updated_at = getattr(client, "latest_record_updated_at", None)
+    activity_candidates = [
+        value
+        for value in (
+            latest_record_updated_at,
+            client.updated_at,
+            client.created_at,
+        )
+        if value
+    ]
+    recent_activity_at = max(activity_candidates) if activity_candidates else None
+
     return {
         "id": client.id,
         "client_name": client.client_name,
@@ -109,6 +122,8 @@ def _serialize_client(client: Client) -> dict:
         "date_registered": client.date_registered.isoformat() if client.date_registered else "",
         "created_at": client.created_at.isoformat() if client.created_at else "",
         "updated_at": client.updated_at.isoformat() if client.updated_at else "",
+        "latest_record_updated_at": latest_record_updated_at.isoformat() if latest_record_updated_at else "",
+        "recent_activity_at": recent_activity_at.isoformat() if recent_activity_at else "",
     }
 
 
@@ -224,7 +239,12 @@ def check_and_promote_new_client(client) -> bool:
 
 
 def list_clients_for_bookkeeper(bookkeeper) -> dict:
-    clients = Client.objects.filter(bookkeeper=bookkeeper).order_by("client_name", "id")
+    clients = (
+        Client.objects
+        .filter(bookkeeper=bookkeeper)
+        .annotate(latest_record_updated_at=Max("financial_records__updated_at"))
+        .order_by("client_name", "id")
+    )
     for client in clients:
         check_and_promote_new_client(client)
     return {

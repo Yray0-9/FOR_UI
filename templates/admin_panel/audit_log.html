@@ -1,0 +1,191 @@
+{% extends 'admin_panel/admin_base.html' %}
+{% load static %}
+
+{% block page_title %}Audit Log{% endblock %}
+{% block page_heading %}Audit Log{% endblock %}
+{% block page_subtitle %}
+<!-- Keep this page concise: it is for admin accountability, not bookkeeping details. -->
+{% endblock %}
+
+{% block skeleton %}
+<div class="skeleton-overlay dashboard-skeleton" id="pageSkeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+        <div class="dash-sk-layout">
+            <aside class="dash-sk-sidebar">
+                <div class="skeleton-shimmer dash-sk-logo"></div>
+                <div class="dash-sk-nav">
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                    <div class="skeleton-shimmer dash-sk-nav-item"></div>
+                </div>
+            </aside>
+            <section class="dash-sk-main">
+                <div class="dash-sk-topbar">
+                    <div class="skeleton-shimmer dash-sk-title"></div>
+                    <div class="skeleton-shimmer dash-sk-search"></div>
+                    <div class="skeleton-shimmer dash-sk-profile"></div>
+                </div>
+                <div class="dash-sk-metrics" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                    <div class="skeleton-shimmer dash-sk-metric"></div>
+                </div>
+                <div class="dash-sk-content" style="grid-template-columns: 1fr;">
+                    <div class="dash-sk-card">
+                        <div class="skeleton-shimmer dash-sk-card-head"></div>
+                        <div class="dash-sk-table-row">
+                            <span class="skeleton-shimmer" style="height: 14px;"></span>
+                            <span class="skeleton-shimmer" style="height: 14px;"></span>
+                            <span class="skeleton-shimmer" style="height: 14px;"></span>
+                            <span class="skeleton-shimmer" style="height: 14px;"></span>
+                            <span class="skeleton-shimmer" style="height: 14px;"></span>
+                        </div>
+                        <div class="dash-sk-table-row" style="margin-top: 10px;">
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                        </div>
+                        <div class="dash-sk-table-row">
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                        </div>
+                        <div class="dash-sk-table-row">
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                            <span class="skeleton-shimmer"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-content admin-dashboard">
+    <div class="row g-3">
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-journal-check"></i></span>
+                <div>
+                    <p class="stat-label">Recorded actions</p>
+                    <h3 id="auditLogTotalCount">0</h3>
+                    <p class="stat-note">Admin activity trail</p>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-check2-circle"></i></span>
+                <div>
+                    <p class="stat-label">Approval decisions</p>
+                    <h3 id="auditLogApprovalCount">0</h3>
+                    <p class="stat-note">Approve/reject records</p>
+                </div>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-stat-card admin-kpi-card">
+                <span class="stat-icon"><i class="bi bi-person-lock"></i></span>
+                <div>
+                    <p class="stat-label">Access changes</p>
+                    <h3 id="auditLogAccessCount">0</h3>
+                    <p class="stat-note">Deactivate/reactivate records</p>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-12">
+            <article class="dashboard-card admin-card">
+                <div class="dashboard-card-head">
+                    <div>
+                        <h2>Admin activity</h2>
+                    </div>
+                    <span class="dashboard-tag" id="auditLogCountTag">0 shown</span>
+                </div>
+                <div class="dashboard-table-toolbar" aria-label="Audit log controls">
+                    <div class="admin-audit-toolbar-row d-flex align-items-center gap-2 w-100">
+                        <label class="dashboard-table-search admin-audit-search" aria-label="Search audit log">
+                            <i class="bi bi-search"></i>
+                            <input type="search" id="auditLogSearchInput" placeholder="Search action, admin, or message" autocomplete="off">
+                        </label>
+                        <div class="admin-audit-date-filters" aria-label="Filter audit log by date">
+                            <label>
+                                <span>Date from</span>
+                                <input type="date" class="form-control" id="auditLogDateFromInput">
+                            </label>
+                            <label>
+                                <span>Date to</span>
+                                <input type="date" class="form-control" id="auditLogDateToInput">
+                            </label>
+                        </div>
+                        <select class="form-select dashboard-filter-select admin-audit-sort" id="auditLogSortSelect" aria-label="Sort audit log">
+                            <option value="newest">Sort: Newest</option>
+                            <option value="oldest">Sort: Oldest</option>
+                        </select>
+                    </div>
+                    <div class="dashboard-filter-chips" role="group" aria-label="Filter audit log by action type">
+                        <button type="button" class="dashboard-filter-chip is-active" aria-pressed="true" data-audit-action="all">All</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-audit-action="approvals">Approvals</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-audit-action="access">Access</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-audit-action="security">Security</button>
+                        <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-audit-action="danger">Protected delete</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table admin-table admin-audit-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Admin</th>
+                                <th scope="col">Action</th>
+                                <th scope="col">Target account</th>
+                                <th scope="col">Message</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditLogTableBody">
+                            <tr class="admin-table-empty">
+                                <td colspan="5">No admin activity recorded yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav class="admin-audit-pagination" aria-label="Audit log pages">
+                    <button type="button" class="btn admin-audit-page-button" id="auditLogPreviousPage" disabled>
+                        <i class="bi bi-chevron-left"></i> Previous
+                    </button>
+                    <span id="auditLogPageStatus" aria-live="polite">Page 1 of 1</span>
+                    <button type="button" class="btn admin-audit-page-button" id="auditLogNextPage" disabled>
+                        Next <i class="bi bi-chevron-right"></i>
+                    </button>
+                </nav>
+            </article>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.SafeBooksAdminAuditLogConfig = {
+        urls: {
+            auditLogApi: "{% url 'api_admin_audit_log' %}",
+            loginPage: "{% url 'login' %}",
+        },
+    };
+</script>
+<script src="{% static 'js/admin_audit_log_page.js' %}?v=20260713-phase2"></script>
+{% endblock %}

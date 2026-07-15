@@ -420,6 +420,238 @@ def _format_period_label(year: int, month: int, frequency: str) -> str:
     return f"{month_label} {year}"
 
 
+def _workflow_frequency_order(frequency: str) -> int:
+    order = {
+        FinancialRecord.FREQUENCY_MONTHLY: 0,
+        FinancialRecord.FREQUENCY_QUARTERLY: 1,
+        FinancialRecord.FREQUENCY_ANNUALLY: 2,
+    }
+    return order.get(frequency, 99)
+
+
+def _period_index(year: int, month: int) -> int:
+    return (year * 12) + month
+
+
+def _quarter_end_month(month: int) -> int:
+    return (((month - 1) // 3) + 1) * 3
+
+
+def _find_next_quarterly_workflow_period(
+    recorded_periods: set[tuple[int, int]],
+    reference_date: date,
+) -> tuple[int, int, bool]:
+    ordered_periods = sorted(recorded_periods)
+    earliest_year, earliest_month = ordered_periods[0]
+    current_index = _period_index(reference_date.year, reference_date.month)
+
+    expected_year = earliest_year
+    expected_month = _quarter_end_month(earliest_month)
+
+    while _period_index(expected_year, expected_month) <= current_index:
+        if (expected_year, expected_month) not in recorded_periods:
+            return expected_year, expected_month, True
+        expected_year, expected_month = _shift_month(expected_year, expected_month, 3)
+
+    return expected_year, expected_month, False
+
+
+def _find_next_workflow_period(
+    frequency: str,
+    recorded_periods: set[tuple[int, int]],
+    reference_date: date,
+) -> tuple[int, int, bool]:
+    normalized_frequency = _normalize_frequency(frequency)
+    if not recorded_periods:
+        return reference_date.year, reference_date.month, True
+
+    if normalized_frequency == FinancialRecord.FREQUENCY_QUARTERLY:
+        return _find_next_quarterly_workflow_period(recorded_periods, reference_date)
+
+    interval = _frequency_interval_months(normalized_frequency)
+    ordered_periods = sorted(recorded_periods)
+    current_key = (reference_date.year, reference_date.month)
+    current_index = _period_index(*current_key)
+    earliest_year, earliest_month = ordered_periods[0]
+    latest_year, latest_month = ordered_periods[-1]
+
+    next_year, next_month = _shift_month(earliest_year, earliest_month, interval)
+    while _period_index(next_year, next_month) <= current_index:
+        if (next_year, next_month) not in recorded_periods:
+            return next_year, next_month, True
+        next_year, next_month = _shift_month(next_year, next_month, interval)
+
+    if current_key in recorded_periods:
+        return reference_date.year, reference_date.month, True
+
+    if _period_index(latest_year, latest_month) >= current_index:
+        return latest_year, latest_month, True
+
+    next_year, next_month = _shift_month(latest_year, latest_month, interval)
+    return next_year, next_month, _period_index(next_year, next_month) <= current_index
+
+
+def _resolve_workflow_period(
+    frequency: str,
+    latest_record: FinancialRecord | None,
+    reference_date: date,
+    has_current_year_annual_record: bool = False,
+) -> tuple[int, int, bool]:
+    normalized_frequency = _normalize_frequency(frequency)
+
+    if normalized_frequency == FinancialRecord.FREQUENCY_MONTHLY:
+        return reference_date.year, reference_date.month, True
+
+    if normalized_frequency == FinancialRecord.FREQUENCY_QUARTERLY:
+        quarter_end_month = (((reference_date.month - 1) // 3) + 1) * 3
+        return reference_date.year, quarter_end_month, reference_date.month == quarter_end_month
+
+    if normalized_frequency == FinancialRecord.FREQUENCY_ANNUALLY:
+        anchor_month = latest_record.period.month if latest_record and latest_record.period_id else reference_date.month
+        if has_current_year_annual_record and reference_date.month > anchor_month:
+            return reference_date.year + 1, anchor_month, False
+        return reference_date.year, anchor_month, reference_date.month >= anchor_month
+
+    return reference_date.year, reference_date.month, True
+
+
+def _build_workflow_schedule_item(
+    *,
+    bookkeeper,
+    client: Client,
+    frequency: str,
+    latest_record: FinancialRecord | None,
+    recorded_periods: set[tuple[int, int]] | None,
+    reference_date: date,
+) -> dict:
+    normalized_frequency = _normalize_frequency(frequency)
+    has_current_year_annual_record = False
+    if normalized_frequency == FinancialRecord.FREQUENCY_ANNUALLY and latest_record and latest_record.period_id:
+        has_current_year_annual_record = FinancialRecord.objects.filter(
+            bookkeeper=bookkeeper,
+            client=client,
+            frequency=normalized_frequency,
+            period__year=reference_date.year,
+            period__month=latest_record.period.month,
+        ).exists()
+
+    safe_recorded_periods = recorded_periods or set()
+    if safe_recorded_periods:
+        target_year, target_month, is_due_now = _find_next_workflow_period(
+            normalized_frequency,
+            safe_recorded_periods,
+            reference_date,
+        )
+    else:
+        target_year, target_month, is_due_now = _resolve_workflow_period(
+            normalized_frequency,
+            latest_record,
+            reference_date,
+            has_current_year_annual_record,
+        )
+    target_records = FinancialRecord.objects.filter(
+        bookkeeper=bookkeeper,
+        client=client,
+        frequency=normalized_frequency,
+        period__year=target_year,
+        period__month=target_month,
+    )
+    entry_count = target_records.count()
+    detail_count = FinancialRecordLine.objects.filter(record__in=target_records).count()
+    has_record = entry_count > 0
+    status = "ready" if has_record else ("missing" if is_due_now else "upcoming")
+
+    return {
+        "frequency": normalized_frequency,
+        "frequency_label": _frequency_label(normalized_frequency),
+        "period_label": _format_period_label(target_year, target_month, normalized_frequency),
+        "period_year": target_year,
+        "period_month": target_month,
+        "is_due_now": is_due_now,
+        "status": status,
+        "has_record": has_record,
+        "entry_count": entry_count,
+        "transaction_detail_count": detail_count,
+        "latest_period_label": _format_period_label(
+            latest_record.period.year,
+            latest_record.period.month,
+            normalized_frequency,
+        ) if latest_record and latest_record.period_id else "",
+    }
+
+
+def _build_client_workflow_status(client: Client | None, bookkeeper, reference_date: date) -> dict | None:
+    if client is None:
+        return None
+
+    client_records = list(
+        FinancialRecord.objects.filter(bookkeeper=bookkeeper, client=client)
+        .select_related("period")
+        .order_by("-period__year", "-period__month", "-entry_date", "-id")
+    )
+    latest_record = client_records[0] if client_records else None
+
+    latest_by_frequency: dict[str, FinancialRecord | None] = {}
+    periods_by_frequency: dict[str, set[tuple[int, int]]] = defaultdict(set)
+    for record in client_records:
+        normalized_frequency = _normalize_frequency(record.frequency)
+        if record.period_id:
+            periods_by_frequency[normalized_frequency].add((record.period.year, record.period.month))
+        if normalized_frequency not in latest_by_frequency:
+            latest_by_frequency[normalized_frequency] = record
+
+    if not latest_by_frequency:
+        latest_by_frequency[FinancialRecord.FREQUENCY_MONTHLY] = None
+
+    schedule_items = [
+        _build_workflow_schedule_item(
+            bookkeeper=bookkeeper,
+            client=client,
+            frequency=frequency,
+            latest_record=frequency_latest_record,
+            recorded_periods=periods_by_frequency.get(frequency, set()),
+            reference_date=reference_date,
+        )
+        for frequency, frequency_latest_record in sorted(
+            latest_by_frequency.items(),
+            key=lambda item: _workflow_frequency_order(item[0]),
+        )
+    ]
+    missing_items = [item for item in schedule_items if item["status"] == "missing"]
+    ready_items = [item for item in schedule_items if item["status"] == "ready"]
+    primary_item = missing_items[0] if missing_items else (ready_items[0] if ready_items else schedule_items[0])
+    overall_status = "missing" if missing_items else ("ready" if ready_items and len(ready_items) == len(schedule_items) else "upcoming")
+
+    latest_period_label = ""
+    if latest_record and latest_record.period_id:
+        latest_period_label = _format_period_label(
+            latest_record.period.year,
+            latest_record.period.month,
+            latest_record.frequency,
+        )
+
+    return {
+        "period_label": primary_item["period_label"],
+        "period_year": primary_item["period_year"],
+        "period_month": primary_item["period_month"],
+        "frequency": primary_item["frequency"],
+        "frequency_label": primary_item["frequency_label"],
+        "schedule_label": "Mixed" if len(schedule_items) > 1 else primary_item["frequency_label"],
+        "overall_status": overall_status,
+        "schedule_items": schedule_items,
+        "has_current_period_record": primary_item["has_record"],
+        "current_period_entry_count": primary_item["entry_count"],
+        "current_period_transaction_detail_count": primary_item["transaction_detail_count"],
+        "has_any_records": latest_record is not None,
+        "latest_entry_date": latest_record.entry_date.isoformat() if latest_record else "",
+        "latest_period_label": latest_period_label,
+        "email_available": bool(str(client.email or "").strip()),
+        "permit_number_available": bool(str(client.permit_number or "").strip()),
+        "orus_account_available": bool(str(client.orus_account or "").strip()),
+        "report_ready": latest_record is not None,
+    }
+
+
 def _build_period_slots(
     reference_year: int,
     reference_month: int,
@@ -981,6 +1213,7 @@ def get_analytics_summary_for_bookkeeper(
         "type_columns": type_columns,
         "has_data": has_data,
         "summary": summary,
+        "client_workflow": _build_client_workflow_status(scope_client, bookkeeper, today),
         "monthly_trend": monthly_trend,
         "remarks_insight": remarks_insight,
         "forecast": forecast,

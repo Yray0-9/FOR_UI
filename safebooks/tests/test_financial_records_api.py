@@ -2,7 +2,9 @@ import json
 from datetime import date
 from decimal import Decimal
 
+from django.core import mail
 from django.test import TestCase
+from django.test import override_settings
 from django.urls import reverse
 
 from safebooks.models import (
@@ -15,6 +17,11 @@ from safebooks.models import (
 from safebooks.views import SESSION_BOOKKEEPER_ID_KEY
 
 
+@override_settings(
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    DEFAULT_FROM_EMAIL="SafeBooks <no-reply@safebooks.test>",
+    SAFEBOOKS_CLIENT_RECORD_EMAILS_ENABLED=True,
+)
 class FinancialRecordsApiTests(TestCase):
     def _create_bookkeeper(self, suffix: str) -> BookkeeperAccount:
         return BookkeeperAccount.objects.create(
@@ -169,6 +176,10 @@ class FinancialRecordsApiTests(TestCase):
         self.assertEqual(rows_by_id[owner_active.id]["activity_state"], "active")
         self.assertEqual(rows_by_id[owner_active.id]["financial_record_count"], 1)
         self.assertEqual(rows_by_id[owner_active.id]["deadline_date"], "2026-04-15")
+        self.assertIn("latest_record_updated_at", rows_by_id[owner_active.id])
+        self.assertIn("recent_activity_at", rows_by_id[owner_active.id])
+        self.assertTrue(rows_by_id[owner_active.id]["latest_record_updated_at"])
+        self.assertTrue(rows_by_id[owner_active.id]["recent_activity_at"])
         self.assertTrue("days_remaining" in rows_by_id[owner_active.id])
         self.assertTrue(rows_by_id[owner_active.id]["deadline_completed"])
 
@@ -308,6 +319,80 @@ class FinancialRecordsApiTests(TestCase):
 
         self.assertEqual(FinancialRecord.objects.filter(client=client).count(), 0)
         self.assertEqual(Period.objects.filter(client=client, year=2026, month=4).count(), 0)
+
+    def test_creating_financial_record_emails_client_when_email_is_available(self):
+        owner = self._create_bookkeeper("owner-email-notice")
+        client = self._create_client(bookkeeper=owner, suffix="email-notice")
+        self._login_as(owner)
+        mail.outbox = []
+
+        response = self.client.post(
+            reverse("api_financial_records", kwargs={"client_id": client.id}),
+            data=json.dumps(self._build_create_payload()),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertTrue(payload.get("ok"))
+        self.assertEqual(payload["client_email_notification"]["sent"], True)
+        self.assertEqual(payload["client_email_notification"]["skipped"], False)
+
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, [client.email])
+        self.assertIn("SafeBooks record update for April 2026", email.subject)
+        self.assertIn(owner.full_name, email.body)
+        self.assertIn(client.client_name, email.body)
+        self.assertIn("Total recorded amount: PHP 1,120.00", email.body)
+        self.assertIn("Line items recorded: 2", email.body)
+
+    def test_creating_financial_record_skips_client_email_when_email_is_missing(self):
+        owner = self._create_bookkeeper("owner-email-skip")
+        client = self._create_client(bookkeeper=owner, suffix="email-skip")
+        client.email = ""
+        client.save(update_fields=["email"])
+        self._login_as(owner)
+        mail.outbox = []
+
+        response = self.client.post(
+            reverse("api_financial_records", kwargs={"client_id": client.id}),
+            data=json.dumps(self._build_create_payload()),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertTrue(payload.get("ok"))
+        self.assertEqual(payload["client_email_notification"]["sent"], False)
+        self.assertEqual(payload["client_email_notification"]["skipped"], True)
+        self.assertEqual(payload["client_email_notification"]["reason"], "Client email is not provided.")
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_creating_financial_record_skips_client_email_when_preference_is_off(self):
+        owner = self._create_bookkeeper("owner-email-pref-off")
+        owner.client_record_email_notifications_enabled = False
+        owner.save(update_fields=["client_record_email_notifications_enabled"])
+        client = self._create_client(bookkeeper=owner, suffix="email-pref-off")
+        self._login_as(owner)
+        mail.outbox = []
+
+        response = self.client.post(
+            reverse("api_financial_records", kwargs={"client_id": client.id}),
+            data=json.dumps(self._build_create_payload()),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertTrue(payload.get("ok"))
+        self.assertEqual(payload["client_email_notification"]["sent"], False)
+        self.assertEqual(payload["client_email_notification"]["skipped"], True)
+        self.assertEqual(
+            payload["client_email_notification"]["reason"],
+            "Client email notifications are turned off in Settings.",
+        )
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_financial_record_deadline_date_crud(self):
         owner = self._create_bookkeeper("owner-deadline")

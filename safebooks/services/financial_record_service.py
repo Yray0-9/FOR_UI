@@ -286,6 +286,7 @@ def list_financial_clients_for_bookkeeper(bookkeeper) -> dict:
         .exclude(remarks=Client.REMARK_CLOSED)
         .annotate(
             last_activity=Max("financial_records__entry_date"),
+            latest_record_updated_at=Max("financial_records__updated_at"),
             financial_record_count=Count("financial_records", distinct=True),
             last_deadline_date=Subquery(latest_record_for_client.values("deadline_date")[:1]),
         )
@@ -296,6 +297,16 @@ def list_financial_clients_for_bookkeeper(bookkeeper) -> dict:
     today = timezone.localdate()
     for client in clients:
         last_activity = client.last_activity.isoformat() if client.last_activity else ""
+        activity_candidates = [
+            value
+            for value in (
+                client.latest_record_updated_at,
+                client.updated_at,
+                client.created_at,
+            )
+            if value
+        ]
+        recent_activity_at = max(activity_candidates) if activity_candidates else None
         
         deadline_date = client.last_deadline_date.isoformat() if client.last_deadline_date else ""
         days_remaining = None
@@ -314,6 +325,8 @@ def list_financial_clients_for_bookkeeper(bookkeeper) -> dict:
                 "tin_number": client.tin_number,
                 "trade_name": client.trade_name,
                 "last_activity": last_activity,
+                "latest_record_updated_at": client.latest_record_updated_at.isoformat() if client.latest_record_updated_at else "",
+                "recent_activity_at": recent_activity_at.isoformat() if recent_activity_at else "",
                 "activity_state": "active" if last_activity else "none",
                 "financial_record_count": client.financial_record_count,
                 "deadline_date": deadline_date,
@@ -630,11 +643,14 @@ def create_record_for_client_period(bookkeeper, client_id: int, data: dict) -> d
     check_and_promote_new_client(client)
 
     refreshed_record = FinancialRecord.objects.filter(id=record.id).prefetch_related("line_items").first()
+    from safebooks.services.client_notification_service import send_financial_record_created_email
+    email_notification = send_financial_record_created_email(refreshed_record)
 
     return {
         "ok": True,
         "message": "Financial entry added successfully.",
         "record": _serialize_record(refreshed_record),
+        "client_email_notification": email_notification,
     }
 
 

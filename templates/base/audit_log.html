@@ -1,0 +1,79 @@
+{% extends 'base/bookkeeper_base.html' %}
+{% load static %}
+
+{% block page_title %}Audit Log{% endblock %}
+{% block body_class %}bookkeeper-audit-page{% endblock %}
+{% block page_heading %}Audit Log{% endblock %}
+{% block page_subtitle %}
+<p class="dashboard-page-subtitle">History of important changes made in your workspace</p>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/audit_log.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-content audit-log-content">
+    <article class="dashboard-card audit-log-card dashboard-fade-up">
+        <div class="dashboard-card-head audit-log-head">
+            <div>
+                <h2>Workspace activity</h2>
+                <p>Client, record, account, and security changes are recorded here.</p>
+            </div>
+            <span class="dashboard-tag" id="auditLogCountTag">0 activities</span>
+        </div>
+
+        <div class="audit-log-toolbar" aria-label="Audit log controls">
+            <label class="dashboard-table-search audit-log-search" aria-label="Search activity">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search" id="auditLogSearchInput" placeholder="Search activity or client" autocomplete="off">
+            </label>
+            <select class="form-select dashboard-filter-select audit-log-sort" id="auditLogSortSelect" aria-label="Sort activity">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+            </select>
+        </div>
+
+        <div class="dashboard-filter-chips audit-log-filters" role="group" aria-label="Filter activity type">
+            <button type="button" class="dashboard-filter-chip is-active" aria-pressed="true" data-audit-action="all">All</button>
+            <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-audit-action="clients">Clients</button>
+            <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-audit-action="records">Financial Records</button>
+            <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-audit-action="account">Account</button>
+            <button type="button" class="dashboard-filter-chip" aria-pressed="false" data-audit-action="security">Security</button>
+        </div>
+
+        <div class="audit-log-table-wrap">
+            <table class="table dashboard-table audit-log-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Date and time</th>
+                        <th scope="col">Activity</th>
+                        <th scope="col">Client</th>
+                        <th scope="col">Details</th>
+                    </tr>
+                </thead>
+                <tbody id="auditLogTableBody">
+                    <tr class="audit-log-empty">
+                        <td colspan="4">No activity has been recorded yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="audit-log-note"><i class="bi bi-shield-check" aria-hidden="true"></i> Only activity from your own SafeBooks workspace is shown.</p>
+    </article>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.SafeBooksAuditLogConfig = {
+        urls: {
+            auditLogApi: "{% url 'api_bookkeeper_audit_log' %}",
+            loginPage: "{% url 'login' %}"
+        },
+        sidebarStateKey: "safebooks.sidebarCollapsed",
+        desktopQuery: "(min-width: 992px)"
+    };
+</script>
+<script src="{% static 'js/audit_log_page.js' %}"></script>
+{% endblock %}

@@ -14,19 +14,28 @@
     const bookkeepersTotalCount = document.getElementById("bookkeepersTotalCount");
     const bookkeepersActiveCount = document.getElementById("bookkeepersActiveCount");
     const bookkeepersDeactivatedCount = document.getElementById("bookkeepersDeactivatedCount");
+    const bookkeepersDeactivationRequestCount = document.getElementById("bookkeepersDeactivationRequestCount");
     const bookkeepersApprovedCount = document.getElementById("bookkeepersApprovedCount");
     const bookkeepersDeactivatedSummary = document.getElementById("bookkeepersDeactivatedSummary");
-    const bookkeepersInactiveCount = document.getElementById("bookkeepersInactiveCount");
+    const bookkeepersRejectedCount = document.getElementById("bookkeepersRejectedCount");
+
+    const bookkeepersPagination = document.getElementById("bookkeepersPagination");
+    const bookkeepersPageRange = document.getElementById("bookkeepersPageRange");
+    const bookkeepersPageStatus = document.getElementById("bookkeepersPageStatus");
+    const bookkeepersPreviousPage = document.getElementById("bookkeepersPreviousPage");
+    const bookkeepersNextPage = document.getElementById("bookkeepersNextPage");
 
     const bookkeepersClientsZeroToFive = document.getElementById("bookkeepersClientsZeroToFive");
     const bookkeepersClientsSixToFifteen = document.getElementById("bookkeepersClientsSixToFifteen");
     const bookkeepersClientsSixteenPlus = document.getElementById("bookkeepersClientsSixteenPlus");
 
     const bookkeeperActionModal = document.getElementById("bookkeeperActionModal");
+    const deactivationRequestModal = document.getElementById("deactivationRequestModal");
     const bookkeeperActionModalLabel = document.getElementById("bookkeeperActionModalLabel");
     const bookkeeperActionModalMessage = document.getElementById("bookkeeperActionModalMessage");
     const bookkeeperActionModalWarning = document.getElementById("bookkeeperActionModalWarning");
     const bookkeeperActionConfirm = document.getElementById("bookkeeperActionConfirm");
+    const bookkeeperActionPasswordInput = document.getElementById("bookkeeperActionPasswordInput");
 
     const uiToastContainer = document.getElementById("uiToastContainer");
 
@@ -74,20 +83,16 @@
             return { label: "Deactivated", className: "suspended" };
         }
         if (status === "rejected") {
-            return { label: "Inactive", className: "inactive" };
+            return { label: "Rejected", className: "inactive" };
         }
         if (status === "pending") {
             return { label: "Pending", className: "pending" };
         }
-        return { label: "Inactive", className: "inactive" };
+        return { label: "Unavailable", className: "inactive" };
     };
 
     const setCounts = (counts, clientSummary) => {
         const totalValue = Number.isFinite(counts.total) ? counts.total : 0;
-        if (bookkeepersCountTag) {
-            bookkeepersCountTag.textContent = `${totalValue} bookkeeper${totalValue === 1 ? "" : "s"}`;
-        }
-
         if (bookkeepersTotalCount) {
             bookkeepersTotalCount.textContent = String(totalValue);
         }
@@ -97,14 +102,17 @@
         if (bookkeepersDeactivatedCount) {
             bookkeepersDeactivatedCount.textContent = String((counts && counts.deactivated) || 0);
         }
+        if (bookkeepersDeactivationRequestCount) {
+            bookkeepersDeactivationRequestCount.textContent = String((counts && counts.deactivation_requests) || 0);
+        }
         if (bookkeepersApprovedCount) {
             bookkeepersApprovedCount.textContent = String((counts && counts.active) || 0);
         }
         if (bookkeepersDeactivatedSummary) {
             bookkeepersDeactivatedSummary.textContent = String((counts && counts.deactivated) || 0);
         }
-        if (bookkeepersInactiveCount) {
-            bookkeepersInactiveCount.textContent = String((counts && counts.inactive) || 0);
+        if (bookkeepersRejectedCount) {
+            bookkeepersRejectedCount.textContent = String((counts && counts.rejected) || 0);
         }
 
         if (bookkeepersClientsZeroToFive) {
@@ -121,7 +129,7 @@
     const renderEmptyRow = (message) => {
         bookkeepersTableBody.innerHTML = `
             <tr class="admin-table-empty">
-                <td colspan="6">${escapeHtml(message || "No bookkeepers available yet.")}</td>
+                <td colspan="7">${escapeHtml(message || "No bookkeepers available yet.")}</td>
             </tr>
         `;
     };
@@ -137,6 +145,49 @@
                 ${escapeHtml(label)}
             </button>
         `;
+    };
+
+    const renderPagination = (pagination) => {
+        const totalCount = Number(pagination && pagination.total_count) || 0;
+        const page = Number(pagination && pagination.page) || 1;
+        const totalPages = Number(pagination && pagination.total_pages) || 1;
+        const startIndex = Number(pagination && pagination.start_index) || 0;
+        const endIndex = Number(pagination && pagination.end_index) || 0;
+
+        state.page = page;
+        if (bookkeepersCountTag) {
+            bookkeepersCountTag.textContent = `${totalCount} result${totalCount === 1 ? "" : "s"}`;
+        }
+        if (bookkeepersPagination) {
+            bookkeepersPagination.hidden = totalCount === 0 || totalPages <= 1;
+        }
+        if (bookkeepersPageRange) {
+            bookkeepersPageRange.textContent = totalCount
+                ? `Showing ${startIndex}-${endIndex} of ${totalCount}`
+                : "No matching bookkeepers";
+        }
+        if (bookkeepersPageStatus) {
+            bookkeepersPageStatus.textContent = `Page ${page} of ${totalPages}`;
+        }
+        if (bookkeepersPreviousPage) {
+            bookkeepersPreviousPage.disabled = !Boolean(pagination && pagination.has_previous);
+        }
+        if (bookkeepersNextPage) {
+            bookkeepersNextPage.disabled = !Boolean(pagination && pagination.has_next);
+        }
+    };
+
+    const buildRequestActionButton = (label, action, bookkeeperId, requestId, extraClass) => {
+        const classes = ["admin-action-btn", extraClass, "is-enabled"];
+        return `
+            <button type="button" class="${classes.filter(Boolean).join(" ")}" data-action="${action}" data-bookkeeper-id="${bookkeeperId}" data-request-id="${requestId}">
+                ${escapeHtml(label)}
+            </button>
+        `;
+    };
+
+    const renderDeactivationRequestMeta = (requestData) => {
+        return "";
     };
 
     const renderBookkeepers = (bookkeepers) => {
@@ -155,18 +206,35 @@
                 const toggleAction = bookkeeper.status === "suspended" ? "reactivate" : "deactivate";
                 const toggleLabel = bookkeeper.status === "suspended" ? "Reactivate" : "Deactivate";
                 const toggleClass = bookkeeper.status === "suspended" ? "reactivate" : "deactivate";
+                const deactivationRequest = bookkeeper.deactivation_request || null;
+                const hasPendingRequest = Boolean(deactivationRequest && deactivationRequest.id && bookkeeper.status === "approved");
+                const actionButtons = hasPendingRequest
+                    ? `
+                        ${buildRequestActionButton("Approve", "approve-deactivation-request", bookkeeper.id, deactivationRequest.id, "deactivate")}
+                        ${buildRequestActionButton("Decline", "decline-deactivation-request", bookkeeper.id, deactivationRequest.id, "reject")}
+                    `
+                    : buildActionButton(toggleLabel, toggleAction, bookkeeper.id, canToggle, toggleClass);
 
                 return `
                     <tr data-bookkeeper-id="${bookkeeper.id}">
-                        <td>${escapeHtml(bookkeeper.full_name || "-")}</td>
+                        <td>
+                            <div class="admin-row-main d-flex align-items-center gap-2 flex-wrap">
+                                <span class="fw-bold text-nowrap">${escapeHtml(bookkeeper.full_name || "-")}</span>
+                                ${deactivationRequest ? `
+                                    <span class="badge bg-warning text-dark is-clickable admin-deactivation-trigger" data-action="view-deactivation-reason" data-bookkeeper-id="${bookkeeper.id}" style="cursor: pointer; font-size: 0.65rem; font-weight: 700; padding: 0.22rem 0.5rem; border-radius: 999px;" title="Click to view deactivation request reason">
+                                        <i class="bi bi-chat-right-text-fill me-1"></i>Deactivation requested
+                                    </span>
+                                ` : ""}
+                            </div>
+                        </td>
                         <td>${escapeHtml(bookkeeper.email || "-")}</td>
-                        <td><span class="admin-status-chip ${statusMeta.className}">${escapeHtml(statusMeta.label)}</span></td>
                         <td>${escapeHtml(String(clientsCount))}</td>
+                        <td>${escapeHtml(formatDate(bookkeeper.created_at))}</td>
                         <td>${escapeHtml(formatDate(bookkeeper.last_login))}</td>
+                        <td><span class="admin-status-chip ${statusMeta.className}">${escapeHtml(statusMeta.label)}</span></td>
                         <td>
                             <div class="admin-table-actions">
-                                ${buildActionButton(toggleLabel, toggleAction, bookkeeper.id, canToggle, toggleClass)}
-                                ${buildActionButton("Delete", "delete", bookkeeper.id, true, "delete")}
+                                ${actionButtons}
                             </div>
                         </td>
                     </tr>
@@ -194,18 +262,37 @@
         if (state.sort) {
             searchParams.set("sort", state.sort);
         }
+        searchParams.set("page", String(state.page));
+        searchParams.set("page_size", String(state.pageSize));
 
         return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
     };
 
     const buildActionUrl = (bookkeeperId, action) => {
+        if (action === "decline-deactivation-request") {
+            return "";
+        }
+
+        const normalizedAction = action === "approve-deactivation-request"
+            ? "deactivate"
+            : action;
         const baseUrl = String(urls.bookkeepersBaseApi || urls.bookkeepersApi || "");
         if (!baseUrl) {
             return "";
         }
 
         const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-        return `${normalizedBase}${bookkeeperId}/${action}/`;
+        return `${normalizedBase}${bookkeeperId}/${normalizedAction}/`;
+    };
+
+    const buildRequestDeclineUrl = (requestId) => {
+        const baseUrl = String(urls.deactivationRequestsBaseApi || "");
+        if (!baseUrl) {
+            return "";
+        }
+
+        const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+        return `${normalizedBase}${requestId}/decline/`;
     };
 
     const fetchBookkeepers = async () => {
@@ -245,16 +332,19 @@
             bookkeepersCache = Array.isArray(payload.bookkeepers) ? payload.bookkeepers : [];
             renderBookkeepers(bookkeepersCache);
             setCounts(payload.counts || {}, payload.client_summary || {});
+            renderPagination(payload.pagination || {});
         } catch (error) {
             renderEmptyRow("Unable to load bookkeepers right now.");
         }
     };
 
-    const runBookkeeperAction = async (bookkeeperId, action) => {
-        const url = buildActionUrl(bookkeeperId, action);
+    const runBookkeeperAction = async (bookkeeperId, action, adminPassword, requestId) => {
+        const url = action === "decline-deactivation-request"
+            ? buildRequestDeclineUrl(requestId)
+            : buildActionUrl(bookkeeperId, action);
         if (!url) {
             showToast("Bookkeeper action is unavailable.", "warning");
-            return;
+            return false;
         }
 
         const csrfToken = shared && typeof shared.getCookieValue === "function"
@@ -270,7 +360,10 @@
                     "X-CSRFToken": csrfToken,
                 },
                 credentials: "same-origin",
-                body: JSON.stringify({}),
+                body: JSON.stringify({
+                    admin_password: adminPassword,
+                    deactivation_request_id: requestId || undefined,
+                }),
             });
 
             const result = shared && typeof shared.parseJsonSafe === "function"
@@ -279,13 +372,19 @@
 
             if (!response.ok || !result || !result.ok) {
                 showToast(result && result.message ? result.message : "Action failed.", "warning");
-                return;
+                if (result && result.refresh_required) {
+                    await fetchBookkeepers();
+                    return true;
+                }
+                return false;
             }
 
             showToast(result.message || "Action completed.", "success");
             await fetchBookkeepers();
+            return true;
         } catch (error) {
             showToast("Unable to complete action right now.", "warning");
+            return false;
         }
     };
 
@@ -316,6 +415,7 @@
         }
         searchDebounceId = window.setTimeout(() => {
             state.search = bookkeepersSearchInput.value.trim();
+            state.page = 1;
             fetchBookkeepers();
         }, 320);
     };
@@ -328,6 +428,45 @@
         });
     }
 
+    let deactivationDetailsModalInstance = null;
+    if (deactivationRequestModal && window.bootstrap && window.bootstrap.Modal) {
+        deactivationDetailsModalInstance = new window.bootstrap.Modal(deactivationRequestModal);
+    }
+
+    const openDeactivationDetailsModal = (bookkeeper) => {
+        if (!bookkeeper || !bookkeeper.deactivation_request || !deactivationDetailsModalInstance) {
+            return;
+        }
+
+        const request = bookkeeper.deactivation_request;
+        const nameField = document.getElementById("deactivationRequestModalName");
+        const dateField = document.getElementById("deactivationRequestModalDate");
+        const reasonField = document.getElementById("deactivationRequestModalReason");
+
+        if (nameField) nameField.textContent = bookkeeper.full_name || "--";
+        if (dateField) dateField.textContent = formatDate(request.requested_at);
+        if (reasonField) reasonField.textContent = request.reason || "No reason provided.";
+
+        const declineBtn = document.getElementById("deactivationRequestModalDeclineBtn");
+        const approveBtn = document.getElementById("deactivationRequestModalApproveBtn");
+
+        if (declineBtn) {
+            declineBtn.onclick = () => {
+                deactivationDetailsModalInstance.hide();
+                openActionModal(bookkeeper, "decline-deactivation-request");
+            };
+        }
+
+        if (approveBtn) {
+            approveBtn.onclick = () => {
+                deactivationDetailsModalInstance.hide();
+                openActionModal(bookkeeper, "approve-deactivation-request");
+            };
+        }
+
+        deactivationDetailsModalInstance.show();
+    };
+
     const openActionModal = (bookkeeper, action) => {
         if (!bookkeeper || !actionModalInstance) {
             showToast("Action modal is not available. Refresh the page.", "warning");
@@ -338,26 +477,58 @@
         pendingAction = {
             id: bookkeeper.id,
             action,
+            requestId: bookkeeper.deactivation_request && bookkeeper.deactivation_request.id
+                ? bookkeeper.deactivation_request.id
+                : null,
         };
 
         if (bookkeeperActionModalWarning) {
             bookkeeperActionModalWarning.hidden = true;
             bookkeeperActionModalWarning.textContent = "";
         }
+        if (bookkeeperActionPasswordInput) {
+            bookkeeperActionPasswordInput.value = "";
+            bookkeeperActionPasswordInput.classList.remove("is-invalid");
+        }
 
-        if (action === "deactivate") {
+        if (action === "deactivate" || action === "approve-deactivation-request") {
+            const clientCount = Number(bookkeeper.client_count || 0);
             if (bookkeeperActionModalLabel) {
-                bookkeeperActionModalLabel.textContent = "Deactivate bookkeeper account";
+                bookkeeperActionModalLabel.textContent = action === "approve-deactivation-request"
+                    ? "Approve deactivation request"
+                    : "Deactivate bookkeeper account";
             }
             if (bookkeeperActionModalMessage) {
-                bookkeeperActionModalMessage.textContent = `Deactivate ${name}?`;
+                bookkeeperActionModalMessage.textContent = action === "approve-deactivation-request"
+                    ? `Approve ${name}'s deactivation request? This will remove workspace access until the account is reactivated.`
+                    : `Deactivate ${name}? This will remove workspace access until the account is reactivated.`;
             }
             if (bookkeeperActionModalWarning) {
                 bookkeeperActionModalWarning.hidden = false;
-                bookkeeperActionModalWarning.textContent = "This account will lose access until reactivated.";
+                bookkeeperActionModalWarning.textContent = clientCount > 0
+                    ? `This bookkeeper currently owns ${clientCount} client${clientCount === 1 ? "" : "s"}. Client records will stay saved, but the bookkeeper cannot access them while deactivated.`
+                    : "This account will lose access until reactivated.";
             }
             if (bookkeeperActionConfirm) {
-                bookkeeperActionConfirm.textContent = "Deactivate";
+                bookkeeperActionConfirm.textContent = action === "approve-deactivation-request"
+                    ? "Approve Request"
+                    : "Deactivate";
+                bookkeeperActionConfirm.classList.remove("primary");
+                bookkeeperActionConfirm.classList.add("outline");
+            }
+        } else if (action === "decline-deactivation-request") {
+            if (bookkeeperActionModalLabel) {
+                bookkeeperActionModalLabel.textContent = "Decline deactivation request";
+            }
+            if (bookkeeperActionModalMessage) {
+                bookkeeperActionModalMessage.textContent = `Decline ${name}'s deactivation request? The account will stay active.`;
+            }
+            if (bookkeeperActionModalWarning) {
+                bookkeeperActionModalWarning.hidden = false;
+                bookkeeperActionModalWarning.textContent = "The request will be marked reviewed and removed from the pending list.";
+            }
+            if (bookkeeperActionConfirm) {
+                bookkeeperActionConfirm.textContent = "Decline Request";
                 bookkeeperActionConfirm.classList.remove("primary");
                 bookkeeperActionConfirm.classList.add("outline");
             }
@@ -366,7 +537,7 @@
                 bookkeeperActionModalLabel.textContent = "Reactivate bookkeeper account";
             }
             if (bookkeeperActionModalMessage) {
-                bookkeeperActionModalMessage.textContent = `Reactivate ${name}?`;
+                bookkeeperActionModalMessage.textContent = `Reactivate ${name}? This will restore workspace access for this account.`;
             }
             if (bookkeeperActionConfirm) {
                 bookkeeperActionConfirm.textContent = "Reactivate";
@@ -375,14 +546,14 @@
             }
         } else {
             if (bookkeeperActionModalLabel) {
-                bookkeeperActionModalLabel.textContent = "Delete bookkeeper account";
+                bookkeeperActionModalLabel.textContent = "Protected account deletion";
             }
             if (bookkeeperActionModalMessage) {
-                bookkeeperActionModalMessage.textContent = `Delete ${name}?`;
+                bookkeeperActionModalMessage.textContent = `Permanently delete ${name}?`;
             }
             if (bookkeeperActionModalWarning) {
                 bookkeeperActionModalWarning.hidden = false;
-                bookkeeperActionModalWarning.textContent = "This action permanently removes the account.";
+                bookkeeperActionModalWarning.textContent = "Permanent delete is blocked for accounts that still own clients. Use deactivate for normal access control.";
             }
             if (bookkeeperActionConfirm) {
                 bookkeeperActionConfirm.textContent = "Delete";
@@ -392,6 +563,9 @@
         }
 
         actionModalInstance.show();
+        if (bookkeeperActionPasswordInput) {
+            window.setTimeout(() => bookkeeperActionPasswordInput.focus(), 150);
+        }
     };
 
     const state = {
@@ -399,6 +573,8 @@
         clients: "",
         search: "",
         sort: "recent",
+        page: 1,
+        pageSize: 10,
     };
 
     let bookkeepersCache = [];
@@ -408,6 +584,7 @@
         button.addEventListener("click", () => {
             const nextStatus = String(button.dataset.bookkeeperStatus || "all");
             setActiveStatusFilter(nextStatus);
+            state.page = 1;
             fetchBookkeepers();
         });
     });
@@ -417,14 +594,33 @@
             const filterValue = String(button.dataset.bookkeeperClients || "");
             const nextValue = state.clients === filterValue ? "" : filterValue;
             setActiveClientFilter(nextValue);
+            state.page = 1;
             fetchBookkeepers();
         });
     });
 
     bookkeepersSortSelect.addEventListener("change", () => {
         state.sort = String(bookkeepersSortSelect.value || "recent");
+        state.page = 1;
         fetchBookkeepers();
     });
+
+    if (bookkeepersPreviousPage) {
+        bookkeepersPreviousPage.addEventListener("click", () => {
+            if (state.page <= 1) {
+                return;
+            }
+            state.page -= 1;
+            fetchBookkeepers();
+        });
+    }
+
+    if (bookkeepersNextPage) {
+        bookkeepersNextPage.addEventListener("click", () => {
+            state.page += 1;
+            fetchBookkeepers();
+        });
+    }
 
     bookkeepersSearchInput.addEventListener("input", scheduleSearch);
 
@@ -436,23 +632,27 @@
 
     bookkeepersTableBody.addEventListener("click", (event) => {
         const actionButton = event.target.closest("button[data-action]");
-        if (!actionButton) {
+        if (actionButton) {
+            const action = String(actionButton.dataset.action || "");
+            const bookkeeperId = Number(actionButton.dataset.bookkeeperId || 0);
+            const selected = bookkeepersCache.find((item) => item.id === bookkeeperId) || null;
+            if (!selected) {
+                showToast("Unable to locate this bookkeeper.", "warning");
+                return;
+            }
+
+            openActionModal(selected, action);
             return;
         }
 
-        const action = String(actionButton.dataset.action || "");
-        const bookkeeperId = Number(actionButton.dataset.bookkeeperId || 0);
-        if (!action || !bookkeeperId) {
-            return;
+        const deactivationTrigger = event.target.closest(".admin-deactivation-trigger");
+        if (deactivationTrigger) {
+            const bookkeeperId = Number(deactivationTrigger.dataset.bookkeeperId || 0);
+            const selected = bookkeepersCache.find((item) => item.id === bookkeeperId) || null;
+            if (selected && selected.deactivation_request) {
+                openDeactivationDetailsModal(selected);
+            }
         }
-
-        const selected = bookkeepersCache.find((item) => item.id === bookkeeperId) || null;
-        if (!selected) {
-            showToast("Unable to locate this bookkeeper.", "warning");
-            return;
-        }
-
-        openActionModal(selected, action);
     });
 
     if (bookkeeperActionConfirm) {
@@ -461,15 +661,37 @@
                 return;
             }
 
-            const { id, action } = pendingAction;
-            bookkeeperActionConfirm.disabled = true;
-            await runBookkeeperAction(id, action);
-            bookkeeperActionConfirm.disabled = false;
-            pendingAction = null;
+            const { id, action, requestId } = pendingAction;
+            const adminPassword = bookkeeperActionPasswordInput
+                ? bookkeeperActionPasswordInput.value.trim()
+                : "";
 
-            if (actionModalInstance) {
+            if (!adminPassword) {
+                if (bookkeeperActionPasswordInput) {
+                    bookkeeperActionPasswordInput.classList.add("is-invalid");
+                    bookkeeperActionPasswordInput.focus();
+                }
+                showToast("Enter your admin password to continue.", "warning");
+                return;
+            }
+
+            bookkeeperActionConfirm.disabled = true;
+            const completed = await runBookkeeperAction(id, action, adminPassword, requestId);
+            bookkeeperActionConfirm.disabled = false;
+
+            if (completed) {
+                pendingAction = null;
+            }
+
+            if (completed && actionModalInstance) {
                 actionModalInstance.hide();
             }
+        });
+    }
+
+    if (bookkeeperActionPasswordInput) {
+        bookkeeperActionPasswordInput.addEventListener("input", () => {
+            bookkeeperActionPasswordInput.classList.remove("is-invalid");
         });
     }
 

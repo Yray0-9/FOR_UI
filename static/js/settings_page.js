@@ -27,26 +27,14 @@
     const applyThemeButton = document.getElementById("settingsApplyThemeButton");
     const appearanceSection = document.getElementById("settingsAppearance");
 
-    const defaultsSection = document.getElementById("settingsDefaults");
-    const defaultScopeSelect = document.getElementById("settingsDefaultScope");
-    const defaultReportSelect = document.getElementById("settingsDefaultReport");
-    const defaultRangeSelect = document.getElementById("settingsDefaultRange");
-    const defaultRangeFromInput = document.getElementById("settingsDefaultRangeFrom");
-    const defaultRangeToInput = document.getElementById("settingsDefaultRangeTo");
-    const customRangeFields = Array.from(document.querySelectorAll("[data-custom-range-field]"));
-    const defaultsSaveButton = defaultsSection
-        ? defaultsSection.querySelector("[data-settings-defaults-save]")
-        : null;
-
-    const plannedFeatureButtons = Array.from(document.querySelectorAll("[data-planned-feature]"));
-
     const settingsSections = Array.from(document.querySelectorAll("[data-settings-section]"));
     const settingsNavLinks = Array.from(document.querySelectorAll(".settings-nav-link"));
 
-    const workspaceDefaultsUrl = String(urls.workspaceDefaultsApi || "");
     const securityChangePasswordUrl = String(urls.securityChangePasswordApi || "");
     const securityLoginAlertsUrl = String(urls.securityLoginAlertsApi || "");
+    const clientRecordEmailNotificationsUrl = String(urls.clientRecordEmailNotificationsApi || "");
     const securityClientDetailsAccessPreferenceUrl = String(urls.securityClientDetailsAccessPreferenceApi || "");
+    const deactivationRequestUrl = String(urls.deactivationRequestApi || "");
 
     const changePasswordForm = document.getElementById("settingsChangePasswordForm");
     const changePasswordStatus = document.getElementById("settingsChangePasswordStatus");
@@ -60,12 +48,24 @@
     const loginAlertsToggle = document.getElementById("settingsLoginAlertsToggle");
     const loginAlertsStatus = document.getElementById("settingsLoginAlertsStatus");
     const loginAlertsFeedback = document.getElementById("settingsLoginAlertsFeedback");
+    const clientRecordEmailsPanel = document.getElementById("settingsNotifications");
+    const clientRecordEmailsToggle = document.getElementById("settingsClientRecordEmailsToggle");
+    const clientRecordEmailsStatus = document.getElementById("settingsClientRecordEmailsStatus");
+    const clientRecordEmailsFeedback = document.getElementById("settingsClientRecordEmailsFeedback");
     const clientDetailsLockPanel = document.getElementById("settingsClientDetailsLockPanel");
     const clientDetailsLockToggle = document.getElementById("settingsClientDetailsLockToggle");
     const clientDetailsLockStatus = document.getElementById("settingsClientDetailsLockStatus");
     const clientDetailsLockFeedback = document.getElementById("settingsClientDetailsLockFeedback");
     const clientDetailsLockPasswordInput = document.getElementById("settingsClientDetailsLockPassword");
     const clientDetailsLockSaveButton = document.getElementById("settingsClientDetailsLockSaveButton");
+    const deactivationRequestForm = document.getElementById("settingsDeactivationRequestForm");
+    const deactivationRequestModalElement = document.getElementById("settingsDeactivationRequestModal");
+    const deactivationRequestStatus = document.getElementById("settingsDeactivationRequestStatus");
+    const deactivationRequestButton = document.getElementById("settingsDeactivationRequestButton");
+    const deactivationReasonInput = document.getElementById("settingsDeactivationReason");
+    const deactivationPasswordInput = document.getElementById("settingsDeactivationPassword");
+    const openDeactivationRequestButton = document.getElementById("settingsOpenDeactivationRequestModal");
+    const deactivationRequestHint = document.getElementById("settingsDeactivationRequestHint");
 
     if (!body || !uiToastContainer || !settingsSections.length) {
         return;
@@ -272,6 +272,7 @@
     };
 
     let changePasswordModal = null;
+    let deactivationRequestModal = null;
 
     const getPasswordRequirementState = () => {
         const currentValue = currentPasswordInput ? currentPasswordInput.value : "";
@@ -472,204 +473,6 @@
         }
     };
 
-    const setSelectValue = (selectElement, nextValue) => {
-        if (!selectElement) {
-            return;
-        }
-
-        const value = String(nextValue || "").trim();
-        if (!value) {
-            return;
-        }
-
-        const optionExists = Array.from(selectElement.options)
-            .some((optionItem) => optionItem.value === value);
-        if (optionExists) {
-            selectElement.value = value;
-        }
-    };
-
-    const setCustomRangeVisibility = (isCustomRange) => {
-        customRangeFields.forEach((field) => {
-            field.hidden = !isCustomRange;
-        });
-    };
-
-    const setDateValue = (inputElement, nextValue) => {
-        if (!inputElement) {
-            return;
-        }
-
-        inputElement.value = String(nextValue || "").trim();
-    };
-
-    const validateCustomRange = () => {
-        if (!defaultRangeSelect || defaultRangeSelect.value !== "custom") {
-            return "";
-        }
-
-        const fromValue = defaultRangeFromInput ? defaultRangeFromInput.value : "";
-        const toValue = defaultRangeToInput ? defaultRangeToInput.value : "";
-
-        if (!fromValue || !toValue) {
-            return "Custom range requires both start and end dates.";
-        }
-
-        if (fromValue > toValue) {
-            return "Custom range start must be on or before the end date.";
-        }
-
-        return "";
-    };
-
-    const applyWorkspaceDefaults = (defaults) => {
-        if (!defaults || typeof defaults !== "object") {
-            return;
-        }
-
-        setSelectValue(defaultScopeSelect, defaults.default_client_scope);
-        setSelectValue(defaultReportSelect, defaults.default_report_type);
-        setSelectValue(defaultRangeSelect, defaults.default_report_range);
-        setDateValue(defaultRangeFromInput, defaults.default_report_range_from);
-        setDateValue(defaultRangeToInput, defaults.default_report_range_to);
-        setCustomRangeVisibility(defaultRangeSelect && defaultRangeSelect.value === "custom");
-    };
-
-    const loadWorkspaceDefaults = async () => {
-        if (!workspaceDefaultsUrl || !defaultsSection) {
-            return;
-        }
-
-        const status = defaultsSection.querySelector("[data-settings-status]");
-        if (status) {
-            status.textContent = "Loading...";
-        }
-        if (defaultsSaveButton) {
-            defaultsSaveButton.disabled = true;
-        }
-
-        try {
-            const response = await fetch(workspaceDefaultsUrl, {
-                method: "GET",
-                headers: {
-                    Accept: "application/json",
-                },
-                credentials: "same-origin",
-            });
-
-            if (response.status === 401) {
-                window.location.assign(String(urls.loginPage || "/login/"));
-                return;
-            }
-
-            const payload = await parseJsonSafe(response);
-            if (!response.ok || !payload || !payload.ok) {
-                throw new Error(payload && payload.message ? String(payload.message) : "Unable to load workspace defaults.");
-            }
-
-            applyWorkspaceDefaults(payload.defaults);
-            resetSectionDirty(defaultsSection);
-        } catch (error) {
-            if (status) {
-                status.textContent = "Unable to load";
-            }
-            showToast("Workspace defaults could not be loaded.", "warning");
-            if (defaultsSaveButton) {
-                defaultsSaveButton.disabled = false;
-            }
-        } finally {
-            setCustomRangeVisibility(defaultRangeSelect && defaultRangeSelect.value === "custom");
-        }
-    };
-
-    const saveWorkspaceDefaults = async () => {
-        if (!workspaceDefaultsUrl || !defaultsSection) {
-            showToast("Workspace defaults are unavailable.", "warning");
-            return;
-        }
-
-        const customRangeError = validateCustomRange();
-        if (customRangeError) {
-            showToast(customRangeError, "warning");
-            return;
-        }
-
-        const payload = {
-            default_client_scope: defaultScopeSelect ? defaultScopeSelect.value : "",
-            default_report_type: defaultReportSelect ? defaultReportSelect.value : "",
-            default_report_range: defaultRangeSelect ? defaultRangeSelect.value : "",
-            default_report_range_from: defaultRangeFromInput ? defaultRangeFromInput.value : "",
-            default_report_range_to: defaultRangeToInput ? defaultRangeToInput.value : "",
-        };
-
-        const status = defaultsSection.querySelector("[data-settings-status]");
-        if (status) {
-            status.textContent = "Saving...";
-        }
-        if (defaultsSaveButton) {
-            defaultsSaveButton.disabled = true;
-        }
-
-        try {
-            const csrfToken = getCookieValue("csrftoken");
-            const headers = {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            };
-            if (csrfToken) {
-                headers["X-CSRFToken"] = csrfToken;
-            }
-
-            const response = await fetch(workspaceDefaultsUrl, {
-                method: "POST",
-                headers,
-                credentials: "same-origin",
-                body: JSON.stringify(payload),
-            });
-
-            if (response.status === 401) {
-                window.location.assign(String(urls.loginPage || "/login/"));
-                return;
-            }
-
-            const result = await parseJsonSafe(response);
-            if (!response.ok || !result || !result.ok) {
-                const message = result && result.message
-                    ? String(result.message)
-                    : "Unable to save workspace defaults.";
-                throw new Error(message);
-            }
-
-            applyWorkspaceDefaults(result.defaults);
-            resetSectionDirty(defaultsSection);
-            showToast("Workspace defaults saved.", "success");
-        } catch (error) {
-            if (status) {
-                status.textContent = "Unsaved changes";
-            }
-            showToast(error && error.message ? String(error.message) : "Unable to save workspace defaults.", "danger");
-            if (defaultsSaveButton) {
-                defaultsSaveButton.disabled = false;
-            }
-        }
-    };
-
-    const bindWorkspaceDefaults = () => {
-        if (!defaultsSaveButton) {
-            return;
-        }
-
-        defaultsSaveButton.addEventListener("click", () => {
-            saveWorkspaceDefaults();
-        });
-
-        if (defaultRangeSelect) {
-            defaultRangeSelect.addEventListener("change", () => {
-                setCustomRangeVisibility(defaultRangeSelect.value === "custom");
-            });
-        }
-    };
-
     const isLoginAlertsEnabled = () => {
         if (!loginAlertsPanel) {
             return false;
@@ -737,6 +540,76 @@
             showToast(error && error.message ? String(error.message) : "Unable to update login alerts.", "danger");
         } finally {
             setLoginAlertsLoading(false);
+        }
+    };
+
+    const isClientRecordEmailsEnabled = () => {
+        if (!clientRecordEmailsPanel) {
+            return true;
+        }
+
+        return String(clientRecordEmailsPanel.dataset.clientRecordEmailNotificationsEnabled || "true") === "true";
+    };
+
+    const updateClientRecordEmailsUiState = (isEnabled) => {
+        if (clientRecordEmailsPanel) {
+            clientRecordEmailsPanel.dataset.clientRecordEmailNotificationsEnabled = isEnabled ? "true" : "false";
+        }
+
+        if (clientRecordEmailsStatus) {
+            clientRecordEmailsStatus.textContent = isEnabled ? "On" : "Off";
+            clientRecordEmailsStatus.classList.toggle("is-enabled", isEnabled);
+        }
+
+        if (clientRecordEmailsToggle) {
+            clientRecordEmailsToggle.checked = isEnabled;
+        }
+    };
+
+    const setClientRecordEmailsLoading = (isLoading) => {
+        if (clientRecordEmailsToggle) {
+            clientRecordEmailsToggle.disabled = isLoading;
+        }
+    };
+
+    const handleClientRecordEmailsToggle = async (nextValue) => {
+        if (!clientRecordEmailNotificationsUrl) {
+            showToast("Client email notification settings are unavailable.", "warning");
+            updateClientRecordEmailsUiState(isClientRecordEmailsEnabled());
+            return;
+        }
+
+        const previousValue = isClientRecordEmailsEnabled();
+        setClientRecordEmailsLoading(true);
+        setInlineStatus(clientRecordEmailsFeedback, "Saving...", "warning");
+
+        try {
+            const response = await postJson(clientRecordEmailNotificationsUrl, {
+                enabled: Boolean(nextValue),
+            });
+
+            if (response.status === 401) {
+                window.location.assign(String(urls.loginPage || "/login/"));
+                return;
+            }
+
+            const result = await parseJsonSafe(response);
+            if (!response.ok || !result || !result.ok) {
+                const message = result && result.message
+                    ? String(result.message)
+                    : "Unable to update client email notifications.";
+                throw new Error(message);
+            }
+
+            updateClientRecordEmailsUiState(Boolean(result.client_record_email_notifications_enabled));
+            setInlineStatus(clientRecordEmailsFeedback, "Updated", "success");
+            showToast("Client email notification setting updated.", "success");
+        } catch (error) {
+            updateClientRecordEmailsUiState(previousValue);
+            setInlineStatus(clientRecordEmailsFeedback, "Update failed", "danger");
+            showToast(error && error.message ? String(error.message) : "Unable to update client email notifications.", "danger");
+        } finally {
+            setClientRecordEmailsLoading(false);
         }
     };
 
@@ -828,6 +701,89 @@
             showToast(error && error.message ? String(error.message) : "Unable to update client details lock.", "danger");
         } finally {
             setClientDetailsLockLoading(false);
+        }
+    };
+
+    const resetDeactivationRequestInputs = () => {
+        if (deactivationReasonInput) {
+            deactivationReasonInput.value = "";
+        }
+        if (deactivationPasswordInput) {
+            deactivationPasswordInput.value = "";
+        }
+        clearInlineStatus(deactivationRequestStatus);
+    };
+
+    const markDeactivationRequestPending = () => {
+        if (openDeactivationRequestButton) {
+            openDeactivationRequestButton.textContent = "Request Pending";
+            openDeactivationRequestButton.disabled = true;
+            openDeactivationRequestButton.setAttribute("aria-disabled", "true");
+            openDeactivationRequestButton.removeAttribute("data-bs-toggle");
+            openDeactivationRequestButton.removeAttribute("data-bs-target");
+        }
+        if (deactivationRequestHint) {
+            deactivationRequestHint.textContent = "Request pending admin review.";
+        }
+    };
+
+    const handleDeactivationRequestSubmit = async () => {
+        if (!deactivationRequestUrl || !deactivationRequestForm) {
+            showToast("Deactivation requests are unavailable.", "warning");
+            return;
+        }
+
+        const currentPassword = deactivationPasswordInput ? deactivationPasswordInput.value : "";
+        if (!currentPassword) {
+            setInlineStatus(deactivationRequestStatus, "Current password is required.", "danger");
+            showToast("Enter your current password to submit this request.", "warning");
+            if (deactivationPasswordInput) {
+                deactivationPasswordInput.focus();
+            }
+            return;
+        }
+
+        setButtonLoading(deactivationRequestButton, true, "Submitting...");
+        setInlineStatus(deactivationRequestStatus, "Submitting request...", "warning");
+        let submitted = false;
+
+        try {
+            const response = await postJson(deactivationRequestUrl, {
+                current_password: currentPassword,
+                reason: deactivationReasonInput ? deactivationReasonInput.value : "",
+            });
+
+            if (response.status === 401) {
+                window.location.assign(String(urls.loginPage || "/login/"));
+                return;
+            }
+
+            const result = await parseJsonSafe(response);
+            if (!response.ok || !result || !result.ok) {
+                const message = result && result.message
+                    ? String(result.message)
+                    : "Unable to submit deactivation request.";
+                throw new Error(message);
+            }
+
+            setInlineStatus(deactivationRequestStatus, "Request submitted", "success");
+            submitted = true;
+            markDeactivationRequestPending();
+            showToast(result.message || "Deactivation request submitted.", "success");
+            window.setTimeout(() => {
+                if (deactivationRequestModal) {
+                    deactivationRequestModal.hide();
+                }
+            }, 450);
+        } catch (error) {
+            setInlineStatus(deactivationRequestStatus, "Request failed", "danger");
+            showToast(error && error.message ? String(error.message) : "Unable to submit deactivation request.", "danger");
+        } finally {
+            if (submitted) {
+                markDeactivationRequestPending();
+            } else {
+                setButtonLoading(deactivationRequestButton, false);
+            }
         }
     };
 
@@ -965,6 +921,12 @@
             });
         }
 
+        if (clientRecordEmailsToggle) {
+            clientRecordEmailsToggle.addEventListener("change", () => {
+                handleClientRecordEmailsToggle(clientRecordEmailsToggle.checked);
+            });
+        }
+
         if (clientDetailsLockToggle) {
             clientDetailsLockToggle.addEventListener("change", () => {
                 clearInlineStatus(clientDetailsLockFeedback);
@@ -983,22 +945,44 @@
             });
         }
 
+        if (deactivationRequestModalElement) {
+            deactivationRequestModal = getModalInstance(deactivationRequestModalElement);
+            deactivationRequestModalElement.addEventListener("shown.bs.modal", () => {
+                if (deactivationPasswordInput) {
+                    deactivationPasswordInput.focus();
+                }
+                clearInlineStatus(deactivationRequestStatus);
+            });
+            deactivationRequestModalElement.addEventListener("hidden.bs.modal", () => {
+                resetDeactivationRequestInputs();
+            });
+        }
+
+        if (deactivationRequestForm) {
+            deactivationRequestForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                handleDeactivationRequestSubmit();
+            });
+        }
+
+        [deactivationReasonInput, deactivationPasswordInput].forEach((input) => {
+            if (!input) {
+                return;
+            }
+            input.addEventListener("input", () => {
+                clearInlineStatus(deactivationRequestStatus);
+            });
+        });
+
         updateLoginAlertsUiState(isLoginAlertsEnabled());
+        updateClientRecordEmailsUiState(isClientRecordEmailsEnabled());
         updateClientDetailsLockUiState(isClientDetailsLockEnabled());
         clearInlineStatus(changePasswordStatus);
         clearInlineStatus(loginAlertsFeedback);
+        clearInlineStatus(clientRecordEmailsFeedback);
         clearInlineStatus(clientDetailsLockFeedback);
+        clearInlineStatus(deactivationRequestStatus);
         updatePasswordRequirementsUi();
-    };
-
-    const bindPlannedFeatures = () => {
-        plannedFeatureButtons.forEach((button) => {
-            button.addEventListener("click", (event) => {
-                event.preventDefault();
-                const label = String(button.dataset.plannedFeature || "This feature").trim();
-                showToast(`${label} is planned and will be available soon.`);
-            });
-        });
     };
 
     const bindSettingsScrollSpy = () => {
@@ -1116,14 +1100,10 @@
 
         bindSectionInputs();
         bindThemeControls();
-        bindWorkspaceDefaults();
         bindSecurityActions();
-        bindPlannedFeatures();
         bindSettingsScrollSpy();
         bindHeaderActions();
         syncThemeState();
-        loadWorkspaceDefaults();
-
         window.addEventListener("resize", () => {
             sidebarState.closeMobileSidebar();
             sidebarState.restoreDesktopState();

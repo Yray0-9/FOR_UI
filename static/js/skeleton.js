@@ -8,13 +8,15 @@
     const TRANSITION_FLASH_MS = 420;
     const startTime = performance.now();
 
+    const revealPage = () => {
+        body.classList.remove("skeleton-active");
+        body.classList.add("skeleton-loaded");
+    };
+
     const hideSkeleton = () => {
         const elapsed = performance.now() - startTime;
         const delay = Math.max(0, MIN_INITIAL_MS - elapsed);
-        window.setTimeout(() => {
-            body.classList.remove("skeleton-active");
-            body.classList.add("skeleton-loaded");
-        }, delay);
+        window.setTimeout(revealPage, delay);
     };
 
     if (document.readyState === "loading") {
@@ -22,6 +24,18 @@
     } else {
         hideSkeleton();
     }
+
+    window.addEventListener("pageshow", (event) => {
+        const navigationEntry = typeof performance.getEntriesByType === "function"
+            ? performance.getEntriesByType("navigation")[0]
+            : null;
+        const restoredFromHistory = Boolean(event.persisted)
+            || Boolean(navigationEntry && navigationEntry.type === "back_forward");
+
+        if (restoredFromHistory) {
+            revealPage();
+        }
+    });
 
     const shouldInterceptLink = (link, event) => {
         if (!link || event.defaultPrevented || event.button !== 0) {

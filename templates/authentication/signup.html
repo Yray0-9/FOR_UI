@@ -261,17 +261,89 @@
                 updatePasswordRules();
             }
 
+            const getInput = (id) => {
+                const element = document.getElementById(id);
+                return element instanceof HTMLInputElement ? element : null;
+            };
+
+            const clearFieldErrors = () => {
+                signupForm.querySelectorAll(".is-invalid").forEach((field) => {
+                    field.classList.remove("is-invalid");
+                });
+            };
+
+            const markInvalid = (input) => {
+                if (input) {
+                    input.classList.add("is-invalid");
+                }
+            };
+
+            signupForm.addEventListener("input", (event) => {
+                if (event.target instanceof HTMLInputElement) {
+                    event.target.classList.remove("is-invalid");
+                }
+            });
+
             signupForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 clearSkeletonState();
+                clearFieldErrors();
 
+                const fullNameInput = getInput("signup_full_name");
+                const emailInput = getInput("signup_email");
+                const usernameInput = getInput("signup_username");
+                const confirmPasswordInput = getInput("signup_confirm_password");
                 const payload = {
-                    full_name: document.getElementById("signup_full_name") ? document.getElementById("signup_full_name").value.trim() : "",
-                    email: document.getElementById("signup_email") ? document.getElementById("signup_email").value.trim() : "",
-                    username: document.getElementById("signup_username") ? document.getElementById("signup_username").value.trim() : "",
+                    full_name: fullNameInput ? fullNameInput.value.trim() : "",
+                    email: emailInput ? emailInput.value.trim() : "",
+                    username: usernameInput ? usernameInput.value.trim() : "",
                     password: passwordInput ? passwordInput.value : "",
-                    confirm_password: document.getElementById("signup_confirm_password") ? document.getElementById("signup_confirm_password").value : ""
+                    confirm_password: confirmPasswordInput ? confirmPasswordInput.value : ""
                 };
+
+                const missingFields = [];
+                if (!payload.full_name) {
+                    missingFields.push("full name");
+                    markInvalid(fullNameInput);
+                }
+                if (!payload.email) {
+                    missingFields.push("email");
+                    markInvalid(emailInput);
+                }
+                if (!payload.username) {
+                    missingFields.push("username");
+                    markInvalid(usernameInput);
+                }
+                if (!payload.password) {
+                    missingFields.push("password");
+                    markInvalid(passwordInput);
+                }
+                if (!payload.confirm_password) {
+                    missingFields.push("confirm password");
+                    markInvalid(confirmPasswordInput);
+                }
+
+                if (missingFields.length) {
+                    setFeedback(`Please complete ${missingFields.join(", ")}.`, "error");
+                    clearSkeletonState();
+                    return;
+                }
+
+                const passwordStatus = getPasswordStatus(payload.password);
+                const passwordIsValid = Object.values(passwordStatus).every(Boolean);
+                if (!passwordIsValid) {
+                    markInvalid(passwordInput);
+                    setFeedback("Password must include 8+ characters, uppercase, lowercase, number, and symbol.", "error");
+                    clearSkeletonState();
+                    return;
+                }
+
+                if (payload.password !== payload.confirm_password) {
+                    markInvalid(confirmPasswordInput);
+                    setFeedback("Passwords do not match.", "error");
+                    clearSkeletonState();
+                    return;
+                }
 
                 setSubmittingState(true);
 

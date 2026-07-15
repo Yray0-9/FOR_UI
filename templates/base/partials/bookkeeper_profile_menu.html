@@ -9,17 +9,17 @@
     </button>
     <ul class="dropdown-menu dropdown-menu-end dashboard-profile-menu" aria-labelledby="dashboardProfileMenuButton">
         <li>
-            <button type="button" class="dropdown-item" id="dashboardProfileAction">
+            <a href="{% url 'profile' %}" class="dropdown-item">
                 <i class="bi bi-person"></i>
                 <span>Profile</span>
-            </button>
+            </a>
         </li>
         <li><hr class="dropdown-divider" /></li>
         <li>
-            <button type="button" class="dropdown-item text-danger" id="dashboardLogoutAction">
+            <a href="{% url 'login' %}" class="dropdown-item text-danger" data-bookkeeper-logout>
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Log out</span>
-            </button>
+            </a>
         </li>
     </ul>
 </div>

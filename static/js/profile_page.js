@@ -24,16 +24,7 @@
     const profileDisplayName = document.getElementById("profileDisplayName");
     const profileDisplayEmail = document.getElementById("profileDisplayEmail");
     const profileAvatar = document.getElementById("profileAvatar");
-    const profileThemeChip = document.querySelector("[data-profile-theme-chip]");
-    const profileThemeIcon = document.querySelector("[data-profile-theme-icon]");
-    const profileThemeLabel = document.querySelector("[data-profile-theme-label]");
-
-    const profileCompletionValue = document.getElementById("profileCompletionValue");
-    const profileCompletionTrack = document.getElementById("profileCompletionTrack");
-    const profileCompletionBar = document.getElementById("profileCompletionBar");
-
     const profileSections = Array.from(document.querySelectorAll("[data-profile-section]"));
-    const profileTrackInputs = Array.from(document.querySelectorAll("[data-profile-track]"));
     const profileForm = document.getElementById("profilePersonalDetails");
     const profileFullNameInput = document.getElementById("profileFullName");
     const profileUsernameInput = document.getElementById("profileUsername");
@@ -46,8 +37,6 @@
     const verifyEmailPage = String(urls.verifyEmailPage || "");
 
     const scrollTargets = Array.from(document.querySelectorAll("[data-scroll-target]"));
-    const plannedFeatureButtons = Array.from(document.querySelectorAll("[data-planned-feature]"));
-
     if (!body || !uiToastContainer) {
         return;
     }
@@ -169,35 +158,6 @@
         }
     };
 
-    const updateThemeSnapshot = () => {
-        if (!profileThemeChip) {
-            return;
-        }
-
-        const preference = shared && typeof shared.getThemePreference === "function"
-            ? shared.getThemePreference()
-            : { theme: "light", followSystem: false };
-
-        let label = "Light Theme";
-        let iconClass = "bi-brightness-high";
-
-        if (preference.followSystem) {
-            label = "System Theme";
-            iconClass = "bi-laptop";
-        } else if (preference.theme === "dark") {
-            label = "Dark Theme";
-            iconClass = "bi-moon-stars";
-        }
-
-        if (profileThemeLabel) {
-            profileThemeLabel.textContent = label;
-        }
-
-        if (profileThemeIcon) {
-            profileThemeIcon.className = `bi ${iconClass}`;
-        }
-    };
-
     const markSectionDirty = (section) => {
         if (!section) {
             return;
@@ -312,32 +272,6 @@
         });
     };
 
-    const isInputFilled = (input) => {
-        if (!input) {
-            return false;
-        }
-
-        if (input.type === "checkbox" || input.type === "radio") {
-            return input.checked;
-        }
-
-        return Boolean(String(input.value || "").trim());
-    };
-
-    const updateCompletion = () => {
-        if (!profileCompletionValue || !profileCompletionBar || !profileCompletionTrack || !profileTrackInputs.length) {
-            return;
-        }
-
-        const filledCount = profileTrackInputs.filter((input) => isInputFilled(input)).length;
-        const completion = Math.round((filledCount / profileTrackInputs.length) * 100);
-        const safeCompletion = Number.isFinite(completion) ? completion : 0;
-
-        profileCompletionValue.textContent = `${safeCompletion}%`;
-        profileCompletionBar.style.width = `${safeCompletion}%`;
-        profileCompletionTrack.setAttribute("aria-valuenow", String(safeCompletion));
-    };
-
     const hydrateProfileForm = () => {
         const authUser = getAuthUser() || {};
         const resolveValue = (value, fallback) => {
@@ -353,7 +287,6 @@
         setInputValue(profileEmailInput, resolveValue(profileData.email, authUser.email));
         setInputValue(profileLocationInput, resolveValue(profileData.location, authUser.location));
 
-        updateCompletion();
     };
 
     const handleProfileSave = async (section) => {
@@ -399,7 +332,6 @@
             setProfileStatus("Saved");
             hydrateProfileIdentity();
             hydrateHeaderUser();
-            updateCompletion();
             showToast(result.message || "Profile updated.", "success");
 
             if (result.requires_email_verification && verifyEmailPage) {
@@ -422,11 +354,9 @@
             inputs.forEach((input) => {
                 input.addEventListener("input", () => {
                     markSectionDirty(section);
-                    updateCompletion();
                 });
                 input.addEventListener("change", () => {
                     markSectionDirty(section);
-                    updateCompletion();
                 });
             });
 
@@ -467,16 +397,6 @@
         });
     };
 
-    const bindPlannedFeatures = () => {
-        plannedFeatureButtons.forEach((button) => {
-            button.addEventListener("click", (event) => {
-                event.preventDefault();
-                const label = String(button.dataset.plannedFeature || "This feature").trim();
-                showToast(`${label} is planned and will be available soon.`);
-            });
-        });
-    };
-
     const bindHeaderActions = () => {
         if (dashboardProfileAction) {
             dashboardProfileAction.addEventListener("click", () => {
@@ -509,10 +429,8 @@
 
         hydrateProfileIdentity();
         hydrateProfileForm();
-        updateThemeSnapshot();
         bindSectionInputs();
         bindScrollTargets();
-        bindPlannedFeatures();
         bindHeaderActions();
 
         window.addEventListener("resize", () => {

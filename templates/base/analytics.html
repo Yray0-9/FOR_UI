@@ -542,8 +542,8 @@
                 avatarElement: dashboardUserAvatar,
                 nameElement: dashboardUserName,
                 authUserKey: AUTH_USER_KEY,
-                defaultName: "Bookkeeper User",
-                defaultInitials: "SB",
+                defaultName: "{{ current_user_name|default:'Bookkeeper User'|escapejs }}",
+                defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}",
             });
         };
 

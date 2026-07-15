@@ -72,6 +72,7 @@
                 <input type="search" id="financialClientsSearchInput" placeholder="Search by client name or TIN" autocomplete="off">
             </label>
             <select id="financialClientsSortSelect" class="form-select dashboard-filter-select" aria-label="Sort financial records client list">
+                <option value="recent-activity">Recent Activity</option>
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
                 <option value="name-asc">Alphabetical (A-Z)</option>
@@ -80,7 +81,6 @@
             <label class="visually-hidden" for="financialClientsFilter">Filter financial records client list</label>
             <select id="financialClientsFilter" class="form-select dashboard-filter-select" aria-label="Filter clients in financial records list">
                 <option value="all">All Clients</option>
-                <option value="active">Recently Active</option>
                 <option value="none">No Activity</option>
             </select>
         </div>
@@ -108,8 +108,10 @@
         </div>
 
         <div class="clients-empty-state" id="financialClientsEmptyState" hidden>
-            <p>No clients with financial records yet.</p>
-            <a href="{% url 'clients' %}" class="btn dashboard-action-btn primary">Add Client</a>
+            <p id="financialClientsEmptyMessage">No clients are ready for financial records yet. Add a client first, then open their records when paperwork is ready.</p>
+            <div class="dashboard-empty-actions">
+                <a href="{% url 'clients' %}" class="btn dashboard-action-btn primary" id="financialClientsEmptyPrimaryAction">Open Clients</a>
+            </div>
         </div>
     </article>
 </section>
@@ -171,6 +173,8 @@
         const financialClientsSortSelect = document.getElementById("financialClientsSortSelect");
         const financialClientsCountTag = document.getElementById("financialClientsCountTag");
         const financialClientsEmptyState = document.getElementById("financialClientsEmptyState");
+        const financialClientsEmptyMessage = document.getElementById("financialClientsEmptyMessage");
+        const financialClientsEmptyPrimaryAction = document.getElementById("financialClientsEmptyPrimaryAction");
         const uiToastContainer = document.getElementById("uiToastContainer");
         const FINANCIAL_RECORDS_DETAIL_BASE_URL = "{% url 'financial_records_client' %}";
         const FINANCIAL_RECORD_CLIENTS_API_URL = "{% url 'api_financial_record_clients' %}";
@@ -183,6 +187,10 @@
         let FINANCIAL_CLIENTS_DATA = [];
 
         const normalize = (value) => String(value || "").trim().toLowerCase();
+        const toTimestamp = (value) => {
+            const parsed = Date.parse(String(value || ""));
+            return Number.isFinite(parsed) ? parsed : 0;
+        };
 
         const debounce = (callback, waitMs = 180) => {
             return (...args) => {
@@ -250,8 +258,8 @@
                 avatarElement: dashboardUserAvatar,
                 nameElement: dashboardUserName,
                 authUserKey: AUTH_USER_KEY,
-                defaultName: "Bookkeeper User",
-                defaultInitials: "SB",
+                defaultName: "{{ current_user_name|default:'Bookkeeper User'|escapejs }}",
+                defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}",
             });
         };
 
@@ -267,6 +275,57 @@
                 return;
             }
             financialClientsCountTag.textContent = `${count} ${count === 1 ? "Client" : "Clients"}`;
+        };
+
+        const setFinancialClientsEmptyState = ({ message, showPrimaryAction = true }) => {
+            if (financialClientsEmptyMessage) {
+                financialClientsEmptyMessage.textContent = message;
+            }
+
+            if (financialClientsEmptyPrimaryAction) {
+                financialClientsEmptyPrimaryAction.hidden = !showPrimaryAction;
+            }
+        };
+
+        const updateFinancialClientsEmptyState = (visibleCount, totalRows, query, activityFilter) => {
+            if (!financialClientsEmptyState) {
+                return;
+            }
+
+            financialClientsEmptyState.hidden = visibleCount !== 0;
+
+            if (visibleCount !== 0) {
+                return;
+            }
+
+            if (totalRows === 0) {
+                setFinancialClientsEmptyState({
+                    message: "No clients are ready for financial records yet. Add a client first, then open their records when paperwork is ready.",
+                    showPrimaryAction: true,
+                });
+                return;
+            }
+
+            if (query) {
+                setFinancialClientsEmptyState({
+                    message: "No clients match that name or TIN. Clear the search to see the full list again.",
+                    showPrimaryAction: false,
+                });
+                return;
+            }
+
+            if (activityFilter === "none") {
+                setFinancialClientsEmptyState({
+                    message: "Every listed client already has record activity. Switch back to All Clients to continue reviewing records.",
+                    showPrimaryAction: false,
+                });
+                return;
+            }
+
+            setFinancialClientsEmptyState({
+                message: "No clients match the current filter. Clear filters to return to the full list.",
+                showPrimaryAction: false,
+            });
         };
 
         const setFinancialClientsLoadingState = (isLoading, message = "Loading clients...") => {
@@ -424,6 +483,17 @@
                 safeClients.sort((a, b) => normalize(a.client_name).localeCompare(normalize(b.client_name)));
             } else if (sortBy === "name-desc") {
                 safeClients.sort((a, b) => normalize(b.client_name).localeCompare(normalize(a.client_name)));
+            } else if (sortBy === "recent-activity") {
+                safeClients.sort((a, b) => {
+                    const aTime = toTimestamp(a && (a.recent_activity_at || a.last_activity || a.created_at));
+                    const bTime = toTimestamp(b && (b.recent_activity_at || b.last_activity || b.created_at));
+                    if (bTime !== aTime) {
+                        return bTime - aTime;
+                    }
+                    const aId = Number(a.id || 0);
+                    const bId = Number(b.id || 0);
+                    return bId - aId;
+                });
             } else if (sortBy === "oldest") {
                 safeClients.sort((a, b) => {
                     const aId = Number(a.id || 0);
@@ -442,7 +512,7 @@
         };
 
         const syncSortedFinancialClients = () => {
-            const sortBy = financialClientsSortSelect ? financialClientsSortSelect.value : "newest";
+            const sortBy = financialClientsSortSelect ? financialClientsSortSelect.value : "recent-activity";
             const sorted = sortFinancialClients(FINANCIAL_CLIENTS_DATA, sortBy);
             renderClientRows(sorted);
         };
@@ -467,6 +537,7 @@
                 row.dataset.tin = client.tin_number || "";
                 row.dataset.tradeName = client.trade_name || "";
                 row.dataset.lastActivity = lastActivity;
+                row.dataset.recentActivityAt = client.recent_activity_at || "";
                 row.dataset.activityState = activityState;
                 row.setAttribute("aria-label", `Open financial records for ${client.client_name || "selected client"}`);
 
@@ -546,9 +617,7 @@
                 }, 170);
             }
 
-            if (financialClientsEmptyState) {
-                financialClientsEmptyState.hidden = visibleCount !== 0;
-            }
+            updateFinancialClientsEmptyState(visibleCount, rows.length, query, activityFilter);
 
             updateCount(visibleCount);
         };

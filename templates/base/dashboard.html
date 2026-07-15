@@ -165,6 +165,7 @@
                             <input type="search" id="clientTableSearch" placeholder="Search client or TIN" autocomplete="off">
                         </label>
                         <select id="clientSortSelect" class="form-select dashboard-filter-select" aria-label="Sort recent client activity">
+                            <option value="recent-activity">Recent Activity</option>
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
                             <option value="name-asc">Alphabetical (A-Z)</option>
@@ -196,7 +197,7 @@
                     </table>
                 </div>
                 <div class="dashboard-data-empty" id="clientActivityEmpty" hidden>
-                    <p>No data available yet</p>
+                    <p>No matching clients in this view. Try another filter or add a client.</p>
                     <div class="dashboard-empty-actions">
                         <a href="{% url 'clients' %}" class="btn dashboard-action-btn outline">Add Client</a>
                         <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn primary">Add Financial Entry</a>
@@ -229,7 +230,7 @@
                     </table>
                 </div>
                 <div class="dashboard-data-empty" id="recentEntriesEmpty" hidden>
-                    <p>No data available yet</p>
+                    <p>No financial entries recorded yet. Add an entry when a client record is ready.</p>
                     <div class="dashboard-empty-actions">
                         <a href="{% url 'clients' %}" class="btn dashboard-action-btn outline">Add Client</a>
                         <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn primary">Add Financial Entry</a>
@@ -328,16 +329,6 @@
                 <div class="dashboard-recent-list dashboard-deadline-list" id="upcomingDeadlinesList"></div>
             </article>
 
-            <article class="dashboard-card dashboard-fade-up dashboard-delay-45">
-                <div class="dashboard-card-head">
-                    <h2>Quick Actions</h2>
-                </div>
-                <div class="dashboard-actions">
-                    <a href="{% url 'clients' %}" class="btn dashboard-action-btn primary">Add Client</a>
-                    <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline">Add Financial Entry</a>
-                    <a href="{% url 'financial_records' %}" class="btn dashboard-action-btn outline">View Financial Records</a>
-                </div>
-            </article>
         </div>
     </div>
 </section>
@@ -630,6 +621,11 @@
             return Number.isFinite(parsed) ? parsed : 0;
         };
 
+        const toTimestamp = (value) => {
+            const parsed = Date.parse(String(value || ""));
+            return Number.isNaN(parsed) ? 0 : parsed;
+        };
+
         const formatCurrency = (value) => currencyFormatter.format(value || 0);
 
         const formatEntryDate = (value) => {
@@ -803,6 +799,18 @@
                     const bId = Number(b.clientId || 0);
                     return aId - bId;
                 });
+            } else if (sortBy === "recent-activity") {
+                safeRows.sort((a, b) => {
+                    const aActivityTime = toTimestamp(a && (a.recentActivityAt || a.lastEntryDate));
+                    const bActivityTime = toTimestamp(b && (b.recentActivityAt || b.lastEntryDate));
+                    if (aActivityTime !== bActivityTime) {
+                        return bActivityTime - aActivityTime;
+                    }
+
+                    const aId = Number(a.clientId || 0);
+                    const bId = Number(b.clientId || 0);
+                    return bId - aId;
+                });
             } else {
                 // "newest"
                 safeRows.sort((a, b) => {
@@ -818,7 +826,7 @@
             const query = normalize(clientTableSearch ? clientTableSearch.value : "");
             const queryDigits = normalizeDigits(query);
             const statusFilter = normalize(getActiveClientFilter());
-            const sortBy = clientSortSelect ? clientSortSelect.value : "newest";
+            const sortBy = clientSortSelect ? clientSortSelect.value : "recent-activity";
 
             let filteredRows = CLIENT_ACTIVITY_DATA.filter((row) => {
                 const tinDigits = normalizeDigits(row.tinRaw || row.tin);
@@ -974,6 +982,7 @@
                 tinRaw,
                 tradeName: row.trade_name || "",
                 lastEntryDate: row.last_entry_date || "",
+                recentActivityAt: row.recent_activity_at || "",
                 currentPeriod: row.current_period || CURRENT_PERIOD_LABEL || "",
                 status: row.status || "needs-attention",
                 remarks: row.remarks || "new",
@@ -1175,8 +1184,8 @@
                 avatarElement: dashboardUserAvatar,
                 nameElement: dashboardUserName,
                 authUserKey: AUTH_USER_KEY,
-                defaultName: "Bookkeeper User",
-                defaultInitials: "SB",
+                defaultName: "{{ current_user_name|default:'Bookkeeper User'|escapejs }}",
+                defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}",
             });
         };
 

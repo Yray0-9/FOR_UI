@@ -771,8 +771,10 @@ def _login_admin_account(account: AdminAccount, password: str) -> dict:
             "errors": [AUTH_FAILURE_MESSAGE],
         }
 
-    account.last_login = timezone.now()
-    account.save(update_fields=["password_hash", "last_login"])
+    # A valid password is not a completed admin sign-in when a second factor
+    # is enabled. The view records last_login after the full flow succeeds.
+    if account.password_hash != stored_password_hash:
+        account.save(update_fields=["password_hash"])
 
     return {
         "ok": True,

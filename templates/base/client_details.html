@@ -9,7 +9,7 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item"><a href="{% url 'clients' %}" class="client-details-breadcrumb-link">Clients</a></li>
-        <li class="breadcrumb-item active client-details-breadcrumb-current" aria-current="page">{{ client.client_name }}</li>
+        <li class="breadcrumb-item active client-details-breadcrumb-current" id="clientDetailsBreadcrumbCurrent" aria-current="page">{{ client.client_name }}</li>
     </ol>
 </nav>
 {% endblock %}
@@ -17,7 +17,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/analytics.css' %}?v=1.2">
 <link rel="stylesheet" href="{% static 'css/reports.css' %}?v=1.2">
-<link rel="stylesheet" href="{% static 'css/client_details.css' %}?v=1.5">
+<link rel="stylesheet" href="{% static 'css/client_details.css' %}?v=1.7">
 {% endblock %}
 
 {% block skeleton %}
@@ -59,7 +59,7 @@
     <!-- Quick Actions Top Bar -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-1 animate-fade-in">
         <div class="d-flex align-items-center gap-3">
-            <h2 class="h4 mb-0 font-weight-bold client-details-page-title">{{ client.client_name }}</h2>
+            <h2 class="h4 mb-0 font-weight-bold client-details-page-title" id="clientDetailsPageTitle">{{ client.client_name }}</h2>
             {% if client.remarks == 'new' %}
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1-5 client-details-status-badge">New</span>
             {% elif client.remarks == 'active' %}
@@ -71,13 +71,16 @@
             {% endif %}
         </div>
         <div class="client-details-actions-panel">
-            <a href="{% url 'financial_records_client' %}?client_id={{ client.id }}&client={{ client.client_name|urlencode }}&tin={{ client.tin_number|urlencode }}&trade={{ client.trade_name|urlencode }}" class="btn dashboard-action-btn outline">
+            <button type="button" class="btn dashboard-action-btn outline" id="editClientDetailsButton" data-bs-toggle="modal" data-bs-target="#editClientDetailsModal">
+                <i class="bi bi-pencil-square me-1"></i> Edit Details
+            </button>
+            <a href="{% url 'financial_records_client' %}?client_id={{ client.id }}&client={{ client.client_name|urlencode }}&tin={{ client.tin_number|urlencode }}&trade={{ client.trade_name|urlencode }}" class="btn dashboard-action-btn outline" id="clientDetailsRecordsLink">
                 <i class="bi bi-journal-text me-1"></i> Records
             </a>
-            <a href="{% url 'reports' %}?report_type=financial_summary&client_id={{ client.id }}&auto_generate=1" id="generateReportActionBtn" data-no-skeleton onclick="event.preventDefault(); if (window.SafeBooksClientDetails) { window.SafeBooksClientDetails.showReportModal(); }" class="btn dashboard-action-btn outline">
-                <i class="bi bi-printer me-1"></i> Report
-            </a>
-            <a href="{% url 'financial_records_client' %}?client_id={{ client.id }}&client={{ client.client_name|urlencode }}&tin={{ client.tin_number|urlencode }}&trade={{ client.trade_name|urlencode }}&action=add" class="btn dashboard-action-btn primary">
+            <button type="button" id="generateReportActionBtn" class="btn dashboard-action-btn outline">
+                <i class="bi bi-printer me-1"></i> Preview Report
+            </button>
+            <a href="{% url 'financial_records_client' %}?client_id={{ client.id }}&client={{ client.client_name|urlencode }}&tin={{ client.tin_number|urlencode }}&trade={{ client.trade_name|urlencode }}&action=add" class="btn dashboard-action-btn primary" id="clientDetailsAddEntryLink">
                 <i class="bi bi-plus-lg me-1"></i> Add Entry
             </a>
         </div>
@@ -93,65 +96,73 @@
                     <h2 class="client-details-name">Client Overview</h2>
                 </div>
             </div>
+
+            <div class="client-details-reminder" id="clientDetailsReminder" {% if client.email or not client_record_email_notifications_enabled %}hidden{% endif %}>
+                <div class="client-details-reminder-icon">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+                <div>
+                    <strong>Client record emails will be skipped.</strong>
+                    <ul id="clientDetailsReminderList">
+                        {% if client_record_email_notifications_enabled and not client.email %}<li>Add an email address only if this client should receive record updates.</li>{% endif %}
+                    </ul>
+                </div>
+            </div>
             
             <div class="client-details-grid">
                 <div class="client-details-row">
                     <span class="client-details-key">Client Name</span>
-                    <strong class="client-details-val">{{ client.client_name }}</strong>
+                    <strong class="client-details-val" data-client-profile-field="client_name">{{ client.client_name }}</strong>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">TIN Number</span>
-                    <strong class="client-details-val tin-format">{{ client.tin_number }}</strong>
+                    <strong class="client-details-val tin-format" data-client-profile-field="tin_number">{{ client.tin_number }}</strong>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">Trade Name</span>
-                    <strong class="client-details-val">{{ client.trade_name|default:"Not provided" }}</strong>
+                    <strong class="client-details-val" data-client-profile-field="trade_name">{{ client.trade_name|default:"Not provided" }}</strong>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">Location</span>
-                    <strong class="client-details-val">{{ client.location }}</strong>
+                    <strong class="client-details-val" data-client-profile-field="location">{{ client.location }}</strong>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">Permit Number</span>
-                    <strong class="client-details-val">{{ client.permit_number|default:"Not provided" }}</strong>
+                    <strong class="client-details-val" data-client-profile-field="permit_number">{{ client.permit_number|default:"Not provided" }}</strong>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">Birthday</span>
-                    <strong class="client-details-val">{{ client.birthday|date:"Y-m-d"|default:"Not provided" }}</strong>
+                    <strong class="client-details-val" data-client-profile-field="birthday">{{ client.birthday|date:"Y-m-d"|default:"Not provided" }}</strong>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">Email Address</span>
-                    <strong class="client-details-val">{{ client.email|default:"Not provided" }}</strong>
+                    <strong class="client-details-val" data-client-profile-field="email">{{ client.email|default:"Not provided" }}</strong>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">Email Password</span>
                     <div class="client-details-value-wrapper">
-                        <strong class="client-details-password" data-raw-password="{{ client.email_password }}">{% if client.email_password %}&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;{% else %}Not provided{% endif %}</strong>
-                        {% if client.email_password %}
-                        <button type="button" class="btn client-details-toggle-btn" aria-label="Show password">
+                        <strong class="client-details-password" data-client-profile-field="email_password" data-raw-password="{{ client.email_password }}">{% if client.email_password %}&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;{% else %}Not provided{% endif %}</strong>
+                        <button type="button" class="btn client-details-toggle-btn" aria-label="Show password" {% if not client.email_password %}hidden{% endif %}>
                             <i class="bi bi-eye"></i>
                         </button>
-                        {% endif %}
                     </div>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">ORUS Account</span>
-                    <strong class="client-details-val">{{ client.orus_account|default:"Not provided" }}</strong>
+                    <strong class="client-details-val" data-client-profile-field="orus_account">{{ client.orus_account|default:"Not provided" }}</strong>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">ORUS Password</span>
                     <div class="client-details-value-wrapper">
-                        <strong class="client-details-password" data-raw-password="{{ client.orus_password }}">{% if client.orus_password %}&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;{% else %}Not provided{% endif %}</strong>
-                        {% if client.orus_password %}
-                        <button type="button" class="btn client-details-toggle-btn" aria-label="Show password">
+                        <strong class="client-details-password" data-client-profile-field="orus_password" data-raw-password="{{ client.orus_password }}">{% if client.orus_password %}&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;{% else %}Not provided{% endif %}</strong>
+                        <button type="button" class="btn client-details-toggle-btn" aria-label="Show password" {% if not client.orus_password %}hidden{% endif %}>
                             <i class="bi bi-eye"></i>
                         </button>
-                        {% endif %}
                     </div>
                 </div>
                 <div class="client-details-row">
                     <span class="client-details-key">Status / Remarks</span>
-                    <strong class="client-details-val">
+                    <strong class="client-details-val" data-client-profile-field="remarks">
                         {% if client.remarks == 'new' %}New
                         {% elif client.remarks == 'active' %}Active
                         {% elif client.remarks == 'separated' %}Separated
@@ -162,10 +173,9 @@
             </div>
 
             <!-- Custom Fields Section -->
-            {% if client.custom_fields %}
-            <div class="client-details-custom">
+            <div class="client-details-custom" id="clientDetailsCustomSection" {% if not client.custom_fields %}hidden{% endif %}>
                 <h3 class="client-details-custom-title">Custom Fields</h3>
-                <div class="client-details-grid">
+                <div class="client-details-grid" id="clientDetailsCustomGrid">
                     {% for field in client.custom_fields %}
                     <div class="client-details-row">
                         <span class="client-details-key">{{ field.label }}</span>
@@ -183,7 +193,6 @@
                     {% endfor %}
                 </div>
             </div>
-            {% endif %}
         </article>
 
         <!-- Analytics Dashboard & Charts -->
@@ -212,6 +221,29 @@
                                 <option value="6">6 Months</option>
                                 <option value="12">12 Months</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="client-card dashboard-fade-up client-workflow-card client-delay-10" id="clientWorkflowCard">
+                <div class="client-workflow-head">
+                    <div>
+                        <h2 class="client-details-name">Record Schedule Status</h2>
+                        <p class="client-workflow-subtitle">Checks each record frequency saved for this client.</p>
+                    </div>
+                    <span class="client-workflow-status-tag pending" id="clientPeriodReadinessTag">Checking</span>
+                </div>
+                <div class="client-workflow-readiness">
+                    <strong id="clientPeriodReadinessText">Checking current period...</strong>
+                    <span id="clientPeriodReadinessHint">SafeBooks will show the current period status after records load.</span>
+                </div>
+                <div class="client-workflow-list" id="clientWorkflowScheduleList" aria-label="Record schedule status">
+                    <div class="client-workflow-item pending">
+                        <span class="client-workflow-icon"><i class="bi bi-calendar-check"></i></span>
+                        <div>
+                            <strong>Checking records</strong>
+                            <span>SafeBooks will show each active record frequency after records load.</span>
                         </div>
                     </div>
                 </div>
@@ -423,7 +455,7 @@
                                         <g id="analyticsForecastProjectionDots"></g>
                                     </svg>
                                     <div class="analytics-forecast-projection-tooltip" id="analyticsForecastProjectionTooltip" role="status" hidden></div>
-                                    <p class="analytics-forecast-projection-empty" id="analyticsForecastProjectionEmpty">Needs forecast data to draw the projection graph.</p>
+                    <p class="analytics-forecast-projection-empty" id="analyticsForecastProjectionEmpty">Projection graph will appear after forecast values are available.</p>
                                 </div>
                                 <div class="analytics-forecast-projection-labels" id="analyticsForecastProjectionLabels"></div>
 
@@ -452,12 +484,133 @@
             <article class="client-card analytics-empty-state" id="analyticsEmptyState" hidden>
                 <div class="dashboard-data-empty text-center py-5">
                     <i class="bi bi-file-earmark-bar-graph text-muted mb-3 client-details-empty-icon"></i>
-                    <p class="text-muted mb-3">No financial data available yet for this client.</p>
+                    <p class="text-muted mb-3">No financial records yet for this client. Add records when this client's period is ready.</p>
                     <div class="dashboard-empty-actions">
-                        <a href="{% url 'financial_records_client' %}?client_id={{ client.id }}&client={{ client.client_name|urlencode }}&tin={{ client.tin_number|urlencode }}&trade={{ client.trade_name|urlencode }}&action=add" class="btn dashboard-action-btn primary">Add Financial Records</a>
+                        <a href="{% url 'financial_records_client' %}?client_id={{ client.id }}&client={{ client.client_name|urlencode }}&tin={{ client.tin_number|urlencode }}&trade={{ client.trade_name|urlencode }}&action=add" class="btn dashboard-action-btn primary" id="clientDetailsEmptyAddRecordsLink">Add Financial Records</a>
                     </div>
                 </div>
             </article>
+        </div>
+    </div>
+
+    <!-- Edit Client Details Modal -->
+    <div class="modal fade client-manage-modal client-details-edit-modal" id="editClientDetailsModal" tabindex="-1" aria-labelledby="editClientDetailsModalTitle" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <form class="modal-content" id="editClientDetailsForm" novalidate>
+                <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title h5" id="editClientDetailsModalTitle">Edit Client Details</h2>
+                        <p class="client-edit-modal-subtitle mb-0">Update only the details that changed for this client.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <section class="client-form-section">
+                        <div class="client-form-section-head">
+                            <h3>Basic Information</h3>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label client-form-label" for="editDetailsClientName">Client Name</label>
+                                <input class="form-control client-form-input" id="editDetailsClientName" name="client_name" type="text" value="{{ client.client_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label client-form-label" for="editDetailsClientTin">TIN</label>
+                                <input class="form-control client-form-input" id="editDetailsClientTin" name="tin_number" type="text" inputmode="numeric" pattern="[0-9\-]*" placeholder="000-000-000-000" maxlength="15" value="{{ client.tin_number }}" autocomplete="off" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label client-form-label" for="editDetailsClientTradeName">Trade Name</label>
+                                <input class="form-control client-form-input" id="editDetailsClientTradeName" name="trade_name" type="text" value="{{ client.trade_name }}" placeholder="Optional">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label client-form-label" for="editDetailsClientLocation">Location</label>
+                                <input class="form-control client-form-input" id="editDetailsClientLocation" name="location" type="text" value="{{ client.location }}" required>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="client-form-section">
+                        <div class="client-form-section-head">
+                            <h3>Registration Details</h3>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label client-form-label" for="editDetailsClientPermitNumber">Permit Number</label>
+                                <input class="form-control client-form-input" id="editDetailsClientPermitNumber" name="permit_number" type="text" value="{{ client.permit_number }}" placeholder="Optional">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label client-form-label" for="editDetailsClientBirthday">Birthday</label>
+                                <input class="form-control client-form-input" id="editDetailsClientBirthday" name="birthday" type="date" value="{{ client.birthday|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="client-form-section">
+                        <div class="client-form-section-head">
+                            <h3>Account Access</h3>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label client-form-label" for="editDetailsClientEmail">Email Address</label>
+                                <input class="form-control client-form-input" id="editDetailsClientEmail" name="email" type="email" value="{{ client.email }}" placeholder="Optional">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label client-form-label" for="editDetailsClientEmailPassword">Email Password</label>
+                                <div class="client-password-field">
+                                    <input class="form-control client-form-input client-password-input" id="editDetailsClientEmailPassword" name="email_password" type="password" value="{{ client.email_password }}" placeholder="Optional" autocomplete="new-password">
+                                    <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <details class="client-form-optional">
+                        <summary>
+                            <span>More optional details</span>
+                            <small>ORUS access and custom fields</small>
+                        </summary>
+                        <div class="client-form-optional-body">
+                            <section class="client-form-section">
+                                <div class="client-form-section-head">
+                                    <h3>ORUS Access</h3>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label client-form-label" for="editDetailsClientOrusAccount">ORUS Account</label>
+                                        <input class="form-control client-form-input" id="editDetailsClientOrusAccount" name="orus_account" type="text" value="{{ client.orus_account }}" placeholder="Optional" autocomplete="off">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label client-form-label" for="editDetailsClientOrusPassword">ORUS Password</label>
+                                        <div class="client-password-field">
+                                            <input class="form-control client-form-input client-password-input" id="editDetailsClientOrusPassword" name="orus_password" type="password" value="{{ client.orus_password }}" placeholder="Optional" autocomplete="new-password">
+                                            <button class="client-password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="client-form-section client-custom-fields-block">
+                                <div class="client-custom-fields-head">
+                                    <span class="client-custom-fields-title">Custom Fields</span>
+                                    <button type="button" class="btn client-custom-add-btn" id="editDetailsAddCustomFieldBtn">
+                                        <i class="bi bi-plus-lg"></i>
+                                        <span>Add Field</span>
+                                    </button>
+                                </div>
+                                <div class="row g-3 client-custom-fields-body" id="editDetailsCustomFields"></div>
+                            </section>
+                        </div>
+                    </details>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn dashboard-action-btn outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn dashboard-action-btn primary" id="saveClientDetailsButton">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -511,7 +664,8 @@
         {% for field in client.custom_fields %}
             {
                 "label": "{{ field.label|escapejs }}",
-                "value": "{{ field.value|escapejs }}"
+                "value": "{{ field.value|escapejs }}",
+                "type": "{{ field.type|default:'text'|escapejs }}"
             }{% if not forloop.last %},{% endif %}
         {% endfor %}
     ]
@@ -520,12 +674,45 @@
     (() => {
         const CLIENT_ID = Number("{{ client.id }}");
         const ANALYTICS_SUMMARY_API_URL = "{% url 'api_analytics_summary' %}";
+        const REPORTS_PRINT_LAYOUT_API_URL = "{% url 'api_reports_print_layout' %}";
+        const CLIENT_DETAIL_API_URL = "{% url 'api_client_detail' client.id %}";
+        const CLIENT_FORECAST_GROWTH_PERCENT = "{{ client.forecast_growth_percent|default:'0.00' }}";
+        const CLIENT_RECORD_EMAIL_NOTIFICATIONS_ENABLED = {{ client_record_email_notifications_enabled|yesno:"true,false" }};
         const body = document.body;
         const uiToastContainer = document.getElementById("uiToastContainer");
         const shared = window.SafeBooksShared || null;
+        const editClientDetailsModalElement = document.getElementById("editClientDetailsModal");
+        const editClientDetailsForm = document.getElementById("editClientDetailsForm");
+        const editDetailsClientTinInput = document.getElementById("editDetailsClientTin");
+        const editDetailsCustomFields = document.getElementById("editDetailsCustomFields");
+        const editDetailsAddCustomFieldBtn = document.getElementById("editDetailsAddCustomFieldBtn");
+        const saveClientDetailsButton = document.getElementById("saveClientDetailsButton");
+        const editClientDetailsModal = editClientDetailsModalElement && window.bootstrap
+            ? new window.bootstrap.Modal(editClientDetailsModalElement)
+            : null;
+        let editClientDetailsDirty = false;
+        let latestClientWorkflowStatus = null;
+        let currentClientProfile = {
+            client_name: "{{ client.client_name|escapejs }}",
+            tin_number: "{{ client.tin_number|escapejs }}",
+            trade_name: "{{ client.trade_name|default:''|escapejs }}",
+            location: "{{ client.location|escapejs }}",
+            permit_number: "{{ client.permit_number|default:''|escapejs }}",
+            birthday: "{{ client.birthday|date:'Y-m-d'|default:''|escapejs }}",
+            email: "{{ client.email|default:''|escapejs }}",
+            email_password: "{{ client.email_password|default:''|escapejs }}",
+            orus_account: "{{ client.orus_account|default:''|escapejs }}",
+            orus_password: "{{ client.orus_password|default:''|escapejs }}",
+            remarks: "{{ client.remarks|escapejs }}",
+            custom_fields: [],
+        };
 
         const analyticsDataPanels = document.getElementById("analyticsDataPanels");
         const analyticsEmptyState = document.getElementById("analyticsEmptyState");
+        const clientPeriodReadinessTag = document.getElementById("clientPeriodReadinessTag");
+        const clientPeriodReadinessText = document.getElementById("clientPeriodReadinessText");
+        const clientPeriodReadinessHint = document.getElementById("clientPeriodReadinessHint");
+        const clientWorkflowScheduleList = document.getElementById("clientWorkflowScheduleList");
 
         const analyticsTotalSalesValue = document.getElementById("analyticsTotalSalesValue");
         const analyticsTotalExpensesValue = document.getElementById("analyticsTotalExpensesValue");
@@ -611,50 +798,498 @@
             return groups.join("-");
         };
 
+        const normalizeDigits = (value) => String(value || "").replace(/\D+/g, "");
+
+        const getCookieValue = (cookieName) => {
+            if (shared && typeof shared.getCookieValue === "function") {
+                return shared.getCookieValue(cookieName);
+            }
+
+            const cookie = document.cookie
+                .split(";")
+                .map((item) => item.trim())
+                .find((item) => item.startsWith(`${cookieName}=`));
+            return cookie ? decodeURIComponent(cookie.split("=").slice(1).join("=")) : "";
+        };
+
+        const parseJsonSafe = async (response) => {
+            if (shared && typeof shared.parseJsonSafe === "function") {
+                return shared.parseJsonSafe(response);
+            }
+
+            try {
+                return await response.json();
+            } catch (error) {
+                return null;
+            }
+        };
+
         // Format TIN fields on page load
         document.querySelectorAll(".tin-format").forEach(el => {
             el.textContent = formatTin(el.textContent);
         });
 
-        // Setup Password Visibility Toggles
         const maskedPasswordText = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
-        document.querySelectorAll(".client-details-toggle-btn").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                const wrapper = btn.closest(".client-details-value-wrapper");
-                if (!wrapper) return;
-                const passwordElem = wrapper.querySelector(".client-details-password");
-                const icon = btn.querySelector("i");
-                if (!passwordElem || !icon) return;
 
-                const rawPassword = passwordElem.dataset.rawPassword || "";
-                const isMasked = passwordElem.textContent.includes(maskedPasswordText);
-
-                if (isMasked) {
-                    passwordElem.textContent = rawPassword;
-                    icon.className = "bi bi-eye-slash";
-                    btn.setAttribute("aria-label", "Hide password");
-                } else {
-                    passwordElem.textContent = maskedPasswordText;
-                    icon.className = "bi bi-eye";
-                    btn.setAttribute("aria-label", "Show password");
+        if (editDetailsClientTinInput) {
+            editDetailsClientTinInput.value = formatTin(editDetailsClientTinInput.value);
+            editDetailsClientTinInput.addEventListener("input", () => {
+                const cursorAtEnd = editDetailsClientTinInput.selectionStart === editDetailsClientTinInput.value.length;
+                editDetailsClientTinInput.value = formatTin(editDetailsClientTinInput.value);
+                if (cursorAtEnd) {
+                    editDetailsClientTinInput.setSelectionRange(editDetailsClientTinInput.value.length, editDetailsClientTinInput.value.length);
                 }
             });
-        });
-
-        // Set dynamic href dates for Generate Report btn
-        const generateReportActionBtn = document.getElementById("generateReportActionBtn");
-        if (generateReportActionBtn) {
-            const now = new Date();
-            const yearStart = new Date(now.getFullYear(), 0, 1);
-            const formatDate = (d) => {
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, "0");
-                const day = String(d.getDate()).padStart(2, "0");
-                return `${year}-${month}-${day}`;
-            };
-            const currentHref = generateReportActionBtn.getAttribute("href");
-            generateReportActionBtn.setAttribute("href", `${currentHref}&date_from=${formatDate(yearStart)}&date_to=${formatDate(now)}`);
         }
+
+        const bindOverviewPasswordToggles = () => {
+            document.querySelectorAll(".client-details-toggle-btn").forEach((btn) => {
+                if (btn.dataset.bound === "true") return;
+                btn.dataset.bound = "true";
+                btn.addEventListener("click", () => {
+                    const wrapper = btn.closest(".client-details-value-wrapper");
+                    if (!wrapper) return;
+                    const passwordElem = wrapper.querySelector(".client-details-password");
+                    const icon = btn.querySelector("i");
+                    if (!passwordElem || !icon) return;
+
+                    const rawPassword = passwordElem.dataset.rawPassword || "";
+                    if (!rawPassword) return;
+                    const isMasked = passwordElem.textContent.includes(maskedPasswordText);
+
+                    if (isMasked) {
+                        passwordElem.textContent = rawPassword;
+                        icon.className = "bi bi-eye-slash";
+                        btn.setAttribute("aria-label", "Hide password");
+                    } else {
+                        passwordElem.textContent = maskedPasswordText;
+                        icon.className = "bi bi-eye";
+                        btn.setAttribute("aria-label", "Show password");
+                    }
+                });
+            });
+        };
+
+        const bindClientPasswordToggles = () => {
+            document.querySelectorAll("#editClientDetailsModal .client-password-field").forEach((field) => {
+                const input = field.querySelector("input");
+                const toggle = field.querySelector(".client-password-toggle");
+                const icon = toggle ? toggle.querySelector("i") : null;
+                if (!input || !toggle || !icon || toggle.dataset.bound === "true") return;
+
+                toggle.dataset.bound = "true";
+                toggle.addEventListener("click", () => {
+                    const showPassword = input.type === "password";
+                    input.type = showPassword ? "text" : "password";
+                    icon.className = showPassword ? "bi bi-eye-slash" : "bi bi-eye";
+                    toggle.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
+                    toggle.setAttribute("aria-pressed", showPassword ? "true" : "false");
+                });
+            });
+        };
+
+        bindOverviewPasswordToggles();
+
+        const displayValue = (value) => {
+            const cleaned = String(value || "").trim();
+            return cleaned || "Not provided";
+        };
+
+        const formatRemarksLabel = (value) => {
+            const normalized = String(value || "").trim().toLowerCase();
+            if (normalized === "new") return "New";
+            if (normalized === "active") return "Active";
+            if (normalized === "separated") return "Separated";
+            if (normalized === "closed") return "Closed";
+            return displayValue(value);
+        };
+
+        const readCustomFieldsData = () => {
+            const customFieldsEl = document.getElementById("clientCustomFieldsData");
+            if (!customFieldsEl) return [];
+            try {
+                const parsed = JSON.parse(customFieldsEl.textContent);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                return [];
+            }
+        };
+        currentClientProfile.custom_fields = readCustomFieldsData();
+
+        const createCustomFieldRow = (field = {}) => {
+            const col = document.createElement("div");
+            col.className = "col-md-6 client-custom-field";
+            col.innerHTML = `
+                <div class="client-details-custom-editor">
+                    <button type="button" class="btn client-custom-remove-btn" aria-label="Remove custom field">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <input class="client-custom-label-input" type="text" value="" placeholder="Field Label">
+                    <div class="client-select-wrap client-custom-type-wrap">
+                        <select class="form-select client-form-input client-select-input client-custom-type-input">
+                            <option value="text">Text</option>
+                            <option value="email">Email</option>
+                            <option value="password">Password</option>
+                            <option value="number">Number</option>
+                            <option value="date">Date</option>
+                            <option value="tin">TIN</option>
+                        </select>
+                        <i class="bi bi-chevron-down client-select-icon" aria-hidden="true"></i>
+                    </div>
+                    <div class="client-password-field client-custom-value-wrap">
+                        <input class="form-control client-form-input client-password-input client-custom-value-input" type="text" value="" placeholder="Value">
+                        <button class="client-password-toggle client-custom-field-password-toggle" type="button" aria-label="Show password" aria-pressed="false" hidden>
+                            <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const labelInput = col.querySelector(".client-custom-label-input");
+            const typeInput = col.querySelector(".client-custom-type-input");
+            const valueInput = col.querySelector(".client-custom-value-input");
+            const passwordToggle = col.querySelector(".client-custom-field-password-toggle");
+            const removeButton = col.querySelector(".client-custom-remove-btn");
+
+            if (labelInput) labelInput.value = field.label || "";
+            if (typeInput) typeInput.value = field.type || "text";
+            if (valueInput) valueInput.value = field.value || "";
+
+            const applyType = () => {
+                const type = typeInput ? typeInput.value : "text";
+                if (!valueInput) return;
+                valueInput.type = type === "password" ? "password" : (type === "tin" ? "text" : type);
+                valueInput.inputMode = type === "number" || type === "tin" ? "numeric" : "";
+                valueInput.placeholder = type === "tin" ? "000-000-000-000" : "Value";
+                if (passwordToggle) {
+                    passwordToggle.hidden = type !== "password";
+                }
+                if (type === "tin") {
+                    valueInput.value = formatTin(valueInput.value);
+                }
+            };
+
+            if (typeInput) {
+                typeInput.addEventListener("change", () => {
+                    applyType();
+                    editClientDetailsDirty = true;
+                });
+            }
+            if (valueInput) {
+                valueInput.addEventListener("input", () => {
+                    if (typeInput && typeInput.value === "tin") {
+                        valueInput.value = formatTin(valueInput.value);
+                    }
+                });
+            }
+            if (removeButton) {
+                removeButton.addEventListener("click", () => {
+                    col.remove();
+                    editClientDetailsDirty = true;
+                });
+            }
+
+            applyType();
+            return col;
+        };
+
+        const renderEditCustomFields = () => {
+            if (!editDetailsCustomFields) return;
+            editDetailsCustomFields.innerHTML = "";
+            readCustomFieldsData().forEach((field) => {
+                editDetailsCustomFields.appendChild(createCustomFieldRow(field));
+            });
+            bindClientPasswordToggles();
+        };
+
+        const collectEditCustomFields = () => {
+            if (!editDetailsCustomFields) return [];
+            return Array.from(editDetailsCustomFields.querySelectorAll(".client-custom-field"))
+                .map((row) => {
+                    const label = row.querySelector(".client-custom-label-input");
+                    const type = row.querySelector(".client-custom-type-input");
+                    const value = row.querySelector(".client-custom-value-input");
+                    const resolvedType = type && type.value ? type.value : "text";
+                    return {
+                        label: label ? label.value.trim() : "",
+                        type: resolvedType,
+                        value: value
+                            ? (resolvedType === "tin" ? normalizeDigits(value.value) : value.value.trim())
+                            : "",
+                    };
+                })
+                .filter((field) => field.label || field.value);
+        };
+
+        const syncClientCustomFieldSource = (fields) => {
+            const customFieldsEl = document.getElementById("clientCustomFieldsData");
+            if (customFieldsEl) {
+                customFieldsEl.textContent = JSON.stringify(Array.isArray(fields) ? fields : []);
+            }
+        };
+
+        const renderOverviewCustomFields = (fields) => {
+            const section = document.getElementById("clientDetailsCustomSection");
+            const grid = document.getElementById("clientDetailsCustomGrid");
+            if (!section || !grid) return;
+
+            const visibleFields = (Array.isArray(fields) ? fields : [])
+                .filter((field) => field && (String(field.label || "").trim() || String(field.value || "").trim()));
+            grid.innerHTML = "";
+            section.hidden = visibleFields.length === 0;
+
+            visibleFields.forEach((field) => {
+                const row = document.createElement("div");
+                row.className = "client-details-row";
+                const key = document.createElement("span");
+                key.className = "client-details-key";
+                key.textContent = displayValue(field.label);
+                row.appendChild(key);
+
+                if (field.type === "password" && field.value) {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "client-details-value-wrapper";
+                    const value = document.createElement("strong");
+                    value.className = "client-details-password";
+                    value.dataset.rawPassword = String(field.value || "");
+                    value.textContent = maskedPasswordText;
+                    wrapper.appendChild(value);
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "btn client-details-toggle-btn";
+                    button.setAttribute("aria-label", "Show password");
+                    button.innerHTML = '<i class="bi bi-eye"></i>';
+                    wrapper.appendChild(button);
+                    row.appendChild(wrapper);
+                } else {
+                    const value = document.createElement("strong");
+                    value.className = "client-details-val";
+                    value.textContent = field.type === "tin" ? formatTin(field.value) : displayValue(field.value);
+                    row.appendChild(value);
+                }
+                grid.appendChild(row);
+            });
+            bindOverviewPasswordToggles();
+        };
+
+        const updateProfileText = (field, value) => {
+            document.querySelectorAll(`[data-client-profile-field="${field}"]`).forEach((element) => {
+                element.textContent = field === "tin_number"
+                    ? formatTin(value)
+                    : (field === "remarks" ? formatRemarksLabel(value) : displayValue(value));
+            });
+        };
+
+        const setPasswordOverviewValue = (field, value) => {
+            const passwordElement = document.querySelector(`.client-details-password[data-client-profile-field="${field}"]`);
+            if (!passwordElement) return;
+            const wrapper = passwordElement.closest(".client-details-value-wrapper");
+            const toggle = wrapper ? wrapper.querySelector(".client-details-toggle-btn") : null;
+            const icon = toggle ? toggle.querySelector("i") : null;
+            const rawValue = String(value || "");
+
+            passwordElement.dataset.rawPassword = rawValue;
+            passwordElement.textContent = rawValue ? maskedPasswordText : "Not provided";
+            if (toggle) {
+                toggle.hidden = !rawValue;
+                toggle.setAttribute("aria-label", "Show password");
+            }
+            if (icon) icon.className = "bi bi-eye";
+        };
+
+        const setInputValueAndDefault = (id, value) => {
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.value = value || "";
+            input.defaultValue = value || "";
+        };
+
+        const syncEditFormDefaults = () => {
+            setInputValueAndDefault("editDetailsClientName", currentClientProfile.client_name);
+            setInputValueAndDefault("editDetailsClientTin", formatTin(currentClientProfile.tin_number));
+            setInputValueAndDefault("editDetailsClientTradeName", currentClientProfile.trade_name);
+            setInputValueAndDefault("editDetailsClientLocation", currentClientProfile.location);
+            setInputValueAndDefault("editDetailsClientPermitNumber", currentClientProfile.permit_number);
+            setInputValueAndDefault("editDetailsClientBirthday", currentClientProfile.birthday);
+            setInputValueAndDefault("editDetailsClientEmail", currentClientProfile.email);
+            setInputValueAndDefault("editDetailsClientEmailPassword", currentClientProfile.email_password);
+            setInputValueAndDefault("editDetailsClientOrusAccount", currentClientProfile.orus_account);
+            setInputValueAndDefault("editDetailsClientOrusPassword", currentClientProfile.orus_password);
+            renderEditCustomFields();
+            bindClientPasswordToggles();
+        };
+
+        const updateClientActionLinks = () => {
+            const params = new URLSearchParams({
+                client_id: String(CLIENT_ID),
+                client: currentClientProfile.client_name || "",
+                tin: currentClientProfile.tin_number || "",
+                trade: currentClientProfile.trade_name || "",
+            });
+            const baseUrl = "{% url 'financial_records_client' %}";
+            const recordsUrl = `${baseUrl}?${params.toString()}`;
+            const addUrl = `${recordsUrl}&action=add`;
+
+            const recordsLink = document.getElementById("clientDetailsRecordsLink");
+            if (recordsLink) recordsLink.href = recordsUrl;
+            ["clientDetailsAddEntryLink", "clientDetailsEmptyAddRecordsLink"].forEach((id) => {
+                const link = document.getElementById(id);
+                if (link) link.href = addUrl;
+            });
+        };
+
+        const syncClientDetailsReminder = () => {
+            const reminder = document.getElementById("clientDetailsReminder");
+            const reminderList = document.getElementById("clientDetailsReminderList");
+            if (!reminder || !reminderList) return;
+
+            const missingItems = [];
+            if (CLIENT_RECORD_EMAIL_NOTIFICATIONS_ENABLED && !String(currentClientProfile.email || "").trim()) {
+                missingItems.push("Add an email address only if this client should receive record updates.");
+            }
+
+            reminder.hidden = missingItems.length === 0;
+            reminderList.innerHTML = missingItems.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+        };
+
+        const applyClientWorkflowStatus = (workflow) => {
+            const safeWorkflow = workflow && typeof workflow === "object" ? workflow : {};
+            latestClientWorkflowStatus = safeWorkflow;
+
+            const scheduleItems = Array.isArray(safeWorkflow.schedule_items) && safeWorkflow.schedule_items.length
+                ? safeWorkflow.schedule_items
+                : [{
+                    frequency_label: String(safeWorkflow.frequency_label || safeWorkflow.schedule_label || "Monthly"),
+                    period_label: String(safeWorkflow.period_label || "current period"),
+                    status: safeWorkflow.has_current_period_record ? "ready" : "missing",
+                    has_record: Boolean(safeWorkflow.has_current_period_record),
+                    entry_count: Number(safeWorkflow.current_period_entry_count || 0),
+                    transaction_detail_count: Number(safeWorkflow.current_period_transaction_detail_count || 0),
+                    is_due_now: true,
+                }];
+            const normalizedItems = scheduleItems.map((item) => {
+                const source = item && typeof item === "object" ? item : {};
+                return {
+                    frequencyLabel: String(source.frequency_label || "Monthly").trim(),
+                    periodLabel: String(source.period_label || "current period").trim(),
+                    status: String(source.status || (source.has_record ? "ready" : "missing")).trim().toLowerCase(),
+                    hasRecord: Boolean(source.has_record),
+                    entryCount: Number(source.entry_count || 0),
+                    detailCount: Number(source.transaction_detail_count || 0),
+                    isDueNow: Boolean(source.is_due_now),
+                };
+            });
+            const missingItems = normalizedItems.filter((item) => item.status === "missing");
+            const upcomingItems = normalizedItems.filter((item) => item.status === "upcoming");
+            const readyItems = normalizedItems.filter((item) => item.status === "ready");
+            const overallStatus = String(safeWorkflow.overall_status || (missingItems.length ? "missing" : (readyItems.length === normalizedItems.length ? "ready" : "upcoming"))).toLowerCase();
+            const isMixedSchedule = normalizedItems.length > 1;
+
+            if (clientPeriodReadinessTag) {
+                clientPeriodReadinessTag.classList.remove("ready", "pending", "upcoming");
+                clientPeriodReadinessTag.classList.add(overallStatus === "ready" ? "ready" : (overallStatus === "upcoming" ? "upcoming" : "pending"));
+                clientPeriodReadinessTag.textContent = overallStatus === "ready"
+                    ? "Records ready"
+                    : (overallStatus === "upcoming" ? "Next record scheduled" : "Needs record");
+            }
+            if (clientPeriodReadinessText) {
+                if (isMixedSchedule) {
+                    const labels = normalizedItems.map((item) => item.frequencyLabel).join(", ");
+                    clientPeriodReadinessText.textContent = `This client has ${normalizedItems.length} active record frequencies: ${labels}.`;
+                } else {
+                    const item = normalizedItems[0];
+                    clientPeriodReadinessText.textContent = item.status === "ready"
+                        ? `${item.periodLabel} has ${item.entryCount} saved ${item.entryCount === 1 ? "record" : "records"}.`
+                        : (item.status === "upcoming"
+                            ? `${item.periodLabel} is the next expected ${item.frequencyLabel.toLowerCase()} record.`
+                            : `${item.periodLabel} has no saved ${item.frequencyLabel.toLowerCase()} record yet.`);
+                }
+            }
+            if (clientPeriodReadinessHint) {
+                clientPeriodReadinessHint.textContent = missingItems.length
+                    ? "Only the frequency marked as needing a record requires attention."
+                    : (upcomingItems.length
+                        ? "Upcoming periods are shown for awareness only; they are not due yet."
+                        : "Saved records match the expected frequencies for this client.");
+            }
+
+            if (clientWorkflowScheduleList) {
+                clientWorkflowScheduleList.innerHTML = normalizedItems.map((item) => {
+                    const stateClass = item.status === "ready" ? "complete" : (item.status === "upcoming" ? "upcoming" : "warning");
+                    const icon = item.status === "ready" ? "bi-check2-circle" : (item.status === "upcoming" ? "bi-calendar-event" : "bi-calendar-plus");
+                    const detailText = item.status === "ready"
+                        ? `${item.periodLabel}: ${item.entryCount} ${item.entryCount === 1 ? "record" : "records"} and ${item.detailCount} ${item.detailCount === 1 ? "transaction detail" : "transaction details"}.`
+                        : (item.status === "upcoming"
+                            ? `${item.periodLabel} is upcoming, so no action is needed yet.`
+                            : `No ${item.frequencyLabel.toLowerCase()} record saved for ${item.periodLabel}.`);
+                    return `
+                        <div class="client-workflow-item ${stateClass}">
+                            <span class="client-workflow-icon"><i class="bi ${icon}"></i></span>
+                            <div>
+                                <strong>${escapeHtml(item.frequencyLabel)} record</strong>
+                                <span>${escapeHtml(detailText)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+            }
+        };
+
+        const normalizeClientProfile = (client) => {
+            const source = client && typeof client === "object" ? client : {};
+            return {
+                ...currentClientProfile,
+                client_name: String(source.client_name ?? currentClientProfile.client_name ?? ""),
+                tin_number: String(source.tin_number ?? currentClientProfile.tin_number ?? ""),
+                trade_name: String(source.trade_name ?? ""),
+                location: String(source.location ?? ""),
+                permit_number: String(source.permit_number ?? ""),
+                birthday: String(source.birthday ?? ""),
+                email: String(source.email ?? ""),
+                email_password: String(source.email_password ?? ""),
+                orus_account: String(source.orus_account ?? ""),
+                orus_password: String(source.orus_password ?? ""),
+                remarks: String(source.remarks ?? currentClientProfile.remarks ?? "new"),
+                custom_fields: Array.isArray(source.custom_fields) ? source.custom_fields : [],
+            };
+        };
+
+        const syncClientProfileUi = (client) => {
+            currentClientProfile = normalizeClientProfile(client);
+            const title = document.getElementById("clientDetailsPageTitle");
+            const breadcrumb = document.getElementById("clientDetailsBreadcrumbCurrent");
+            if (title) title.textContent = currentClientProfile.client_name;
+            if (breadcrumb) breadcrumb.textContent = currentClientProfile.client_name;
+            document.title = `Client Details | ${currentClientProfile.client_name}`;
+
+            updateProfileText("client_name", currentClientProfile.client_name);
+            updateProfileText("tin_number", currentClientProfile.tin_number);
+            updateProfileText("trade_name", currentClientProfile.trade_name);
+            updateProfileText("location", currentClientProfile.location);
+            updateProfileText("permit_number", currentClientProfile.permit_number);
+            updateProfileText("birthday", currentClientProfile.birthday);
+            updateProfileText("email", currentClientProfile.email);
+            updateProfileText("orus_account", currentClientProfile.orus_account);
+            updateProfileText("remarks", currentClientProfile.remarks);
+            setPasswordOverviewValue("email_password", currentClientProfile.email_password);
+            setPasswordOverviewValue("orus_password", currentClientProfile.orus_password);
+
+            syncClientCustomFieldSource(currentClientProfile.custom_fields);
+            renderOverviewCustomFields(currentClientProfile.custom_fields);
+            syncEditFormDefaults();
+            updateClientActionLinks();
+            syncClientDetailsReminder();
+            if (latestClientWorkflowStatus) {
+                applyClientWorkflowStatus(latestClientWorkflowStatus);
+            }
+            if (analyticsScopeHint) {
+                const tin = currentClientProfile.tin_number ? ` (TIN: ${formatTin(currentClientProfile.tin_number)})` : "";
+                analyticsScopeHint.textContent = `Viewing: ${currentClientProfile.client_name}${tin}`;
+            }
+            if (analyticsSummaryTimeframeCaption) {
+                analyticsSummaryTimeframeCaption.textContent = `Totals use all recorded entries for ${currentClientProfile.client_name}.`;
+            }
+        };
 
         // Analytics drawing and data population helpers
         const projectionHasValue = (source, valueKey) => {
@@ -716,7 +1351,7 @@
 
         const applyTimeframeCaptions = (scope, trendRows) => {
             const rows = Array.isArray(trendRows) ? trendRows : [];
-            const clientName = "{{ client.client_name }}";
+            const clientName = currentClientProfile.client_name || "{{ client.client_name|escapejs }}";
             if (analyticsSummaryTimeframeCaption) {
                 analyticsSummaryTimeframeCaption.textContent = `Totals use all recorded entries for ${clientName}.`;
             }
@@ -977,7 +1612,7 @@
             if (!safeProjections.length) {
                 predictiveForecastTableBody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">Needs historical data to compute forecasts.</td>
+                        <td colspan="5" class="text-center text-muted py-4">Add more records to compute forecasts.</td>
                     </tr>
                 `;
                 return;
@@ -1031,7 +1666,7 @@
                 analyticsForecastProjectionDots.innerHTML = "";
                 analyticsForecastProjectionLabels.innerHTML = "";
                 if (analyticsForecastProjectionTooltip) analyticsForecastProjectionTooltip.hidden = true;
-                analyticsForecastProjectionEmpty.textContent = "Needs forecast data to draw the projection graph.";
+                analyticsForecastProjectionEmpty.textContent = "Projection graph will appear after forecast values are available.";
                 analyticsForecastProjectionEmpty.hidden = false;
             };
 
@@ -1241,7 +1876,7 @@
         const applyAnalyticsFallbackState = () => {
             if (analyticsDataPanels) analyticsDataPanels.hidden = true;
             if (analyticsEmptyState) analyticsEmptyState.hidden = false;
-            if (analyticsScopeHint) analyticsScopeHint.textContent = "Viewing: {{ client.client_name }}";
+            if (analyticsScopeHint) analyticsScopeHint.textContent = `Viewing: ${currentClientProfile.client_name}`;
             applyTimeframeCaptions({}, []);
 
             if (analyticsTotalSalesValue) analyticsTotalSalesValue.textContent = formatCurrency(0);
@@ -1252,6 +1887,7 @@
             renderTrend([]);
             applyPredictiveForecast({ has_forecast: false });
             renderForecastProjectionChart([]);
+            applyClientWorkflowStatus({});
         };
 
         const applyAnalyticsPayload = (payload) => {
@@ -1286,9 +1922,10 @@
 
             const scope = payload && payload.scope ? payload.scope : {};
             applyTimeframeCaptions(scope, trendRows);
+            applyClientWorkflowStatus(payload && payload.client_workflow ? payload.client_workflow : {});
             if (analyticsScopeHint) {
-                const clientTin = "{{ client.tin_number }}";
-                analyticsScopeHint.textContent = `Viewing: {{ client.client_name }}${clientTin ? ` (TIN: ${formatTin(clientTin)})` : ""}`;
+                const clientTin = currentClientProfile.tin_number || "";
+                analyticsScopeHint.textContent = `Viewing: ${currentClientProfile.client_name}${clientTin ? ` (TIN: ${formatTin(clientTin)})` : ""}`;
             }
         };
 
@@ -1354,6 +1991,127 @@
             }
         };
 
+        const setClientDetailsSaving = (isSaving) => {
+            if (!saveClientDetailsButton) return;
+            saveClientDetailsButton.disabled = isSaving;
+            saveClientDetailsButton.innerHTML = isSaving
+                ? '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Saving'
+                : 'Save Changes';
+        };
+
+        const setupEditClientDetailsEvents = () => {
+            renderEditCustomFields();
+            bindClientPasswordToggles();
+
+            if (editDetailsAddCustomFieldBtn && editDetailsCustomFields) {
+                editDetailsAddCustomFieldBtn.addEventListener("click", () => {
+                    editDetailsCustomFields.appendChild(createCustomFieldRow());
+                    bindClientPasswordToggles();
+                    editClientDetailsDirty = true;
+                });
+            }
+
+            if (editClientDetailsForm) {
+                editClientDetailsForm.addEventListener("input", () => {
+                    editClientDetailsDirty = true;
+                });
+                editClientDetailsForm.addEventListener("change", () => {
+                    editClientDetailsDirty = true;
+                });
+
+                editClientDetailsForm.addEventListener("submit", async (event) => {
+                    event.preventDefault();
+                    if (!editClientDetailsForm.checkValidity()) {
+                        editClientDetailsForm.reportValidity();
+                        return;
+                    }
+
+                    const payload = {
+                        client_name: document.getElementById("editDetailsClientName") ? document.getElementById("editDetailsClientName").value.trim() : "",
+                        tin_number: editDetailsClientTinInput ? normalizeDigits(editDetailsClientTinInput.value) : "",
+                        trade_name: document.getElementById("editDetailsClientTradeName") ? document.getElementById("editDetailsClientTradeName").value.trim() : "",
+                        location: document.getElementById("editDetailsClientLocation") ? document.getElementById("editDetailsClientLocation").value.trim() : "",
+                        permit_number: document.getElementById("editDetailsClientPermitNumber") ? document.getElementById("editDetailsClientPermitNumber").value.trim() : "",
+                        birthday: document.getElementById("editDetailsClientBirthday") ? document.getElementById("editDetailsClientBirthday").value.trim() : "",
+                        email: document.getElementById("editDetailsClientEmail") ? document.getElementById("editDetailsClientEmail").value.trim() : "",
+                        email_password: document.getElementById("editDetailsClientEmailPassword") ? document.getElementById("editDetailsClientEmailPassword").value.trim() : "",
+                        orus_account: document.getElementById("editDetailsClientOrusAccount") ? document.getElementById("editDetailsClientOrusAccount").value.trim() : "",
+                        orus_password: document.getElementById("editDetailsClientOrusPassword") ? document.getElementById("editDetailsClientOrusPassword").value.trim() : "",
+                        forecast_growth_percent: CLIENT_FORECAST_GROWTH_PERCENT,
+                        custom_fields: collectEditCustomFields(),
+                    };
+
+                    setClientDetailsSaving(true);
+                    try {
+                        const response = await fetch(CLIENT_DETAIL_API_URL, {
+                            method: "PUT",
+                            headers: {
+                                "Accept": "application/json",
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": getCookieValue("csrftoken"),
+                            },
+                            credentials: "same-origin",
+                            body: JSON.stringify(payload),
+                        });
+
+                        if (response.status === 401) {
+                            const nextPath = encodeURIComponent(window.location.pathname + window.location.search);
+                            window.location.assign(`{% url 'login' %}?next=${nextPath}`);
+                            return;
+                        }
+
+                        const result = await parseJsonSafe(response);
+                        if (!response.ok || !result || !result.ok) {
+                            throw new Error(result && result.message ? result.message : "Unable to update client details.");
+                        }
+
+                        syncClientProfileUi(result.client || payload);
+                        editClientDetailsDirty = false;
+                        if (editClientDetailsModal) {
+                            editClientDetailsModal.hide();
+                        }
+                        showToast(result.message || "Client details updated successfully.");
+                    } catch (error) {
+                        showToast(error && error.message ? error.message : "Unable to update client details.", "danger");
+                    } finally {
+                        setClientDetailsSaving(false);
+                    }
+                });
+            }
+
+            if (editClientDetailsModalElement) {
+                editClientDetailsModalElement.addEventListener("shown.bs.modal", () => {
+                    const modalBody = editClientDetailsModalElement.querySelector(".modal-body");
+                    if (modalBody) {
+                        modalBody.scrollTop = 0;
+                    }
+                });
+                editClientDetailsModalElement.addEventListener("hide.bs.modal", (event) => {
+                    if (!editClientDetailsDirty) return;
+                    event.preventDefault();
+                    if (shared && typeof shared.showConfirmDiscard === "function") {
+                        shared.showConfirmDiscard().then((discard) => {
+                            if (discard) {
+                                editClientDetailsDirty = false;
+                                if (editClientDetailsModal) editClientDetailsModal.hide();
+                            }
+                        });
+                    } else if (window.confirm("You have unsaved changes. Are you sure you want to discard them?")) {
+                        editClientDetailsDirty = false;
+                        if (editClientDetailsModal) editClientDetailsModal.hide();
+                    }
+                });
+                editClientDetailsModalElement.addEventListener("hidden.bs.modal", () => {
+                    editClientDetailsDirty = false;
+                    if (editClientDetailsForm) editClientDetailsForm.reset();
+                    renderEditCustomFields();
+                    if (editDetailsClientTinInput) {
+                        editDetailsClientTinInput.value = formatTin(editDetailsClientTinInput.value);
+                    }
+                });
+            }
+        };
+
         const initializeClientDetailsPage = () => {
             // Remove skeleton loading classes after timeout
             window.setTimeout(() => {
@@ -1377,6 +2135,22 @@
             }
 
             setupModalReportEvents();
+            setupEditClientDetailsEvents();
+
+            // Toggle Client Overview Card visibility depending on selected tab (Dashboard vs Forecast)
+            const dashboardTab = document.getElementById("dashboard-tab");
+            const forecastingTab = document.getElementById("forecasting-tab");
+            const overviewCard = document.querySelector(".client-overview-card");
+            if (dashboardTab && forecastingTab && overviewCard) {
+                dashboardTab.addEventListener("shown.bs.tab", () => {
+                    overviewCard.hidden = false;
+                    overviewCard.classList.remove("d-none");
+                });
+                forecastingTab.addEventListener("shown.bs.tab", () => {
+                    overviewCard.hidden = true;
+                    overviewCard.classList.add("d-none");
+                });
+            }
         };
 
         // Modal report generation state and logic
@@ -1389,93 +2163,131 @@
         
         let modalLatestReport = null;
 
-        const buildModalReportData = (payload, yearFilterVal) => {
-            const summary = payload && payload.summary ? payload.summary : {};
-            const trendRows = payload && Array.isArray(payload.monthly_trend) ? payload.monthly_trend : [];
-            const scope = payload && payload.scope ? payload.scope : {};
+        const modalReportMonthNames = [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        ];
 
-            const rawTypeColumns = Array.isArray(payload && payload.type_columns)
-                ? payload.type_columns.filter((value) => String(value || "").trim())
-                : [];
-            
-            const typeColumns = window.SafeBooksReportsShared && typeof window.SafeBooksReportsShared.normalizeFinancialSummaryColumns === "function"
-                ? window.SafeBooksReportsShared.normalizeFinancialSummaryColumns(rawTypeColumns)
-                : rawTypeColumns;
-                
-            const typeColumnMeta = typeColumns.map((label, index) => ({
-                key: `type_${index}`,
-                label: String(label),
-            }));
-            const useTypeColumns = typeColumnMeta.length > 0;
+        const classifyModalReportLine = (typeCode, description) => {
+            const text = `${typeCode || ""} ${description || ""}`.toLowerCase();
+            if (/(expense|cost|payment|purchase)/.test(text)) {
+                return "expenses";
+            }
+            if (/(tax|bir|1701|2551|percentage|income return|return)/.test(text)) {
+                return "tax";
+            }
+            return "sales";
+        };
 
-            const getTypeAmount = (typeBreakdown, label) => {
-                const normalizedLabel = String(label || "").trim().toLowerCase();
-                if (!normalizedLabel) return 0;
-                const directMatch = typeBreakdown && Object.prototype.hasOwnProperty.call(typeBreakdown, label)
-                    ? Number(typeBreakdown[label] || 0)
-                    : null;
-                if (Number.isFinite(directMatch)) return directMatch;
-                const fallbackKey = Object.keys(typeBreakdown || {}).find((key) => String(key || "").trim().toLowerCase() === normalizedLabel);
-                return Number(typeBreakdown && fallbackKey ? typeBreakdown[fallbackKey] : 0);
+        const getModalReportPeriod = (entryDate) => {
+            const cleaned = String(entryDate || "").trim();
+            const match = cleaned.match(/^(\d{4})-(\d{2})-\d{2}$/);
+            if (!match) {
+                return null;
+            }
+
+            const year = Number(match[1]);
+            const month = Number(match[2]);
+            if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+                return null;
+            }
+
+            return {
+                key: `${year}-${String(month).padStart(2, "0")}`,
+                label: `${modalReportMonthNames[month - 1]} ${year}`,
             };
+        };
 
-            const rows = trendRows.map((row) => {
-                const periodLabel = `${row.month_label || row.month || "-"} ${row.year || ""}`.trim();
-                const typeBreakdown = row && row.type_breakdown ? row.type_breakdown : {};
-                const salesValue = useTypeColumns
-                    ? getTypeAmount(typeBreakdown, "Sales")
-                    : Number(row.sales || 0);
-                const expensesValue = useTypeColumns
-                    ? getTypeAmount(typeBreakdown, "Expenses")
-                    : Number(row.expenses || 0);
-                const netValue = salesValue - expensesValue;
+        const getModalReportTaxLabel = (row) => {
+            const typeCode = String(row && row.type_code ? row.type_code : "").trim();
+            const description = String(row && row.description ? row.description : "").trim();
+            return typeCode || description || "Tax";
+        };
 
-                if (!useTypeColumns) {
-                    return {
-                        period: periodLabel,
-                        sales: formatCurrency(salesValue),
-                        expenses: formatCurrency(expensesValue),
-                        tax: formatCurrency(row.tax),
-                        net_value: formatCurrency(netValue),
-                    };
+        const buildModalReportData = (payload) => {
+            const transactionRows = payload && Array.isArray(payload.rows) ? payload.rows : [];
+            const periodMap = new Map();
+            const taxLabelMap = new Map();
+
+            transactionRows.forEach((row) => {
+                const period = getModalReportPeriod(row && row.entry_date);
+                if (!period) return;
+
+                if (!periodMap.has(period.key)) {
+                    periodMap.set(period.key, {
+                        period: period.label,
+                        salesValue: 0,
+                        expensesValue: 0,
+                        taxValues: new Map(),
+                    });
                 }
 
-                const typeValues = {};
-                typeColumnMeta.forEach((column) => {
-                    typeValues[column.key] = formatCurrency(typeBreakdown[column.label]);
-                });
+                const bucket = periodMap.get(period.key);
+                const amount = Number(row && row.amount ? row.amount : 0);
+                const category = classifyModalReportLine(row && row.type_code, row && row.description);
 
-                return {
-                    period: periodLabel,
-                    ...typeValues,
-                    net_value: formatCurrency(netValue),
-                };
+                if (category === "expenses") {
+                    bucket.expensesValue += Number.isFinite(amount) ? amount : 0;
+                } else if (category === "tax") {
+                    const taxLabel = getModalReportTaxLabel(row);
+                    const taxKey = taxLabel.toLowerCase();
+                    if (!taxLabelMap.has(taxKey)) {
+                        taxLabelMap.set(taxKey, taxLabel);
+                    }
+                    bucket.taxValues.set(
+                        taxKey,
+                        (bucket.taxValues.get(taxKey) || 0) + (Number.isFinite(amount) ? amount : 0)
+                    );
+                } else {
+                    bucket.salesValue += Number.isFinite(amount) ? amount : 0;
+                }
             });
 
-            const dateFrom = scope.date_from || (yearFilterVal !== "all" ? `${yearFilterVal}-01-01` : "2024-01-01");
-            const dateTo = scope.date_to || new Date().toISOString().split('T')[0];
+            const taxColumnMeta = Array.from(taxLabelMap.entries())
+                .sort((left, right) => left[1].localeCompare(right[1]))
+                .map(([key, label], index) => ({
+                    key: `tax_${index}`,
+                    taxKey: key,
+                    label,
+                }));
+
+            const rows = Array.from(periodMap.entries())
+                .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+                .map(([, values]) => {
+                    const netValue = values.salesValue - values.expensesValue;
+                    const taxValues = {};
+                    taxColumnMeta.forEach((column) => {
+                        taxValues[column.key] = formatCurrency(values.taxValues.get(column.taxKey) || 0);
+                    });
+                    return {
+                        period: values.period,
+                        sales: formatCurrency(values.salesValue),
+                        expenses: formatCurrency(values.expensesValue),
+                        ...taxValues,
+                        net_value: formatCurrency(netValue),
+                    };
+                });
+
+            const firstPeriod = rows.length ? rows[0].period : "";
+            const lastPeriod = rows.length ? rows[rows.length - 1].period : "";
+            const dateRangeLabel = firstPeriod && lastPeriod && firstPeriod !== lastPeriod
+                ? `${firstPeriod} to ${lastPeriod}`
+                : (firstPeriod || "All recorded entries");
 
             return {
                 reportType: "financial_summary",
                 reportLabel: "Financial Summary Report",
-                dateFrom: dateFrom,
-                dateTo: dateTo,
+                dateRangeLabel,
                 generatedAt: new Date().toISOString(),
                 clientId: CLIENT_ID,
-                scopeLabel: "{{ client.client_name }}",
-                columns: useTypeColumns
-                    ? [
-                        { key: "period", label: "Period" },
-                        ...typeColumnMeta,
-                        { key: "net_value", label: "Net Value" },
-                    ]
-                    : [
-                        { key: "period", label: "Period" },
-                        { key: "sales", label: "Sales" },
-                        { key: "expenses", label: "Expenses" },
-                        { key: "tax", label: "Tax" },
-                        { key: "net_value", label: "Net Value" },
-                    ],
+                scopeLabel: currentClientProfile.client_name,
+                columns: [
+                    { key: "period", label: "Period" },
+                    { key: "sales", label: "Sales" },
+                    { key: "expenses", label: "Expenses" },
+                    ...taxColumnMeta.map((column) => ({ key: column.key, label: column.label })),
+                    { key: "net_value", label: "Net Value" },
+                ],
                 rows,
             };
         };
@@ -1485,16 +2297,16 @@
                 return "";
             }
 
-            const clientName = "{{ client.client_name }}";
-            const clientTin = formatTin("{{ client.tin_number }}");
-            const tradeName = "{{ client.trade_name|default:'' }}";
-            const location = "{{ client.location }}";
-            const permitNumber = "{{ client.permit_number|default:'' }}";
-            const birthday = "{{ client.birthday|date:'Y-m-d'|default:'' }}";
-            const email = "{{ client.email|default:'' }}";
-            const emailPassword = "{{ client.email_password|default:'' }}";
-            const orusAccount = "{{ client.orus_account|default:'' }}";
-            const orusPassword = "{{ client.orus_password|default:'' }}";
+            const clientName = currentClientProfile.client_name;
+            const clientTin = formatTin(currentClientProfile.tin_number);
+            const tradeName = currentClientProfile.trade_name;
+            const location = currentClientProfile.location;
+            const permitNumber = currentClientProfile.permit_number;
+            const birthday = currentClientProfile.birthday;
+            const email = currentClientProfile.email;
+            const emailPassword = currentClientProfile.email_password;
+            const orusAccount = currentClientProfile.orus_account;
+            const orusPassword = currentClientProfile.orus_password;
 
             const customFields = [];
             const customFieldsEl = document.getElementById("clientCustomFieldsData");
@@ -1514,7 +2326,7 @@
                 year: "numeric", month: "short", day: "numeric",
                 hour: "2-digit", minute: "2-digit"
             }).format(new Date());
-            const dateRangeLabel = `${report.dateFrom} to ${report.dateTo}`;
+            const dateRangeLabel = report.dateRangeLabel || "All recorded entries";
 
             const columns = report.columns.map((c) => c.label.toUpperCase());
             const rows = report.rows.map((r) => {
@@ -1721,10 +2533,13 @@
             if (modalReportWrapper) modalReportWrapper.hidden = true;
             if (modalPrintReportBtn) modalPrintReportBtn.disabled = true;
 
-            const yearVal = analyticsYearFilter ? analyticsYearFilter.value : "all";
-
             try {
-                const url = buildAnalyticsSummaryApiUrl();
+                const params = new URLSearchParams();
+                params.set("client_id", String(CLIENT_ID));
+                params.set("date_from", "2000-01-01");
+                params.set("date_to", "2100-12-31");
+
+                const url = `${REPORTS_PRINT_LAYOUT_API_URL}?${params.toString()}`;
                 const response = await fetch(url, {
                     method: "GET",
                     headers: { "Accept": "application/json" },
@@ -1743,7 +2558,7 @@
                         throw new Error(result && result.message ? result.message : "Unable to generate report data.");
                     }
 
-                    modalLatestReport = buildModalReportData(result, yearVal);
+                    modalLatestReport = buildModalReportData(result);
                     modalReportSheet.innerHTML = buildModalLedgerSheetHtml(modalLatestReport);
                     
                     if (modalReportLoading) modalReportLoading.hidden = true;
@@ -1760,13 +2575,14 @@
         const showReportModal = () => {
             const modalEl = document.getElementById("formattedReportModal");
             if (modalEl) {
-                const reportModal = new bootstrap.Modal(modalEl);
+                const reportModal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 reportModal.show();
                 loadModalReport();
             }
         };
 
         const setupModalReportEvents = () => {
+            const modalEl = document.getElementById("formattedReportModal");
             const generateReportActionBtn = document.getElementById("generateReportActionBtn");
             if (generateReportActionBtn) {
                 generateReportActionBtn.addEventListener("click", (e) => {
@@ -1778,6 +2594,24 @@
             if (modalPrintReportBtn) {
                 modalPrintReportBtn.addEventListener("click", () => {
                     printModalLedgerLayout();
+                });
+            }
+
+            if (modalEl) {
+                modalEl.addEventListener("hidden.bs.modal", () => {
+                    if (modalReportLoading) modalReportLoading.hidden = true;
+                    if (modalReportError) modalReportError.hidden = true;
+
+                    window.setTimeout(() => {
+                        if (document.querySelector(".modal.show")) {
+                            return;
+                        }
+
+                        document.querySelectorAll(".modal-backdrop").forEach((backdrop) => backdrop.remove());
+                        document.body.classList.remove("modal-open");
+                        document.body.style.removeProperty("overflow");
+                        document.body.style.removeProperty("padding-right");
+                    }, 50);
                 });
             }
         };

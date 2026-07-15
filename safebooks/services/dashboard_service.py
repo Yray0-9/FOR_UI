@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from django.db.models import Count, OuterRef, Q, Subquery
+from django.db.models import Count, Max, OuterRef, Q, Subquery
 from django.utils import timezone
 
 from safebooks.models import Client, FinancialRecord, Period
@@ -76,6 +76,16 @@ def _build_client_activity_payload(client, current_period_label: str, reference_
         compliance = "late"
 
     last_entry_date = client.last_entry_date.isoformat() if client.last_entry_date else ""
+    activity_candidates = [
+        value
+        for value in (
+            getattr(client, "latest_record_updated_at", None),
+            getattr(client, "updated_at", None),
+            getattr(client, "created_at", None),
+        )
+        if value
+    ]
+    recent_activity_at = max(activity_candidates) if activity_candidates else None
 
     if client.last_period_month and client.last_period_year:
         current_period = _period_label(client.last_period_month, client.last_period_year)
@@ -102,6 +112,7 @@ def _build_client_activity_payload(client, current_period_label: str, reference_
         "tin_number": client.tin_number,
         "trade_name": client.trade_name,
         "last_entry_date": last_entry_date,
+        "recent_activity_at": recent_activity_at.isoformat() if recent_activity_at else "",
         "current_period": current_period,
         "status": status,
         "remarks": remarks,
@@ -159,6 +170,10 @@ def get_dashboard_summary_for_bookkeeper(bookkeeper) -> dict:
             last_period_year=Subquery(latest_record_for_client.values("period__year")[:1]),
             last_frequency=Subquery(latest_record_for_client.values("frequency")[:1]),
             last_deadline_date=Subquery(latest_record_for_client.values("deadline_date")[:1]),
+            latest_record_updated_at=Max(
+                "financial_records__updated_at",
+                filter=Q(financial_records__bookkeeper=bookkeeper),
+            ),
         )
         .order_by("-created_at", "-id")
     )

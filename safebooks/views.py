@@ -4,6 +4,7 @@ import secrets
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -12,7 +13,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST
 
-from safebooks.models import AdminAccount, BookkeeperAccount
+from safebooks.models import AdminAccount, AdminAuditLog, BookkeeperAccount, BookkeeperAuditLog, Client
 from safebooks.services.auth_service import (
     authenticate_google_bookkeeper,
     build_google_oauth_authorization_url,
@@ -43,7 +44,12 @@ from safebooks.services.dashboard_service import get_dashboard_summary_for_bookk
 from safebooks.services.analytics_service import get_analytics_summary_for_bookkeeper
 from safebooks.services.settings_service import (
     get_workspace_defaults_for_bookkeeper,
+    update_client_record_email_notifications_preference,
     update_workspace_defaults_for_bookkeeper,
+)
+from safebooks.services.deactivation_request_service import (
+    get_deactivation_request_status,
+    request_bookkeeper_deactivation,
 )
 from safebooks.services.security_service import (
     change_bookkeeper_password,
@@ -59,22 +65,172 @@ from safebooks.services.admin_approvals_service import (
     approve_bookkeeper,
     reject_bookkeeper,
     list_admin_approvals,
+    retry_approval_decision_email,
 )
 from safebooks.services.admin_bookkeepers_service import (
     list_admin_bookkeepers,
     deactivate_bookkeeper,
+    decline_deactivation_request,
     reactivate_bookkeeper,
     delete_bookkeeper_account,
 )
+from safebooks.services.admin_audit_service import list_admin_audit_logs, record_admin_auth_event
+from safebooks.services.bookkeeper_audit_service import (
+    list_bookkeeper_audit_logs,
+    record_bookkeeper_audit,
+)
 from safebooks.services.admin_dashboard_service import get_admin_dashboard_summary
+from safebooks.services.admin_profile_service import (
+    change_admin_password,
+    get_admin_profile,
+    update_admin_profile,
+)
+from safebooks.services.admin_security_service import (
+    create_admin_two_factor_setup,
+    disable_admin_two_factor,
+    enable_admin_two_factor,
+    regenerate_admin_two_factor_recovery_codes,
+    verify_admin_two_factor_login,
+)
 
 
 SESSION_BOOKKEEPER_ID_KEY = "safebooks_bookkeeper_id"
 SESSION_ADMIN_ID_KEY = "safebooks_admin_id"
+SESSION_ADMIN_AUTHENTICATED_AT_KEY = "safebooks_admin_authenticated_at"
+SESSION_ADMIN_LAST_ACTIVITY_AT_KEY = "safebooks_admin_last_activity_at"
+SESSION_ADMIN_TWO_FACTOR_SETUP_KEY = "safebooks_admin_two_factor_setup"
+SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY = "safebooks_admin_two_factor_challenge"
 SESSION_CLIENT_DETAILS_VERIFIED_UNTIL_KEY = "safebooks_client_details_verified_until"
 SESSION_GOOGLE_OAUTH_STATE_KEY = "safebooks_google_oauth_state"
 SESSION_GOOGLE_SIGNUP_PROFILE_KEY = "safebooks_google_signup_profile"
 CLIENT_DETAILS_CONFIRMATION_WINDOW_SECONDS = 15 * 60
+
+
+def _session_timestamp(value) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _clear_admin_session(request) -> None:
+    for key in (
+        SESSION_ADMIN_ID_KEY,
+        SESSION_ADMIN_AUTHENTICATED_AT_KEY,
+        SESSION_ADMIN_LAST_ACTIVITY_AT_KEY,
+        SESSION_ADMIN_TWO_FACTOR_SETUP_KEY,
+        SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY,
+    ):
+        request.session.pop(key, None)
+    request.session.modified = True
+
+
+def _admin_session_is_expired(request, now_timestamp: int) -> bool:
+    authenticated_at = _session_timestamp(
+        request.session.get(SESSION_ADMIN_AUTHENTICATED_AT_KEY)
+    )
+    last_activity_at = _session_timestamp(
+        request.session.get(SESSION_ADMIN_LAST_ACTIVITY_AT_KEY)
+    )
+
+    # Preserve sessions created before this policy was deployed, then enforce
+    # both limits from their first authenticated request onward.
+    if authenticated_at <= 0 or authenticated_at > now_timestamp:
+        authenticated_at = now_timestamp
+        request.session[SESSION_ADMIN_AUTHENTICATED_AT_KEY] = authenticated_at
+    if last_activity_at <= 0 or last_activity_at > now_timestamp:
+        last_activity_at = now_timestamp
+        request.session[SESSION_ADMIN_LAST_ACTIVITY_AT_KEY] = last_activity_at
+
+    max_age = max(
+        1,
+        int(getattr(settings, "SAFEBOOKS_ADMIN_SESSION_MAX_AGE_SECONDS", 8 * 60 * 60)),
+    )
+    idle_timeout = max(
+        1,
+        int(getattr(settings, "SAFEBOOKS_ADMIN_SESSION_IDLE_TIMEOUT_SECONDS", 30 * 60)),
+    )
+
+    return (
+        now_timestamp - authenticated_at >= max_age
+        or now_timestamp - last_activity_at >= idle_timeout
+    )
+
+
+def _set_admin_session(request, account_id: int) -> None:
+    now_timestamp = int(timezone.now().timestamp())
+    request.session.cycle_key()
+    request.session[SESSION_ADMIN_ID_KEY] = account_id
+    request.session[SESSION_ADMIN_AUTHENTICATED_AT_KEY] = now_timestamp
+    request.session[SESSION_ADMIN_LAST_ACTIVITY_AT_KEY] = now_timestamp
+    request.session.pop(SESSION_ADMIN_TWO_FACTOR_SETUP_KEY, None)
+    request.session.pop(SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY, None)
+    request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
+    request.session.pop(SESSION_CLIENT_DETAILS_VERIFIED_UNTIL_KEY, None)
+    request.session.set_expiry(
+        max(
+            1,
+            int(getattr(settings, "SAFEBOOKS_ADMIN_SESSION_MAX_AGE_SECONDS", 8 * 60 * 60)),
+        )
+    )
+    request.session.modified = True
+
+
+def _admin_two_factor_failure_cache_key(account_id: int) -> str:
+    return f"safebooks:admin-2fa-login-failures:{account_id}"
+
+
+def _admin_two_factor_login_policy() -> tuple[int, int, int]:
+    timeout_seconds = max(
+        30,
+        int(getattr(settings, "SAFEBOOKS_ADMIN_TWO_FACTOR_LOGIN_TIMEOUT_SECONDS", 300)),
+    )
+    max_attempts = max(
+        1,
+        int(getattr(settings, "SAFEBOOKS_ADMIN_TWO_FACTOR_LOGIN_MAX_ATTEMPTS", 5)),
+    )
+    lockout_seconds = max(
+        timeout_seconds,
+        int(getattr(settings, "SAFEBOOKS_ADMIN_TWO_FACTOR_LOGIN_LOCKOUT_SECONDS", 300)),
+    )
+    return timeout_seconds, max_attempts, lockout_seconds
+
+
+def _set_admin_two_factor_challenge(request, account_id: int) -> None:
+    timeout_seconds, _max_attempts, _lockout_seconds = _admin_two_factor_login_policy()
+    request.session.cycle_key()
+    _clear_admin_session(request)
+    request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
+    request.session.pop(SESSION_CLIENT_DETAILS_VERIFIED_UNTIL_KEY, None)
+    request.session[SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY] = {
+        "admin_id": account_id,
+        "issued_at": int(timezone.now().timestamp()),
+        "attempts": 0,
+    }
+    request.session.set_expiry(timeout_seconds)
+    request.session.modified = True
+
+
+def _complete_admin_login(request, admin_account: AdminAccount, *, method: str) -> dict:
+    admin_account.last_login = timezone.now()
+    admin_account.save(update_fields=["last_login"])
+    _set_admin_session(request, admin_account.id)
+    record_admin_auth_event(
+        admin_account,
+        AdminAuditLog.ACTION_ADMIN_LOGIN,
+        authentication_method=method,
+    )
+    return {
+        "ok": True,
+        "message": "Login successful.",
+        "role": "admin",
+        "user": {
+            "id": admin_account.id,
+            "full_name": admin_account.full_name,
+            "email": admin_account.email,
+        },
+        "redirect_url": reverse("admin_dashboard"),
+    }
 
 
 def _decode_request_data(request):
@@ -94,6 +250,21 @@ def _decode_request_data(request):
         return None
 
     return payload
+
+
+def _no_store_json(payload: dict, *, status: int = 200) -> JsonResponse:
+    response = JsonResponse(payload, status=status)
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+def _audit_client_name(bookkeeper, client_id: int) -> str:
+    return str(
+        Client.objects.filter(id=client_id, bookkeeper=bookkeeper)
+        .values_list("client_name", flat=True)
+        .first()
+        or "Client"
+    )
 
 
 def _is_api_request(request):
@@ -125,9 +296,24 @@ def _get_session_admin(request):
     if not account_id:
         return None
 
+    now_timestamp = int(timezone.now().timestamp())
+    if _admin_session_is_expired(request, now_timestamp):
+        request.session.flush()
+        return None
+
     account = AdminAccount.objects.filter(id=account_id, is_active=True).first()
     if account is None:
-        request.session.pop(SESSION_ADMIN_ID_KEY, None)
+        _clear_admin_session(request)
+        return None
+
+    # Avoid a session write for every rapid API request while still keeping
+    # the idle timer accurate for normal admin activity.
+    last_activity_at = _session_timestamp(
+        request.session.get(SESSION_ADMIN_LAST_ACTIVITY_AT_KEY)
+    )
+    if now_timestamp - last_activity_at >= 60:
+        request.session[SESSION_ADMIN_LAST_ACTIVITY_AT_KEY] = now_timestamp
+        request.session.modified = True
 
     return account
 
@@ -244,8 +430,11 @@ def _build_auth_page_context(request, extra_context: dict | None = None) -> dict
 
 
 def _set_bookkeeper_session(request, account_id: int) -> None:
+    request.session.cycle_key()
     request.session[SESSION_BOOKKEEPER_ID_KEY] = account_id
-    request.session.pop(SESSION_ADMIN_ID_KEY, None)
+    _clear_admin_session(request)
+    request.session.pop(SESSION_CLIENT_DETAILS_VERIFIED_UNTIL_KEY, None)
+    request.session.set_expiry(None)
     request.session.modified = True
 
 
@@ -615,15 +804,19 @@ def client_details_page_view(request, client_id):
     context = _build_user_context(request.bookkeeper_account)
     context["active_nav"] = "clients"
     context["client"] = client
+    context["client_record_email_notifications_enabled"] = bool(
+        getattr(request.bookkeeper_account, "client_record_email_notifications_enabled", True)
+    )
     return render(request, "base/client_details.html", context)
 
 
 @require_bookkeeper_auth
 @ensure_csrf_cookie
 def reports_page_view(request):
-    context = _build_user_context(request.bookkeeper_account)
-    context["active_nav"] = "reports"
-    return render(request, "base/reports.html", context)
+    query = urlencode({
+        "report_scope": "client",
+    })
+    return redirect(f"{reverse('clients')}?{query}")
 
 
 @require_bookkeeper_auth
@@ -668,8 +861,14 @@ def settings_page_view(request):
     context = _build_user_context(request.bookkeeper_account)
     context["active_nav"] = "settings"
     context["login_alerts_enabled"] = bool(getattr(request.bookkeeper_account, "login_alerts_enabled", False))
+    context["client_record_email_notifications_enabled"] = bool(
+        getattr(request.bookkeeper_account, "client_record_email_notifications_enabled", True)
+    )
     context["client_details_password_required"] = _client_details_lock_enabled(request.bookkeeper_account)
     context["login_alerts_destination"] = _mask_email_address(request.bookkeeper_account.email)
+    context["deactivation_request_pending"] = bool(
+        get_deactivation_request_status(request.bookkeeper_account).get("pending_request")
+    )
     return render(request, "base/settings.html", context)
 
 
@@ -685,6 +884,14 @@ def profile_page_view(request):
         "location": getattr(request.bookkeeper_account, "location", "") or "",
     }
     return render(request, "base/profile.html", context)
+
+
+@require_bookkeeper_auth
+@ensure_csrf_cookie
+def bookkeeper_audit_log_page_view(request):
+    context = _build_user_context(request.bookkeeper_account)
+    context["active_nav"] = "audit_log"
+    return render(request, "base/audit_log.html", context)
 
 
 @require_admin_auth
@@ -709,6 +916,14 @@ def admin_approvals_page_view(request):
     context = _build_admin_context(request.admin_account)
     context["active_admin_nav"] = "approvals"
     return render(request, "admin_panel/approvals.html", context)
+
+
+@require_admin_auth
+@ensure_csrf_cookie
+def admin_audit_log_page_view(request):
+    context = _build_admin_context(request.admin_account)
+    context["active_admin_nav"] = "audit_log"
+    return render(request, "admin_panel/audit_log.html", context)
 
 
 @require_admin_auth
@@ -751,6 +966,8 @@ def _resolve_analytics_error_status(result):
 
 
 def _resolve_admin_approval_error_status(result):
+    if result.get("code") == "stale_decision":
+        return 409
     message = result.get("message", "")
     if message == "Bookkeeper not found.":
         return 404
@@ -758,6 +975,8 @@ def _resolve_admin_approval_error_status(result):
 
 
 def _resolve_admin_bookkeeper_error_status(result):
+    if result.get("code") == "stale_decision":
+        return 409
     message = result.get("message", "")
     if message == "Bookkeeper not found.":
         return 404
@@ -797,6 +1016,13 @@ def security_change_password_api_view(request):
 
     result = change_bookkeeper_password(request.bookkeeper_account, payload)
     if result.get("ok"):
+        record_bookkeeper_audit(
+            request.bookkeeper_account,
+            BookkeeperAuditLog.ACTION_PASSWORD_CHANGED,
+            "Changed account password.",
+            target_model="BookkeeperAccount",
+            target_id=request.bookkeeper_account.id,
+        )
         return JsonResponse(result)
 
     return JsonResponse(result, status=400)
@@ -814,6 +1040,41 @@ def security_login_alerts_api_view(request):
 
     result = update_login_alerts_preference(request.bookkeeper_account, payload)
     if result.get("ok"):
+        enabled = bool(result.get("login_alerts_enabled"))
+        record_bookkeeper_audit(
+            request.bookkeeper_account,
+            BookkeeperAuditLog.ACTION_LOGIN_ALERTS_CHANGED,
+            f"Turned login alerts {'on' if enabled else 'off'}.",
+            target_model="BookkeeperAccount",
+            target_id=request.bookkeeper_account.id,
+            metadata={"enabled": enabled},
+        )
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
+
+
+@require_POST
+@require_bookkeeper_auth
+def settings_client_record_email_notifications_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = update_client_record_email_notifications_preference(request.bookkeeper_account, payload)
+    if result.get("ok"):
+        enabled = bool(result.get("client_record_email_notifications_enabled"))
+        record_bookkeeper_audit(
+            request.bookkeeper_account,
+            BookkeeperAuditLog.ACTION_CLIENT_EMAILS_CHANGED,
+            f"Turned client record emails {'on' if enabled else 'off'}.",
+            target_model="BookkeeperAccount",
+            target_id=request.bookkeeper_account.id,
+            metadata={"enabled": enabled},
+        )
         return JsonResponse(result)
 
     return JsonResponse(result, status=400)
@@ -851,9 +1112,39 @@ def security_client_details_access_preference_api_view(request):
 
     result = update_client_details_access_preference(request.bookkeeper_account, payload)
     if result.get("ok"):
+        enabled = bool(result.get("client_details_password_required"))
         if not result.get("client_details_password_required"):
             _clear_client_details_access_verified(request)
+        record_bookkeeper_audit(
+            request.bookkeeper_account,
+            BookkeeperAuditLog.ACTION_CLIENT_DETAILS_LOCK_CHANGED,
+            f"Turned the client details lock {'on' if enabled else 'off'}.",
+            target_model="BookkeeperAccount",
+            target_id=request.bookkeeper_account.id,
+            metadata={"enabled": enabled},
+        )
         return JsonResponse(result)
+
+    return JsonResponse(result, status=400)
+
+
+@require_http_methods(["GET", "POST"])
+@require_bookkeeper_auth
+def settings_deactivation_request_api_view(request):
+    if request.method == "GET":
+        result = get_deactivation_request_status(request.bookkeeper_account)
+        return JsonResponse(result)
+
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = request_bookkeeper_deactivation(request.bookkeeper_account, payload)
+    if result.get("ok"):
+        return JsonResponse(result, status=201)
 
     return JsonResponse(result, status=400)
 
@@ -874,6 +1165,14 @@ def profile_api_view(request):
 
     result = update_profile_for_bookkeeper(request.bookkeeper_account, payload)
     if result.get("ok"):
+        record_bookkeeper_audit(
+            request.bookkeeper_account,
+            BookkeeperAuditLog.ACTION_PROFILE_UPDATED,
+            "Updated personal profile details.",
+            target_model="BookkeeperAccount",
+            target_id=request.bookkeeper_account.id,
+            metadata={"email_verification_required": bool(result.get("requires_email_verification"))},
+        )
         return JsonResponse(result)
 
     return JsonResponse(result, status=400)
@@ -896,6 +1195,16 @@ def clients_api_view(request):
 
     result = create_client_for_bookkeeper(request.bookkeeper_account, payload)
     if result.get("ok"):
+        client_payload = result.get("client") or {}
+        client_name = str(client_payload.get("client_name") or "Client")
+        record_bookkeeper_audit(
+            request.bookkeeper_account,
+            BookkeeperAuditLog.ACTION_CLIENT_CREATED,
+            f"Added client {client_name}.",
+            target_model="Client",
+            target_id=client_payload.get("id"),
+            metadata={"client_name": client_name},
+        )
         return JsonResponse(result, status=201)
 
     return JsonResponse(result, status=_resolve_client_error_status(result))
@@ -907,6 +1216,16 @@ def client_detail_api_view(request, client_id):
     if request.method == "DELETE":
         result = delete_client_for_bookkeeper(request.bookkeeper_account, client_id)
         if result.get("ok"):
+            client_payload = result.get("client") or {}
+            client_name = str(client_payload.get("client_name") or "Client")
+            record_bookkeeper_audit(
+                request.bookkeeper_account,
+                BookkeeperAuditLog.ACTION_CLIENT_CLOSED,
+                f"Closed client {client_name}.",
+                target_model="Client",
+                target_id=client_id,
+                metadata={"client_name": client_name},
+            )
             return JsonResponse(result)
         return JsonResponse(result, status=_resolve_client_error_status(result))
 
@@ -919,6 +1238,16 @@ def client_detail_api_view(request, client_id):
 
     result = update_client_for_bookkeeper(request.bookkeeper_account, client_id, payload)
     if result.get("ok"):
+        client_payload = result.get("client") or {}
+        client_name = str(client_payload.get("client_name") or "Client")
+        record_bookkeeper_audit(
+            request.bookkeeper_account,
+            BookkeeperAuditLog.ACTION_CLIENT_UPDATED,
+            f"Updated client {client_name}.",
+            target_model="Client",
+            target_id=client_id,
+            metadata={"client_name": client_name},
+        )
         return JsonResponse(result)
 
     return JsonResponse(result, status=_resolve_client_error_status(result))
@@ -976,12 +1305,16 @@ def admin_approvals_api_view(request):
     status_value = (request.GET.get("status") or "").strip()
     search_value = (request.GET.get("search") or "").strip()
     sort_value = (request.GET.get("sort") or "").strip()
+    page_value = (request.GET.get("page") or "").strip()
+    page_size_value = (request.GET.get("page_size") or "").strip()
 
     result = list_admin_approvals(
         request.admin_account,
         status_value,
         search_value,
         sort_value,
+        page=page_value,
+        page_size=page_size_value,
     )
     return JsonResponse(result)
 
@@ -1006,6 +1339,18 @@ def admin_approvals_reject_api_view(request, bookkeeper_id):
     if result.get("ok"):
         return JsonResponse(result)
 
+    if result.get("message") == "Rejection reason is required.":
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=_resolve_admin_approval_error_status(result))
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_approvals_retry_email_api_view(request, bookkeeper_id):
+    result = retry_approval_decision_email(request.admin_account, bookkeeper_id)
+    if result.get("ok"):
+        return JsonResponse(result)
     return JsonResponse(result, status=_resolve_admin_approval_error_status(result))
 
 
@@ -1016,6 +1361,8 @@ def admin_bookkeepers_api_view(request):
     search_value = (request.GET.get("search") or "").strip()
     sort_value = (request.GET.get("sort") or "").strip()
     clients_value = (request.GET.get("clients") or "").strip()
+    page_value = (request.GET.get("page") or "").strip()
+    page_size_value = (request.GET.get("page_size") or "").strip()
 
     result = list_admin_bookkeepers(
         request.admin_account,
@@ -1023,6 +1370,8 @@ def admin_bookkeepers_api_view(request):
         search_value,
         sort_value,
         clients_value,
+        page_value,
+        page_size_value,
     )
     return JsonResponse(result)
 
@@ -1030,8 +1379,37 @@ def admin_bookkeepers_api_view(request):
 @require_http_methods(["POST"])
 @require_admin_auth
 def admin_bookkeepers_deactivate_api_view(request, bookkeeper_id):
-    result = deactivate_bookkeeper(request.admin_account, bookkeeper_id)
+    payload = _decode_request_data(request) or {}
+    admin_password = payload.get("admin_password") or payload.get("password")
+    request_id_raw = payload.get("deactivation_request_id") or payload.get("request_id")
+    request_id = None
+    if request_id_raw not in (None, ""):
+        try:
+            request_id = int(request_id_raw)
+        except (TypeError, ValueError):
+            return JsonResponse({"ok": False, "message": "Invalid deactivation request id."}, status=400)
+
+    result = deactivate_bookkeeper(request.admin_account, bookkeeper_id, admin_password, request_id=request_id)
     if result.get("ok"):
+        return JsonResponse(result)
+
+    if result.get("message") in {"Admin password is required.", "Admin password is incorrect."}:
+        return JsonResponse(result)
+
+    return JsonResponse(result, status=_resolve_admin_bookkeeper_error_status(result))
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_bookkeepers_deactivation_request_decline_api_view(request, request_id):
+    payload = _decode_request_data(request) or {}
+    admin_password = payload.get("admin_password") or payload.get("password")
+    admin_note = payload.get("admin_note") or payload.get("note")
+    result = decline_deactivation_request(request.admin_account, request_id, admin_password, admin_note)
+    if result.get("ok"):
+        return JsonResponse(result)
+
+    if result.get("message") in {"Admin password is required.", "Admin password is incorrect."}:
         return JsonResponse(result)
 
     return JsonResponse(result, status=_resolve_admin_bookkeeper_error_status(result))
@@ -1040,8 +1418,13 @@ def admin_bookkeepers_deactivate_api_view(request, bookkeeper_id):
 @require_http_methods(["POST"])
 @require_admin_auth
 def admin_bookkeepers_reactivate_api_view(request, bookkeeper_id):
-    result = reactivate_bookkeeper(request.admin_account, bookkeeper_id)
+    payload = _decode_request_data(request) or {}
+    admin_password = payload.get("admin_password") or payload.get("password")
+    result = reactivate_bookkeeper(request.admin_account, bookkeeper_id, admin_password)
     if result.get("ok"):
+        return JsonResponse(result)
+
+    if result.get("message") in {"Admin password is required.", "Admin password is incorrect."}:
         return JsonResponse(result)
 
     return JsonResponse(result, status=_resolve_admin_bookkeeper_error_status(result))
@@ -1050,8 +1433,13 @@ def admin_bookkeepers_reactivate_api_view(request, bookkeeper_id):
 @require_http_methods(["POST"])
 @require_admin_auth
 def admin_bookkeepers_delete_api_view(request, bookkeeper_id):
-    result = delete_bookkeeper_account(request.admin_account, bookkeeper_id)
+    payload = _decode_request_data(request) or {}
+    admin_password = payload.get("admin_password") or payload.get("password")
+    result = delete_bookkeeper_account(request.admin_account, bookkeeper_id, admin_password)
     if result.get("ok"):
+        return JsonResponse(result)
+
+    if result.get("message") in {"Admin password is required.", "Admin password is incorrect."}:
         return JsonResponse(result)
 
     return JsonResponse(result, status=_resolve_admin_bookkeeper_error_status(result))
@@ -1062,6 +1450,169 @@ def admin_bookkeepers_delete_api_view(request, bookkeeper_id):
 def admin_dashboard_summary_api_view(request):
     result = get_admin_dashboard_summary(request.admin_account)
     return JsonResponse(result)
+
+
+@require_http_methods(["GET", "POST"])
+@require_admin_auth
+def admin_profile_api_view(request):
+    if request.method == "GET":
+        result = get_admin_profile(request.admin_account)
+        return JsonResponse(result)
+
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = update_admin_profile(request.admin_account, payload)
+    return JsonResponse(result)
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_security_change_password_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = change_admin_password(request.admin_account, payload)
+    return JsonResponse(result)
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_two_factor_setup_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = create_admin_two_factor_setup(request.admin_account, payload)
+    if result.get("ok"):
+        request.session[SESSION_ADMIN_TWO_FACTOR_SETUP_KEY] = {
+            "admin_id": request.admin_account.id,
+            "secret": result.get("secret", ""),
+            "issued_at": int(timezone.now().timestamp()),
+        }
+        request.session.modified = True
+    response = JsonResponse(result)
+    if result.get("ok"):
+        response["Cache-Control"] = "no-store"
+    return response
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_two_factor_confirm_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    setup_state = request.session.get(SESSION_ADMIN_TWO_FACTOR_SETUP_KEY)
+    if not isinstance(setup_state, dict):
+        return JsonResponse({
+            "ok": False,
+            "message": "Authenticator setup expired. Start setup again.",
+        })
+
+    issued_at = _session_timestamp(setup_state.get("issued_at"))
+    timeout_seconds = max(
+        1,
+        int(getattr(settings, "SAFEBOOKS_ADMIN_TWO_FACTOR_PENDING_TIMEOUT_SECONDS", 5 * 60)),
+    )
+    setup_matches_admin = setup_state.get("admin_id") == request.admin_account.id
+    setup_is_current = (
+        issued_at > 0
+        and int(timezone.now().timestamp()) - issued_at < timeout_seconds
+    )
+    if not setup_matches_admin or not setup_is_current:
+        request.session.pop(SESSION_ADMIN_TWO_FACTOR_SETUP_KEY, None)
+        request.session.modified = True
+        return JsonResponse({
+            "ok": False,
+            "message": "Authenticator setup expired. Start setup again.",
+        })
+
+    result = enable_admin_two_factor(
+        request.admin_account,
+        str(setup_state.get("secret") or ""),
+        payload,
+    )
+    if result.get("ok"):
+        request.session.pop(SESSION_ADMIN_TWO_FACTOR_SETUP_KEY, None)
+        request.session.modified = True
+    response = JsonResponse(result)
+    if result.get("ok"):
+        response["Cache-Control"] = "no-store"
+    return response
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_two_factor_disable_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = disable_admin_two_factor(request.admin_account, payload)
+    if result.get("ok"):
+        request.session.pop(SESSION_ADMIN_TWO_FACTOR_SETUP_KEY, None)
+        request.session.modified = True
+    return JsonResponse(result)
+
+
+@require_http_methods(["POST"])
+@require_admin_auth
+def admin_two_factor_recovery_codes_api_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return JsonResponse(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    result = regenerate_admin_two_factor_recovery_codes(request.admin_account, payload)
+    response = JsonResponse(result)
+    if result.get("ok"):
+        response["Cache-Control"] = "no-store"
+    return response
+
+
+@require_http_methods(["GET"])
+@require_admin_auth
+def admin_audit_log_api_view(request):
+    action_value = (request.GET.get("action") or "").strip()
+    search_value = (request.GET.get("search") or "").strip()
+    sort_value = (request.GET.get("sort") or "").strip()
+    date_from_value = (request.GET.get("date_from") or "").strip()
+    date_to_value = (request.GET.get("date_to") or "").strip()
+    page_value = (request.GET.get("page") or "").strip()
+    page_size_value = (request.GET.get("page_size") or "").strip()
+
+    result = list_admin_audit_logs(
+        request.admin_account,
+        action_value,
+        search_value,
+        sort_value,
+        date_from_value,
+        date_to_value,
+        page_value,
+        page_size_value,
+    )
+    return JsonResponse(result, status=200 if result.get("ok") else 400)
 
 
 @require_http_methods(["GET"])
@@ -1114,6 +1665,18 @@ def financial_records_api_view(request, client_id):
 
     result = create_record_for_client_period(request.bookkeeper_account, client_id, payload)
     if result.get("ok"):
+        record_payload = result.get("record") or {}
+        client_name = _audit_client_name(request.bookkeeper_account, client_id)
+        record_date = str(record_payload.get("date") or "")
+        frequency = str(record_payload.get("frequency") or "")
+        record_bookkeeper_audit(
+            request.bookkeeper_account,
+            BookkeeperAuditLog.ACTION_RECORD_CREATED,
+            f"Added a {frequency or 'financial'} record for {client_name} dated {record_date or 'the selected period'}.",
+            target_model="FinancialRecord",
+            target_id=record_payload.get("id"),
+            metadata={"client_name": client_name, "client_id": client_id, "record_date": record_date, "frequency": frequency},
+        )
         return JsonResponse(result, status=201)
 
     return JsonResponse(result, status=_resolve_financial_record_error_status(result))
@@ -1144,6 +1707,17 @@ def financial_record_detail_api_view(request, client_id, record_id):
     if request.method == "DELETE":
         result = delete_record_for_client(request.bookkeeper_account, client_id, record_id)
         if result.get("ok"):
+            record_payload = result.get("record") or {}
+            client_name = _audit_client_name(request.bookkeeper_account, client_id)
+            record_date = str(record_payload.get("date") or "")
+            record_bookkeeper_audit(
+                request.bookkeeper_account,
+                BookkeeperAuditLog.ACTION_RECORD_DELETED,
+                f"Deleted a financial record for {client_name} dated {record_date or 'the selected period'}.",
+                target_model="FinancialRecord",
+                target_id=record_id,
+                metadata={"client_name": client_name, "client_id": client_id, "record_date": record_date},
+            )
             return JsonResponse(result)
         return JsonResponse(result, status=_resolve_financial_record_error_status(result))
 
@@ -1161,6 +1735,18 @@ def financial_record_detail_api_view(request, client_id, record_id):
         payload,
     )
     if result.get("ok"):
+        record_payload = result.get("record") or {}
+        client_name = _audit_client_name(request.bookkeeper_account, client_id)
+        record_date = str(record_payload.get("date") or "")
+        frequency = str(record_payload.get("frequency") or "")
+        record_bookkeeper_audit(
+            request.bookkeeper_account,
+            BookkeeperAuditLog.ACTION_RECORD_UPDATED,
+            f"Updated the {frequency or 'financial'} record for {client_name} dated {record_date or 'the selected period'}.",
+            target_model="FinancialRecord",
+            target_id=record_id,
+            metadata={"client_name": client_name, "client_id": client_id, "record_date": record_date, "frequency": frequency},
+        )
         return JsonResponse(result)
 
     return JsonResponse(result, status=_resolve_financial_record_error_status(result))
@@ -1180,9 +1766,7 @@ def register_view(request):
         user_payload = result.get("user") or {}
         account_id = user_payload.get("id")
         if account_id:
-            request.session[SESSION_BOOKKEEPER_ID_KEY] = account_id
-            request.session.pop(SESSION_ADMIN_ID_KEY, None)
-            request.session.modified = True
+            _set_bookkeeper_session(request, account_id)
 
         result["redirect_url"] = reverse("verify_email")
         return JsonResponse(result, status=201)
@@ -1192,6 +1776,18 @@ def register_view(request):
         return JsonResponse(result, status=409)
 
     return JsonResponse(result, status=400)
+
+
+@require_http_methods(["GET"])
+@require_bookkeeper_auth
+def bookkeeper_audit_log_api_view(request):
+    result = list_bookkeeper_audit_logs(
+        request.bookkeeper_account,
+        (request.GET.get("action") or "").strip(),
+        (request.GET.get("search") or "").strip(),
+        (request.GET.get("sort") or "").strip(),
+    )
+    return JsonResponse(result)
 
 
 @require_POST
@@ -1232,7 +1828,9 @@ def google_complete_signup_view(request):
     }:
         return JsonResponse(result, status=409)
 
-    return JsonResponse(result, status=400)
+    # Field-level validation is a normal form outcome. Keep it out of the
+    # server's Bad Request log while still returning ok=false to the UI.
+    return JsonResponse(result)
 
 
 @require_POST
@@ -1250,17 +1848,49 @@ def login_view(request):
         user_payload = result.get("user") or {}
         account_id = user_payload.get("id")
         if account_id and role == "admin":
-            request.session[SESSION_ADMIN_ID_KEY] = account_id
-            request.session.pop(SESSION_BOOKKEEPER_ID_KEY, None)
-            request.session.modified = True
-            result["redirect_url"] = reverse("admin_dashboard")
+            admin_account = AdminAccount.objects.filter(id=account_id, is_active=True).first()
+            if admin_account is None:
+                return _no_store_json({
+                    "ok": False,
+                    "message": "Unable to complete admin login.",
+                })
+
+            if admin_account.two_factor_enabled and admin_account.two_factor_secret:
+                timeout_seconds, max_attempts, _lockout_seconds = (
+                    _admin_two_factor_login_policy()
+                )
+                failure_count = int(
+                    cache.get(_admin_two_factor_failure_cache_key(admin_account.id), 0)
+                    or 0
+                )
+                if failure_count >= max_attempts:
+                    return _no_store_json({
+                        "ok": False,
+                        "message": (
+                            "Too many verification attempts. Wait a few minutes "
+                            "before trying again."
+                        ),
+                    })
+
+                _set_admin_two_factor_challenge(request, admin_account.id)
+                return _no_store_json({
+                    "ok": True,
+                    "message": "Password accepted. Enter your admin verification code.",
+                    "role": "admin",
+                    "requires_two_factor": True,
+                    "challenge_expires_in_seconds": timeout_seconds,
+                })
+
+            result = _complete_admin_login(
+                request,
+                admin_account,
+                method="password",
+            )
         else:
             status = user_payload.get("status") or BookkeeperAccount.STATUS_APPROVED
             email_verified = user_payload.get("email_verified", True)
             if account_id:
-                request.session[SESSION_BOOKKEEPER_ID_KEY] = account_id
-                request.session.pop(SESSION_ADMIN_ID_KEY, None)
-                request.session.modified = True
+                _set_bookkeeper_session(request, account_id)
 
             if not email_verified:
                 result["redirect_url"] = reverse("verify_email")
@@ -1285,6 +1915,108 @@ def login_view(request):
 
     # Keep expected auth failures as normal API responses to avoid noisy server warnings.
     return JsonResponse(result)
+
+
+@require_POST
+def admin_two_factor_login_verify_view(request):
+    payload = _decode_request_data(request)
+    if payload is None:
+        return _no_store_json(
+            {"ok": False, "message": "Invalid request payload."},
+            status=400,
+        )
+
+    challenge = request.session.get(SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY)
+    if not isinstance(challenge, dict):
+        return _no_store_json({
+            "ok": False,
+            "message": "Your verification session is no longer active. Sign in again.",
+            "restart_login": True,
+        })
+
+    account_id = _session_timestamp(challenge.get("admin_id"))
+    issued_at = _session_timestamp(challenge.get("issued_at"))
+    attempts = max(0, _session_timestamp(challenge.get("attempts")))
+    timeout_seconds, max_attempts, lockout_seconds = _admin_two_factor_login_policy()
+    now_timestamp = int(timezone.now().timestamp())
+
+    if (
+        account_id <= 0
+        or issued_at <= 0
+        or issued_at > now_timestamp
+        or now_timestamp - issued_at >= timeout_seconds
+    ):
+        request.session.pop(SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY, None)
+        request.session.modified = True
+        return _no_store_json({
+            "ok": False,
+            "message": "Your verification session expired. Sign in again.",
+            "restart_login": True,
+        })
+
+    cache_key = _admin_two_factor_failure_cache_key(account_id)
+    cached_failures = int(cache.get(cache_key, 0) or 0)
+    if attempts >= max_attempts or cached_failures >= max_attempts:
+        request.session.pop(SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY, None)
+        request.session.modified = True
+        return _no_store_json({
+            "ok": False,
+            "message": "Too many verification attempts. Sign in again after a few minutes.",
+            "restart_login": True,
+        })
+
+    admin_account = AdminAccount.objects.filter(id=account_id, is_active=True).first()
+    if (
+        admin_account is None
+        or not admin_account.two_factor_enabled
+        or not admin_account.two_factor_secret
+    ):
+        request.session.pop(SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY, None)
+        request.session.modified = True
+        return _no_store_json({
+            "ok": False,
+            "message": "Admin security settings changed. Sign in again.",
+            "restart_login": True,
+        })
+
+    verification = verify_admin_two_factor_login(
+        admin_account,
+        str(payload.get("code") or ""),
+    )
+    if not verification.get("ok"):
+        attempts += 1
+        cached_failures += 1
+        cache.set(cache_key, cached_failures, lockout_seconds)
+        remaining_attempts = max(0, max_attempts - max(attempts, cached_failures))
+
+        if remaining_attempts == 0:
+            request.session.pop(SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY, None)
+        else:
+            challenge["attempts"] = attempts
+            request.session[SESSION_ADMIN_TWO_FACTOR_CHALLENGE_KEY] = challenge
+        request.session.modified = True
+
+        message = verification.get("message") or "Invalid authenticator or recovery code."
+        if remaining_attempts == 0:
+            message = "Too many verification attempts. Sign in again after a few minutes."
+        return _no_store_json({
+            "ok": False,
+            "message": message,
+            "remaining_attempts": remaining_attempts,
+            "restart_login": remaining_attempts == 0,
+        })
+
+    cache.delete(cache_key)
+    recovery_code_used = bool(verification.get("recovery_code_used"))
+    result = _complete_admin_login(
+        request,
+        admin_account,
+        method="recovery_code" if recovery_code_used else "authenticator",
+    )
+    result["recovery_code_used"] = recovery_code_used
+    if recovery_code_used:
+        result["message"] = "Login successful. That recovery code has now been used."
+    return _no_store_json(result)
 
 
 @require_POST
@@ -1326,7 +2058,12 @@ def verify_email_api_view(request):
 @require_POST
 @require_any_auth
 def logout_view(request):
-    request.session.flush()
+    admin_account = _get_session_admin(request)
+    try:
+        if admin_account is not None:
+            record_admin_auth_event(admin_account, AdminAuditLog.ACTION_ADMIN_LOGOUT)
+    finally:
+        request.session.flush()
     return JsonResponse(
         {
             "ok": True,

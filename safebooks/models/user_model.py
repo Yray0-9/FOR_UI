@@ -23,6 +23,7 @@ class BookkeeperAccount(models.Model):
     location = models.CharField(max_length=180, blank=True, default="")
     email_verified = models.BooleanField(default=True)
     login_alerts_enabled = models.BooleanField(default=False)
+    client_record_email_notifications_enabled = models.BooleanField(default=True)
     client_details_password_required = models.BooleanField(default=True)
     password_hash = models.CharField(max_length=255)
     two_factor_enabled = models.BooleanField(default=False)

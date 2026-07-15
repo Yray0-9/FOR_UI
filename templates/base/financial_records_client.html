@@ -133,14 +133,27 @@
             <span class="dashboard-tag" id="periodEntriesTag">0 Entries</span>
         </div>
 
+        <div class="financial-save-summary" id="financialSaveSummary" role="status" aria-live="polite" hidden>
+            <div class="financial-save-summary-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="financial-save-summary-copy">
+                <strong id="financialSaveSummaryTitle">Record saved</strong>
+                <span id="financialSaveSummaryMeta">The record list is now updated.</span>
+            </div>
+            <button type="button" class="btn financial-save-summary-dismiss" id="financialSaveSummaryDismiss" aria-label="Dismiss save summary">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
         <div class="table-responsive" id="financialTableWrap">
             <table class="table table-hover align-middle dashboard-table financial-table mb-0" id="financialTable">
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Schedule</th>
+                        <th>Record Frequency</th>
                         <th>Amount</th>
-                        <th>Items</th>
+                        <th>Transaction Details</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -149,8 +162,8 @@
         </div>
 
         <div class="financial-empty-state" id="financialEmptyState" hidden>
-            <p>No entries yet</p>
-            <button type="button" class="btn dashboard-action-btn primary" data-bs-toggle="modal" data-bs-target="#addEntryModal">Add First Entry</button>
+            <p>No records for this period yet. Add the first entry when this client's record is ready.</p>
+            <button type="button" class="btn dashboard-action-btn primary" data-bs-toggle="modal" data-bs-target="#addEntryModal">Add Entry for This Period</button>
         </div>
     </article>
 
@@ -167,7 +180,7 @@
             <div class="financial-summary-item financial-summary-item-breakdown">
                 <p>Breakdown by Type / Code</p>
                 <ul class="financial-breakdown-list" id="summaryTypeBreakdown"></ul>
-                <p class="financial-breakdown-empty" id="summaryBreakdownEmpty">No breakdown yet.</p>
+                <p class="financial-breakdown-empty" id="summaryBreakdownEmpty">Breakdown will appear after a transaction detail is saved.</p>
             </div>
         </div>
     </article>
@@ -187,33 +200,37 @@
             <div class="modal-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label financial-form-label" for="addEntryDate">Date</label>
+                        <label class="form-label financial-form-label" for="addEntryDate">Record Date</label>
                         <input class="form-control financial-form-input" id="addEntryDate" name="date" type="date" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label financial-form-label" for="addEntryNotes">Notes</label>
-                        <input class="form-control financial-form-input" id="addEntryNotes" name="notes" type="text" placeholder="Optional">
-                    </div>
-                </div>
-                <div class="row g-3 mt-2">
-                    <div class="col-md-6">
-                        <label class="form-label financial-form-label" for="addEntryFrequency">Schedule</label>
+                        <label class="form-label financial-form-label" for="addEntryFrequency">Record Frequency</label>
                         <select class="form-select financial-form-input" id="addEntryFrequency" name="frequency">
                             <option value="monthly">Monthly</option>
                             <option value="quarterly">Quarterly</option>
                             <option value="annually">Annually</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label financial-form-label" for="addEntryDeadline">Due Date</label>
-                        <input class="form-control financial-form-input" id="addEntryDeadline" name="deadline_date" type="date">
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-12">
+                        <label class="form-label financial-form-label" for="addEntryNotes">Notes</label>
+                        <input class="form-control financial-form-input" id="addEntryNotes" name="notes" type="text" placeholder="Optional">
+                    </div>
+                </div>
+
+                <div class="financial-entry-warning" id="addEntryDuplicateWarning" role="status" aria-live="polite" hidden>
+                    <span class="financial-entry-warning-icon"><i class="bi bi-exclamation-triangle"></i></span>
+                    <div>
+                        <strong>Possible duplicate record</strong>
+                        <span id="addEntryDuplicateWarningText">This client already has a record for the selected period and frequency.</span>
                     </div>
                 </div>
 
                 <div class="financial-reuse-panel" role="note" aria-label="Reuse last period entry">
                     <div>
                         <h3 class="financial-reuse-title">Previous Entry</h3>
-                        <p class="financial-reuse-copy">Copy the latest entry for this schedule.</p>
+                        <p class="financial-reuse-copy">Copy the latest entry with this record frequency.</p>
                     </div>
                     <button type="button" class="btn dashboard-action-btn outline financial-reuse-btn" id="useLastPeriodBtn">
                         <i class="bi bi-arrow-repeat"></i>
@@ -221,17 +238,22 @@
                     </button>
                 </div>
 
-                <section class="financial-line-items-section" aria-label="Dynamic line items">
+                <section class="financial-line-items-section" aria-label="Transaction details">
                     <div class="financial-line-items-head">
                         <div>
                             <h3 class="financial-line-items-title">
-                                Line Items
+                                Transaction Details
                             </h3>
                         </div>
                         <button type="button" class="btn dashboard-action-btn outline financial-add-line-item-btn" id="addLineItemBtn">
                             <i class="bi bi-plus-lg"></i>
-                            <span>Add Line Item</span>
+                            <span>Add Detail</span>
                         </button>
+                    </div>
+                    <div class="financial-detail-starters" aria-label="Common transaction detail starters">
+                        <span class="financial-detail-starters-label">Common details</span>
+                        <button type="button" class="financial-detail-starter-btn" data-detail-template="sales" data-template-target="add">Sales</button>
+                        <button type="button" class="financial-detail-starter-btn" data-detail-template="expenses" data-template-target="add">Expenses</button>
                     </div>
                     <div class="table-responsive financial-line-items-table-wrap">
                         <table class="table align-middle financial-line-items-table mb-0">
@@ -269,40 +291,49 @@
             <div class="modal-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label financial-form-label" for="editEntryDate">Date</label>
+                        <label class="form-label financial-form-label" for="editEntryDate">Record Date</label>
                         <input class="form-control financial-form-input" id="editEntryDate" name="date" type="date" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label financial-form-label" for="editEntryNotes">Notes</label>
-                        <input class="form-control financial-form-input" id="editEntryNotes" name="notes" type="text" placeholder="Optional">
-                    </div>
-                </div>
-                <div class="row g-3 mt-2">
-                    <div class="col-md-6">
-                        <label class="form-label financial-form-label" for="editEntryFrequency">Schedule</label>
+                        <label class="form-label financial-form-label" for="editEntryFrequency">Record Frequency</label>
                         <select class="form-select financial-form-input" id="editEntryFrequency" name="frequency">
                             <option value="monthly">Monthly</option>
                             <option value="quarterly">Quarterly</option>
                             <option value="annually">Annually</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label financial-form-label" for="editEntryDeadline">Due Date</label>
-                        <input class="form-control financial-form-input" id="editEntryDeadline" name="deadline_date" type="date">
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-12">
+                        <label class="form-label financial-form-label" for="editEntryNotes">Notes</label>
+                        <input class="form-control financial-form-input" id="editEntryNotes" name="notes" type="text" placeholder="Optional">
                     </div>
                 </div>
 
-                <section class="financial-line-items-section" aria-label="Edit line items">
+                <div class="financial-entry-warning" id="editEntryDuplicateWarning" role="status" aria-live="polite" hidden>
+                    <span class="financial-entry-warning-icon"><i class="bi bi-exclamation-triangle"></i></span>
+                    <div>
+                        <strong>Possible duplicate record</strong>
+                        <span id="editEntryDuplicateWarningText">This client already has another record for the selected period and frequency.</span>
+                    </div>
+                </div>
+
+                <section class="financial-line-items-section" aria-label="Edit transaction details">
                     <div class="financial-line-items-head">
                         <div>
                             <h3 class="financial-line-items-title">
-                                Line Items
+                                Transaction Details
                             </h3>
                         </div>
                         <button type="button" class="btn dashboard-action-btn outline financial-add-line-item-btn" id="editAddLineItemBtn">
                             <i class="bi bi-plus-lg"></i>
-                            <span>Add Line Item</span>
+                            <span>Add Detail</span>
                         </button>
+                    </div>
+                    <div class="financial-detail-starters" aria-label="Common transaction detail starters">
+                        <span class="financial-detail-starters-label">Common details</span>
+                        <button type="button" class="financial-detail-starter-btn" data-detail-template="sales" data-template-target="edit">Sales</button>
+                        <button type="button" class="financial-detail-starter-btn" data-detail-template="expenses" data-template-target="edit">Expenses</button>
                     </div>
                     <div class="table-responsive financial-line-items-table-wrap">
                         <table class="table align-middle financial-line-items-table mb-0">
@@ -457,6 +488,19 @@
             { code: "BIR Form 2553", desc: "Percentage Tax Payable Under Special Laws" }
         ];
 
+        const COMMON_DETAIL_TEMPLATES = {
+            sales: {
+                type_code: "SALES",
+                description: "",
+                amount: "",
+            },
+            expenses: {
+                type_code: "EXPENSES",
+                description: "",
+                amount: "",
+            },
+        };
+
         const body = document.body;
         const sidebarToggle = document.getElementById("sidebarToggle");
         const sidebarCollapseToggle = document.getElementById("sidebarCollapseToggle");
@@ -501,6 +545,10 @@
         const financialTableBody = document.getElementById("financialTableBody");
         const financialTableWrap = document.getElementById("financialTableWrap");
         const financialEmptyState = document.getElementById("financialEmptyState");
+        const financialSaveSummary = document.getElementById("financialSaveSummary");
+        const financialSaveSummaryTitle = document.getElementById("financialSaveSummaryTitle");
+        const financialSaveSummaryMeta = document.getElementById("financialSaveSummaryMeta");
+        const financialSaveSummaryDismiss = document.getElementById("financialSaveSummaryDismiss");
 
         const summaryTotalAmount = document.getElementById("summaryTotalAmount");
         const summaryEntriesHint = document.getElementById("summaryEntriesHint");
@@ -526,6 +574,10 @@
         const deleteEntryPeriodLabel = document.getElementById("deleteEntryPeriodLabel");
         const useLastPeriodBtn = document.getElementById("useLastPeriodBtn");
         const reuseLastPeriodPanel = document.querySelector(".financial-reuse-panel");
+        const addEntryDuplicateWarning = document.getElementById("addEntryDuplicateWarning");
+        const addEntryDuplicateWarningText = document.getElementById("addEntryDuplicateWarningText");
+        const editEntryDuplicateWarning = document.getElementById("editEntryDuplicateWarning");
+        const editEntryDuplicateWarningText = document.getElementById("editEntryDuplicateWarningText");
 
         const addEntryModalElement = document.getElementById("addEntryModal");
         const editEntryModalElement = document.getElementById("editEntryModal");
@@ -591,6 +643,7 @@
         let activePriorFrequencies = new Set();
         let recordsLoadAbortController = null;
         let isRecordsLoading = false;
+        let financialSaveSummaryTimer = null;
         const expandedEntryIds = new Set();
         const lineItemAnimationMs = 180;
         let addEntryFormDirty = false;
@@ -717,8 +770,8 @@
                 avatarElement: dashboardUserAvatar,
                 nameElement: dashboardUserName,
                 authUserKey: AUTH_USER_KEY,
-                defaultName: "Bookkeeper User",
-                defaultInitials: "SB",
+                defaultName: "{{ current_user_name|default:'Bookkeeper User'|escapejs }}",
+                defaultInitials: "{{ current_user_initials|default:'SB'|escapejs }}",
             });
         };
 
@@ -747,6 +800,49 @@
 
         const getEntryTotal = (entry) => {
             return getEntryLineItems(entry).reduce((total, lineItem) => total + parseAmount(lineItem.amount), 0);
+        };
+
+        const getPayloadTotal = (payload) => {
+            const items = payload && Array.isArray(payload.line_items) ? payload.line_items : [];
+            return items.reduce((total, item) => total + parseAmount(item.amount), 0);
+        };
+
+        const getNotificationSummary = (notification) => {
+            if (!notification || typeof notification !== "object") {
+                return "";
+            }
+            if (notification.sent) {
+                return "Client email sent.";
+            }
+            if (notification.skipped) {
+                return notification.reason ? `Client email skipped: ${notification.reason}` : "Client email skipped.";
+            }
+            return notification.reason ? `Client email not sent: ${notification.reason}` : "Client email not sent.";
+        };
+
+        const showFinancialSaveSummary = (mode, payload, result = {}) => {
+            if (!financialSaveSummary || !financialSaveSummaryTitle || !financialSaveSummaryMeta) return;
+
+            const frequency = formatFrequencyLabel(payload && payload.frequency);
+            const lineItems = payload && Array.isArray(payload.line_items) ? payload.line_items : [];
+            const itemCountLabel = `${lineItems.length} ${lineItems.length === 1 ? "transaction detail" : "transaction details"}`;
+            const totalLabel = formatCurrency(getPayloadTotal(payload));
+            const dateLabel = toDisplayText(payload && payload.date);
+            const notificationLabel = getNotificationSummary(result.client_email_notification);
+
+            financialSaveSummaryTitle.textContent = mode === "edit" ? "Entry updated" : "Entry saved";
+            financialSaveSummaryMeta.textContent = [
+                `${dateLabel} \u2022 ${frequency} \u2022 ${itemCountLabel} \u2022 ${totalLabel}`,
+                notificationLabel,
+            ].filter(Boolean).join(" ");
+            financialSaveSummary.hidden = false;
+
+            window.clearTimeout(financialSaveSummaryTimer);
+            financialSaveSummaryTimer = window.setTimeout(() => {
+                if (financialSaveSummary) {
+                    financialSaveSummary.hidden = true;
+                }
+            }, 7000);
         };
 
         const getEntryById = (entryId) => {
@@ -839,7 +935,7 @@
                     </div>
                 </td>
                 <td>
-                    <button type="button" class="btn financial-line-remove-btn" data-line-action="remove" aria-label="Remove line item">
+                    <button type="button" class="btn financial-line-remove-btn" data-line-action="remove" aria-label="Remove transaction detail">
                         <i class="bi bi-trash3"></i>
                     </button>
                 </td>
@@ -942,6 +1038,53 @@
             itemsToRender.forEach((lineItem) => addLineItemRow(tbodyElement, lineItem));
         };
 
+        const isBlankLineItemRow = (rowElement) => {
+            if (!rowElement) {
+                return false;
+            }
+
+            const codeSelect = rowElement.querySelector(".financial-line-code-select");
+            const customCodeInput = rowElement.querySelector(".financial-line-code-custom-input");
+            const descriptionInput = rowElement.querySelector(".financial-line-description-input");
+            const amountInput = rowElement.querySelector(".financial-line-amount-input");
+            return !String(codeSelect && codeSelect.value ? codeSelect.value : "").trim()
+                && !String(customCodeInput && customCodeInput.value ? customCodeInput.value : "").trim()
+                && !String(descriptionInput && descriptionInput.value ? descriptionInput.value : "").trim()
+                && !String(amountInput && amountInput.value ? amountInput.value : "").trim();
+        };
+
+        const addCommonDetailTemplate = (tbodyElement, templateKey) => {
+            if (!tbodyElement) {
+                return;
+            }
+
+            const template = COMMON_DETAIL_TEMPLATES[templateKey];
+            if (!template) {
+                return;
+            }
+
+            const rows = getLineItemRows(tbodyElement);
+            const shouldReplaceBlankRow = rows.length === 1 && isBlankLineItemRow(rows[0]);
+            if (shouldReplaceBlankRow) {
+                resetLineItemsBody(tbodyElement, [template]);
+            } else {
+                addLineItemRow(tbodyElement, template);
+            }
+
+            const insertedRows = getLineItemRows(tbodyElement);
+            const latestRow = insertedRows[insertedRows.length - 1];
+            const amountInput = latestRow ? latestRow.querySelector(".financial-line-amount-input") : null;
+            if (amountInput && typeof amountInput.focus === "function") {
+                amountInput.focus();
+            }
+
+            if (tbodyElement === editLineItemsBody) {
+                editEntryFormDirty = true;
+            } else {
+                addEntryFormDirty = true;
+            }
+        };
+
         const removeLineItemRow = (tbodyElement, rowElement) => {
             if (!tbodyElement || !rowElement) {
                 return;
@@ -1023,7 +1166,7 @@
 
             if (summaryEntriesHint) {
                 const entryCountLabel = `${activeRecords.length} ${activeRecords.length === 1 ? "entry" : "entries"}`;
-                const itemCountLabel = `${totalLineItems} ${totalLineItems === 1 ? "line item" : "line items"}`;
+                const itemCountLabel = `${totalLineItems} ${totalLineItems === 1 ? "transaction detail" : "transaction details"}`;
                 summaryEntriesHint.textContent = `${entryCountLabel} \u2022 ${itemCountLabel}`;
             }
 
@@ -1045,7 +1188,7 @@
         const renderEntryDetailsTable = (entry) => {
             const lineItems = getEntryLineItems(entry);
             if (!lineItems.length) {
-                return '<p class="financial-entry-no-items">No line items available for this entry.</p>';
+                return '<p class="financial-entry-no-items">No transaction details available for this entry.</p>';
             }
 
             const rowsMarkup = lineItems
@@ -1187,32 +1330,6 @@
                 const safeFrequency = escapeHtml(formatFrequencyLabel(entry.frequency));
                 const safeNotes = escapeHtml(toDisplayText(entry.notes));
 
-                let deadlineBadgeHtml = "";
-                if (entry.deadline_date) {
-                    if (entry.deadline_completed) {
-                        deadlineBadgeHtml = `<span class="badge bg-success financial-deadline-badge"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>`;
-                    } else {
-                        const todayDate = new Date();
-                        const todayMidnight = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
-                        const deadlineParts = entry.deadline_date.split("-");
-                        const deadlineMidnight = new Date(
-                            parseInt(deadlineParts[0], 10),
-                            parseInt(deadlineParts[1], 10) - 1,
-                            parseInt(deadlineParts[2], 10)
-                        );
-                        const diffTime = deadlineMidnight.getTime() - todayMidnight.getTime();
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                        if (diffDays < 0) {
-                            deadlineBadgeHtml = `<span class="badge bg-danger financial-deadline-badge"><i class="bi bi-exclamation-octagon-fill me-1"></i>Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? "" : "s"}</span>`;
-                        } else if (diffDays <= 5) {
-                            deadlineBadgeHtml = `<span class="badge bg-warning text-dark financial-deadline-badge"><i class="bi bi-clock-fill me-1"></i>Due in ${diffDays} day${diffDays === 1 ? "" : "s"}</span>`;
-                        } else {
-                            deadlineBadgeHtml = `<span class="badge bg-secondary financial-deadline-badge"><i class="bi bi-calendar-event me-1"></i>Due: ${entry.deadline_date}</span>`;
-                        }
-                    }
-                }
-
                 row.className = "financial-entry-row";
                 row.dataset.entryId = String(entry.id);
                 row.setAttribute("tabindex", "0");
@@ -1223,11 +1340,10 @@
                 row.innerHTML = `
                     <td>
                         <div>${safeDate}</div>
-                        ${deadlineBadgeHtml}
                     </td>
                     <td>${safeFrequency}</td>
                     <td><strong class="financial-entry-total">${formatCurrency(totalAmount)}</strong></td>
-                    <td><span class="financial-line-item-count">${lineItemCount} ${lineItemCount === 1 ? "Line Item" : "Line Items"}</span></td>
+                    <td><span class="financial-line-item-count">${lineItemCount} ${lineItemCount === 1 ? "Detail" : "Details"}</span></td>
                     <td class="financial-entry-actions-cell">
                         <div class="financial-entry-actions">
                             <button type="button" class="btn financial-entry-btn toggle" data-entry-action="toggle" data-entry-id="${entry.id}"><i class="bi ${isExpanded ? "bi-chevron-up" : "bi-chevron-down"}"></i><span>${isExpanded ? "Collapse" : "Expand"}</span></button>
@@ -1243,13 +1359,12 @@
                     <td colspan="5">
                         <div class="financial-entry-details-shell${isExpanded ? " is-open" : ""}">
                             <div class="financial-entry-details-head">
-                                <h3>Line Items</h3>
+                                <h3>Transaction Details</h3>
                                 <span class="dashboard-tag">${lineItemCount}</span>
                             </div>
                             ${renderEntryDetailsTable(entry)}
-                            ${entry.deadline_date ? `<p class="financial-entry-notes"><span>Due Date:</span> ${entry.deadline_date}</p>` : ""}
                             <p class="financial-entry-notes"><span>Notes:</span> ${safeNotes}</p>
-                            <p class="financial-entry-notes"><span>Frequency:</span> ${safeFrequency}</p>
+                            <p class="financial-entry-notes"><span>Record Frequency:</span> ${safeFrequency}</p>
                         </div>
                     </td>
                 `;
@@ -1281,7 +1396,6 @@
             const editEntryDate = document.getElementById("editEntryDate");
             const editEntryNotes = document.getElementById("editEntryNotes");
             const editEntryFrequency = document.getElementById("editEntryFrequency");
-            const editEntryDeadline = document.getElementById("editEntryDeadline");
 
             if (editEntryId) {
                 editEntryId.value = String(entry.id);
@@ -1295,11 +1409,9 @@
             if (editEntryFrequency) {
                 editEntryFrequency.value = String(entry.frequency || entry.freq || "monthly");
             }
-            if (editEntryDeadline) {
-                editEntryDeadline.value = entry.deadline_date || "";
-            }
 
             resetLineItemsBody(editLineItemsBody, getEntryLineItems(entry));
+            updateDuplicateEntryWarning("edit");
         };
 
         const buildPayloadFromForm = (formType) => {
@@ -1307,7 +1419,6 @@
             const dateInput = document.getElementById(isEdit ? "editEntryDate" : "addEntryDate");
             const notesInput = document.getElementById(isEdit ? "editEntryNotes" : "addEntryNotes");
             const frequencyInput = document.getElementById(isEdit ? "editEntryFrequency" : "addEntryFrequency");
-            const deadlineInput = document.getElementById(isEdit ? "editEntryDeadline" : "addEntryDeadline");
             const lineItemsBody = isEdit ? editLineItemsBody : addLineItemsBody;
 
             const lineItems = collectLineItems(lineItemsBody);
@@ -1318,7 +1429,6 @@
                 date: dateInput ? dateInput.value.trim() : "",
                 notes: notesInput ? notesInput.value.trim() : "",
                 frequency: frequencyInput ? String(frequencyInput.value || "monthly") : "monthly",
-                deadline_date: deadlineInput ? deadlineInput.value.trim() : "",
                 line_items: lineItems,
             };
         };
@@ -1349,6 +1459,72 @@
             return { year, month, day };
         };
 
+        const normalizeFrequencyValue = (frequencyValue) => {
+            const normalized = String(frequencyValue || "monthly").trim().toLowerCase();
+            if (["monthly", "quarterly", "annually"].includes(normalized)) {
+                return normalized;
+            }
+
+            return "monthly";
+        };
+
+        const findRecordForSamePeriodAndFrequency = (dateValue, frequencyValue, excludedEntryId = null) => {
+            const parsedDate = parseIsoDateParts(dateValue);
+            if (!parsedDate) {
+                return null;
+            }
+
+            const normalizedFrequency = normalizeFrequencyValue(frequencyValue);
+            return activeRecords.find((entry) => {
+                const entryId = Number.parseInt(entry && entry.id ? entry.id : "", 10);
+                if (Number.isFinite(excludedEntryId) && entryId === excludedEntryId) {
+                    return false;
+                }
+
+                const entryDate = parseIsoDateParts(entry && entry.date);
+                if (!entryDate) {
+                    return false;
+                }
+
+                const entryFrequency = normalizeFrequencyValue(entry && entry.frequency);
+                return entryDate.year === parsedDate.year
+                    && entryDate.month === parsedDate.month
+                    && entryFrequency === normalizedFrequency;
+            }) || null;
+        };
+
+        const updateDuplicateEntryWarning = (formType) => {
+            const isEdit = formType === "edit";
+            const dateInput = document.getElementById(isEdit ? "editEntryDate" : "addEntryDate");
+            const frequencyInput = document.getElementById(isEdit ? "editEntryFrequency" : "addEntryFrequency");
+            const warningElement = isEdit ? editEntryDuplicateWarning : addEntryDuplicateWarning;
+            const warningTextElement = isEdit ? editEntryDuplicateWarningText : addEntryDuplicateWarningText;
+            if (!dateInput || !frequencyInput || !warningElement || !warningTextElement) {
+                return;
+            }
+
+            const editEntryIdInput = document.getElementById("editEntryId");
+            const excludedEntryId = isEdit
+                ? Number.parseInt(editEntryIdInput && editEntryIdInput.value ? editEntryIdInput.value : "", 10)
+                : null;
+            const duplicateRecord = findRecordForSamePeriodAndFrequency(
+                dateInput.value,
+                frequencyInput.value,
+                excludedEntryId
+            );
+
+            if (!duplicateRecord) {
+                warningElement.hidden = true;
+                return;
+            }
+
+            const parsedDate = parseIsoDateParts(dateInput.value);
+            const monthLabel = parsedDate ? (MONTH_NAMES[parsedDate.month] || "this period") : "this period";
+            const periodLabel = parsedDate ? `${monthLabel} ${parsedDate.year}` : "this period";
+            warningTextElement.textContent = `A ${formatFrequencyLabel(frequencyInput.value).toLowerCase()} record already exists for ${periodLabel}. Save only if this is intentional.`;
+            warningElement.hidden = false;
+        };
+
         const getDefaultDateForActivePeriod = () => {
             const now = new Date();
             const targetMonth = activeMonth === "all" ? now.getMonth() + 1 : activeMonth;
@@ -1368,10 +1544,12 @@
             }
 
             if (String(addEntryDate.value || "").trim()) {
+                updateDuplicateEntryWarning("add");
                 return;
             }
 
             addEntryDate.value = getDefaultDateForActivePeriod();
+            updateDuplicateEntryWarning("add");
         };
 
         const syncActivePeriodToDate = (dateValue) => {
@@ -1424,19 +1602,6 @@
 
             reuseLastPeriodPanel.hidden = !Boolean(hasAnyRecords);
             setReuseButtonState(isReuseLoading);
-        };
-
-        const normalizeFrequencyValue = (value) => {
-            const cleanedValue = String(value || "").trim().toLowerCase();
-            if (!cleanedValue) {
-                return "monthly";
-            }
-
-            if (cleanedValue === "monthly" || cleanedValue === "quarterly" || cleanedValue === "annually") {
-                return cleanedValue;
-            }
-
-            return "monthly";
         };
 
         const updateReusePanelForFrequency = (frequencyValue) => {
@@ -1526,6 +1691,7 @@
                 }
 
                 resetLineItemsBody(addLineItemsBody, Array.isArray(record.line_items) ? record.line_items : []);
+                updateDuplicateEntryWarning("add");
                 showToast(`Loaded last period entry from ${getSourcePeriodLabel(record.date)}.`);
             } catch (error) {
                 showToast("Unable to load last period entry.");
@@ -1546,16 +1712,8 @@
                 return "Entry date must use YYYY-MM-DD format.";
             }
 
-            const deadlineValue = String(payload && payload.deadline_date ? payload.deadline_date : "").trim();
-            if (deadlineValue) {
-                const parsedDeadline = parseIsoDateParts(deadlineValue);
-                if (!parsedDeadline) {
-                    return "Deadline date must use YYYY-MM-DD format.";
-                }
-            }
-
             if (!Array.isArray(payload.line_items) || payload.line_items.length === 0) {
-                return "At least one line item is required.";
+                return "At least one transaction detail is required.";
             }
 
             const normalizedLineItems = [];
@@ -1757,6 +1915,7 @@
                 );
                 const addEntryFrequency = document.getElementById("addEntryFrequency");
                 updateReusePanelForFrequency(addEntryFrequency ? addEntryFrequency.value : "monthly");
+                updateDuplicateEntryWarning("add");
 
                 expandedEntryIds.clear();
                 setRecordsLoadingState(false);
@@ -1800,6 +1959,14 @@
             });
         }
 
+        document.querySelectorAll("[data-detail-template]").forEach((buttonElement) => {
+            buttonElement.addEventListener("click", () => {
+                const target = String(buttonElement.dataset.templateTarget || "add").trim().toLowerCase();
+                const tbodyElement = target === "edit" ? editLineItemsBody : addLineItemsBody;
+                addCommonDetailTemplate(tbodyElement, buttonElement.dataset.detailTemplate);
+            });
+        });
+
         if (addLineItemsBody) {
             addLineItemsBody.addEventListener("click", (event) => {
                 handleLineItemClick(addLineItemsBody, event);
@@ -1810,7 +1977,25 @@
         if (addEntryFrequencySelect) {
             addEntryFrequencySelect.addEventListener("change", (event) => {
                 updateReusePanelForFrequency(event.target.value);
+                updateDuplicateEntryWarning("add");
             });
+        }
+
+        const addEntryDateInput = document.getElementById("addEntryDate");
+        if (addEntryDateInput) {
+            addEntryDateInput.addEventListener("input", () => updateDuplicateEntryWarning("add"));
+            addEntryDateInput.addEventListener("change", () => updateDuplicateEntryWarning("add"));
+        }
+
+        const editEntryFrequencySelect = document.getElementById("editEntryFrequency");
+        if (editEntryFrequencySelect) {
+            editEntryFrequencySelect.addEventListener("change", () => updateDuplicateEntryWarning("edit"));
+        }
+
+        const editEntryDateInput = document.getElementById("editEntryDate");
+        if (editEntryDateInput) {
+            editEntryDateInput.addEventListener("input", () => updateDuplicateEntryWarning("edit"));
+            editEntryDateInput.addEventListener("change", () => updateDuplicateEntryWarning("edit"));
         }
 
         if (editLineItemsBody) {
@@ -1831,6 +2016,7 @@
                     addEntryFrequency.value = "monthly";
                 }
                 updateReusePanelForFrequency(addEntryFrequency ? addEntryFrequency.value : "monthly");
+                updateDuplicateEntryWarning("add");
             });
 
             addEntryModalElement.addEventListener("hidden.bs.modal", () => {
@@ -1841,6 +2027,9 @@
                 const addEntryFrequency = document.getElementById("addEntryFrequency");
                 if (addEntryFrequency) {
                     addEntryFrequency.value = "monthly";
+                }
+                if (addEntryDuplicateWarning) {
+                    addEntryDuplicateWarning.hidden = true;
                 }
                 updateReusePanelForFrequency(addEntryFrequency ? addEntryFrequency.value : "monthly");
             });
@@ -1855,6 +2044,9 @@
                 const editEntryFrequency = document.getElementById("editEntryFrequency");
                 if (editEntryFrequency) {
                     editEntryFrequency.value = "monthly";
+                }
+                if (editEntryDuplicateWarning) {
+                    editEntryDuplicateWarning.hidden = true;
                 }
             });
         }
@@ -1955,6 +2147,13 @@
             });
         }
 
+        if (financialSaveSummaryDismiss && financialSaveSummary) {
+            financialSaveSummaryDismiss.addEventListener("click", () => {
+                window.clearTimeout(financialSaveSummaryTimer);
+                financialSaveSummary.hidden = true;
+            });
+        }
+
         if (addEntryForm) {
             addEntryForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
@@ -2014,6 +2213,7 @@
 
                     const periodChanged = syncActivePeriodToDate(payload.date);
                     await loadRecordsFromApi();
+                    showFinancialSaveSummary("add", payload, result);
                     const baseMessage = result.message || "Financial entry added successfully.";
                     const finalMessage = periodChanged ? `${baseMessage} Switched to ${getActivePeriodLabel()}.` : baseMessage;
                     showToast(finalMessage);
@@ -2090,6 +2290,7 @@
 
                     const periodChanged = syncActivePeriodToDate(payload.date);
                     await loadRecordsFromApi();
+                    showFinancialSaveSummary("edit", payload, result);
                     const baseMessage = result.message || "Financial entry updated successfully.";
                     const finalMessage = periodChanged ? `${baseMessage} Switched to ${getActivePeriodLabel()}.` : baseMessage;
                     showToast(finalMessage);
