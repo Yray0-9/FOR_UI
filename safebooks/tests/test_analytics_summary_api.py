@@ -92,16 +92,34 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertFalse(payload.get("ok"))
         self.assertEqual(payload.get("message"), "Authentication required.")
 
-    def test_client_details_forecasting_card_names_weighted_moving_average(self):
-        owner = self._create_bookkeeper("owner-client-details-wma")
+    def test_client_details_forecasting_card_names_sarima(self):
+        owner = self._create_bookkeeper("owner-client-details-sarima")
         self._login_as(owner)
-        client = self._create_client(bookkeeper=owner, suffix="client-details-wma", remarks=Client.REMARK_ACTIVE)
+        client = self._create_client(bookkeeper=owner, suffix="client-details-sarima", remarks=Client.REMARK_ACTIVE)
 
         response = self.client.get(reverse("client_details", args=[client.id]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Generated using Weighted Moving Average Algorithm")
-        self.assertNotContains(response, "Generated using Linear Regression Algorithm")
+        self.assertContains(response, "Generated using Seasonal ARIMA")
+        self.assertNotContains(response, "Weighted Moving Average")
+
+    def test_client_details_starts_in_neutral_analytics_loading_state(self):
+        owner = self._create_bookkeeper("owner-client-details-loading")
+        self._login_as(owner)
+        client = self._create_client(bookkeeper=owner, suffix="client-details-loading", remarks=Client.REMARK_ACTIVE)
+
+        response = self.client.get(reverse("client_details", args=[client.id]))
+        html = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="analyticsLoadingState"')
+        self.assertContains(response, "Loading client records...")
+        self.assertContains(response, 'id="analyticsDataPanels" class="tab-content client-analytics-panels" hidden')
+        self.assertContains(response, "Checking current period...")
+        self.assertNotIn(
+            "bindForecastLegendHighlight();\n            applyAnalyticsFallbackState();",
+            html,
+        )
 
     def test_analytics_summary_all_clients_returns_expected_values(self):
         today = timezone.localdate()
@@ -569,41 +587,45 @@ class AnalyticsSummaryApiTests(TestCase):
 
         payload = response.json()
         forecast = payload.get("predictive_forecast", {})
-        self.assertTrue(forecast.get("has_forecast"))
+        self.assertFalse(forecast.get("has_forecast"))
         self.assertEqual(forecast.get("frequency"), "mixed")
         self.assertEqual(forecast.get("frequency_label"), "Mixed Schedule")
         self.assertEqual(forecast.get("next_period_label"), f"Jul {forecast_year}")
-        self.assertIn("transaction-aware", forecast.get("basis", ""))
-        self.assertIn("Weighted Moving Average", forecast.get("basis", ""))
+        self.assertIn("SARIMA", forecast.get("basis", ""))
+        self.assertIn("minimum-history requirement", forecast.get("basis", ""))
 
         projections = forecast.get("future_projections", [])
         self.assertEqual(len(projections), 3)
 
         self.assertEqual(projections[0]["period_label"], f"Jul {forecast_year}")
-        self.assertEqual(projections[0]["expected_sales"], 230.0)
+        self.assertIsNone(projections[0]["expected_sales"])
         self.assertIsNone(projections[0]["expected_expenses"])
         self.assertIsNone(projections[0]["expected_tax"])
         self.assertFalse(projections[0]["expected_expenses_applicable"])
         self.assertFalse(projections[0]["expected_tax_applicable"])
-        self.assertEqual(projections[0]["expected_net"], 230.0)
+        self.assertTrue(projections[0]["sales_unreliable"])
+        self.assertEqual(projections[0]["sales_readiness_note"], "3 of 24 monthly records")
+        self.assertEqual(projections[0]["expenses_readiness_note"], "Not scheduled this period")
+        self.assertEqual(projections[0]["tax_readiness_note"], "Not scheduled this period")
+        self.assertIsNone(projections[0]["expected_net"])
 
         self.assertEqual(projections[1]["period_label"], f"Aug {forecast_year}")
-        self.assertEqual(projections[1]["expected_sales"], 245.0)
+        self.assertIsNone(projections[1]["expected_sales"])
         self.assertIsNone(projections[1]["expected_expenses"])
         self.assertIsNone(projections[1]["expected_tax"])
-        self.assertEqual(projections[1]["expected_net"], 245.0)
+        self.assertIsNone(projections[1]["expected_net"])
 
         self.assertEqual(projections[2]["period_label"], f"Sep {forecast_year}")
-        self.assertEqual(projections[2]["expected_sales"], 251.5)
-        self.assertEqual(projections[2]["expected_expenses"], 50.0)
+        self.assertIsNone(projections[2]["expected_sales"])
+        self.assertIsNone(projections[2]["expected_expenses"])
         self.assertTrue(projections[2]["expected_expenses_applicable"])
-        self.assertFalse(projections[2]["expenses_unreliable"])
-        self.assertEqual(projections[2]["expected_tax"], 10.0)
-        self.assertEqual(projections[2]["tax_method"], "Weighted Moving Average")
+        self.assertTrue(projections[2]["expenses_unreliable"])
+        self.assertIsNone(projections[2]["expected_tax"])
+        self.assertEqual(projections[2]["tax_method"], "SARIMA")
         self.assertTrue(projections[2]["tax_limited_data"])
-        self.assertTrue(projections[2]["expected_net_applicable"])
-        self.assertFalse(projections[2]["expected_net_unreliable"])
-        self.assertEqual(projections[2]["expected_net"], 201.5)
+        self.assertFalse(projections[2]["expected_net_applicable"])
+        self.assertTrue(projections[2]["expected_net_unreliable"])
+        self.assertIsNone(projections[2]["expected_net"])
 
     def test_analytics_summary_exposes_tin_for_disambiguation_and_scope(self):
         today = timezone.localdate()
@@ -675,62 +697,30 @@ class AnalyticsSummaryApiTests(TestCase):
         self.assertEqual(scoped_payload["scope"]["client_id"], client_b.id)
         self.assertEqual(scoped_payload["scope"]["client_tin"], same_tin_b)
 
-    def test_analytics_weighted_moving_average_forecasting_logic(self):
+    def test_analytics_sarima_forecasting_logic(self):
         today = timezone.localdate()
 
-        owner = self._create_bookkeeper("owner-wma")
+        owner = self._create_bookkeeper("owner-sarima")
         self._login_as(owner)
 
-        client = self._create_client(bookkeeper=owner, suffix="wma", remarks=Client.REMARK_ACTIVE)
+        client = self._create_client(bookkeeper=owner, suffix="sarima", remarks=Client.REMARK_ACTIVE)
 
-        # Create three consecutive months of records
-        y3, m3 = today.year, today.month
-
-        m2 = m3 - 1 if m3 > 1 else 12
-        y2 = y3 if m3 > 1 else y3 - 1
-
-        m1 = m2 - 1 if m2 > 1 else 12
-        y1 = y2 if m2 > 1 else y2 - 1
-
-        date_1 = date(y1, m1, 1)
-        date_2 = date(y2, m2, 1)
-        date_3 = date(y3, m3, 1)
-
-        # Sales: 100, 200, 300
-        # Expenses: 10, 20, 30
-        self._create_record_with_lines(
-            bookkeeper=owner,
-            client=client,
-            entry_date=date_1,
-            frequency=FinancialRecord.FREQUENCY_MONTHLY,
-            lines=[
-                ("Sales", "Sales 1", Decimal("100.00")),
-                ("Expenses", "Exp 1", Decimal("10.00")),
-                ("2550M", "Monthly VAT Tax 1", Decimal("5.00")),
-            ],
-        )
-        self._create_record_with_lines(
-            bookkeeper=owner,
-            client=client,
-            entry_date=date_2,
-            frequency=FinancialRecord.FREQUENCY_MONTHLY,
-            lines=[
-                ("Sales", "Sales 2", Decimal("200.00")),
-                ("Expenses", "Exp 2", Decimal("20.00")),
-                ("2550M", "Monthly VAT Tax 2", Decimal("10.00")),
-            ],
-        )
-        self._create_record_with_lines(
-            bookkeeper=owner,
-            client=client,
-            entry_date=date_3,
-            frequency=FinancialRecord.FREQUENCY_MONTHLY,
-            lines=[
-                ("Sales", "Sales 3", Decimal("300.00")),
-                ("Expenses", "Exp 3", Decimal("30.00")),
-                ("2550M", "Monthly VAT Tax 3", Decimal("15.00")),
-            ],
-        )
+        end_index = (today.year * 12) + (today.month - 1)
+        start_index = end_index - 23
+        for index in range(24):
+            month_index = start_index + index
+            entry_date = date(month_index // 12, (month_index % 12) + 1, 1)
+            self._create_record_with_lines(
+                bookkeeper=owner,
+                client=client,
+                entry_date=entry_date,
+                frequency=FinancialRecord.FREQUENCY_MONTHLY,
+                lines=[
+                    ("Sales", f"Sales {index + 1}", Decimal(100 + (index * 10))),
+                    ("Expenses", f"Expense {index + 1}", Decimal(10 + index)),
+                    ("2550M", f"Monthly VAT Tax {index + 1}", Decimal("5.0") + (Decimal("0.5") * index)),
+                ],
+            )
 
         response = self.client.get(
             reverse("api_analytics_summary"),
@@ -743,32 +733,108 @@ class AnalyticsSummaryApiTests(TestCase):
         forecast = payload.get("predictive_forecast", {})
         self.assertTrue(forecast.get("has_forecast"))
         self.assertEqual(forecast.get("frequency"), FinancialRecord.FREQUENCY_MONTHLY)
-        self.assertEqual(forecast.get("data_points"), 3)
+        self.assertEqual(forecast.get("data_points"), 24)
 
-        self.assertIn("Weighted Moving Average", forecast.get("basis", ""))
-        self.assertEqual(forecast.get("sales_method"), "Weighted Moving Average")
+        self.assertIn("SARIMA (0,1,0)(0,1,0)", forecast.get("basis", ""))
+        self.assertEqual(forecast.get("sales_method"), "SARIMA")
 
-        self.assertEqual(forecast.get("expected_sales"), 230.0)
-        self.assertEqual(forecast.get("expected_expenses"), 23.0)
-        self.assertEqual(forecast.get("expected_tax"), 11.5)
-        self.assertEqual(forecast.get("expected_net"), 207.0)
+        self.assertEqual(forecast.get("expected_sales"), 340.0)
+        self.assertEqual(forecast.get("expected_expenses"), 34.0)
+        self.assertEqual(forecast.get("expected_tax"), 17.0)
+        self.assertEqual(forecast.get("expected_net"), 306.0)
 
         # Assert 3 future projections
         projections = forecast.get("future_projections", [])
         self.assertEqual(len(projections), 3)
 
-        self.assertEqual(projections[0]["expected_sales"], 230.0)
-        self.assertEqual(projections[0]["expected_expenses"], 23.0)
-        self.assertEqual(projections[0]["expected_tax"], 11.5)
-        self.assertEqual(projections[0]["expected_net"], 207.0)
+        self.assertEqual(projections[0]["expected_sales"], 340.0)
+        self.assertEqual(projections[0]["expected_expenses"], 34.0)
+        self.assertEqual(projections[0]["expected_tax"], 17.0)
+        self.assertEqual(projections[0]["expected_net"], 306.0)
 
-        self.assertEqual(projections[1]["expected_sales"], 245.0)
-        self.assertEqual(projections[1]["expected_expenses"], 24.5)
-        self.assertEqual(projections[1]["expected_tax"], 12.25)
-        self.assertEqual(projections[1]["expected_net"], 220.5)
+        self.assertEqual(projections[1]["expected_sales"], 350.0)
+        self.assertEqual(projections[1]["expected_expenses"], 35.0)
+        self.assertEqual(projections[1]["expected_tax"], 17.5)
+        self.assertEqual(projections[1]["expected_net"], 315.0)
 
-        self.assertEqual(projections[2]["expected_sales"], 251.5)
-        self.assertEqual(projections[2]["expected_expenses"], 25.15)
-        self.assertEqual(projections[2]["expected_tax"], 12.58)
-        self.assertEqual(projections[2]["expected_net"], 226.35)
+        self.assertEqual(projections[2]["expected_sales"], 360.0)
+        self.assertEqual(projections[2]["expected_expenses"], 36.0)
+        self.assertEqual(projections[2]["expected_tax"], 18.0)
+        self.assertEqual(projections[2]["expected_net"], 324.0)
+
+    def test_sarima_recovers_isolated_expense_frequency_and_generic_taxes_label(self):
+        owner = self._create_bookkeeper("owner-sarima-quarterly")
+        self._login_as(owner)
+        client = self._create_client(
+            bookkeeper=owner,
+            suffix="sarima-quarterly",
+            remarks=Client.REMARK_ACTIVE,
+        )
+
+        for index in range(24):
+            month_index = (2024 * 12) + index
+            entry_date = date(month_index // 12, (month_index % 12) + 1, 1)
+            self._create_record_with_lines(
+                bookkeeper=owner,
+                client=client,
+                entry_date=entry_date,
+                frequency=FinancialRecord.FREQUENCY_MONTHLY,
+                lines=[("SALES", "Recorded sales", Decimal(1000 + (index * 10)))],
+            )
+
+        quarter_dates = [
+            date(year, month, 1)
+            for year in (2024, 2025)
+            for month in (3, 6, 9, 12)
+        ]
+        for index, entry_date in enumerate(quarter_dates):
+            expense_frequency = (
+                FinancialRecord.FREQUENCY_MONTHLY
+                if entry_date == date(2024, 12, 1)
+                else FinancialRecord.FREQUENCY_QUARTERLY
+            )
+            self._create_record_with_lines(
+                bookkeeper=owner,
+                client=client,
+                entry_date=entry_date,
+                frequency=expense_frequency,
+                lines=[(
+                    "EXPENSES",
+                    "It's TAXES" if entry_date == date(2024, 12, 1) else "Recorded expenses",
+                    Decimal(100 + (index * 10)),
+                )],
+            )
+            self._create_record_with_lines(
+                bookkeeper=owner,
+                client=client,
+                entry_date=entry_date,
+                frequency=FinancialRecord.FREQUENCY_QUARTERLY,
+                lines=[("TAXES", "Recorded taxes", Decimal(10 + index))],
+            )
+
+        response = self.client.get(
+            reverse("api_analytics_summary"),
+            {"client_id": client.id},
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        payload = response.json()
+        self.assertEqual(payload["summary"]["total_tax"], 108.0)
+        forecast = payload["predictive_forecast"]
+        projections = forecast["future_projections"]
+
+        self.assertTrue(forecast["has_forecast"])
+        self.assertEqual(projections[0]["period_label"], "Jan 2026")
+        self.assertFalse(projections[0]["expected_expenses_applicable"])
+        self.assertFalse(projections[0]["expected_tax_applicable"])
+        self.assertEqual(projections[0]["expenses_readiness_note"], "Not scheduled this period")
+
+        self.assertEqual(projections[2]["period_label"], "Mar 2026")
+        self.assertTrue(projections[2]["expected_expenses_applicable"])
+        self.assertIsNotNone(projections[2]["expected_expenses"])
+        self.assertEqual(projections[2]["expenses_readiness_note"], "SARIMA")
+        self.assertTrue(projections[2]["expected_tax_applicable"])
+        self.assertIsNotNone(projections[2]["expected_tax"])
+        self.assertEqual(projections[2]["tax_readiness_note"], "SARIMA")
 

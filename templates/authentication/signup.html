@@ -215,8 +215,40 @@
                 }
 
                 signupFeedback.textContent = message;
-                signupFeedback.classList.remove("d-none", "alert-success", "alert-danger");
-                signupFeedback.classList.add(level === "success" ? "alert-success" : "alert-danger");
+                signupFeedback.classList.remove(
+                    "d-none",
+                    "alert-success",
+                    "alert-danger",
+                    "alert-warning",
+                    "animate-shake",
+                    "animate-fade-in"
+                );
+
+                void signupFeedback.offsetWidth;
+
+                if (level === "success") {
+                    signupFeedback.classList.add("alert-success", "animate-fade-in");
+                } else if (level === "warning") {
+                    signupFeedback.classList.add("alert-warning", "animate-fade-in");
+                } else {
+                    signupFeedback.classList.add("alert-danger", "animate-shake");
+                }
+            };
+
+            const clearFeedback = () => {
+                if (!signupFeedback) {
+                    return;
+                }
+
+                signupFeedback.textContent = "";
+                signupFeedback.classList.add("d-none");
+                signupFeedback.classList.remove(
+                    "alert-success",
+                    "alert-danger",
+                    "alert-warning",
+                    "animate-shake",
+                    "animate-fade-in"
+                );
             };
 
             const setSubmittingState = (isSubmitting) => {
@@ -282,12 +314,17 @@
                 if (event.target instanceof HTMLInputElement) {
                     event.target.classList.remove("is-invalid");
                 }
+
+                if (signupFeedback && signupFeedback.classList.contains("alert-danger")) {
+                    clearFeedback();
+                }
             });
 
             signupForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 clearSkeletonState();
                 clearFieldErrors();
+                clearFeedback();
 
                 const fullNameInput = getInput("signup_full_name");
                 const emailInput = getInput("signup_email");

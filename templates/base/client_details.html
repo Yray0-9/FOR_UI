@@ -17,7 +17,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/analytics.css' %}?v=1.2">
 <link rel="stylesheet" href="{% static 'css/reports.css' %}?v=1.2">
-<link rel="stylesheet" href="{% static 'css/client_details.css' %}?v=1.7">
+<link rel="stylesheet" href="{% static 'css/client_details.css' %}?v=1.9">
 {% endblock %}
 
 {% block skeleton %}
@@ -266,7 +266,14 @@
             </div>
 
             <!-- Tab Content -->
-            <div id="analyticsDataPanels" class="tab-content client-analytics-panels">
+            <article class="client-card analytics-loading-state" id="analyticsLoadingState" aria-live="polite">
+                <div class="analytics-loading-state-content">
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    <span>Loading client records...</span>
+                </div>
+            </article>
+
+            <div id="analyticsDataPanels" class="tab-content client-analytics-panels" hidden>
                 <!-- Tab 1: Dashboard -->
                 <div class="tab-pane fade show active" id="dashboard-tab-pane" role="tabpanel" aria-labelledby="dashboard-tab" tabindex="0">
                     <div class="row g-3 dashboard-stats-row mt-1">
@@ -385,7 +392,7 @@
                             <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-report-card client-delay-28">
                                 <div class="dashboard-card-head analytics-predictive-report-head">
                                     <h2>Forecast Report</h2>
-                                    <span class="dashboard-tag analytics-method-tag">Weighted Moving Average</span>
+                                    <span class="dashboard-tag analytics-method-tag">SARIMA</span>
                                 </div>
                                 <div class="table-responsive analytics-predictive-report-scroll">
                                     <table class="table table-hover align-middle dashboard-table analytics-predictive-report-table mb-0" id="predictiveForecastTable">
@@ -467,7 +474,7 @@
                                     </span>
                                     <span>
                                         <i class="bi bi-calculator text-primary"></i>
-                                        <span aria-label="Generated using Weighted Moving Average Algorithm">Weighted Moving Average</span>
+                                        <span aria-label="Generated using Seasonal ARIMA">SARIMA</span>
                                     </span>
                                     <span>
                                         <i class="bi bi-clock-history text-primary"></i>
@@ -523,8 +530,15 @@
                                 <input class="form-control client-form-input" id="editDetailsClientTradeName" name="trade_name" type="text" value="{{ client.trade_name }}" placeholder="Optional">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label client-form-label" for="editDetailsClientLocation">Location</label>
-                                <input class="form-control client-form-input" id="editDetailsClientLocation" name="location" type="text" value="{{ client.location }}" required>
+                                <label class="form-label client-form-label" for="editDetailsClientLocationSelect">Location</label>
+                                <input id="editDetailsClientLocation" name="location" type="hidden" value="{{ client.location }}">
+                                <div class="client-select-wrap">
+                                    <select class="form-select client-form-input client-select-input" id="editDetailsClientLocationSelect" aria-label="Select province" required>
+                                        <option value="">Select province</option>
+                                    </select>
+                                    <i class="bi bi-chevron-down client-select-icon" aria-hidden="true"></i>
+                                </div>
+                                <div class="form-text text-muted client-location-summary" id="editDetailsClientLocationSummary" hidden></div>
                             </div>
                         </div>
                     </section>
@@ -684,6 +698,9 @@
         const editClientDetailsModalElement = document.getElementById("editClientDetailsModal");
         const editClientDetailsForm = document.getElementById("editClientDetailsForm");
         const editDetailsClientTinInput = document.getElementById("editDetailsClientTin");
+        const editDetailsClientLocationInput = document.getElementById("editDetailsClientLocation");
+        const editDetailsClientLocationSelect = document.getElementById("editDetailsClientLocationSelect");
+        const editDetailsClientLocationSummary = document.getElementById("editDetailsClientLocationSummary");
         const editDetailsCustomFields = document.getElementById("editDetailsCustomFields");
         const editDetailsAddCustomFieldBtn = document.getElementById("editDetailsAddCustomFieldBtn");
         const saveClientDetailsButton = document.getElementById("saveClientDetailsButton");
@@ -707,7 +724,16 @@
             custom_fields: [],
         };
 
+        {% include 'base/partials/client_location_selector_script.html' %}
+
+        const editDetailsLocationState = createLocationState({
+            hiddenInput: editDetailsClientLocationInput,
+            select: editDetailsClientLocationSelect,
+            summary: editDetailsClientLocationSummary,
+        });
+
         const analyticsDataPanels = document.getElementById("analyticsDataPanels");
+        const analyticsLoadingState = document.getElementById("analyticsLoadingState");
         const analyticsEmptyState = document.getElementById("analyticsEmptyState");
         const clientPeriodReadinessTag = document.getElementById("clientPeriodReadinessTag");
         const clientPeriodReadinessText = document.getElementById("clientPeriodReadinessText");
@@ -1108,7 +1134,10 @@
             setInputValueAndDefault("editDetailsClientName", currentClientProfile.client_name);
             setInputValueAndDefault("editDetailsClientTin", formatTin(currentClientProfile.tin_number));
             setInputValueAndDefault("editDetailsClientTradeName", currentClientProfile.trade_name);
-            setInputValueAndDefault("editDetailsClientLocation", currentClientProfile.location);
+            applyLocationSelection(editDetailsLocationState, currentClientProfile.location);
+            if (editDetailsClientLocationInput) {
+                editDetailsClientLocationInput.defaultValue = editDetailsClientLocationInput.value;
+            }
             setInputValueAndDefault("editDetailsClientPermitNumber", currentClientProfile.permit_number);
             setInputValueAndDefault("editDetailsClientBirthday", currentClientProfile.birthday);
             setInputValueAndDefault("editDetailsClientEmail", currentClientProfile.email);
@@ -1325,14 +1354,21 @@
             if (!projectionHasValue(source, valueKey)) {
                 return projectionCannotForecast(source, valueKey) ? "Insufficient stable data" : "Not scheduled this period";
             }
-            return String(source[`${categoryKey}_method`] || "Weighted Moving Average");
+            return String(source[`${categoryKey}_method`] || "SARIMA");
         };
 
         const setAnalyticsLoadingState = (isLoading) => {
             isLoadingAnalytics = Boolean(isLoading);
+            if (analyticsLoadingState) {
+                analyticsLoadingState.hidden = !isLoadingAnalytics;
+            }
             if (analyticsDataPanels) {
                 analyticsDataPanels.setAttribute("aria-busy", String(isLoadingAnalytics));
                 analyticsDataPanels.classList.toggle("is-loading", isLoadingAnalytics);
+            }
+            if (isLoadingAnalytics) {
+                if (analyticsDataPanels) analyticsDataPanels.hidden = true;
+                if (analyticsEmptyState) analyticsEmptyState.hidden = true;
             }
             if (analyticsScopeHint && isLoadingAnalytics) {
                 analyticsScopeHint.textContent = "Loading...";
@@ -1578,30 +1614,29 @@
                     : "PHP --";
             }
 
-            const pendingLabel = "Needs historical data";
+            const forecastCardNote = (category, valueKey) => {
+                if (projectionHasValue(safeForecast, valueKey)) {
+                    return getProjectionMethodLabel(safeForecast, category, valueKey);
+                }
+                return String(safeForecast[`${category}_readiness_note`] || "Needs historical data");
+            };
             if (analyticsPredictiveSalesNote) {
-                analyticsPredictiveSalesNote.textContent = hasForecast
-                    ? getProjectionMethodLabel(safeForecast, "sales", "expected_sales")
-                    : pendingLabel;
+                analyticsPredictiveSalesNote.textContent = forecastCardNote("sales", "expected_sales");
             }
             if (analyticsPredictiveExpensesNote) {
-                analyticsPredictiveExpensesNote.textContent = hasForecast
-                    ? getProjectionMethodLabel(safeForecast, "expenses", "expected_expenses")
-                    : pendingLabel;
+                analyticsPredictiveExpensesNote.textContent = forecastCardNote("expenses", "expected_expenses");
             }
             if (analyticsPredictiveTaxNote) {
-                analyticsPredictiveTaxNote.textContent = hasForecast
-                    ? getProjectionMethodLabel(safeForecast, "tax", "expected_tax")
-                    : pendingLabel;
+                analyticsPredictiveTaxNote.textContent = forecastCardNote("tax", "expected_tax");
             }
 
             if (analyticsPredictivePlaceholder) {
                 analyticsPredictivePlaceholder.textContent = hasForecast
-                    ? "WMA projection based on available transaction history."
-                    : "Forecast visualization will appear after enough data is available.";
+                    ? "SARIMA projection based on complete, regularly spaced transaction history."
+                    : "Historical movement shown. SARIMA starts after the required history is complete.";
             }
 
-            renderPredictiveSparkline(hasForecast ? (safeForecast.sparkline || []) : []);
+            renderPredictiveSparkline(safeForecast.sparkline || []);
         };
 
         const predictiveForecastTableBody = document.getElementById("predictiveForecastTableBody");
@@ -2000,6 +2035,8 @@
         };
 
         const setupEditClientDetailsEvents = () => {
+            bindLocationControls(editDetailsLocationState);
+            applyLocationSelection(editDetailsLocationState, currentClientProfile.location);
             renderEditCustomFields();
             bindClientPasswordToggles();
 
@@ -2021,6 +2058,7 @@
 
                 editClientDetailsForm.addEventListener("submit", async (event) => {
                     event.preventDefault();
+                    syncLocationState(editDetailsLocationState);
                     if (!editClientDetailsForm.checkValidity()) {
                         editClientDetailsForm.reportValidity();
                         return;
@@ -2030,7 +2068,7 @@
                         client_name: document.getElementById("editDetailsClientName") ? document.getElementById("editDetailsClientName").value.trim() : "",
                         tin_number: editDetailsClientTinInput ? normalizeDigits(editDetailsClientTinInput.value) : "",
                         trade_name: document.getElementById("editDetailsClientTradeName") ? document.getElementById("editDetailsClientTradeName").value.trim() : "",
-                        location: document.getElementById("editDetailsClientLocation") ? document.getElementById("editDetailsClientLocation").value.trim() : "",
+                        location: editDetailsClientLocationInput ? editDetailsClientLocationInput.value.trim() : "",
                         permit_number: document.getElementById("editDetailsClientPermitNumber") ? document.getElementById("editDetailsClientPermitNumber").value.trim() : "",
                         birthday: document.getElementById("editDetailsClientBirthday") ? document.getElementById("editDetailsClientBirthday").value.trim() : "",
                         email: document.getElementById("editDetailsClientEmail") ? document.getElementById("editDetailsClientEmail").value.trim() : "",
@@ -2104,6 +2142,7 @@
                 editClientDetailsModalElement.addEventListener("hidden.bs.modal", () => {
                     editClientDetailsDirty = false;
                     if (editClientDetailsForm) editClientDetailsForm.reset();
+                    applyLocationSelection(editDetailsLocationState, currentClientProfile.location);
                     renderEditCustomFields();
                     if (editDetailsClientTinInput) {
                         editDetailsClientTinInput.value = formatTin(editDetailsClientTinInput.value);
@@ -2123,7 +2162,6 @@
 
             renderTrendGrid();
             bindForecastLegendHighlight();
-            applyAnalyticsFallbackState();
 
             loadAnalyticsSummaryFromApi();
 

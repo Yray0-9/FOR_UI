@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from safebooks.models import Client, FinancialRecord, FinancialRecordLine
+from safebooks.services.forecasting_service import FREQUENCY_CONFIG, build_sarima_forecast
 
 
 TAX_TYPE_CODES = {
@@ -51,6 +52,7 @@ TAX_CODE_PATTERN = re.compile(r"^\d{4}[a-z]{0,2}$", re.IGNORECASE)
 
 TAX_KEYWORDS = (
     "tax",
+    "taxes",
     "vat",
     "withholding",
     "wht",
@@ -166,10 +168,9 @@ FREQUENCY_INTERVALS = {
 }
 
 FORECAST_CATEGORIES = ("sales", "expenses", "tax")
-FORECAST_METHOD_LABEL = "Weighted Moving Average"
-FORECAST_LIMITED_DATA_MESSAGE = "Groups with fewer than 3 records use the latest-value fallback until enough history is available for Weighted Moving Average."
+FORECAST_METHOD_LABEL = "SARIMA"
+FORECAST_LIMITED_DATA_MESSAGE = "Forecasts are shown only for complete monthly or quarterly histories that meet the SARIMA minimum-history requirement."
 FORECAST_MIXED_FREQUENCY = "mixed"
-WMA_WEIGHTS = (Decimal("0.20"), Decimal("0.30"), Decimal("0.50"))
 
 
 def _to_money_number(value: Decimal) -> float:
@@ -210,6 +211,7 @@ def _recent_month_slots(reference_date: date, count: int = 6) -> list[tuple[int,
 
 def _classify_line_item(type_code: str, description: str) -> str:
     normalized_type_code = str(type_code or "").strip().lower()
+    normalized_type_text = _normalize_search_text(type_code)
     searchable_text = _normalize_search_text(f"{type_code or ''} {description or ''}")
 
     if normalized_type_code.startswith("bir form"):
@@ -218,6 +220,12 @@ def _classify_line_item(type_code: str, description: str) -> str:
         return "tax"
     if TAX_CODE_PATTERN.match(normalized_type_code):
         return "tax"
+    if any(_contains_keyword(normalized_type_text, keyword) for keyword in NORMALIZED_TAX_KEYWORDS):
+        return "tax"
+    if any(_contains_keyword(normalized_type_text, keyword) for keyword in NORMALIZED_EXPENSE_KEYWORDS):
+        return "expenses"
+    if any(_contains_keyword(normalized_type_text, keyword) for keyword in NORMALIZED_SALES_KEYWORDS):
+        return "sales"
     if any(_contains_keyword(searchable_text, keyword) for keyword in NORMALIZED_TAX_KEYWORDS):
         return "tax"
     if any(_contains_keyword(searchable_text, keyword) for keyword in NORMALIZED_EXPENSE_KEYWORDS):
@@ -231,21 +239,6 @@ def _classify_line_item(type_code: str, description: str) -> str:
 def _contains_tax_form_code(raw_text: str, form_code: str) -> bool:
     pattern = rf"(?<![a-z0-9]){re.escape(form_code.lower())}(?:v\d+)?(?![a-z0-9])"
     return re.search(pattern, raw_text) is not None
-
-
-def _extract_tax_form_code(type_code: str, description: str) -> str:
-    raw_text = f"{type_code or ''} {description or ''}".lower()
-    form_codes = (
-        TAX_QUARTERLY_FORM_CODES
-        | TAX_MONTHLY_FORM_CODES
-        | TAX_ANNUAL_FORM_CODES
-    )
-
-    for form_code in sorted(form_codes, key=len, reverse=True):
-        if _contains_tax_form_code(raw_text, form_code):
-            return form_code
-
-    return ""
 
 
 def _infer_tax_line_frequency(type_code: str, description: str) -> str | None:
@@ -278,14 +271,86 @@ def _resolve_line_forecast_frequency(line: FinancialRecordLine, category: str) -
     return _normalize_frequency(line.record.frequency)
 
 
-def _forecast_group_key(line: FinancialRecordLine, category: str) -> str:
-    if category == "tax":
-        form_code = _extract_tax_form_code(line.type_code, line.description)
-        if form_code:
-            return f"{category}:{form_code}"
+def _periods_are_regular_for_frequency(
+    periods: set[tuple[int, int]],
+    frequency: str,
+) -> bool:
+    ordered_periods = sorted(periods)
+    if len(ordered_periods) < 2:
+        return True
 
-    type_key = _normalize_type_code_key(line.type_code)
-    return f"{category}:{type_key}" if type_key else category
+    interval = FREQUENCY_INTERVALS.get(frequency)
+    if interval is None:
+        return False
+
+    return all(
+        current == _shift_month(previous[0], previous[1], interval)
+        for previous, current in zip(ordered_periods, ordered_periods[1:])
+    )
+
+
+def _align_period_key_for_frequency(
+    period_key: tuple[int, int],
+    frequency: str,
+) -> tuple[int, int]:
+    if frequency == FinancialRecord.FREQUENCY_QUARTERLY:
+        year, month = period_key
+        return year, (((month - 1) // 3) + 1) * 3
+    return period_key
+
+
+def _infer_isolated_expense_frequency_overrides(prepared_lines: list[dict]) -> dict[int, str]:
+    """Recover one mistagged expense when its dates complete a regular series.
+
+    This affects forecasting only. It does not modify stored records, and it
+    does not merge genuinely mixed monthly and quarterly expense histories.
+    """
+    groups: dict[tuple[int, str], list[dict]] = defaultdict(list)
+    for item in prepared_lines:
+        if item["category"] != "expenses":
+            continue
+        type_key = _normalize_type_code_key(item["line"].type_code)
+        groups[(item["client_id"], type_key)].append(item)
+
+    overrides: dict[int, str] = {}
+    supported_frequencies = tuple(FREQUENCY_CONFIG)
+
+    for items in groups.values():
+        frequency_counts = {
+            frequency: sum(item["frequency"] == frequency for item in items)
+            for frequency in supported_frequencies
+        }
+        dominant_frequency = max(frequency_counts, key=frequency_counts.get)
+        dominant_count = frequency_counts[dominant_frequency]
+        minimum_observations = FREQUENCY_CONFIG[dominant_frequency]["minimum_observations"]
+        minority_items = [item for item in items if item["frequency"] != dominant_frequency]
+
+        # A single conflicting label can safely be inferred only when it fills
+        # the sole gap in an otherwise complete native-frequency series.
+        if dominant_count < minimum_observations - 1 or len(minority_items) != 1:
+            continue
+
+        candidate = minority_items[0]
+        dominant_periods = {
+            _align_period_key_for_frequency(item["period_key"], dominant_frequency)
+            for item in items
+            if item["frequency"] == dominant_frequency
+        }
+        candidate_period = _align_period_key_for_frequency(
+            candidate["period_key"],
+            dominant_frequency,
+        )
+        if candidate_period in dominant_periods:
+            continue
+
+        completed_periods = dominant_periods | {candidate_period}
+        if (
+            len(completed_periods) >= minimum_observations
+            and _periods_are_regular_for_frequency(completed_periods, dominant_frequency)
+        ):
+            overrides[candidate["index"]] = dominant_frequency
+
+    return overrides
 
 
 def _resolve_all_clients_remarks(clients: list[Client]) -> str:
@@ -387,20 +452,6 @@ def _weighted_average(values: list[Decimal]) -> Decimal:
     )
 
     return weighted_sum / weight_total
-
-def _weighted_moving_average_next(values: list[Decimal]) -> Decimal | None:
-    if not values:
-        return None
-
-    if len(values) < len(WMA_WEIGHTS):
-        return values[-1]
-
-    last_three = values[-len(WMA_WEIGHTS):]
-    return sum(
-        (value or Decimal("0.00")) * weight
-        for value, weight in zip(last_three, WMA_WEIGHTS)
-    )
-
 
 def _frequency_interval_months(frequency: str) -> int:
     return FREQUENCY_INTERVALS.get(frequency, 1)
@@ -691,15 +742,6 @@ def _period_key_for_line(line: FinancialRecordLine) -> tuple[int, int]:
     return record.entry_date.year, record.entry_date.month
 
 
-def _month_distance(
-    start_year: int,
-    start_month: int,
-    end_year: int,
-    end_month: int,
-) -> int:
-    return ((end_year - start_year) * 12) + (end_month - start_month)
-
-
 def _normalize_frequency(value: str) -> str:
     return value if value in FREQUENCY_INTERVALS else FinancialRecord.FREQUENCY_MONTHLY
 
@@ -711,29 +753,24 @@ def _build_group_forecast_model(
     frequency: str,
     group_key: str,
     period_totals: dict[tuple[int, int], Decimal],
+    forecast_through: tuple[int, int],
 ) -> dict | None:
-    period_keys = sorted(period_totals)
-    if not period_keys:
+    model = build_sarima_forecast(
+        period_totals=period_totals,
+        frequency=_normalize_frequency(frequency),
+        forecast_through=forecast_through,
+    )
+    if model is None:
         return None
 
-    values = [period_totals[period_key] for period_key in period_keys]
-    data_points = len(values)
-    last_year, last_month = period_keys[-1]
-    normalized_frequency = _normalize_frequency(frequency)
-
-    model = {
+    model.update({
         "client_id": client_id,
         "category": category,
         "group_key": group_key,
-        "frequency": normalized_frequency,
-        "interval": _frequency_interval_months(normalized_frequency),
-        "last_year": last_year,
-        "last_month": last_month,
-        "data_points": data_points,
-        "uses_limited_data": data_points < len(WMA_WEIGHTS),
-        "history": values,
-        "projected_values": {},
-    }
+        "frequency": _normalize_frequency(frequency),
+        "data_points": model["observation_count"],
+        "uses_limited_data": model["status"] == "insufficient_history",
+    })
 
     return model
 
@@ -743,46 +780,46 @@ def _project_group_value(
     target_year: int,
     target_month: int,
 ) -> tuple[bool, Decimal | None, bool]:
-    months_after_latest = _month_distance(
-        model["last_year"],
-        model["last_month"],
-        target_year,
-        target_month,
-    )
-    interval = model["interval"]
-
-    if months_after_latest <= 0 or months_after_latest % interval != 0:
+    period_key = (target_year, target_month)
+    if period_key not in model["scheduled_periods"]:
         return False, None, False
-
-    step_count = months_after_latest // interval
-    projected_values = model["projected_values"]
-    if step_count in projected_values:
-        return True, projected_values[step_count], False
-
-    values = list(model["history"])
-    for index in range(1, step_count + 1):
-        if index in projected_values:
-            next_value = projected_values[index]
-        else:
-            next_value = _weighted_moving_average_next(values)
-            projected_values[index] = next_value
-
-        if next_value is not None:
-            values.append(next_value)
-
-    value = projected_values.get(step_count)
-    if value is None:
-        return True, None, False
-    if value < 0:
+    if model["status"] != "forecast":
         return True, None, True
-
-    return True, value, False
+    return True, model["forecast_by_period"].get(period_key), False
 
 
 def _money_or_none(value: Decimal | None) -> float | None:
     if value is None:
         return None
     return _to_money_number(value.quantize(Decimal("0.01")))
+
+
+def _forecast_readiness_note(models: list[dict]) -> str:
+    if not models:
+        return "Not scheduled this period"
+
+    unavailable_notes: list[str] = []
+    for model in models:
+        status = model.get("status")
+        frequency = str(model.get("frequency") or "record").lower()
+        if status == "forecast":
+            continue
+        if status == "insufficient_history":
+            available = int(model.get("observation_count") or 0)
+            required = int(model.get("minimum_observations") or 0)
+            unavailable_notes.append(
+                f"{available} of {required} {frequency} records"
+            )
+        elif status == "irregular_history":
+            unavailable_notes.append(f"Review missing {frequency} periods")
+        elif status == "unsupported_frequency":
+            unavailable_notes.append(f"{frequency.capitalize()} forecast unavailable")
+        else:
+            unavailable_notes.append("Forecast unavailable for this history")
+
+    if not unavailable_notes:
+        return FORECAST_METHOD_LABEL
+    return "; ".join(dict.fromkeys(unavailable_notes))
 
 
 def _resolve_forecast_context(bookkeeper, scope_client: Client | None, reference_date) -> tuple[str, int, int, int]:
@@ -852,8 +889,9 @@ def _build_predictive_forecast(
     )
     actual_totals_by_period: dict[tuple[int, int], dict[str, Decimal]] = defaultdict(_empty_bucket)
     latest_period_key: tuple[int, int] | None = None
+    prepared_lines: list[dict] = []
 
-    for line in lines:
+    for index, line in enumerate(lines):
         record = line.record
         if not record:
             continue
@@ -864,10 +902,30 @@ def _build_predictive_forecast(
         amount = line.amount or Decimal("0.00")
         category = _classify_line_item(line.type_code, line.description)
         frequency = _resolve_line_forecast_frequency(line, category)
-        group_key = _forecast_group_key(line, category)
 
-        grouped_totals[(record.client_id, category, frequency, group_key)][period_key] += amount
+        prepared_lines.append({
+            "index": index,
+            "line": line,
+            "client_id": record.client_id,
+            "period_key": period_key,
+            "amount": amount,
+            "category": category,
+            "frequency": frequency,
+        })
         actual_totals_by_period[period_key][category] += amount
+
+    frequency_overrides = _infer_isolated_expense_frequency_overrides(prepared_lines)
+    for item in prepared_lines:
+        category = item["category"]
+        frequency = frequency_overrides.get(item["index"], item["frequency"])
+        group_key = category
+        forecast_period_key = _align_period_key_for_frequency(item["period_key"], frequency)
+        grouped_totals[(
+            item["client_id"],
+            category,
+            frequency,
+            group_key,
+        )][forecast_period_key] += item["amount"]
 
     if latest_period_key is None:
         reference_year = fallback_reference_date.year
@@ -886,6 +944,7 @@ def _build_predictive_forecast(
 
     reference_year, reference_month = latest_period_key
     projection_slots = _build_monthly_projection_slots(reference_year, reference_month, safe_horizon)
+    forecast_through = (projection_slots[-1][0], projection_slots[-1][1])
 
     models_by_category: dict[str, list[dict]] = {category: [] for category in FORECAST_CATEGORIES}
     frequencies = set()
@@ -898,6 +957,7 @@ def _build_predictive_forecast(
             frequency=frequency,
             group_key=group_key,
             period_totals=period_totals,
+            forecast_through=forecast_through,
         )
         if model is None:
             continue
@@ -913,13 +973,16 @@ def _build_predictive_forecast(
         category_has_values: dict[str, bool] = {}
         category_limited_data: dict[str, bool] = {}
         category_unreliable: dict[str, bool] = {}
+        category_readiness_notes: dict[str, str] = {}
 
         for category in FORECAST_CATEGORIES:
             projected_total = Decimal("0.00")
             is_applicable = False
-            has_value = False
+            scheduled_model_count = 0
+            projected_model_count = 0
             uses_limited_data = False
             has_unreliable_projection = False
+            scheduled_models: list[dict] = []
 
             for model in models_by_category[category]:
                 is_scheduled, projected_value, is_unreliable = _project_group_value(
@@ -931,22 +994,38 @@ def _build_predictive_forecast(
                     continue
 
                 is_applicable = True
+                scheduled_model_count += 1
+                scheduled_models.append(model)
                 uses_limited_data = uses_limited_data or model["uses_limited_data"]
                 has_unreliable_projection = has_unreliable_projection or is_unreliable
                 if projected_value is None:
+                    has_unreliable_projection = True
                     continue
 
-                has_value = True
+                projected_model_count += 1
                 projected_total += projected_value
 
+            has_value = (
+                scheduled_model_count > 0
+                and projected_model_count == scheduled_model_count
+                and not has_unreliable_projection
+            )
             category_totals[category] = projected_total
             category_applicability[category] = is_applicable
             category_has_values[category] = has_value
             category_limited_data[category] = uses_limited_data
             category_unreliable[category] = has_unreliable_projection
+            category_readiness_notes[category] = _forecast_readiness_note(scheduled_models)
 
-        net_has_value = category_has_values["sales"]
-        net_unreliable = False
+        expenses_required = category_applicability["expenses"]
+        net_has_value = (
+            category_has_values["sales"]
+            and (not expenses_required or category_has_values["expenses"])
+        )
+        net_unreliable = (
+            category_unreliable["sales"]
+            or (expenses_required and category_unreliable["expenses"])
+        )
         projected_net = category_totals["sales"] - category_totals["expenses"]
 
         future_projections.append({
@@ -966,6 +1045,9 @@ def _build_predictive_forecast(
             "sales_unreliable": category_unreliable["sales"],
             "expenses_unreliable": category_unreliable["expenses"],
             "tax_unreliable": category_unreliable["tax"],
+            "sales_readiness_note": category_readiness_notes["sales"],
+            "expenses_readiness_note": category_readiness_notes["expenses"],
+            "tax_readiness_note": category_readiness_notes["tax"],
             "expected_net_applicable": net_has_value,
             "expected_net_unreliable": net_unreliable,
             "expected_net": _money_or_none(projected_net if net_has_value else None),
@@ -979,7 +1061,7 @@ def _build_predictive_forecast(
         default=0,
     )
     basis = (
-        "Forecast calculated using separate transaction-aware and frequency-aware Weighted Moving Average models for each client, category, and frequency."
+        "Forecast calculated using separate frequency-aware SARIMA (0,1,0)(0,1,0)s models for each client and financial category."
     )
     if limited_data_used:
         basis = f"{basis} {FORECAST_LIMITED_DATA_MESSAGE}"
@@ -989,12 +1071,18 @@ def _build_predictive_forecast(
         totals = actual_totals_by_period[period_key]
         sparkline_values.append(totals["sales"] - totals["expenses"])
     sparkline_values.extend(
-        Decimal(str(row.get("expected_net") or 0))
+        Decimal(str(row["expected_net"]))
         for row in future_projections
+        if row.get("expected_net") is not None
     )
 
     return {
-        "has_forecast": True,
+        "has_forecast": any(
+            row.get("expected_sales") is not None
+            or row.get("expected_expenses") is not None
+            or row.get("expected_tax") is not None
+            for row in future_projections
+        ),
         "frequency": frequency_value,
         "frequency_label": frequency_label,
         "period_count": data_points,
@@ -1015,6 +1103,9 @@ def _build_predictive_forecast(
         "sales_unreliable": first_projection.get("sales_unreliable", False),
         "expenses_unreliable": first_projection.get("expenses_unreliable", False),
         "tax_unreliable": first_projection.get("tax_unreliable", False),
+        "sales_readiness_note": first_projection.get("sales_readiness_note", "Needs historical data"),
+        "expenses_readiness_note": first_projection.get("expenses_readiness_note", "Needs historical data"),
+        "tax_readiness_note": first_projection.get("tax_readiness_note", "Needs historical data"),
         "expected_net_applicable": first_projection.get("expected_net_applicable", False),
         "expected_net_unreliable": first_projection.get("expected_net_unreliable", False),
         "expected_net": first_projection.get("expected_net"),

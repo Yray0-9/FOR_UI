@@ -250,7 +250,7 @@
                     <article class="dashboard-card dashboard-fade-up analytics-forecast-card analytics-predictive-report-card" style="--delay: 0.36s;">
                         <div class="dashboard-card-head analytics-predictive-report-head">
                             <h2>Predictive Forecast Report</h2>
-                            <span class="dashboard-tag analytics-method-tag">Weighted Moving Average</span>
+                            <span class="dashboard-tag analytics-method-tag">SARIMA</span>
                         </div>
                         <p class="dashboard-section-hint">Data-driven future projections for the selected forecast horizon.</p>
                         <div class="table-responsive analytics-predictive-report-scroll">
@@ -614,7 +614,7 @@
                     : "Not scheduled this period";
             }
 
-            return String(source[`${categoryKey}_method`] || "Weighted Moving Average");
+            return String(source[`${categoryKey}_method`] || "SARIMA");
         };
 
         const formatTin = (value) => {
@@ -1427,30 +1427,29 @@
                     : "PHP --";
             }
 
-            const pendingLabel = "Needs historical data";
+            const forecastCardNote = (category, valueKey) => {
+                if (projectionHasValue(safeForecast, valueKey)) {
+                    return getProjectionMethodLabel(safeForecast, category, valueKey);
+                }
+                return String(safeForecast[`${category}_readiness_note`] || "Needs historical data");
+            };
             if (analyticsPredictiveSalesNote) {
-                analyticsPredictiveSalesNote.textContent = hasForecast
-                    ? getProjectionMethodLabel(safeForecast, "sales", "expected_sales")
-                    : pendingLabel;
+                analyticsPredictiveSalesNote.textContent = forecastCardNote("sales", "expected_sales");
             }
             if (analyticsPredictiveExpensesNote) {
-                analyticsPredictiveExpensesNote.textContent = hasForecast
-                    ? getProjectionMethodLabel(safeForecast, "expenses", "expected_expenses")
-                    : pendingLabel;
+                analyticsPredictiveExpensesNote.textContent = forecastCardNote("expenses", "expected_expenses");
             }
             if (analyticsPredictiveTaxNote) {
-                analyticsPredictiveTaxNote.textContent = hasForecast
-                    ? getProjectionMethodLabel(safeForecast, "tax", "expected_tax")
-                    : pendingLabel;
+                analyticsPredictiveTaxNote.textContent = forecastCardNote("tax", "expected_tax");
             }
 
             if (analyticsPredictivePlaceholder) {
                 analyticsPredictivePlaceholder.textContent = hasForecast
-                    ? "WMA projection based on available transaction history."
-                    : "Forecast visualization will appear after enough data is available.";
+                    ? "SARIMA projection based on complete, regularly spaced transaction history."
+                    : "Historical movement shown. SARIMA starts after the required history is complete.";
             }
 
-            renderPredictiveSparkline(hasForecast ? (safeForecast.sparkline || []) : []);
+            renderPredictiveSparkline(safeForecast.sparkline || []);
         };
 
         const predictiveForecastTableBody = document.getElementById("predictiveForecastTableBody");

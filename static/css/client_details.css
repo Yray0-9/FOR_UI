@@ -385,6 +385,11 @@
     font-size: 0.9rem;
 }
 
+.client-details-edit-modal .client-location-summary {
+    margin-top: 0.4rem;
+    font-weight: 700;
+}
+
 .client-details-custom-editor {
     position: relative;
     padding: 0.75rem;
@@ -712,6 +717,24 @@
 
 .client-analytics-panels {
     position: relative;
+}
+
+.analytics-loading-state {
+    min-height: 180px;
+    display: grid;
+    place-items: center;
+}
+
+.analytics-loading-state[hidden] {
+    display: none;
+}
+
+.analytics-loading-state-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--dashboard-muted, #6880ad);
+    font-weight: 600;
 }
 
 .client-details-page .analytics-forecasting-row {

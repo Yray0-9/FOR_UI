@@ -1,403 +1,284 @@
-# SAFEBOOKS Enhancement Plan and Panel Feedback Analysis
+# SafeBooks Forecasting Model: WMA vs SARIMA
 
-## Project Title
+The previous forecasting method used by SafeBooks was the Weighted Moving Average (WMA). WMA generates the next forecast by using the three most recent historical values and assigning greater importance to newer records. The formula used was:
 
-**SAFEBOOKS: A Web-Based Bookkeeping Platform for Client Transaction Entry Records with Financial Analytics and Forecasting Insights**
+Forecast = (0.2 × oldest value) + (0.3 × middle value) + (0.5 × most recent value)
 
----
+Mathematically:
 
-# 1. Current Assessment of the Project
+F(t+1) = 0.2Y(t-2) + 0.3Y(t-1) + 0.5Y(t)
 
-The SAFEBOOKS platform already provides core bookkeeping functionalities, including:
+Where:
 
-* Client profile management
-* Financial transaction entry
-* Compliance monitoring
-* Financial analytics dashboard
-* Financial summary reporting
-* Forecasting insight section
+- F(t+1) = forecast for the next period
+- Y(t) = most recent actual value
+- Y(t-1) = second most recent value
+- Y(t-2) = third most recent value
 
-The project successfully addresses bookkeeping record management and provides valuable financial information for bookkeepers and accounting staff.
+For example, if the last three monthly sales records are:
 
-However, based on the panel's feedback, the forecasting component requires further enhancement to demonstrate a stronger research and analytical contribution.
+- October = 100,000
+- November = 110,000
+- December = 120,000
 
----
+The WMA forecast is:
 
-# 2. Understanding the Panel's Feedback
+Forecast = (0.2 × 100,000) + (0.3 × 110,000) + (0.5 × 120,000)
 
-The panel noted that the current forecasting implementation appears to be based primarily on historical summaries and weighted averages.
+Forecast = 20,000 + 33,000 + 60,000
 
-Current Process:
+Forecast = 113,000
 
-Historical Transactions
-→ Monthly Totals
-→ Weighted Average
-→ Expected Sales/Expenses/Tax
+Therefore, the forecast for the next month would be 113,000.
 
-The panel considers this approach closer to:
+The main limitation of WMA is that it only considers the most recent values. It does not directly recognize repeating seasonal patterns. For example, January 2023, January 2024, and January 2025 may have a stronger relationship with each other because they occur during the same month of different years. WMA does not directly capture this relationship because it focuses mainly on the immediately preceding records.
 
-* Descriptive Analytics
-* Trend Visualization
-* Historical Analysis
+The new forecasting model selected for SafeBooks is the Seasonal Autoregressive Integrated Moving Average, or SARIMA. SARIMA is a statistical time-series forecasting model designed to handle both non-seasonal changes and recurring seasonal patterns in historical data.
 
-rather than a true forecasting model.
+The general structure of SARIMA is:
 
-The primary concern is that the forecasting output lacks a clear evaluation of forecasting methodologies and does not demonstrate why a particular forecasting technique was selected.
+SARIMA(p, d, q)(P, D, Q, s)
 
----
+Where:
 
-# 3. Difference Between Descriptive Analytics and Forecasting
+- p = non-seasonal autoregressive order
+- d = non-seasonal differencing order
+- q = non-seasonal moving-average order
+- P = seasonal autoregressive order
+- D = seasonal differencing order
+- Q = seasonal moving-average order
+- s = seasonal period or length of the repeating cycle
 
-## Descriptive Analytics
+For monthly financial records, the seasonal period can be:
 
-Descriptive analytics answers:
+s = 12
 
-**"What happened?"**
+This represents a yearly cycle consisting of 12 months.
 
-Examples already present in SAFEBOOKS:
+For regularly spaced quarterly financial records, the seasonal period can be:
 
-* Total Sales
-* Total Expenses
-* Total Tax
-* Net Value
-* Monthly Trends
-* Compliance Status
-* Client Financial Summaries
+s = 4
 
-These features are valid and should remain part of the project.
+This represents a yearly cycle consisting of four quarters.
 
----
+The SARIMA configuration used during the SafeBooks forecasting evaluation was:
 
-## Forecasting (Predictive Analytics)
+SARIMA(0,1,0)(0,1,0,s)
 
-Forecasting answers:
+This configuration applies both regular differencing and seasonal differencing. A simplified way of understanding its one-step forecasting behavior is:
 
-**"What is likely to happen?"**
+Predicted Value = Most Recent Value + Value from the Same Seasonal Period - Previous Value Before that Seasonal Period
 
-Examples:
+This may be represented as:
 
-* Predicted Sales for Next Quarter
-* Predicted Expenses for Next Quarter
-* Predicted Tax Obligations
-* Predicted Annual Financial Performance
+Ŷ(t) = Y(t-1) + Y(t-s) - Y(t-s-1)
 
-Forecasting requires the use of a forecasting algorithm that generates future projections based on historical data.
+Where:
 
----
+- Ŷ(t) = predicted value
+- Y(t-1) = most recent historical value
+- Y(t-s) = value from the corresponding previous seasonal period
+- Y(t-s-1) = value immediately before the corresponding seasonal period
+- s = seasonal length
 
-# 4. Recommended Forecasting Study
+For example, suppose SafeBooks wants to forecast January 2026 using monthly sales records. Since monthly records use a seasonal period of 12, the model can consider the relationship between recent records and records from the corresponding period of the previous year.
 
-To strengthen the forecasting component, compare three forecasting algorithms.
+Example values:
 
-## Algorithm 1: Moving Average
+- December 2025 = 112,820
+- January 2025 = 222,491
+- December 2024 = 118,205
 
-Uses the average of previous periods to estimate future values.
+Using the simplified seasonal relationship:
 
-Advantages:
+Forecast = December 2025 + January 2025 - December 2024
 
-* Easy to implement
-* Easy to explain
+Forecast = 112,820 + 222,491 - 118,205
 
-Limitations:
+Forecast = 217,106
 
-* Does not capture long-term trends effectively
+Therefore, the simplified example forecast for January 2026 would be approximately 217,106.
 
----
+This example is only intended to explain the behavior of the selected SARIMA configuration. The actual SafeBooks implementation should use the statistical SARIMA model through the Python `statsmodels` SARIMAX implementation instead of manually calculating forecasts using only this simplified formula.
 
-## Algorithm 2: Weighted Moving Average
+## Difference Between WMA and SARIMA
 
-Assigns higher importance to recent financial records.
+| Feature | Weighted Moving Average (WMA) | SARIMA |
+|---|---|---|
+| Uses recent historical values | Yes | Yes |
+| Uses fixed weights | Yes | No |
+| Focuses mainly on the last three records | Yes | No |
+| Can represent seasonal patterns | No | Yes |
+| Can account for changes over time | Limited | Yes |
+| Can model monthly or quarterly seasonal cycles | No | Yes |
+| Requires regularly spaced historical records | Preferably | Yes |
+| Complexity | Simple | More advanced |
+| Selected after SafeBooks model evaluation | No | Yes |
 
-Advantages:
+The main difference is that WMA asks:
 
-* More responsive to recent changes
+"What happened in the most recent records?"
 
-Limitations:
+SARIMA considers:
 
-* Still limited in identifying long-term patterns
+"What happened recently, how has the time series changed, and are there repeating patterns from previous seasonal periods?"
 
----
+For example, WMA may forecast January mainly from the records immediately before January. SARIMA can also consider how January behaved during previous yearly cycles when sufficient regularly spaced historical data are available.
 
-## Algorithm 3: Linear Regression
+## How SARIMA Should Work in SafeBooks
 
-Uses historical trends to project future values.
+The forecasting process in SafeBooks should follow this general flow:
 
-Advantages:
+1. The Bookkeeper enters financial records for a client.
+2. SafeBooks retrieves the historical financial records for the selected client and financial category.
+3. The records are arranged in chronological order.
+4. The system checks whether sufficient historical observations are available.
+5. The system checks whether the records are regularly spaced according to their reporting frequency.
+6. The system identifies the appropriate seasonal period.
+7. For monthly records, the seasonal period is set to 12.
+8. For regularly spaced quarterly records, the seasonal period is set to 4.
+9. The SARIMA model is fitted using the available historical values.
+10. SARIMA processes the non-seasonal and seasonal changes found in the historical series.
+11. The model generates the requested future forecast.
+12. The resulting forecast is displayed in the SafeBooks analytics module for Bookkeeper review.
 
-* Suitable for long-term forecasting
-* Effective for trend analysis
-* Appropriate for datasets with multiple years of records
+Example for monthly sales:
 
-Limitations:
+Client A
+→ Monthly Sales Records
+→ Historical Records from 2023 to 2025
+→ Check Record Regularity
+→ Seasonal Period = 12
+→ Fit SARIMA Model
+→ Generate Future Monthly Sales Forecast
+→ Display Forecast in Analytics
 
-* Assumes trend continuity
+Example for quarterly expenses:
 
----
+Client A
+→ Quarterly Expense Records
+→ Historical Quarterly Records
+→ Check Record Regularity
+→ Seasonal Period = 4
+→ Fit SARIMA Model
+→ Generate Future Quarterly Expense Forecast
+→ Display Forecast in Analytics
 
-# 5. Algorithm Evaluation
+## Why SARIMA Replaced WMA
 
-Use historical client transaction records.
+Weighted Moving Average was originally used because it is simple and gives greater importance to recent financial observations. However, after additional historical records became available, the data showed repeating monthly and quarterly patterns that WMA could not directly model.
 
-Example:
+Three forecasting models were therefore evaluated:
 
-2021 Data
-2022 Data
-2023 Data
-2024 Data
-2025 Data
+1. Weighted Moving Average (WMA)
+2. Holt-Winters Exponential Smoothing
+3. Seasonal Autoregressive Integrated Moving Average (SARIMA)
 
-Compare forecasting accuracy using:
+The three models were evaluated using the same historical financial dataset and holdout testing approach. Their forecasts were compared with actual values using the following error metrics:
 
-* MAE (Mean Absolute Error)
-* MAPE (Mean Absolute Percentage Error)
-* RMSE (Root Mean Square Error)
+- Mean Absolute Error (MAE)
+- Mean Absolute Percentage Error (MAPE)
+- Root Mean Square Error (RMSE)
+- Weighted Absolute Percentage Error (WAPE)
 
-The algorithm with the best forecasting accuracy will be selected and integrated into SAFEBOOKS.
+Lower error values indicate better forecasting performance.
 
-Research Process:
+Based on the reported SafeBooks forecasting evaluation, SARIMA obtained the lowest overall errors among the three evaluated models. Its reported WAPE was:
 
-Historical Data
-→ Algorithm Comparison
-→ Accuracy Evaluation
-→ Best Algorithm Selection
-→ Final Forecasting Module
+WAPE = 6.06%
 
-This creates a clear research contribution for the capstone project.
+The reported WAPE-based overall forecasting accuracy was calculated as:
 
----
+Overall Accuracy = 100% - WAPE
 
-# 6. Recommended Forecasting Module Enhancements
+Overall Accuracy = 100% - 6.06%
 
-## Forecasting Filters
+Overall Accuracy = 93.94%
 
-The forecasting page should allow users to generate forecasts dynamically.
+Therefore, SARIMA was selected as the forecasting model for the SafeBooks forecasting component.
 
-Suggested Filters:
+## Important Requirements Before Generating a SARIMA Forecast
 
-* Client Filter
-* Date Range Filter
-* Forecast Type Filter
+SafeBooks should not automatically generate a SARIMA forecast for every available record. Before forecasting, the system should check the following conditions:
 
-  * Sales
-  * Expenses
-  * Taxes
-* Forecast Horizon Filter
+1. There must be sufficient historical data.
+2. Historical records must be arranged chronologically.
+3. Records must follow a regular reporting frequency.
+4. The system must identify whether the records are monthly or quarterly.
+5. The correct seasonal period must be assigned.
 
-  * 3 Months
-  * 6 Months
-  * 12 Months
-  * 1 Year
+For monthly records:
 
-Benefits:
+Seasonal Period = 12
 
-* More interactive forecasting
-* Better decision support
-* Greater analytical flexibility
+For regularly spaced quarterly records:
 
----
+Seasonal Period = 4
 
-# 7. Recommended Forecasting Outputs
+Examples of regularly spaced monthly records:
 
-The forecasting module should provide multiple outputs rather than a single prediction card.
+January
+→ February
+→ March
+→ April
+→ May
 
-## Forecast Summary
+Examples of regularly spaced quarterly records:
 
-Displays:
+March
+→ June
+→ September
+→ December
 
-* Forecasted Sales
-* Forecasted Expenses
-* Forecasted Tax
-* Forecasted Net Value
+An irregular sequence such as:
 
----
+January
+→ March
+→ April
+→ September
 
-## Forecast Table
+should not automatically be treated as a regular seasonal series. Missing or irregular periods should be properly handled before the SARIMA model is applied.
 
-Example:
+## Simplified Developer Implementation Flow
 
-| Period        | Forecasted Sales |
-| ------------- | ---------------- |
-| January 2026  | ₱100,000         |
-| February 2026 | ₱105,000         |
-| March 2026    | ₱110,000         |
+OLD WMA PROCESS:
 
----
+Historical Financial Records
+→ Retrieve the Last Three Values
+→ Apply Fixed Weights of 0.2, 0.3, and 0.5
+→ Calculate Weighted Average
+→ Generate Forecast
+→ Display Forecast
 
-## Actual vs Forecast Report
+NEW SARIMA PROCESS:
 
-Displays:
+Historical Financial Records
+→ Filter Records by Client and Financial Category
+→ Sort Records Chronologically
+→ Check Sufficient Historical Data
+→ Check Regular Reporting Frequency
+→ Determine Seasonal Period
+→ Monthly = 12
+→ Quarterly = 4
+→ Fit SARIMA Model Using SARIMAX
+→ Generate Future Forecast
+→ Display Forecast in SafeBooks Analytics
 
-* Historical Values
-* Forecasted Values
-* Forecast Accuracy
+## Important Developer Note
 
-Purpose:
+The existing WMA forecasting function should not simply be renamed to SARIMA. SARIMA uses a fundamentally different forecasting process.
 
-Allows users to compare projections against actual financial performance.
+The developer should replace the WMA forecast calculation with an actual SARIMA implementation, such as the `SARIMAX` model provided by the Python `statsmodels` library.
 
----
+The evaluated model configuration was:
 
-## Forecast Accuracy Report
+SARIMA(0,1,0)(0,1,0,s)
 
-Displays:
+The value of `s` depends on the frequency of the records:
 
-| Algorithm               | Accuracy |
-| ----------------------- | -------- |
-| Moving Average          | 82%      |
-| Weighted Moving Average | 87%      |
-| Linear Regression       | 92%      |
+- Monthly records: s = 12
+- Quarterly records: s = 4
 
-Purpose:
+The simplified seasonal equation shown earlier is intended only to explain the concept. The actual application should rely on the fitted SARIMA/SARIMAX statistical model to generate forecasts.
 
-Justifies the selection of the forecasting algorithm.
-
----
-
-# 8. Additional Descriptive Analytics Reports
-
-The panel suggested adding more reports.
-
-This does not necessarily mean adding more graphs.
-
-Recommended reports include:
-
-## Financial Summary Report
-
-Displays:
-
-* Total Sales
-* Total Expenses
-* Total Tax
-* Net Value
-
----
-
-## Client Performance Report
-
-Displays:
-
-* Top Revenue Clients
-* Most Active Clients
-* Highest Tax-Contributing Clients
-
----
-
-## Tax Summary Report
-
-Displays:
-
-* Monthly Tax Totals
-* Quarterly Tax Totals
-* Annual Tax Totals
-
----
-
-## Expense Analysis Report
-
-Displays:
-
-* Expense Trends
-* Expense Categories
-* Expense Growth Rates
-
----
-
-## Sales Analysis Report
-
-Displays:
-
-* Monthly Sales
-* Quarterly Sales
-* Annual Sales
-
----
-
-# 9. Graph Recommendations
-
-Not every report requires a graph.
-
-Recommended graph usage:
-
-### Monthly Sales Trend
-
-Graph Recommended
-
-### Expense Trend
-
-Graph Recommended
-
-### Tax Trend
-
-Graph Recommended
-
-### Forecast Trend
-
-Graph Recommended
-
-### Financial Summary
-
-Cards or Tables Preferred
-
-### Client Performance Report
-
-Table Preferred
-
-### Tax Summary Report
-
-Table Preferred
-
-### Forecast Accuracy Report
-
-Table Preferred
-
-The goal is to present meaningful information rather than increasing the number of charts.
-
----
-
-# 10. Proposed Analytics Structure
-
-## Financial Analytics Dashboard
-
-### Summary Cards
-
-* Total Sales
-* Total Expenses
-* Total Tax
-* Net Value
-
-### Trend Reports
-
-* Monthly Sales Trend
-* Monthly Expense Trend
-* Monthly Tax Trend
-
-### Financial Reports
-
-* Client Performance Report
-* Expense Analysis Report
-* Tax Analysis Report
-
-### Forecasting Reports
-
-* Forecast Summary
-* Forecast Table
-* Actual vs Forecast Comparison
-* Forecast Accuracy Report
-
----
-
-# 11. Final Recommendation
-
-The current SAFEBOOKS platform already demonstrates a strong bookkeeping foundation.
-
-The project should focus on:
-
-1. Maintaining existing descriptive analytics features.
-2. Expanding reporting capabilities.
-3. Implementing forecasting algorithm comparison.
-4. Selecting the most accurate forecasting algorithm.
-5. Adding forecasting filters.
-6. Providing multiple forecasting outputs.
-7. Demonstrating the use of long-term historical data for future projections.
-
-These enhancements directly address the concerns raised by the panel and strengthen both the research contribution and practical value of the SAFEBOOKS platform.
+In summary, WMA primarily predicts future values using a fixed weighted combination of the three most recent historical records. SARIMA, in contrast, uses a statistical time-series approach that can represent both changes over time and recurring seasonal patterns. Because SARIMA achieved lower forecasting errors during the SafeBooks model comparison, it was selected as the new forecasting model for the system.
